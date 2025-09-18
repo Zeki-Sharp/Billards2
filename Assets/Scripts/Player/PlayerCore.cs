@@ -331,9 +331,9 @@ public class PlayerCore : MonoBehaviour
             return;
         }
         
-        // 检查当前玩家状态，只有在Idle状态才能受击
-        PlayerStateMachine stateMachine = GetComponent<PlayerStateMachine>();
-        if (stateMachine != null && !stateMachine.IsIdle)
+        // 检查游戏状态，只有在EnemyPhase阶段才能受击
+        GameFlowController gameFlowController = GameFlowController.Instance;
+        if (gameFlowController == null || !gameFlowController.IsEnemyPhase)
         {
             return;
         }

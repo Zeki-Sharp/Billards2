@@ -86,17 +86,16 @@ public class Enemy : MonoBehaviour
             return; // 玩家阶段完全静止，不执行任何AI逻辑
         }
         
-        // 获取缩放后的时间
-        float scaledDeltaTime = TimeManager.Instance != null ? 
-            TimeManager.Instance.GetEnemyDeltaTime() : Time.deltaTime;
+        // 敌人阶段直接使用正常时间，不需要TimeManager
+        float deltaTime = Time.deltaTime;
         
-        // 更新动画（根据设置决定是否应用时间缩放）
-        UpdateAnimations(scaledDeltaTime);
+        // 更新动画
+        UpdateAnimations(deltaTime);
         
         // 敌人AI逻辑（根据配置化的移动方式）
         if (ShouldEnableAI() && targetPlayer != null && IsAlive())
         {
-            ExecuteMovementAI(scaledDeltaTime);
+            ExecuteMovementAI(deltaTime);
             ExecuteAttackAI();
         }
     }
@@ -447,20 +446,19 @@ public class Enemy : MonoBehaviour
     
     void OnCollisionEnter2D(Collision2D collision)
     {
-        // 与玩家碰撞时的处理（只在Normal和Transition阶段）
+        // 与玩家碰撞时的处理（只在EnemyPhase阶段）
         if (collision.gameObject.CompareTag("Player"))
         {
-            // 检查游戏状态，只在Normal和Transition阶段处理碰撞
+            // 检查游戏状态，只在EnemyPhase阶段处理碰撞
             GameFlowController gameFlowController = GameFlowController.Instance;
-            if (gameFlowController != null && 
-                (gameFlowController.IsNormalState || gameFlowController.IsTransitionState))
+            if (gameFlowController != null && gameFlowController.IsEnemyPhase)
             {
-                // Normal和Transition状态：敌人攻击玩家
+                // EnemyPhase状态：敌人攻击玩家
                 AttackPlayer();
             }
             else
             {
-                // 在Charging阶段，不处理碰撞（由PlayerCore处理）
+                // 在其他阶段，不处理碰撞
             }
         }
         

@@ -86,19 +86,16 @@ public class EnemySpawner : MonoBehaviour
     void Update()
     {
         // 检查是否在敌人阶段，只有在敌人阶段才生成敌人
-        if (!IsInEnemyPhase())
+        if (!IsInEnemyPhase() || !isSpawning || isCurrentWaveActive)
         {
             return; // 玩家阶段完全停止生成
         }
         
         // 自动生成波次
-        if (isSpawning && !isCurrentWaveActive)
+        // 使用ScaledTime，自动处理时间缩放
+        if (ScaledTime.time - lastWaveTime >= globalWaveInterval)
         {
-            // 使用ScaledTime，自动处理时间缩放
-            if (ScaledTime.time - lastWaveTime >= globalWaveInterval)
-            {
-                SpawnNextWave();
-            }
+            SpawnNextWave();
         }
         
         // 手动控制
