@@ -2,10 +2,6 @@ using UnityEngine;
 
 public class AttackRange : MonoBehaviour
 {
-    [Header("攻击范围设置")]
-    public float rangeWidth = 2f;      // 范围宽度
-    public float rangeLength = 4f;     // 范围长度
-    
     [Header("颜色设置")]
     public Color previewColor = new Color(1f, 0f, 0f, 0.3f); // 预览颜色
     public Color attackColor = new Color(1f, 0f, 0f, 0.8f);  // 攻击颜色
@@ -15,35 +11,37 @@ public class AttackRange : MonoBehaviour
     private Vector2 attackDirection; // 攻击方向（在预览阶段确定）
     private bool isPreviewActive = false; // 是否正在预览状态
     
+    [Header("子对象引用")]
+    public Transform imageTransform; // Image子对象的引用
+    
     void Start()
     {
-        // 获取或添加SpriteRenderer组件
-        spriteRenderer = GetComponent<SpriteRenderer>();
+        // 自动查找Image子对象
+        if (imageTransform == null)
+        {
+            imageTransform = transform.Find("Image");
+            if (imageTransform == null)
+            {
+                Debug.LogError($"AttackRange {name}: 未找到Image子对象，请确保AttackArea下有Image子对象");
+                return;
+            }
+        }
+        
+        // 从Image子对象获取SpriteRenderer组件
+        spriteRenderer = imageTransform.GetComponent<SpriteRenderer>();
         if (spriteRenderer == null)
         {
-            spriteRenderer = gameObject.AddComponent<SpriteRenderer>();
+            Debug.LogError($"AttackRange {name}: Image子对象上未找到SpriteRenderer组件");
+            return;
         }
-        
-        // 设置默认Sprite
-        if (spriteRenderer.sprite == null)
-        {
-            spriteRenderer.sprite = Resources.GetBuiltinResource<Sprite>("UI/Skin/Knob.psd");
-        }
-        
-        // 添加BoxCollider2D用于射线检测
-        BoxCollider2D collider = GetComponent<BoxCollider2D>();
-        if (collider == null)
-        {
-            collider = gameObject.AddComponent<BoxCollider2D>();
-        }
-        collider.isTrigger = true; // 设为触发器，不参与物理碰撞
         
         // 查找玩家
         targetPlayer = FindAnyObjectByType<Player>();
         
         // 设置初始状态
         SetVisible(false);
-        UpdateRangeSize();
+        
+        Debug.Log($"AttackRange {name}: 初始化完成，Image子对象: {imageTransform.name}");
     }
     
     
@@ -54,35 +52,40 @@ public class AttackRange : MonoBehaviour
         // 设置攻击范围的旋转
         transform.rotation = Quaternion.Euler(0, 0, angle);
         
-        // 攻击范围起点在敌人中心，终点朝向白球方向
-        // 所以AttackRange的中心应该在敌人中心向攻击方向偏移rangeLength/2
-        transform.localPosition = new Vector3(direction.x * rangeLength/2f, direction.y * rangeLength/2f, 0);
+        // 保存攻击方向
+        attackDirection = direction;
         
-        Debug.Log($"AttackRange对齐: direction={direction}, angle={angle:F1}°, localPosition={transform.localPosition}");
+        Debug.Log($"AttackRange对齐: direction={direction}, angle={angle:F1}°");
     }
     
-    void UpdateRangeSize()
+    /// <summary>
+    /// 获取攻击方向（用于Enemy.cs调用）
+    /// </summary>
+    public Vector2 GetAttackDirection()
     {
-        // 设置范围大小
-        transform.localScale = new Vector3(rangeLength, rangeWidth, 1f);
-        
-        // 同步更新Collider大小
-        BoxCollider2D collider = GetComponent<BoxCollider2D>();
-        if (collider != null)
-        {
-            collider.size = new Vector2(1f, 1f); // 本地大小为1x1，通过scale放大
-        }
+        return attackDirection;
     }
     
     public void ShowPreview()
     {
         Debug.Log($"AttackRange {name} 开始显示预览，spriteRenderer={spriteRenderer}, isPreviewActive={isPreviewActive}");
         
+        // 检查Image子对象是否存在
+        if (imageTransform == null)
+        {
+            Debug.LogError($"AttackRange {name}: Image子对象为空，无法显示预览！");
+            return;
+        }
+        
         SetVisible(true);
         if (spriteRenderer != null)
         {
             spriteRenderer.color = previewColor;
-            Debug.Log($"AttackRange {name} 设置颜色: {previewColor}, enabled={spriteRenderer.enabled}");
+            Debug.Log($"AttackRange {name} 设置颜色: {previewColor}, enabled={spriteRenderer.enabled}, sprite={spriteRenderer.sprite?.name}");
+        }
+        else
+        {
+            Debug.LogError($"AttackRange {name}: spriteRenderer为空！");
         }
         
         // 只在第一次进入预览状态时更新攻击方向
@@ -146,10 +149,10 @@ public class AttackRange : MonoBehaviour
     {
         if (targetPlayer == null) return false;
         
-        // 从玩家位置垂直发射射线，检测与攻击范围的重叠
+        // 使用预制体的实际大小进行检测
         Vector2 playerPos = targetPlayer.transform.position;
         
-        // 获取攻击范围的边界
+        // 获取预制体的实际边界
         Bounds attackBounds = GetAttackRangeBounds();
         
         // 检查玩家是否在攻击范围内
@@ -165,10 +168,29 @@ public class AttackRange : MonoBehaviour
     
     Bounds GetAttackRangeBounds()
     {
-        // 计算攻击范围的世界坐标边界
-        Vector3 center = transform.position;
-        Vector3 size = new Vector3(rangeLength, rangeWidth, 0);
-        return new Bounds(center, size);
+        // 使用Image子对象的实际大小
+        if (imageTransform != null && spriteRenderer != null && spriteRenderer.sprite != null)
+        {
+            // 使用Image子对象的Sprite边界
+            Bounds spriteBounds = spriteRenderer.sprite.bounds;
+            Vector3 center = imageTransform.position;
+            Vector3 size = Vector3.Scale(spriteBounds.size, imageTransform.lossyScale);
+            return new Bounds(center, size);
+        }
+        else if (imageTransform != null)
+        {
+            // 如果没有Sprite，使用Image子对象的Transform scale
+            Vector3 center = imageTransform.position;
+            Vector3 size = imageTransform.lossyScale;
+            return new Bounds(center, size);
+        }
+        else
+        {
+            // 回退到父对象
+            Vector3 center = transform.position;
+            Vector3 size = transform.lossyScale;
+            return new Bounds(center, size);
+        }
     }
     
 }

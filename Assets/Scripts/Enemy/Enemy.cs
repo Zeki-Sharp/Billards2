@@ -8,6 +8,7 @@ public class Enemy : MonoBehaviour
     
     private float currentHealth;
     private Player targetPlayer;
+    private PlayerCore targetPlayerCore;
     
     // 防重复触发机制
     private float lastAttackTime = 0f;
@@ -31,6 +32,10 @@ public class Enemy : MonoBehaviour
     private Vector3 moveStartPosition; // 移动开始位置
     private float currentMoveDistance = 0f; // 当前已移动距离
     
+    // 扇形攻击系统相关
+    private Vector2 lastMoveDirection; // 记录上次移动方向
+    private bool hasMovedThisPhase; // 当前阶段是否已移动
+    
     // 事件
     public System.Action<float> OnHealthChanged;
     
@@ -49,6 +54,10 @@ public class Enemy : MonoBehaviour
         // 初始化血量
         currentHealth = enemyData.maxHealth;
         targetPlayer = FindAnyObjectByType<Player>();
+        if (targetPlayer != null)
+        {
+            targetPlayerCore = targetPlayer.GetComponent<PlayerCore>();
+        }
         
         // 获取或添加 BallPhysics 组件
         ballPhysics = GetComponent<BallPhysics>();
@@ -100,7 +109,7 @@ public class Enemy : MonoBehaviour
         UpdateAnimations(deltaTime);
         
         // 根据当前敌人阶段执行不同逻辑
-        if (ShouldEnableAI() && targetPlayer != null && IsAlive())
+        if (ShouldEnableAI() && targetPlayerCore != null && IsAlive())
         {
             ExecuteCurrentPhaseLogic(deltaTime);
         }
@@ -178,10 +187,10 @@ public class Enemy : MonoBehaviour
     public void InitializeAttackRange()
     {
         AttackRange attackRange = GetComponentInChildren<AttackRange>();
-        if (attackRange != null && targetPlayer != null)
+        if (attackRange != null && targetPlayerCore != null)
         {
             // 计算从敌人到白球的方向
-            Vector2 direction = (targetPlayer.transform.position - transform.position).normalized;
+            Vector2 direction = (targetPlayerCore.transform.position - transform.position).normalized;
             
             // 简化初始化：直接调用AttackRange的SetAttackDirection方法
             attackRange.SetAttackDirection(direction);
@@ -193,18 +202,18 @@ public class Enemy : MonoBehaviour
     /// </summary>
     void MoveTowardsPlayer(float deltaTime)
     {
-        if (targetPlayer == null) return;
+        if (targetPlayerCore == null) return;
         
         // 获取移动速度（优先使用配置化设置）
         float currentMoveSpeed = GetMoveSpeed();
         
         // 计算朝向玩家的方向
-        Vector2 direction = (targetPlayer.transform.position - transform.position).normalized;
+        Vector2 direction = (targetPlayerCore.transform.position - transform.position).normalized;
         
         // 检查是否需要保持距离
         if (enemyData.maintainDistance)
         {
-            float distance = Vector3.Distance(transform.position, targetPlayer.transform.position);
+            float distance = Vector3.Distance(transform.position, targetPlayerCore.transform.position);
             if (distance < enemyData.followMinDistance)
             {
                 // 距离太近，远离目标
@@ -391,7 +400,7 @@ public class Enemy : MonoBehaviour
         // 占位符实现：远程攻击功能待实现
         
         // 显示攻击方向
-        Vector3 attackDirection = (targetPlayer.transform.position - transform.position).normalized;
+        Vector3 attackDirection = (targetPlayerCore.transform.position - transform.position).normalized;
         Debug.DrawRay(transform.position, attackDirection * enemyData.attackRange, Color.red, 0.5f);
         
         // TODO: 实现实际的远程攻击逻辑
@@ -438,14 +447,14 @@ public class Enemy : MonoBehaviour
         lastEnemyAttackTime = currentTime;
         
         // 计算攻击方向和位置
-        Vector3 attackPosition = (transform.position + targetPlayer.transform.position) * 0.5f;
-        Vector3 attackDirection = (targetPlayer.transform.position - transform.position).normalized;
+        Vector3 attackPosition = (transform.position + targetPlayerCore.transform.position) * 0.5f;
+        Vector3 attackDirection = (targetPlayerCore.transform.position - transform.position).normalized;
         
         // 获取敌人伤害值
         float damage = GetDamage();
         
         // 触发攻击事件
-        EventTrigger.Attack("EnemyAttack", attackPosition, attackDirection, gameObject, targetPlayer.gameObject, damage);
+        EventTrigger.Attack("EnemyAttack", attackPosition, attackDirection, gameObject, targetPlayerCore.gameObject, damage);
     }
     
     /// <summary>
@@ -678,9 +687,9 @@ public class Enemy : MonoBehaviour
         switch (enemyData.movementType)
         {
             case MovementType.FollowPlayer:
-                if (targetPlayer != null)
+                if (targetPlayerCore != null)
                 {
-                    return (targetPlayer.transform.position - transform.position).normalized;
+                    return (targetPlayerCore.transform.position - transform.position).normalized;
                 }
                 else
                 {
@@ -742,10 +751,11 @@ public class Enemy : MonoBehaviour
         switch (currentPhase)
         {
             case EnemyPhase.Attack:
-                ExecuteAttackPhase();
+                ExecuteSectorAttack();
                 break;
             case EnemyPhase.Move:
                 ExecuteMovePhase(deltaTime);
+                TrackMovementDirection(); // 跟踪移动方向
                 break;
             case EnemyPhase.Spawn:
                 ExecuteSpawnPhase();
@@ -757,19 +767,45 @@ public class Enemy : MonoBehaviour
     }
     
     /// <summary>
-    /// 执行攻击阶段
+    /// 执行扇形攻击
     /// </summary>
-    void ExecuteAttackPhase()
+    void ExecuteSectorAttack()
     {
         if (showDebugInfo)
         {
-            Debug.Log($"Enemy {name}: 执行攻击阶段");
+            Debug.Log($"Enemy {name}: 执行扇形攻击");
         }
         
-        // 执行攻击AI
-        ExecuteAttackAI();
+        AttackRange attackRange = GetComponentInChildren<AttackRange>();
+        if (attackRange != null)
+        {
+            // 显示攻击状态
+            attackRange.ShowAttack();
+            
+            // 检测玩家是否在攻击范围内
+            if (attackRange.IsPlayerInRange() && targetPlayerCore != null)
+            {
+                // 造成伤害
+                float damage = GetDamage();
+                targetPlayerCore.TakeDamage(damage);
+                
+                // 触发攻击事件
+                EventTrigger.Attack("SectorAttack", transform.position, 
+                                  attackRange.GetAttackDirection(), 
+                                  gameObject, targetPlayer.gameObject, damage);
+                
+                if (showDebugInfo)
+                {
+                    Debug.Log($"Enemy {name}: 对玩家造成 {damage} 点伤害");
+                }
+            }
+        }
+        else
+        {
+            Debug.LogWarning($"Enemy {name}: 未找到AttackRange组件");
+        }
         
-        // 攻击阶段直接完成（因为攻击是即时的）
+        // 完成攻击阶段
         EnemyPhaseController.Instance.OnEnemyPhaseActionComplete();
     }
     
@@ -812,8 +848,97 @@ public class Enemy : MonoBehaviour
             Debug.Log($"Enemy {name}: 执行预告阶段");
         }
         
-        // 预告阶段由TelegraphManager处理，这里直接完成
+        // 检查是否需要更新攻击方向
+        if (hasMovedThisPhase)
+        {
+            UpdateAttackRangeDirection();
+            hasMovedThisPhase = false;
+        }
+        
+        // 显示攻击范围预告
+        AttackRange attackRange = GetComponentInChildren<AttackRange>();
+        if (attackRange != null)
+        {
+            if (showDebugInfo)
+            {
+                Debug.Log($"Enemy {name}: 找到AttackRange组件，开始显示预告");
+            }
+            attackRange.ShowPreview();
+        }
+        else
+        {
+            Debug.LogWarning($"Enemy {name}: 未找到AttackRange组件！");
+        }
+        
+        // 延迟后完成预告阶段
+        StartCoroutine(CompleteTelegraphPhase());
+    }
+    
+    /// <summary>
+    /// 完成预告阶段（延迟执行）
+    /// </summary>
+    System.Collections.IEnumerator CompleteTelegraphPhase()
+    {
+        yield return new WaitForSeconds(1f); // 预告持续时间
         EnemyPhaseController.Instance.OnEnemyPhaseActionComplete();
+    }
+    
+    /// <summary>
+    /// 跟踪移动方向
+    /// </summary>
+    void TrackMovementDirection()
+    {
+        Vector2 currentPosition = transform.position;
+        if (lastPosition != Vector2.zero)
+        {
+            Vector2 movement = currentPosition - lastPosition;
+            if (movement.magnitude > 0.1f) // 避免微小移动
+            {
+                lastMoveDirection = movement.normalized;
+                hasMovedThisPhase = true;
+                
+                if (showDebugInfo)
+                {
+                    Debug.Log($"Enemy {name}: 移动方向更新为 {lastMoveDirection}");
+                }
+            }
+        }
+        lastPosition = currentPosition;
+    }
+    
+    /// <summary>
+    /// 更新攻击范围方向
+    /// </summary>
+    void UpdateAttackRangeDirection()
+    {
+        Vector2 direction = GetCurrentMovementDirection();
+        if (direction == Vector2.zero)
+        {
+        // 如果没有移动，朝向玩家
+        if (targetPlayerCore != null)
+        {
+            direction = (targetPlayerCore.transform.position - transform.position).normalized;
+        }
+        }
+        
+        AttackRange attackRange = GetComponentInChildren<AttackRange>();
+        if (attackRange != null)
+        {
+            attackRange.SetAttackDirection(direction);
+            
+            if (showDebugInfo)
+            {
+                Debug.Log($"Enemy {name}: 更新攻击范围方向为 {direction}");
+            }
+        }
+    }
+    
+    /// <summary>
+    /// 获取当前移动方向
+    /// </summary>
+    Vector2 GetCurrentMovementDirection()
+    {
+        return lastMoveDirection;
     }
     
     /// <summary>
@@ -824,5 +949,6 @@ public class Enemy : MonoBehaviour
         hasMovedInCurrentPhase = false;
         currentMoveDistance = 0f;
         moveStartPosition = transform.position;
+        hasMovedThisPhase = false; // 重置移动标记
     }
 }
