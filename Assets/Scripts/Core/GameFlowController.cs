@@ -45,6 +45,7 @@ public class GameFlowController : MonoBehaviour
     private TransitionManager transitionManager;
     private PlayerStateMachine playerStateMachine;
     private PlayerCore playerCore;
+    private EnemyPhaseController enemyPhaseController;
     
     // 状态管理
     private bool hasPlayerLaunched = false;
@@ -169,6 +170,16 @@ public class GameFlowController : MonoBehaviour
         if (showDebugInfo)
         {
             Debug.Log("GameFlowController: 切换到敌人阶段");
+        }
+        
+        // 启动敌人阶段控制器
+        if (enemyPhaseController != null)
+        {
+            enemyPhaseController.StartPhase(EnemyPhase.Attack);
+        }
+        else
+        {
+            Debug.LogWarning("GameFlowController: EnemyPhaseController 未设置！");
         }
         
         // 触发状态变化事件
@@ -399,6 +410,11 @@ public class GameFlowController : MonoBehaviour
     public void SetPlayerCore(PlayerCore core)
     {
         playerCore = core;
+    }
+    
+    public void SetEnemyPhaseController(EnemyPhaseController controller)
+    {
+        enemyPhaseController = controller;
     }
     
     #endregion

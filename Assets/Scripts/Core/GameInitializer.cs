@@ -18,6 +18,7 @@ public class GameInitializer : MonoBehaviour
     private ChargeSystem chargeSystem;
     private TransitionManager transitionManager;
     private TimeManager timeManager;
+    private EnemyPhaseController enemyPhaseController;
     
     // 游戏对象引用
     private Player player;
@@ -90,6 +91,16 @@ public class GameInitializer : MonoBehaviour
         timeManager = FindAnyObjectByType<TimeManager>();
         transitionManager = FindAnyObjectByType<TransitionManager>();
         
+        // 查找EnemyPhaseController
+        enemyPhaseController = FindAnyObjectByType<EnemyPhaseController>();
+        if (enemyPhaseController == null)
+        {
+            Debug.LogWarning("GameInitializer: 未找到EnemyPhaseController，将创建默认实例");
+            // 创建EnemyPhaseController
+            GameObject controllerObj = new GameObject("EnemyPhaseController");
+            enemyPhaseController = controllerObj.AddComponent<EnemyPhaseController>();
+        }
+        
         if (showDebugInfo)
         {
             Debug.Log("GameInitializer: 核心组件查找完成");
@@ -151,6 +162,7 @@ public class GameInitializer : MonoBehaviour
             gameFlowController.SetPlayerStateMachine(playerStateMachine);
             gameFlowController.SetPlayerCore(playerCore);
             gameFlowController.SetTransitionManager(transitionManager);
+            gameFlowController.SetEnemyPhaseController(enemyPhaseController);
             
             // 设置Player相关引用
             if (player != null)

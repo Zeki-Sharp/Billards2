@@ -99,12 +99,10 @@ public class Enemy : MonoBehaviour
         // 更新动画
         UpdateAnimations(deltaTime);
         
-        // 敌人AI逻辑（根据配置化的移动方式）
+        // 根据当前敌人阶段执行不同逻辑
         if (ShouldEnableAI() && targetPlayer != null && IsAlive())
         {
-            // 执行移动逻辑（移动指定距离后停止）
-            ExecuteMoveForDistance(deltaTime);
-            ExecuteAttackAI();
+            ExecuteCurrentPhaseLogic(deltaTime);
         }
     }
     
@@ -163,12 +161,18 @@ public class Enemy : MonoBehaviour
     {
         // 订阅攻击事件
         EventTrigger.OnAttack += HandleAttack;
+        
+        // 订阅敌人阶段事件
+        EnemyPhaseController.OnPhaseStart += OnPhaseStart;
     }
     
     void OnDisable()
     {
         // 取消订阅攻击事件
         EventTrigger.OnAttack -= HandleAttack;
+        
+        // 取消订阅敌人阶段事件
+        EnemyPhaseController.OnPhaseStart -= OnPhaseStart;
     }
     
     public void InitializeAttackRange()
@@ -706,6 +710,116 @@ public class Enemy : MonoBehaviour
     /// 重置移动状态
     /// </summary>
     void ResetMoveState()
+    {
+        hasMovedInCurrentPhase = false;
+        currentMoveDistance = 0f;
+        moveStartPosition = transform.position;
+    }
+    
+    /// <summary>
+    /// 阶段开始事件处理
+    /// </summary>
+    void OnPhaseStart(EnemyPhase phase)
+    {
+        if (showDebugInfo)
+        {
+            Debug.Log($"Enemy {name}: 阶段开始 {phase}");
+        }
+        
+        // 重置阶段状态
+        ResetPhaseState();
+    }
+    
+    /// <summary>
+    /// 执行当前阶段逻辑
+    /// </summary>
+    void ExecuteCurrentPhaseLogic(float deltaTime)
+    {
+        if (EnemyPhaseController.Instance == null) return;
+        
+        EnemyPhase currentPhase = EnemyPhaseController.Instance.GetCurrentPhase();
+        
+        switch (currentPhase)
+        {
+            case EnemyPhase.Attack:
+                ExecuteAttackPhase();
+                break;
+            case EnemyPhase.Move:
+                ExecuteMovePhase(deltaTime);
+                break;
+            case EnemyPhase.Spawn:
+                ExecuteSpawnPhase();
+                break;
+            case EnemyPhase.Telegraph:
+                ExecuteTelegraphPhase();
+                break;
+        }
+    }
+    
+    /// <summary>
+    /// 执行攻击阶段
+    /// </summary>
+    void ExecuteAttackPhase()
+    {
+        if (showDebugInfo)
+        {
+            Debug.Log($"Enemy {name}: 执行攻击阶段");
+        }
+        
+        // 执行攻击AI
+        ExecuteAttackAI();
+        
+        // 攻击阶段直接完成（因为攻击是即时的）
+        EnemyPhaseController.Instance.OnEnemyPhaseActionComplete();
+    }
+    
+    /// <summary>
+    /// 执行移动阶段
+    /// </summary>
+    void ExecuteMovePhase(float deltaTime)
+    {
+        // 执行移动逻辑（移动指定距离后停止）
+        ExecuteMoveForDistance(deltaTime);
+        
+        // 如果移动完成，通知阶段控制器
+        if (hasMovedInCurrentPhase)
+        {
+            EnemyPhaseController.Instance.OnEnemyPhaseActionComplete();
+        }
+    }
+    
+    /// <summary>
+    /// 执行生成阶段
+    /// </summary>
+    void ExecuteSpawnPhase()
+    {
+        if (showDebugInfo)
+        {
+            Debug.Log($"Enemy {name}: 执行生成阶段");
+        }
+        
+        // 生成阶段由EnemySpawner处理，这里直接完成
+        EnemyPhaseController.Instance.OnEnemyPhaseActionComplete();
+    }
+    
+    /// <summary>
+    /// 执行预告阶段
+    /// </summary>
+    void ExecuteTelegraphPhase()
+    {
+        if (showDebugInfo)
+        {
+            Debug.Log($"Enemy {name}: 执行预告阶段");
+        }
+        
+        // 预告阶段由TelegraphManager处理，这里直接完成
+        EnemyPhaseController.Instance.OnEnemyPhaseActionComplete();
+    }
+    
+    /// <summary>
+    /// 重置阶段状态
+    /// </summary>
+    void ResetPhaseState()
     {
         hasMovedInCurrentPhase = false;
         currentMoveDistance = 0f;
