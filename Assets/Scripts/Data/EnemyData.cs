@@ -44,6 +44,9 @@ public class EnemyData : ScriptableObject
     public float bounceRandomOffset = 8f;
     public float minMoveDistance = 0.1f;
     
+    [Header("移动距离配置")]
+    public float moveDistance = 3f;  // 每次移动的距离
+    
     [Header("生成配置")]
     public int spawnWeight = 1;
     public int spawnCost = 1;

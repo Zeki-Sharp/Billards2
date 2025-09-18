@@ -26,6 +26,11 @@ public class Enemy : MonoBehaviour
     private Vector2 stuckCheckPosition; // 开始检查卡住时的位置
     private float stuckCheckStartTime; // 开始检查卡住时的时间
     
+    // 移动距离相关
+    private bool hasMovedInCurrentPhase = false; // 当前阶段是否已经移动过
+    private Vector3 moveStartPosition; // 移动开始位置
+    private float currentMoveDistance = 0f; // 当前已移动距离
+    
     // 事件
     public System.Action<float> OnHealthChanged;
     
@@ -83,6 +88,8 @@ public class Enemy : MonoBehaviour
         // 检查是否在敌人阶段，只有在敌人阶段才执行AI逻辑
         if (!IsInEnemyPhase())
         {
+            // 重置移动状态，为下次敌人阶段做准备
+            ResetMoveState();
             return; // 玩家阶段完全静止，不执行任何AI逻辑
         }
         
@@ -95,7 +102,8 @@ public class Enemy : MonoBehaviour
         // 敌人AI逻辑（根据配置化的移动方式）
         if (ShouldEnableAI() && targetPlayer != null && IsAlive())
         {
-            ExecuteMovementAI(deltaTime);
+            // 执行移动逻辑（移动指定距离后停止）
+            ExecuteMoveForDistance(deltaTime);
             ExecuteAttackAI();
         }
     }
@@ -613,5 +621,94 @@ public class Enemy : MonoBehaviour
         {
             Debug.LogWarning($"敌人 {name} 未找到 EffectPlayer 组件，无法播放生成特效");
         }
+    }
+    
+    /// <summary>
+    /// 执行移动指定距离的逻辑
+    /// </summary>
+    void ExecuteMoveForDistance(float deltaTime)
+    {
+        // 如果已经移动过，不再移动
+        if (hasMovedInCurrentPhase)
+        {
+            return;
+        }
+        
+        // 开始移动时记录起始位置
+        if (currentMoveDistance == 0f)
+        {
+            moveStartPosition = transform.position;
+            if (showDebugInfo)
+            {
+                Debug.Log($"Enemy {name}: 开始移动，目标距离: {enemyData.moveDistance}");
+            }
+        }
+        
+        // 计算移动方向
+        Vector2 moveDirection = GetMoveDirection();
+        
+        // 执行移动
+        float moveSpeed = GetMoveSpeed();
+        Vector2 movement = moveDirection * moveSpeed * deltaTime;
+        transform.Translate(movement);
+        
+        // 更新已移动距离
+        currentMoveDistance = Vector3.Distance(transform.position, moveStartPosition);
+        
+        // 检查是否达到目标距离
+        if (currentMoveDistance >= enemyData.moveDistance)
+        {
+            hasMovedInCurrentPhase = true;
+            if (showDebugInfo)
+            {
+                Debug.Log($"Enemy {name}: 移动完成，实际距离: {currentMoveDistance:F2}, 目标距离: {enemyData.moveDistance:F2}");
+            }
+        }
+    }
+    
+    /// <summary>
+    /// 获取移动方向
+    /// </summary>
+    Vector2 GetMoveDirection()
+    {
+        switch (enemyData.movementType)
+        {
+            case MovementType.FollowPlayer:
+                if (targetPlayer != null)
+                {
+                    return (targetPlayer.transform.position - transform.position).normalized;
+                }
+                else
+                {
+                    // 没有目标玩家，随机方向
+                    return GetRandomDirection();
+                }
+                
+            case MovementType.Patrol:
+                // 使用现有的巡逻方向
+                return patrolDirection;
+                
+            default:
+                return GetRandomDirection();
+        }
+    }
+    
+    /// <summary>
+    /// 获取随机方向
+    /// </summary>
+    Vector2 GetRandomDirection()
+    {
+        float randomAngle = Random.Range(0f, 360f);
+        return new Vector2(Mathf.Cos(randomAngle * Mathf.Deg2Rad), Mathf.Sin(randomAngle * Mathf.Deg2Rad));
+    }
+    
+    /// <summary>
+    /// 重置移动状态
+    /// </summary>
+    void ResetMoveState()
+    {
+        hasMovedInCurrentPhase = false;
+        currentMoveDistance = 0f;
+        moveStartPosition = transform.position;
     }
 }

@@ -19,7 +19,7 @@ MonoBehaviour:
   maxHealth: 50
   damage: 10
   attackCooldown: 1
-  moveSpeed: 1
+  moveSpeed: 3
   enableAI: 1
   attackType: 0
   movementType: 0
@@ -37,6 +37,7 @@ MonoBehaviour:
   stuckDetectionTime: 0.2
   bounceRandomOffset: 8
   minMoveDistance: 0.2
+  moveDistance: 1
   spawnWeight: 1
   spawnCost: 1
   isBoss: 0
