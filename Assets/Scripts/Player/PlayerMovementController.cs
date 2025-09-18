@@ -93,8 +93,8 @@ public class PlayerMovementController : MonoBehaviour
             return false;
         }
         
-        // 允许在Normal和Transition状态下移动
-        if (!gameFlowController.IsNormalState && !gameFlowController.IsTransitionState)
+        // 只在Transition状态下允许移动
+        if (!gameFlowController.IsTransitionState)
         {
             return false;
         }
