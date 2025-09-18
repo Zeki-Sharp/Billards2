@@ -19,19 +19,10 @@ public class EnemyData : ScriptableObject
     
     [Header("AI配置")]
     public bool enableAI = true;
-    public AttackType attackType = AttackType.Contact;
     public MovementType movementType = MovementType.FollowPlayer;
     
     [Header("攻击配置")]
-    public float attackRange = 3f;
-    public float contactRadius = 1f;
-    
-    [Header("远程攻击配置")]
-    public GameObject bulletPrefab;
-    public float bulletSpeed = 10f;
-    public float bulletDamage = 8f;
-    public float bulletLifetime = 3f;
-    public Vector2 bulletOffset = Vector2.zero;
+    public float attackRange = 3f;  // 保留用于其他用途，如检测范围
     
     [Header("跟随移动配置")]
     public float followMinDistance = 1f;

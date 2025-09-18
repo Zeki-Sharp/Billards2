@@ -148,10 +148,10 @@ public class EnemyPhaseController : MonoBehaviour
         switch (current)
         {
             case EnemyPhase.Attack:
-                return EnemyPhase.Spawn;
-            case EnemyPhase.Spawn:
                 return EnemyPhase.Move;
             case EnemyPhase.Move:
+                return EnemyPhase.Spawn;
+            case EnemyPhase.Spawn:
                 return EnemyPhase.Telegraph;
             default:
                 return EnemyPhase.Attack;
@@ -190,8 +190,8 @@ public class EnemyPhaseController : MonoBehaviour
                 break;
             case EnemyPhase.Spawn:
             case EnemyPhase.Telegraph:
-                // 生成和预告阶段：由EnemySpawner处理，不需要等待敌人完成
-                totalEnemies = 0;
+                // 生成和预告阶段：由EnemySpawner处理，等待1个完成信号
+                totalEnemies = 1;
                 break;
         }
         
@@ -237,21 +237,15 @@ public class EnemyPhaseController : MonoBehaviour
     
     /// <summary>
     /// 处理特殊阶段（Spawn和Telegraph）
+    /// 现在所有组件都通过事件响应，不需要直接调用
     /// </summary>
     void HandleSpecialPhases(EnemyPhase phase)
     {
-        if (enemySpawner == null) return;
-        
-        switch (phase)
+        // 所有组件都订阅OnPhaseStart事件，不需要直接调用
+        // 特殊阶段由各组件自己处理并报告完成
+        if (showDebugInfo)
         {
-            case EnemyPhase.Spawn:
-                enemySpawner.SpawnEnemies();
-                // 不需要调用OnEnemyPhaseActionComplete，SpawnEnemies内部会调用
-                break;
-            case EnemyPhase.Telegraph:
-                enemySpawner.StartPreview();
-                // 不需要调用OnEnemyPhaseActionComplete，StartPreview内部会调用
-                break;
+            Debug.Log($"EnemyPhaseController: 特殊阶段 {phase} 由各组件通过事件响应处理");
         }
     }
 }

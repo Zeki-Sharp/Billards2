@@ -44,7 +44,32 @@ public class EnemySpawner : MonoBehaviour
             Debug.LogError("波次配置列表未设置或为空！");
         }
         
+        // 订阅敌人阶段事件
+        EnemyPhaseController.OnPhaseStart += OnPhaseStart;
+        
         Debug.Log($"EnemySpawner初始化完成，生成范围: X({minX}~{maxX}), Y({minY}~{maxY})");
+    }
+    
+    void OnDestroy()
+    {
+        // 取消订阅事件
+        EnemyPhaseController.OnPhaseStart -= OnPhaseStart;
+    }
+    
+    /// <summary>
+    /// 阶段开始事件处理
+    /// </summary>
+    void OnPhaseStart(EnemyPhase phase)
+    {
+        switch (phase)
+        {
+            case EnemyPhase.Spawn:
+                SpawnEnemies();
+                break;
+            case EnemyPhase.Telegraph:
+                StartPreview();
+                break;
+        }
     }
     
     
@@ -117,7 +142,6 @@ public class EnemySpawner : MonoBehaviour
         {
             enemy.enemyData = enemyData;
             spawnedEnemies.Add(enemy);
-            enemy.InitializeAttackRange();
         }
         else
         {
@@ -242,7 +266,7 @@ public class EnemySpawner : MonoBehaviour
             }
         }
         
-        // 通知阶段完成
+        // 预告阶段立即完成
         if (EnemyPhaseController.Instance != null)
         {
             EnemyPhaseController.Instance.OnEnemyPhaseActionComplete();

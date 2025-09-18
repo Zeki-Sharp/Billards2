@@ -76,8 +76,6 @@ public class Enemy : MonoBehaviour
             Debug.LogError($"Enemy {name}: enemyData.ballData 未设置！");
         }
         
-        // 初始化攻击范围朝向
-        InitializeAttackRange();
         
         // 初始化血条
         InitializeHealthBar();
@@ -154,16 +152,8 @@ public class Enemy : MonoBehaviour
     /// </summary>
     void ExecuteAttackAI()
     {
-        // 根据配置的攻击方式执行不同的攻击逻辑
-        switch (enemyData.attackType)
-        {
-            case AttackType.Contact:
-                // 接触攻击在碰撞时触发，这里不需要额外逻辑
-                break;
-            case AttackType.Ranged:
-                ExecuteRangedAttack();
-                break;
-        }
+        // 攻击逻辑已移至敌人阶段控制器统一管理
+        // 不再需要根据AttackType执行不同逻辑
     }
     
     void OnEnable()
@@ -184,18 +174,6 @@ public class Enemy : MonoBehaviour
         EnemyPhaseController.OnPhaseStart -= OnPhaseStart;
     }
     
-    public void InitializeAttackRange()
-    {
-        AttackRange attackRange = GetComponentInChildren<AttackRange>();
-        if (attackRange != null && targetPlayerCore != null)
-        {
-            // 计算从敌人到白球的方向
-            Vector2 direction = (targetPlayerCore.transform.position - transform.position).normalized;
-            
-            // 简化初始化：直接调用AttackRange的SetAttackDirection方法
-            attackRange.SetAttackDirection(direction);
-        }
-    }
     
     /// <summary>
     /// 敌人朝向玩家移动
@@ -380,34 +358,6 @@ public class Enemy : MonoBehaviour
         lastMoveTime = currentTime;
     }
     
-    /// <summary>
-    /// 执行远程攻击（占位符）
-    /// </summary>
-    void ExecuteRangedAttack()
-    {
-        if (targetPlayer == null) return;
-        
-        // 检查攻击冷却
-        float attackInterval = GetAttackInterval();
-        float currentTime = TimeManager.Instance != null ? TimeManager.Instance.GetScaledTime() : Time.time;
-        if (currentTime - lastAttackTime < attackInterval)
-        {
-            return;
-        }
-        
-        lastAttackTime = currentTime;
-        
-        // 占位符实现：远程攻击功能待实现
-        
-        // 显示攻击方向
-        Vector3 attackDirection = (targetPlayerCore.transform.position - transform.position).normalized;
-        Debug.DrawRay(transform.position, attackDirection * enemyData.attackRange, Color.red, 0.5f);
-        
-        // TODO: 实现实际的远程攻击逻辑
-        // 1. 创建子弹预制体
-        // 2. 设置子弹位置、方向、速度
-        // 3. 播放发射音效
-    }
     
     /// <summary>
     /// 获取攻击间隔
@@ -417,45 +367,6 @@ public class Enemy : MonoBehaviour
         return enemyData.attackCooldown;
     }
     
-    /// <summary>
-    /// 敌人攻击玩家（接触攻击）
-    /// </summary>
-    void AttackPlayer()
-    {
-        if (targetPlayer == null) 
-        {
-            Debug.LogWarning($"Enemy {name}: targetPlayer 为空，无法攻击");
-            return;
-        }
-        
-        // 检查攻击间隔（根据设置决定是否受时停影响）
-        float actualAttackInterval = GetAttackInterval();
-        if (TimeManager.Instance != null && TimeManager.Instance.ShouldAffectEnemyAttackInterval())
-        {
-            // 如果攻击间隔受时停影响，需要调整间隔时间
-            float timeScale = TimeManager.Instance.GetEnemyTimeScale();
-            actualAttackInterval = actualAttackInterval / timeScale; // 时停时攻击间隔变长
-        }
-        
-        float currentTime = TimeManager.Instance != null ? TimeManager.Instance.GetScaledTime() : Time.time;
-        if (currentTime - lastEnemyAttackTime < actualAttackInterval)
-        {
-            return;
-        }
-        
-        // 更新攻击时间
-        lastEnemyAttackTime = currentTime;
-        
-        // 计算攻击方向和位置
-        Vector3 attackPosition = (transform.position + targetPlayerCore.transform.position) * 0.5f;
-        Vector3 attackDirection = (targetPlayerCore.transform.position - transform.position).normalized;
-        
-        // 获取敌人伤害值
-        float damage = GetDamage();
-        
-        // 触发攻击事件
-        EventTrigger.Attack("EnemyAttack", attackPosition, attackDirection, gameObject, targetPlayerCore.gameObject, damage);
-    }
     
     /// <summary>
     /// 获取伤害值
@@ -467,35 +378,19 @@ public class Enemy : MonoBehaviour
     
     void OnCollisionEnter2D(Collision2D collision)
     {
-        // 与玩家碰撞时的处理（只在EnemyPhase阶段）
-        if (collision.gameObject.CompareTag("Player"))
-        {
-            // 检查游戏状态，只在EnemyPhase阶段处理碰撞
-            GameFlowController gameFlowController = GameFlowController.Instance;
-            if (gameFlowController != null && gameFlowController.IsEnemyPhase)
-            {
-                // EnemyPhase状态：敌人攻击玩家
-                AttackPlayer();
-            }
-            else
-            {
-                // 在其他阶段，不处理碰撞
-            }
-        }
-        
         // 撞墙时的处理
         if (collision.gameObject.CompareTag("Wall"))
         {
-        // 检查是否还能获得充能力（基于速度）
-        if (CanGetBoost())
-        {
-            // 计算撞墙方向（从墙壁指向敌人）
-            Vector2 wallDirection = ((Vector2)transform.position - collision.contacts[0].point).normalized;
-            
-            // 给敌人添加撞墙充能力
-            Vector2 wallBoostForce = wallDirection * enemyData.ballData.hitBoostForce * enemyData.ballData.hitBoostMultiplier;
-            ballPhysics.ApplyForce(wallBoostForce);
-        }
+            // 检查是否还能获得充能力（基于速度）
+            if (CanGetBoost())
+            {
+                // 计算撞墙方向（从墙壁指向敌人）
+                Vector2 wallDirection = ((Vector2)transform.position - collision.contacts[0].point).normalized;
+                
+                // 给敌人添加撞墙充能力
+                Vector2 wallBoostForce = wallDirection * enemyData.ballData.hitBoostForce * enemyData.ballData.hitBoostMultiplier;
+                ballPhysics.ApplyForce(wallBoostForce);
+            }
         }
     }
     
@@ -751,58 +646,25 @@ public class Enemy : MonoBehaviour
         switch (currentPhase)
         {
             case EnemyPhase.Attack:
+                Debug.Log($"Enemy {name}: 执行攻击阶段");
                 ExecuteSectorAttack();
                 break;
             case EnemyPhase.Move:
+                Debug.Log($"Enemy {name}: 执行移动阶段");
                 ExecuteMovePhase(deltaTime);
                 TrackMovementDirection(); // 跟踪移动方向
-                break;
-            case EnemyPhase.Spawn:
-                ExecuteSpawnPhase();
-                break;
-            case EnemyPhase.Telegraph:
-                ExecuteTelegraphPhase();
                 break;
         }
     }
     
     /// <summary>
-    /// 执行扇形攻击
+    /// 执行攻击阶段
     /// </summary>
     void ExecuteSectorAttack()
     {
         if (showDebugInfo)
         {
-            Debug.Log($"Enemy {name}: 执行扇形攻击");
-        }
-        
-        AttackRange attackRange = GetComponentInChildren<AttackRange>();
-        if (attackRange != null)
-        {
-            // 显示攻击状态
-            attackRange.ShowAttack();
-            
-            // 检测玩家是否在攻击范围内
-            if (attackRange.IsPlayerInRange() && targetPlayerCore != null)
-            {
-                // 造成伤害
-                float damage = GetDamage();
-                targetPlayerCore.TakeDamage(damage);
-                
-                // 触发攻击事件
-                EventTrigger.Attack("SectorAttack", transform.position, 
-                                  attackRange.GetAttackDirection(), 
-                                  gameObject, targetPlayer.gameObject, damage);
-                
-                if (showDebugInfo)
-                {
-                    Debug.Log($"Enemy {name}: 对玩家造成 {damage} 点伤害");
-                }
-            }
-        }
-        else
-        {
-            Debug.LogWarning($"Enemy {name}: 未找到AttackRange组件");
+            Debug.Log($"Enemy {name}: 执行攻击阶段");
         }
         
         // 完成攻击阶段
@@ -824,64 +686,8 @@ public class Enemy : MonoBehaviour
         }
     }
     
-    /// <summary>
-    /// 执行生成阶段
-    /// </summary>
-    void ExecuteSpawnPhase()
-    {
-        if (showDebugInfo)
-        {
-            Debug.Log($"Enemy {name}: 执行生成阶段");
-        }
-        
-        // 生成阶段由EnemySpawner处理，这里直接完成
-        EnemyPhaseController.Instance.OnEnemyPhaseActionComplete();
-    }
     
-    /// <summary>
-    /// 执行预告阶段
-    /// </summary>
-    void ExecuteTelegraphPhase()
-    {
-        if (showDebugInfo)
-        {
-            Debug.Log($"Enemy {name}: 执行预告阶段");
-        }
-        
-        // 检查是否需要更新攻击方向
-        if (hasMovedThisPhase)
-        {
-            UpdateAttackRangeDirection();
-            hasMovedThisPhase = false;
-        }
-        
-        // 显示攻击范围预告
-        AttackRange attackRange = GetComponentInChildren<AttackRange>();
-        if (attackRange != null)
-        {
-            if (showDebugInfo)
-            {
-                Debug.Log($"Enemy {name}: 找到AttackRange组件，开始显示预告");
-            }
-            attackRange.ShowPreview();
-        }
-        else
-        {
-            Debug.LogWarning($"Enemy {name}: 未找到AttackRange组件！");
-        }
-        
-        // 延迟后完成预告阶段
-        StartCoroutine(CompleteTelegraphPhase());
-    }
     
-    /// <summary>
-    /// 完成预告阶段（延迟执行）
-    /// </summary>
-    System.Collections.IEnumerator CompleteTelegraphPhase()
-    {
-        yield return new WaitForSeconds(1f); // 预告持续时间
-        EnemyPhaseController.Instance.OnEnemyPhaseActionComplete();
-    }
     
     /// <summary>
     /// 跟踪移动方向
@@ -907,36 +713,24 @@ public class Enemy : MonoBehaviour
     }
     
     /// <summary>
-    /// 更新攻击范围方向
+    /// 显示攻击预告（由TelegraphManager调用）
     /// </summary>
-    void UpdateAttackRangeDirection()
+    public void ShowAttackTelegraph()
     {
-        Vector2 direction = GetCurrentMovementDirection();
-        if (direction == Vector2.zero)
+        if (showDebugInfo)
         {
-        // 如果没有移动，朝向玩家
-        if (targetPlayerCore != null)
-        {
-            direction = (targetPlayerCore.transform.position - transform.position).normalized;
-        }
+            Debug.Log($"Enemy {name}: 显示攻击预告");
         }
         
-        AttackRange attackRange = GetComponentInChildren<AttackRange>();
-        if (attackRange != null)
-        {
-            attackRange.SetAttackDirection(direction);
-            
-            if (showDebugInfo)
-            {
-                Debug.Log($"Enemy {name}: 更新攻击范围方向为 {direction}");
-            }
-        }
+        // TODO: 这里将来会显示攻击范围
+        // 目前只是占位符，实际实现需要攻击范围系统
     }
+    
     
     /// <summary>
     /// 获取当前移动方向
     /// </summary>
-    Vector2 GetCurrentMovementDirection()
+    public Vector2 GetCurrentMovementDirection()
     {
         return lastMoveDirection;
     }

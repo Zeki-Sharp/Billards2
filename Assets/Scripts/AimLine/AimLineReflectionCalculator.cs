@@ -11,6 +11,7 @@ public class AimLineReflectionCalculator : MonoBehaviour
     [SerializeField] private float maxDistance = 20f;  // 最大瞄准距离（无碰撞时）
     [SerializeField] private float reflectionLength = 10f;  // 反射后线段固定长度
     [SerializeField] private LayerMask reflectionLayers = -1;  // 可反射的层
+    [SerializeField] private LayerMask ignoreLayers = 2;  // 忽略的层（Layer 1 = TransparentFX，用于攻击范围）
     [SerializeField] private float reflectionOffset = 0.01f;  // 反射点偏移，避免重复碰撞
     [SerializeField] private string ballTag = "Player";  // 球体标签，射线检测时排除
     
@@ -82,15 +83,18 @@ public class AimLineReflectionCalculator : MonoBehaviour
         Vector3 currentPos = startPos + ballOffset;
         Vector2 currentDir = direction.normalized;
         
-        // 执行第一次射线检测，使用自定义过滤函数排除白球
-        RaycastHit2D hit = Physics2D.Raycast(currentPos, currentDir, maxDistance, reflectionLayers);
+        // 计算实际检测的层：排除忽略的层（攻击范围层）
+        LayerMask actualLayers = reflectionLayers & ~ignoreLayers;
+        
+        // 执行第一次射线检测，排除攻击范围层
+        RaycastHit2D hit = Physics2D.Raycast(currentPos, currentDir, maxDistance, actualLayers);
         
         // 如果击中了白球，继续射线检测直到找到非白球碰撞
         while (hit.collider != null && hit.collider.CompareTag(ballTag))
         {
             // 从当前碰撞点继续射线检测
             Vector3 newStartPos = (Vector3)hit.point + (Vector3)currentDir * 0.1f; // 小偏移避免重复碰撞
-            hit = Physics2D.Raycast(newStartPos, currentDir, maxDistance - Vector3.Distance(currentPos, newStartPos), reflectionLayers);
+            hit = Physics2D.Raycast(newStartPos, currentDir, maxDistance - Vector3.Distance(currentPos, newStartPos), actualLayers);
         }
         
         if (hit.collider != null)
@@ -109,7 +113,7 @@ public class AimLineReflectionCalculator : MonoBehaviour
             {
                 // 从碰撞点开始，检查反射后是否还有第二次碰撞
                 Vector3 reflectionStartPos = hitPoint + (Vector3)currentDir * reflectionOffset;
-                RaycastHit2D secondHit = Physics2D.Raycast(reflectionStartPos, currentDir, reflectionLength, reflectionLayers);
+                RaycastHit2D secondHit = Physics2D.Raycast(reflectionStartPos, currentDir, reflectionLength, actualLayers);
                 
                 if (secondHit.collider != null)
                 {
