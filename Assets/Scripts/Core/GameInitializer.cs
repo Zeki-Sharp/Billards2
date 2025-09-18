@@ -222,31 +222,7 @@ public class GameInitializer : MonoBehaviour
     
     void SubscribeToEvents()
     {
-        // 订阅玩家事件
-        // if (player != null)
-        // {
-        //     // 订阅玩家停止事件
-        //     PlayerCore playerCore = player.GetPlayerCore();
-        //     if (playerCore != null)
-        //     {
-        //         playerCore.OnBallStopped += OnPlayerStopped;
-        //     }
-        //     if (showDebugInfo)
-        //     {
-        //         Debug.Log("GameInitializer: 订阅玩家事件");
-        //     }
-        // }
         
-        
-        // // 订阅HoleManager事件
-        // if (holeManager != null)
-        // {
-        //     holeManager.OnPlayerInHole += OnPlayerInHole;
-        //     if (showDebugInfo)
-        //     {
-        //         Debug.Log("GameInitializer: 订阅HoleManager事件");
-        //     }
-        // }
     }
     
     #endregion
@@ -255,13 +231,12 @@ public class GameInitializer : MonoBehaviour
     
     void PrepareGameScene()
     {
-        // 启动敌人生成系统
+        // 敌人生成系统现在由手动控制，无需启动
         if (enemySpawner != null)
         {
-            enemySpawner.StartSpawning();
             if (showDebugInfo)
             {
-                Debug.Log("GameInitializer: 启动敌人生成系统");
+                Debug.Log("GameInitializer: 敌人生成系统已准备就绪（手动控制）");
             }
         }
         

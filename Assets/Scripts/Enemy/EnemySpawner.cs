@@ -3,16 +3,6 @@ using System.Collections;
 using System.Collections.Generic;
 using MoreMountains.Feedbacks;
 
-/// <summary>
-/// 敌人生成状态
-/// </summary>
-public enum EnemySpawnState
-{
-    Idle,           // 空闲
-    Previewing,     // 预演中
-    Spawning,       // 生成中
-    Completed       // 完成
-}
 
 public class EnemySpawner : MonoBehaviour
 {
@@ -27,15 +17,10 @@ public class EnemySpawner : MonoBehaviour
     
     [Header("波次配置")]
     public List<WaveConfig> waveConfigs = new List<WaveConfig>(); // 波次配置列表
-    public float globalWaveInterval = 10f; // 全局波次间隔（秒）
-    public int maxWaves = 10; // 最大波次数（0表示无限）
-    
-    [Header("生成控制")]
-    public bool autoStart = true; // 是否自动开始生成
     public bool loopWaves = true; // 是否循环波次
     
     [Header("预览特效设置")]
-    public GameObject previewEffectPrefab; // 预览特效预制体
+    public GameObject previewEffectPrefab; // 预告特效预制体（包含点位出现和点位消失子物体）
     
     [Header("测试设置")]
     public KeyCode spawnKey = KeyCode.Space; // 手动触发下一波
@@ -45,284 +30,41 @@ public class EnemySpawner : MonoBehaviour
     public System.Action<List<Vector2>, List<EnemyData>> OnWavePreviewStart; // 波次预演开始事件
     
     private List<Enemy> spawnedEnemies = new List<Enemy>(); // 已生成的敌人列表
-    private Player targetPlayer;
     
-    // 预演相关变量
-    private EnemySpawnState currentSpawnState = EnemySpawnState.Idle;
-    
-    // 生成状态
+    // 预告和生成控制
+    private bool isPreviewMode = true; // true=预告模式, false=生成模式
+    private List<GameObject> currentPreviewEffects = new List<GameObject>(); // 当前预告特效列表
+    private List<Vector2> previewedPositions = new List<Vector2>(); // 预告的位置列表
+    private List<EnemyData> previewedEnemyData = new List<EnemyData>(); // 预告的敌人数据列表
     private int currentWaveIndex = 0; // 当前波次索引
-    private float lastWaveTime = 0f; // 上次生成波次的时间
-    private bool isSpawning = false; // 是否正在生成
-    private int totalWavesSpawned = 0; // 已生成的波次总数
-    private bool isCurrentWaveActive = false; // 当前波次是否正在生成中
     
     void Start()
     {
-        targetPlayer = FindAnyObjectByType<Player>();
-        
         if (waveConfigs == null || waveConfigs.Count == 0)
         {
             Debug.LogError("波次配置列表未设置或为空！");
         }
         
-        if (autoStart)
-        {
-            StartSpawning();
-        }
-        
-        Debug.Log($"EnemySpawner初始化完成，生成范围: X({minX}~{maxX}), Y({minY}~{maxY}), 波次间隔: {globalWaveInterval}秒");
+        Debug.Log($"EnemySpawner初始化完成，生成范围: X({minX}~{maxX}), Y({minY}~{maxY})");
     }
     
-    /// <summary>
-    /// 检查是否在敌人阶段
-    /// </summary>
-    bool IsInEnemyPhase()
-    {
-        GameFlowController gameFlowController = GameFlowController.Instance;
-        return gameFlowController != null && gameFlowController.IsEnemyPhase;
-    }
     
     void Update()
     {
-        // 检查是否在敌人阶段，只有在敌人阶段才生成敌人
-        if (!IsInEnemyPhase() || !isSpawning || isCurrentWaveActive)
-        {
-            return; // 玩家阶段完全停止生成
-        }
-        
-        // 自动生成波次
-        // 使用ScaledTime，自动处理时间缩放
-        if (ScaledTime.time - lastWaveTime >= globalWaveInterval)
-        {
-            SpawnNextWave();
-        }
-        
-        // 手动控制
+        // 空格键控制预告和生成
         if (Input.GetKeyDown(spawnKey))
         {
-            SpawnNextWave();
-        }
-        
-        if (Input.GetKeyDown(toggleKey))
-        {
-            ToggleSpawning();
-        }
-    }
-    
-    /// <summary>
-    /// 开始生成
-    /// </summary>
-    public void StartSpawning()
-    {
-        isSpawning = true;
-        lastWaveTime = ScaledTime.time;
-        Debug.Log("敌人生成已开始");
-    }
-    
-    /// <summary>
-    /// 停止生成
-    /// </summary>
-    public void StopSpawning()
-    {
-        isSpawning = false;
-        Debug.Log("敌人生成已停止");
-    }
-    
-    /// <summary>
-    /// 切换生成状态
-    /// </summary>
-    public void ToggleSpawning()
-    {
-        if (isSpawning)
-        {
-            StopSpawning();
-        }
-        else
-        {
-            StartSpawning();
-        }
-    }
-    
-    /// <summary>
-    /// 生成下一波敌人
-    /// </summary>
-    public void SpawnNextWave()
-    {
-        // 检查是否达到最大波次限制
-        if (maxWaves > 0 && totalWavesSpawned >= maxWaves)
-        {
-            Debug.Log("已达到最大波次限制，停止生成");
-            StopSpawning();
-            return;
-        }
-        
-        // 检查波次配置是否有效
-        if (currentWaveIndex >= waveConfigs.Count)
-        {
-            if (loopWaves)
+            if (isPreviewMode)
             {
-                currentWaveIndex = 0; // 循环到第一个波次
+                // 预告模式：生成预告特效
+                StartPreview();
             }
             else
             {
-                Debug.Log("所有波次配置已完成");
-                StopSpawning();
-                return;
+                // 生成模式：生成敌人
+                SpawnEnemies();
             }
-        }
-        
-        WaveConfig currentWave = waveConfigs[currentWaveIndex];
-        if (currentWave == null || currentWave.enemySpawns.Count == 0)
-        {
-            Debug.LogWarning($"第{currentWaveIndex + 1}波配置无效，跳过");
-            currentWaveIndex++;
-            return;
-        }
-        
-        // 开始生成当前波次
-        StartCoroutine(SpawnWave(currentWave));
-        
-        // 更新状态
-        lastWaveTime = ScaledTime.time;
-        totalWavesSpawned++;
-        currentWaveIndex++;
-        
-        Debug.Log($"开始生成第{totalWavesSpawned}波: {currentWave.waveName}");
-    }
-    
-    /// <summary>
-    /// 生成指定波次的敌人
-    /// </summary>
-    IEnumerator SpawnWave(WaveConfig waveConfig)
-    {
-        isCurrentWaveActive = true;
-        
-        // 等待波次延迟
-        if (waveConfig.waveDelay > 0)
-        {
-            yield return ScaledTime.WaitForSeconds(waveConfig.waveDelay);
-        }
-        
-        // 检查是否需要等待上一波敌人全部死亡
-        if (waveConfig.waitForPreviousWave)
-        {
-            yield return new WaitUntil(() => GetAliveEnemyCount() == 0);
-        }
-        
-        // 计算所有敌人的生成位置并保存，确保预览和生成位置一致
-        List<Vector2> previewPositions = new List<Vector2>();
-        List<EnemyData> previewEnemyData = new List<EnemyData>();
-        List<EnemySpawnInfo> actualSpawns = new List<EnemySpawnInfo>(); // 保存实际生成信息
-        
-        // 计算所有敌人的生成位置
-        foreach (var enemySpawn in waveConfig.enemySpawns)
-        {
-            if (enemySpawn.enemyData == null) continue;
-            
-            for (int i = 0; i < enemySpawn.count; i++)
-            {
-                Vector2 spawnPosition = GetSpawnPosition(enemySpawn.useRandomPosition, enemySpawn.customPosition);
-                previewPositions.Add(spawnPosition);
-                previewEnemyData.Add(enemySpawn.enemyData);
-                Debug.Log($"计算生成位置: {spawnPosition} (随机: {enemySpawn.useRandomPosition})");
-                
-                // 保存实际生成信息，包含计算好的位置
-                var actualSpawn = new EnemySpawnInfo
-                {
-                    enemyData = enemySpawn.enemyData,
-                    count = 1, // 每个敌人单独一个
-                    spawnDelay = enemySpawn.spawnDelay,
-                    spawnInterval = enemySpawn.spawnInterval,
-                    useRandomPosition = false, // 使用固定位置
-                    customPosition = spawnPosition // 使用计算好的位置
-                };
-                actualSpawns.Add(actualSpawn);
-            }
-        }
-        
-        // 波次预演阶段
-        if (waveConfig.enablePreview && waveConfig.previewDuration > 0)
-        {
-            currentSpawnState = EnemySpawnState.Previewing;
-            Debug.Log($"开始波次预演，预演时间: {waveConfig.previewDuration}秒");
-            
-            // 触发预演事件，传递位置和敌人数据
-            OnWavePreviewStart?.Invoke(previewPositions, previewEnemyData);
-            
-            // 生成预览特效
-            List<GameObject> previewEffects = new List<GameObject>();
-            if (previewEffectPrefab != null)
-            {
-                foreach (var position in previewPositions)
-                {
-                    GameObject previewEffect = Instantiate(previewEffectPrefab, position, Quaternion.identity);
-                    previewEffects.Add(previewEffect);
-                    
-                    // 播放预览特效
-                    var mmfPlayer = previewEffect.GetComponent<MMF_Player>();
-                    if (mmfPlayer != null)
-                    {
-                        mmfPlayer.PlayFeedbacks();
-                        Debug.Log($"播放预览特效 at {position}");
-                    }
-                }
-            }
-            else
-            {
-                Debug.LogWarning("预览特效预制体未设置，跳过预览特效播放");
-            }
-            
-            yield return ScaledTime.WaitForSeconds(waveConfig.previewDuration);
-            
-            // 清理预览特效
-            foreach (var previewEffect in previewEffects)
-            {
-                if (previewEffect != null)
-                {
-                    Destroy(previewEffect);
-                }
-            }
-        }
-        
-        // 预演结束，开始生成敌人
-        currentSpawnState = EnemySpawnState.Spawning;
-        Debug.Log("波次预演结束，开始生成敌人");
-        
-        // 使用计算好的位置信息生成敌人，确保位置与预览一致
-        foreach (var actualSpawn in actualSpawns)
-        {
-            if (actualSpawn.enemyData == null) continue;
-            
-            // 等待敌人生成延迟
-            if (actualSpawn.spawnDelay > 0)
-            {
-                yield return ScaledTime.WaitForSeconds(actualSpawn.spawnDelay);
-            }
-            
-            // 生成敌人，使用计算好的位置
-            Debug.Log($"生成敌人 at {actualSpawn.customPosition} (使用固定位置)");
-            SpawnEnemyFromData(actualSpawn.enemyData, actualSpawn.useRandomPosition, actualSpawn.customPosition);
-            
-            // 等待生成间隔
-            if (actualSpawn.spawnInterval > 0)
-            {
-                yield return ScaledTime.WaitForSeconds(actualSpawn.spawnInterval);
-            }
-        }
-        
-        currentSpawnState = EnemySpawnState.Completed;
-        isCurrentWaveActive = false;
-        Debug.Log($"第{totalWavesSpawned}波生成完成，当前敌人总数: {spawnedEnemies.Count}");
-    }
-    
-    
-    /// <summary>
-    /// 获取当前生成状态
-    /// </summary>
-    public EnemySpawnState GetCurrentSpawnState()
-    {
-        return currentSpawnState;
+        }    
     }
     
     /// <summary>
@@ -332,10 +74,7 @@ public class EnemySpawner : MonoBehaviour
     {
         if (useRandom)
         {
-            return new Vector2(
-                Random.Range(minX, maxX),
-                Random.Range(minY, maxY)
-            );
+            return GenerateRandomPosition();
         }
         else
         {
@@ -346,7 +85,7 @@ public class EnemySpawner : MonoBehaviour
     /// <summary>
     /// 获取存活的敌人数量
     /// </summary>
-    int GetAliveEnemyCount()
+    public int GetAliveEnemyCount()
     {
         int aliveCount = 0;
         foreach (var enemy in spawnedEnemies)
@@ -420,97 +159,134 @@ public class EnemySpawner : MonoBehaviour
         Debug.Log("已清除所有生成的敌人");
     }
     
-    // 获取当前敌人数量
-    public int GetEnemyCount()
-    {
-        return spawnedEnemies.Count;
-    }
-    
     // 获取所有敌人
     public List<Enemy> GetAllEnemies()
     {
         return new List<Enemy>(spawnedEnemies);
     }
     
-    void OnGUI()
+    /// <summary>
+    /// 开始预告
+    /// </summary>
+    void StartPreview()
     {
-        GUI.Label(new Rect(10, 10, 300, 20), $"生成状态: {(isSpawning ? "运行中" : "已停止")}");
-        GUI.Label(new Rect(10, 30, 300, 20), $"当前敌人数量: {GetAliveEnemyCount()}");
-        GUI.Label(new Rect(10, 50, 300, 20), $"已生成波次: {totalWavesSpawned}/{(maxWaves > 0 ? maxWaves.ToString() : "∞")}");
-        GUI.Label(new Rect(10, 70, 300, 20), $"当前波次: {currentWaveIndex + 1}/{waveConfigs.Count}");
+        Debug.Log("开始预告下一波敌人");
         
-        if (isSpawning && !isCurrentWaveActive)
+        // 检查波次配置
+        if (currentWaveIndex >= waveConfigs.Count)
         {
-            float timeUntilNext = globalWaveInterval - (Time.time - lastWaveTime);
-            GUI.Label(new Rect(10, 90, 300, 20), $"下次生成倒计时: {timeUntilNext:F1}秒");
-        }
-        else if (isCurrentWaveActive)
-        {
-            GUI.Label(new Rect(10, 90, 300, 20), "正在生成当前波次...");
-        }
-        
-        GUI.Label(new Rect(10, 110, 300, 20), $"按 {spawnKey} 手动生成下一波");
-        GUI.Label(new Rect(10, 130, 300, 20), $"按 {toggleKey} 切换生成开关");
-        
-        if (maxWaves > 0 && totalWavesSpawned >= maxWaves)
-        {
-            GUI.Label(new Rect(10, 150, 300, 20), "已达到最大波次限制！");
-        }
-    }
-    
-    // 获取剩余敌人数（包括待生成的）
-    public int GetRemainingEnemiesCount()
-    {
-        int count = GetAliveEnemyCount(); // 当前存活的敌人数量
-        
-        // 如果生成已停止，只返回当前敌人数量
-        if (!isSpawning)
-        {
-            return count;
-        }
-        
-        // 计算待生成的敌人数量
-        if (maxWaves > 0)
-        {
-            // 有最大波次限制的情况
-            int remainingWaves = maxWaves - totalWavesSpawned;
-            if (remainingWaves > 0)
+            if (loopWaves)
             {
-                // 计算剩余波次的敌人数量
-                int waveIndex = currentWaveIndex;
-                for (int i = 0; i < remainingWaves; i++)
+                currentWaveIndex = 0;
+            }
+            else
+            {
+                Debug.Log("所有波次已完成");
+                return;
+            }
+        }
+        
+        WaveConfig currentWave = waveConfigs[currentWaveIndex];
+        if (currentWave == null || currentWave.enemySpawns.Count == 0)
+        {
+            Debug.LogWarning($"第{currentWaveIndex + 1}波配置无效");
+            return;
+        }
+        
+        // 计算生成位置并记录
+        previewedPositions.Clear();
+        previewedEnemyData.Clear();
+        
+        foreach (var enemySpawn in currentWave.enemySpawns)
+        {
+            if (enemySpawn.enemyData == null) continue;
+            
+            for (int i = 0; i < enemySpawn.count; i++)
+            {
+                Vector2 spawnPosition;
+                if (enemySpawn.useRandomPosition)
                 {
-                    if (waveIndex < waveConfigs.Count)
+                    spawnPosition = GenerateRandomPosition();
+                }
+                else
+                {
+                    spawnPosition = enemySpawn.customPosition;
+                }
+                
+                // 记录位置和敌人数据
+                previewedPositions.Add(spawnPosition);
+                previewedEnemyData.Add(enemySpawn.enemyData);
+            }
+        }
+        
+        // 生成预告特效
+        if (previewEffectPrefab != null)
+        {
+            foreach (var position in previewedPositions)
+            {
+                GameObject previewEffect = Instantiate(previewEffectPrefab, position, Quaternion.identity);
+                currentPreviewEffects.Add(previewEffect);
+                
+                // 播放"点位出现"特效
+                Transform appearChild = previewEffect.transform.Find("点位出现");
+                if (appearChild != null)
+                {
+                    var appearMMFPlayer = appearChild.GetComponent<MMF_Player>();
+                    if (appearMMFPlayer != null)
                     {
-                        WaveConfig wave = waveConfigs[waveIndex];
-                        if (wave != null)
-                        {
-                            foreach (var enemySpawn in wave.enemySpawns)
-                            {
-                                if (enemySpawn.enemyData != null)
-                                {
-                                    count += enemySpawn.count;
-                                }
-                            }
-                        }
-                    }
-                    waveIndex++;
-                    if (waveIndex >= waveConfigs.Count)
-                    {
-                        if (loopWaves)
-                        {
-                            waveIndex = 0; // 循环到第一个波次
-                        }
-                        else
-                        {
-                            break; // 不循环，停止计算
-                        }
+                        appearMMFPlayer.PlayFeedbacks();
+                        Debug.Log($"播放点位出现特效 at {position}");
                     }
                 }
             }
         }
         
-        return count;
+        // 切换到生成模式
+        isPreviewMode = false;
+        Debug.Log("预告完成，按空格键生成敌人");
     }
+    
+    /// <summary>
+    /// 生成敌人
+    /// </summary>
+    void SpawnEnemies()
+    {
+        Debug.Log("开始生成敌人");
+        
+        // 播放"点位消失"特效
+        foreach (var previewEffect in currentPreviewEffects)
+        {
+            if (previewEffect != null)
+            {
+                Transform disappearChild = previewEffect.transform.Find("点位消失");
+                if (disappearChild != null)
+                {
+                    var disappearMMFPlayer = disappearChild.GetComponent<MMF_Player>();
+                    if (disappearMMFPlayer != null)
+                    {
+                        disappearMMFPlayer.PlayFeedbacks();
+                        Debug.Log($"播放点位消失特效 at {previewEffect.transform.position}");
+                    }
+                }
+            }
+        }
+        
+        // 使用预告时记录的位置和敌人数据生成敌人
+        for (int i = 0; i < previewedPositions.Count && i < previewedEnemyData.Count; i++)
+        {
+            Vector2 spawnPosition = previewedPositions[i];
+            EnemyData enemyData = previewedEnemyData[i];
+            
+            SpawnEnemyFromData(enemyData, false, spawnPosition);
+            Debug.Log($"在预告位置 {spawnPosition} 生成敌人 {enemyData.name}");
+        }
+        
+        
+        // 切换到下一波预告模式
+        currentWaveIndex++;
+        isPreviewMode = true;
+        Debug.Log("敌人生成完成，按空格键开始下一波预告");
+    }
+
 }
 

@@ -283,9 +283,6 @@ MonoBehaviour:
     waitForPreviousWave: 0
     enablePreview: 1
     previewDuration: 2
-  globalWaveInterval: 10
-  maxWaves: 10
-  autoStart: 1
   loopWaves: 0
   previewEffectPrefab: {fileID: 2323225345840014394, guid: 3c3962aa0b8af3242b854ae1c03b6f7b, type: 3}
   spawnKey: 32
@@ -10024,7 +10021,6 @@ Transform:
   - {fileID: 38867660}
   - {fileID: 1360613285}
   - {fileID: 1354289661}
-  - {fileID: 2021852713}
   - {fileID: 12911529}
   - {fileID: 590523341}
   - {fileID: 12897491}
@@ -10738,57 +10734,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   enableDebugLog: 1
---- !u!1 &2021852711
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 2021852713}
-  - component: {fileID: 2021852712}
-  m_Layer: 0
-  m_Name: EnergySystem
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!114 &2021852712
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2021852711}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 34567890123456789012345678901234, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  maxEnergy: 100
-  currentEnergy: 100
-  energyRegenRate: 20
-  energyConsumeRate: 35
-  energyThreshold: 100
-  recoveryEnabled: 1
-  showDebugInfo: 1
---- !u!4 &2021852713
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2021852711}
-  serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0.4747219, y: 0.21998072, z: 0.08004183}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 1787785598}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &2023736138
 PrefabInstance:
   m_ObjectHideFlags: 0
