@@ -169,12 +169,6 @@ public class PlayerCore : MonoBehaviour
         float chargingPower = chargeSystem.GetChargingPower();
         float currentForce = chargeSystem.GetCurrentForce();
         
-        // 消耗能量
-        EnergySystem energySystem = FindFirstObjectByType<EnergySystem>();
-        if (energySystem != null)
-        {
-            energySystem.ConsumeEnergy();
-        }
         
         // 计算发射方向（朝向鼠标位置）
         Vector3 mouseWorldPos = Camera.main.ScreenToWorldPoint(Input.mousePosition);

@@ -39,8 +39,6 @@ public class ChargeSystem : MonoBehaviour
     private TransitionManager transitionManager; // 用于获取门槛值
     private TimeStopEffect timeStopEffect; // 时停特效控制器
     
-    // 能量系统引用
-    private EnergySystem energySystem;
     
     // 事件
     public System.Action<float> OnChargingProgressChanged; // 蓄力进度变化 (0-1)
@@ -48,17 +46,9 @@ public class ChargeSystem : MonoBehaviour
     public System.Action OnChargingStarted; // 开始蓄力
     public System.Action OnChargingCompleted; // 蓄力完成
     public System.Action OnChargingStopped; // 停止蓄力
-    public System.Action OnEnergyDepleted; // 能量耗尽事件
     
     void Start()
     {
-        // 获取能量系统引用
-        energySystem = FindFirstObjectByType<EnergySystem>();
-        if (energySystem == null)
-        {
-            Debug.LogWarning("ChargeSystem: 未找到EnergySystem，能量消耗功能将不可用");
-        }
-        
         // 获取TransitionManager引用
         transitionManager = FindFirstObjectByType<TransitionManager>();
         if (transitionManager == null)
@@ -150,23 +140,6 @@ public class ChargeSystem : MonoBehaviour
     void UpdateChargingProgress()
     {
         if (!isCharging) return;
-        
-        // 持续消耗能量
-        if (energySystem != null)
-        {
-            if (!energySystem.ConsumeEnergyOverTime())
-            {
-                // 能量耗尽，停止蓄力并通知
-                StopCharging();
-                OnEnergyDepleted?.Invoke();
-                
-                if (showDebugInfo)
-                {
-                    Debug.Log("ChargeSystem: 能量耗尽，强制停止蓄力");
-                }
-                return;
-            }
-        }
         
         // 计算蓄力进度
         float chargingTime = Time.time - chargingStartTime;
@@ -340,14 +313,6 @@ public class ChargeSystem : MonoBehaviour
     
     #region 组件设置
     
-    /// <summary>
-    /// 设置能量系统引用
-    /// </summary>
-    public void SetEnergySystem(EnergySystem system)
-    {
-        energySystem = system;
-        Debug.Log($"ChargeSystem: 设置能量系统引用为 {system.name}");
-    }
     
     #endregion
 }

@@ -41,7 +41,6 @@ public class GameFlowController : MonoBehaviour
     private GameFlowState currentState = GameFlowState.Normal;
     
     // 组件引用（由GameInitializer设置）
-    private EnergySystem energySystem;
     private TransitionManager transitionManager;
     private PlayerStateMachine playerStateMachine;
     private PlayerCore playerCore;
@@ -114,12 +113,6 @@ public class GameFlowController : MonoBehaviour
         GameFlowState oldState = currentState;
         currentState = GameFlowState.Normal;
         
-        // 启用能量恢复
-        if (energySystem != null)
-        {
-            energySystem.SetRecoveryEnabled(true);
-        }
-        
         // 重置发射状态
         hasPlayerLaunched = false;
         
@@ -134,13 +127,6 @@ public class GameFlowController : MonoBehaviour
         
         GameFlowState oldState = currentState;
         currentState = GameFlowState.Charging;
-        
-        
-        // 禁用能量恢复
-        if (energySystem != null)
-        {
-            energySystem.SetRecoveryEnabled(false);
-        }
         
         // 触发状态变化事件
         OnStateChanged?.Invoke(currentState);
@@ -159,12 +145,6 @@ public class GameFlowController : MonoBehaviour
         if (showDebugInfo)
         {
             Debug.Log("GameFlowController: 触发时停出场特效");
-        }
-        
-        // 启用能量恢复
-        if (energySystem != null)
-        {
-            energySystem.SetRecoveryEnabled(true);
         }
         
         // 开始过渡
@@ -193,15 +173,6 @@ public class GameFlowController : MonoBehaviour
             Debug.Log("GameFlowController: 检查是否可以进入蓄力状态");
         }
         
-        // 检查能量是否足够
-        if (energySystem != null && !energySystem.CanUseEnergy())
-        {
-            if (showDebugInfo)
-            {
-                Debug.Log($"GameFlowController: 能量不足，无法进入蓄力状态 - 当前能量: {energySystem.GetCurrentEnergy():F2}, 门槛: {energySystem.GetEnergyThreshold():F2}");
-            }
-            return false;
-        }
         
         // 检查玩家状态
         if (playerStateMachine != null && !playerStateMachine.IsIdle)
@@ -333,12 +304,6 @@ public class GameFlowController : MonoBehaviour
     
     void LaunchPlayer()
     {
-        // 消耗能量
-        if (energySystem != null)
-        {
-            energySystem.ConsumeEnergy();
-        }
-        
         hasPlayerLaunched = true;
         
     }
@@ -371,10 +336,6 @@ public class GameFlowController : MonoBehaviour
     
     #region 组件引用设置
     
-    public void SetEnergySystem(EnergySystem system)
-    {
-        energySystem = system;
-    }
     
     public void SetTransitionManager(TransitionManager manager)
     {

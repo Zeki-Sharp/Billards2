@@ -28,7 +28,6 @@ public class GameManager : MonoBehaviour
     
     // 组件引用（由GameInitializer设置）
     private GameFlowController gameFlowController;
-    private EnergySystem energySystem;
     private TimeManager timeManager;
     private TransitionManager transitionManager;
     
@@ -271,10 +270,6 @@ public class GameManager : MonoBehaviour
         gameFlowController = controller;
     }
     
-    public void SetEnergySystem(EnergySystem system)
-    {
-        energySystem = system;
-    }
     
     public void SetTimeManager(TimeManager manager)
     {

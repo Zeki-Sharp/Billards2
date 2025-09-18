@@ -26,7 +26,6 @@ public class PlayerInputHandler : MonoBehaviour
     private PlayerMovementController movementController;
     private PlayerCore playerCore;
     private GameFlowController gameFlowController;
-    private EnergySystem energySystem;
     
     // Input System支持
     private InputAction moveAction;
@@ -47,7 +46,6 @@ public class PlayerInputHandler : MonoBehaviour
         movementController = GetComponent<PlayerMovementController>();
         playerCore = GetComponent<PlayerCore>();
         gameFlowController = GameFlowController.Instance;
-        energySystem = FindFirstObjectByType<EnergySystem>();
         
         // 初始化输入系统
         InitializeInputSystem();
@@ -227,25 +225,10 @@ public class PlayerInputHandler : MonoBehaviour
                 return;
             }
             
-            // 检查能量门槛
-            if (energySystem != null && energySystem.CanUseEnergy())
+            // 开始蓄力
+            if (stateMachine != null)
             {
-                if (showDebugInfo)
-                {
-                    Debug.Log($"PlayerInputHandler: 能量充足，开始蓄力 - 当前能量: {energySystem.GetCurrentEnergy():F2}, 门槛: {energySystem.GetEnergyThreshold():F2}");
-                }
-                // 能量充足，开始蓄力
-                if (stateMachine != null)
-                {
-                    stateMachine.StartCharging();
-                }
-            }
-            else
-            {
-                if (showDebugInfo)
-                {
-                    Debug.Log($"PlayerInputHandler: 能量不足，无法蓄力 - 当前能量: {energySystem?.GetCurrentEnergy():F2}, 门槛: {energySystem?.GetEnergyThreshold():F2}");
-                }
+                stateMachine.StartCharging();
             }
         }
     }

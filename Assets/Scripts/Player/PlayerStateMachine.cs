@@ -58,11 +58,6 @@ public class PlayerStateMachine : MonoBehaviour
         chargeSystem = GetComponent<ChargeSystem>();
         transitionManager = FindFirstObjectByType<TransitionManager>();
         
-        // 订阅能量耗尽事件
-        if (chargeSystem != null)
-        {
-            chargeSystem.OnEnergyDepleted += OnEnergyDepleted;
-        }
         
         // 初始化状态
         currentState = initialState;
@@ -337,34 +332,6 @@ public class PlayerStateMachine : MonoBehaviour
     
     #region 事件处理
     
-    /// <summary>
-    /// 处理能量耗尽事件
-    /// </summary>
-    void OnEnergyDepleted()
-    {
-        if (currentState == PlayerState.Charging)
-        {
-            if (showDebugInfo)
-            {
-                Debug.Log("PlayerStateMachine: 能量耗尽，强制发射");
-            }
-            
-            // 隐藏蓄力UI
-            if (aimController != null)
-            {
-                aimController.HideChargingUI();
-            }
-            
-            // 能量耗尽，强制发射
-            if (playerCore != null)
-            {
-                playerCore.LaunchCharged();
-            }
-            
-            // 切换到移动状态
-            SwitchToState(PlayerState.Moving);
-        }
-    }
     
     #endregion
     
@@ -377,11 +344,6 @@ public class PlayerStateMachine : MonoBehaviour
     {
         chargeSystem = system;
         
-        // 重新订阅事件
-        if (chargeSystem != null)
-        {
-            chargeSystem.OnEnergyDepleted += OnEnergyDepleted;
-        }
         
         Debug.Log($"PlayerStateMachine: 设置蓄力系统引用为 {system.name}");
     }
