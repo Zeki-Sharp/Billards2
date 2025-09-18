@@ -32,7 +32,6 @@ public class EnemySpawner : MonoBehaviour
     private List<Enemy> spawnedEnemies = new List<Enemy>(); // 已生成的敌人列表
     
     // 预告和生成控制
-    private bool isPreviewMode = true; // true=预告模式, false=生成模式
     private List<GameObject> currentPreviewEffects = new List<GameObject>(); // 当前预告特效列表
     private List<Vector2> previewedPositions = new List<Vector2>(); // 预告的位置列表
     private List<EnemyData> previewedEnemyData = new List<EnemyData>(); // 预告的敌人数据列表
@@ -51,20 +50,11 @@ public class EnemySpawner : MonoBehaviour
     
     void Update()
     {
-        // 空格键控制预告和生成
+        // 保留手动控制（用于测试）
         if (Input.GetKeyDown(spawnKey))
         {
-            if (isPreviewMode)
-            {
-                // 预告模式：生成预告特效
-                StartPreview();
-            }
-            else
-            {
-                // 生成模式：生成敌人
-                SpawnEnemies();
-            }
-        }    
+            StartPreview();
+        }
     }
     
     /// <summary>
@@ -166,9 +156,9 @@ public class EnemySpawner : MonoBehaviour
     }
     
     /// <summary>
-    /// 开始预告
+    /// 开始预告（由EnemyPhaseController调用）
     /// </summary>
-    void StartPreview()
+    public void StartPreview()
     {
         Debug.Log("开始预告下一波敌人");
         
@@ -241,15 +231,19 @@ public class EnemySpawner : MonoBehaviour
             }
         }
         
-        // 切换到生成模式
-        isPreviewMode = false;
-        Debug.Log("预告完成，按空格键生成敌人");
+        // 通知阶段完成
+        if (EnemyPhaseController.Instance != null)
+        {
+            EnemyPhaseController.Instance.OnEnemyPhaseActionComplete();
+        }
+        
+        Debug.Log("预告完成");
     }
     
     /// <summary>
-    /// 生成敌人
+    /// 生成敌人（由EnemyPhaseController调用）
     /// </summary>
-    void SpawnEnemies()
+    public void SpawnEnemies()
     {
         Debug.Log("开始生成敌人");
         
@@ -271,7 +265,72 @@ public class EnemySpawner : MonoBehaviour
             }
         }
         
-        // 使用预告时记录的位置和敌人数据生成敌人
+        if (previewedPositions.Count == 0)
+        {
+            // 没有预告位置（第一轮或异常情况），随机生成当前波次
+            SpawnRandomWave();
+        }
+        else
+        {
+            // 有预告位置，使用预告的位置生成
+            SpawnPreviewedWave();
+        }
+        
+        // 清理预告特效和数据
+        ClearPreviewEffects();
+        
+        // 通知阶段完成
+        if (EnemyPhaseController.Instance != null)
+        {
+            EnemyPhaseController.Instance.OnEnemyPhaseActionComplete();
+        }
+        
+        Debug.Log("敌人生成完成");
+    }
+    
+    /// <summary>
+    /// 随机生成当前波次的敌人
+    /// </summary>
+    void SpawnRandomWave()
+    {
+        Debug.Log("随机生成当前波次敌人");
+        
+        if (currentWaveIndex >= waveConfigs.Count)
+        {
+            Debug.LogWarning("当前波次索引超出范围");
+            return;
+        }
+        
+        WaveConfig currentWave = waveConfigs[currentWaveIndex];
+        if (currentWave == null || currentWave.enemySpawns.Count == 0)
+        {
+            Debug.LogWarning($"第{currentWaveIndex + 1}波配置无效");
+            return;
+        }
+        
+        foreach (var enemySpawn in currentWave.enemySpawns)
+        {
+            if (enemySpawn.enemyData == null) continue;
+            
+            for (int i = 0; i < enemySpawn.count; i++)
+            {
+                Vector2 spawnPosition = GetSpawnPosition(enemySpawn.useRandomPosition, enemySpawn.customPosition);
+                SpawnEnemyFromData(enemySpawn.enemyData, false, spawnPosition);
+                Debug.Log($"随机生成敌人 {enemySpawn.enemyData.name} at {spawnPosition}");
+            }
+        }
+        
+        // 切换到下一波
+        currentWaveIndex++;
+    }
+    
+    /// <summary>
+    /// 使用预告位置生成敌人
+    /// </summary>
+    void SpawnPreviewedWave()
+    {
+        Debug.Log("使用预告位置生成敌人");
+        
         for (int i = 0; i < previewedPositions.Count && i < previewedEnemyData.Count; i++)
         {
             Vector2 spawnPosition = previewedPositions[i];
@@ -281,11 +340,27 @@ public class EnemySpawner : MonoBehaviour
             Debug.Log($"在预告位置 {spawnPosition} 生成敌人 {enemyData.name}");
         }
         
-        
-        // 切换到下一波预告模式
+        // 切换到下一波
         currentWaveIndex++;
-        isPreviewMode = true;
-        Debug.Log("敌人生成完成，按空格键开始下一波预告");
+    }
+    
+    /// <summary>
+    /// 清理预告特效和数据
+    /// </summary>
+    void ClearPreviewEffects()
+    {
+        foreach (var effect in currentPreviewEffects)
+        {
+            if (effect != null)
+            {
+                Destroy(effect);
+            }
+        }
+        currentPreviewEffects.Clear();
+        
+        // 清理记录的数据
+        previewedPositions.Clear();
+        previewedEnemyData.Clear();
     }
 
 }

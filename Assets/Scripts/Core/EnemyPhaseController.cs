@@ -23,6 +23,9 @@ public class EnemyPhaseController : MonoBehaviour
     private int totalEnemies;
     private int completedEnemies;
     
+    // 敌人生成器引用
+    private EnemySpawner enemySpawner;
+    
     void Awake()
     {
         if (Instance == null)
@@ -37,6 +40,13 @@ public class EnemyPhaseController : MonoBehaviour
     
     void Start()
     {
+        // 获取敌人生成器引用
+        enemySpawner = FindAnyObjectByType<EnemySpawner>();
+        if (enemySpawner == null)
+        {
+            Debug.LogWarning("EnemyPhaseController: 未找到EnemySpawner！");
+        }
+        
         // 开始第一个阶段
         StartPhase(EnemyPhase.Attack);
     }
@@ -59,6 +69,9 @@ public class EnemyPhaseController : MonoBehaviour
         
         // 触发阶段开始事件
         OnPhaseStart?.Invoke(phase);
+        
+        // 处理特殊阶段（Spawn和Telegraph）
+        HandleSpecialPhases(phase);
         
         // 如果当前阶段没有敌人，直接完成
         if (totalEnemies == 0)
@@ -176,12 +189,9 @@ public class EnemyPhaseController : MonoBehaviour
                 totalEnemies = GetActiveEnemyCount();
                 break;
             case EnemyPhase.Spawn:
-                // 生成阶段：统计要生成的敌人数量
-                totalEnemies = GetPlannedSpawnCount();
-                break;
             case EnemyPhase.Telegraph:
-                // 预告阶段：统计要预告的敌人数量
-                totalEnemies = GetPlannedTelegraphCount();
+                // 生成和预告阶段：由EnemySpawner处理，不需要等待敌人完成
+                totalEnemies = 0;
                 break;
         }
         
@@ -208,23 +218,6 @@ public class EnemyPhaseController : MonoBehaviour
         return count;
     }
     
-    /// <summary>
-    /// 获取计划生成敌人数量
-    /// </summary>
-    int GetPlannedSpawnCount()
-    {
-        // TODO: 从EnemySpawner获取计划生成数量
-        return 1; // 临时返回1
-    }
-    
-    /// <summary>
-    /// 获取计划预告敌人数量
-    /// </summary>
-    int GetPlannedTelegraphCount()
-    {
-        // TODO: 从EnemySpawner获取计划预告数量
-        return 1; // 临时返回1
-    }
     
     /// <summary>
     /// 获取当前阶段
@@ -240,5 +233,25 @@ public class EnemyPhaseController : MonoBehaviour
     public bool IsInPhase(EnemyPhase phase)
     {
         return currentPhase == phase;
+    }
+    
+    /// <summary>
+    /// 处理特殊阶段（Spawn和Telegraph）
+    /// </summary>
+    void HandleSpecialPhases(EnemyPhase phase)
+    {
+        if (enemySpawner == null) return;
+        
+        switch (phase)
+        {
+            case EnemyPhase.Spawn:
+                enemySpawner.SpawnEnemies();
+                // 不需要调用OnEnemyPhaseActionComplete，SpawnEnemies内部会调用
+                break;
+            case EnemyPhase.Telegraph:
+                enemySpawner.StartPreview();
+                // 不需要调用OnEnemyPhaseActionComplete，StartPreview内部会调用
+                break;
+        }
     }
 }
