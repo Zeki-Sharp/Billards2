@@ -162,24 +162,35 @@ public class EnemySpawner : MonoBehaviour
     {
         Debug.Log("开始预告下一波敌人");
         
-        // 检查波次配置
-        if (currentWaveIndex >= waveConfigs.Count)
+        // 预告下一波（currentWaveIndex + 1）
+        int previewWaveIndex = currentWaveIndex + 1;
+        if (previewWaveIndex >= waveConfigs.Count)
         {
             if (loopWaves)
             {
-                currentWaveIndex = 0;
+                previewWaveIndex = 0;
             }
             else
             {
-                Debug.Log("所有波次已完成");
+                Debug.Log("所有波次已完成，跳过预告");
+                // 通知阶段完成，但不预告
+                if (EnemyPhaseController.Instance != null)
+                {
+                    EnemyPhaseController.Instance.OnEnemyPhaseActionComplete();
+                }
                 return;
             }
         }
         
-        WaveConfig currentWave = waveConfigs[currentWaveIndex];
-        if (currentWave == null || currentWave.enemySpawns.Count == 0)
+        WaveConfig previewWave = waveConfigs[previewWaveIndex];
+        if (previewWave == null || previewWave.enemySpawns.Count == 0)
         {
-            Debug.LogWarning($"第{currentWaveIndex + 1}波配置无效");
+            Debug.LogWarning($"第{previewWaveIndex + 1}波配置无效，跳过预告");
+            // 通知阶段完成，但不预告
+            if (EnemyPhaseController.Instance != null)
+            {
+                EnemyPhaseController.Instance.OnEnemyPhaseActionComplete();
+            }
             return;
         }
         
@@ -187,7 +198,7 @@ public class EnemySpawner : MonoBehaviour
         previewedPositions.Clear();
         previewedEnemyData.Clear();
         
-        foreach (var enemySpawn in currentWave.enemySpawns)
+        foreach (var enemySpawn in previewWave.enemySpawns)
         {
             if (enemySpawn.enemyData == null) continue;
             
@@ -267,8 +278,8 @@ public class EnemySpawner : MonoBehaviour
         
         if (previewedPositions.Count == 0)
         {
-            // 没有预告位置（第一轮或异常情况），随机生成当前波次
-            SpawnRandomWave();
+            // 没有预告位置，不生成敌人
+            Debug.Log("没有预告位置，跳过生成");
         }
         else
         {
@@ -288,41 +299,6 @@ public class EnemySpawner : MonoBehaviour
         Debug.Log("敌人生成完成");
     }
     
-    /// <summary>
-    /// 随机生成当前波次的敌人
-    /// </summary>
-    void SpawnRandomWave()
-    {
-        Debug.Log("随机生成当前波次敌人");
-        
-        if (currentWaveIndex >= waveConfigs.Count)
-        {
-            Debug.LogWarning("当前波次索引超出范围");
-            return;
-        }
-        
-        WaveConfig currentWave = waveConfigs[currentWaveIndex];
-        if (currentWave == null || currentWave.enemySpawns.Count == 0)
-        {
-            Debug.LogWarning($"第{currentWaveIndex + 1}波配置无效");
-            return;
-        }
-        
-        foreach (var enemySpawn in currentWave.enemySpawns)
-        {
-            if (enemySpawn.enemyData == null) continue;
-            
-            for (int i = 0; i < enemySpawn.count; i++)
-            {
-                Vector2 spawnPosition = GetSpawnPosition(enemySpawn.useRandomPosition, enemySpawn.customPosition);
-                SpawnEnemyFromData(enemySpawn.enemyData, false, spawnPosition);
-                Debug.Log($"随机生成敌人 {enemySpawn.enemyData.name} at {spawnPosition}");
-            }
-        }
-        
-        // 切换到下一波
-        currentWaveIndex++;
-    }
     
     /// <summary>
     /// 使用预告位置生成敌人
