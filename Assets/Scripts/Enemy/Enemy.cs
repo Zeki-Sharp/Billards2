@@ -80,6 +80,12 @@ public class Enemy : MonoBehaviour
     
     void Update()
     {
+        // 检查是否在敌人阶段，只有在敌人阶段才执行AI逻辑
+        if (!IsInEnemyPhase())
+        {
+            return; // 玩家阶段完全静止，不执行任何AI逻辑
+        }
+        
         // 获取缩放后的时间
         float scaledDeltaTime = TimeManager.Instance != null ? 
             TimeManager.Instance.GetEnemyDeltaTime() : Time.deltaTime;
@@ -93,6 +99,15 @@ public class Enemy : MonoBehaviour
             ExecuteMovementAI(scaledDeltaTime);
             ExecuteAttackAI();
         }
+    }
+    
+    /// <summary>
+    /// 检查是否在敌人阶段
+    /// </summary>
+    bool IsInEnemyPhase()
+    {
+        GameFlowController gameFlowController = GameFlowController.Instance;
+        return gameFlowController != null && gameFlowController.IsEnemyPhase;
     }
     
     /// <summary>

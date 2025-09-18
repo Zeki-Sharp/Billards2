@@ -26,7 +26,8 @@ public class GameFlowController : MonoBehaviour
     {
         Normal,         // 正常游戏状态：玩家移动躲避，敌人移动+射击
         Charging,       // 蓄力时停状态：完全时停，玩家瞄准蓄力
-        Transition      // 过渡状态：玩家可移动，敌人和子弹仍时停，白球运动
+        Transition,     // 过渡状态：玩家可移动，敌人和子弹仍时停，白球运动
+        EnemyPhase      // 敌人阶段：玩家控制完全禁用，敌人正常行动
     }
     
     [Header("流程设置")]
@@ -151,6 +152,23 @@ public class GameFlowController : MonoBehaviour
         if (transitionManager != null)
         {
             transitionManager.StartTransition();
+        }
+        
+        // 触发状态变化事件
+        OnStateChanged?.Invoke(currentState);
+        
+    }
+    
+    public void SwitchToEnemyPhase()
+    {
+        if (currentState == GameFlowState.EnemyPhase) return;
+        
+        GameFlowState oldState = currentState;
+        currentState = GameFlowState.EnemyPhase;
+        
+        if (showDebugInfo)
+        {
+            Debug.Log("GameFlowController: 切换到敌人阶段");
         }
         
         // 触发状态变化事件
@@ -354,6 +372,7 @@ public class GameFlowController : MonoBehaviour
             case GameFlowState.Normal: return "Normal";
             case GameFlowState.Charging: return "Charging";
             case GameFlowState.Transition: return "Transition";
+            case GameFlowState.EnemyPhase: return "EnemyPhase";
             default: return "Unknown";
         }
     }
@@ -366,6 +385,7 @@ public class GameFlowController : MonoBehaviour
     public bool IsNormalState => currentState == GameFlowState.Normal;
     public bool IsChargingState => currentState == GameFlowState.Charging;
     public bool IsTransitionState => currentState == GameFlowState.Transition;
+    public bool IsEnemyPhase => currentState == GameFlowState.EnemyPhase;
     
     #endregion
     

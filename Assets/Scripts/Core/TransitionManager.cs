@@ -130,15 +130,15 @@ public class TransitionManager : MonoBehaviour
             timeStopEffect.ThresholdFadeOut();
         }
         
-        // 直接通知GameFlowController切换到Normal状态
+        // 直接通知GameFlowController切换到敌人阶段
         if (GameFlowController.Instance != null)
         {
-            GameFlowController.Instance.SwitchToNormalState();
+            GameFlowController.Instance.SwitchToEnemyPhase();
         }
         
         if (showDebugInfo)
         {
-            Debug.Log("TransitionManager: 过渡结束，切换到Normal状态");
+            Debug.Log("TransitionManager: 过渡结束，切换到敌人阶段");
         }
     }
     

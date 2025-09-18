@@ -74,8 +74,23 @@ public class EnemySpawner : MonoBehaviour
         Debug.Log($"EnemySpawner初始化完成，生成范围: X({minX}~{maxX}), Y({minY}~{maxY}), 波次间隔: {globalWaveInterval}秒");
     }
     
+    /// <summary>
+    /// 检查是否在敌人阶段
+    /// </summary>
+    bool IsInEnemyPhase()
+    {
+        GameFlowController gameFlowController = GameFlowController.Instance;
+        return gameFlowController != null && gameFlowController.IsEnemyPhase;
+    }
+    
     void Update()
     {
+        // 检查是否在敌人阶段，只有在敌人阶段才生成敌人
+        if (!IsInEnemyPhase())
+        {
+            return; // 玩家阶段完全停止生成
+        }
+        
         // 自动生成波次
         if (isSpawning && !isCurrentWaveActive)
         {

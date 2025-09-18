@@ -85,6 +85,12 @@ public class TimeManager : MonoBehaviour
     {
         if (gameFlowController == null) return 1f;
         
+        // 敌人阶段：敌人使用正常时间（无时停）
+        if (gameFlowController.IsEnemyPhase)
+        {
+            return 1f;
+        }
+        
         bool shouldSlowDown = false;
         
         // 根据当前状态和设置决定是否时停

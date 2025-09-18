@@ -87,6 +87,12 @@ public class PlayerMovementController : MonoBehaviour
             return false;
         }
         
+        // 敌人阶段完全禁用移动
+        if (gameFlowController.IsEnemyPhase)
+        {
+            return false;
+        }
+        
         // 允许在Normal和Transition状态下移动
         if (!gameFlowController.IsNormalState && !gameFlowController.IsTransitionState)
         {
