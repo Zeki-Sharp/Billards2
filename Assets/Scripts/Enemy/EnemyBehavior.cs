@@ -1,0 +1,186 @@
+using UnityEngine;
+
+/// <summary>
+/// 敌人行为脚本 - 纯行为逻辑
+/// </summary>
+public class EnemyBehavior : MonoBehaviour
+{
+    [Header("数据设置")]
+    public EnemyData enemyData;
+    
+    [Header("移动设置")]
+    public float moveDistance = 2f;
+    
+    [Header("组件引用")]
+    public AttackRange attackRange;
+    private Transform player;
+    private Vector2 currentMovementDirection = Vector2.zero;
+    
+    [Header("攻击范围管理")]
+    private Transform attackArea;  // 攻击范围预制体引用
+    
+    void Start()
+    {
+        // 如果手动配置了AttackRange，就不需要自动查找
+        if (attackRange == null)
+        {
+            Debug.LogWarning($"EnemyBehavior {name}: 请手动配置AttackRange引用！");
+        }
+        
+        // 查找玩家
+        GameObject playerObj = GameObject.FindGameObjectWithTag("Player");
+        if (playerObj != null)
+        {
+            player = playerObj.transform;
+        }
+        else
+        {
+            Debug.LogWarning($"EnemyBehavior {name}: 未找到玩家！");
+        }
+    }
+    
+    void Update()
+    {
+        // 临时空实现
+    }
+    
+    /// <summary>
+    /// 执行攻击阶段
+    /// </summary>
+    public void ExecuteAttackPhase()
+    {
+        Debug.Log($"EnemyBehavior {name}: 执行攻击阶段");
+        
+        if (attackRange != null)
+        {
+            // 对攻击范围内的目标执行攻击
+            var targets = attackRange.GetTargetsInRange();
+            foreach (var target in targets)
+            {
+                Debug.Log($"EnemyBehavior {name}: 攻击目标 {target.name}");
+                
+                // 对玩家造成伤害
+                if (target.CompareTag("Player"))
+                {
+                    DealDamageToPlayer(target);
+                }
+            }
+        }
+        else
+        {
+            Debug.LogWarning($"EnemyBehavior {name}: AttackRange 未设置，无法执行攻击！");
+        }
+    }
+    
+    /// <summary>
+    /// 对玩家造成伤害
+    /// </summary>
+    private void DealDamageToPlayer(GameObject player)
+    {
+        if (enemyData == null)
+        {
+            Debug.LogError($"EnemyBehavior {name}: EnemyData 未设置，无法造成伤害！");
+            return;
+        }
+        
+        // 列出所有子物体
+        for (int i = 0; i < player.transform.childCount; i++)
+        {
+            Transform child = player.transform.GetChild(i);
+            Debug.Log($"EnemyBehavior {name}: 子物体 {i}: {child.name}");
+        }
+        
+        // 在玩家及其子物体中查找 PlayerCore 组件
+        PlayerCore playerCore = player.GetComponentInChildren<PlayerCore>();
+        if (playerCore != null)
+        {
+            // 从 EnemyData 读取伤害值
+            float damage = enemyData.damage;
+            
+            // 对玩家造成伤害
+            playerCore.TakeDamage(damage);
+            
+            Debug.Log($"EnemyBehavior {name}: 对玩家造成 {damage} 点伤害！");
+        }
+        else
+        {
+            Debug.LogWarning($"EnemyBehavior {name}: 玩家及其子物体中没有找到 PlayerCore 组件，无法造成伤害！");
+            
+            // 尝试直接查找所有 PlayerCore 组件
+            PlayerCore[] allPlayerCores = FindObjectsOfType<PlayerCore>();
+            Debug.Log($"EnemyBehavior {name}: 场景中总共有 {allPlayerCores.Length} 个 PlayerCore 组件");
+            foreach (var core in allPlayerCores)
+            {
+                Debug.Log($"EnemyBehavior {name}: 找到 PlayerCore: {core.name} (父对象: {core.transform.parent?.name ?? "无"})");
+            }
+        }
+    }
+    
+    /// <summary>
+    /// 执行预告阶段
+    /// </summary>
+    public void ExecuteTelegraphPhase()
+    {
+        Debug.Log($"EnemyBehavior {name}: 执行预告阶段 - 更新攻击范围");
+        
+        // 更新攻击范围
+        if (attackArea != null)
+        {
+            // 显示攻击范围
+            attackArea.gameObject.SetActive(true);
+            Debug.Log($"EnemyBehavior {name}: 显示攻击范围");
+        }
+        
+        if (attackRange != null)
+        {
+            // 更新攻击范围的方向和位置
+            attackRange.ShowTelegraph();
+            Debug.Log($"EnemyBehavior {name}: 更新攻击范围方向");
+        }
+    }
+    
+    /// <summary>
+    /// 执行移动阶段
+    /// </summary>
+    public void ExecuteMovePhase()
+    {
+        Debug.Log($"EnemyBehavior {name}: 执行移动阶段");
+        Debug.Log($"EnemyBehavior {name}: 移动前位置: {transform.position}");
+        
+        if (player != null)
+        {
+            // 计算向玩家移动的方向
+            Vector2 direction = (player.position - transform.position).normalized;
+            currentMovementDirection = direction;
+            
+            // 移动固定距离（移动根节点）
+            Vector2 targetPosition = (Vector2)transform.position + direction * moveDistance;
+            transform.position = targetPosition;
+            
+            Debug.Log($"EnemyBehavior {name}: 向玩家方向移动 {moveDistance} 单位");
+            Debug.Log($"EnemyBehavior {name}: 移动后位置: {transform.position}");
+            Debug.Log($"EnemyBehavior {name}: 玩家位置: {player.position}");
+        }
+        else
+        {
+            Debug.LogWarning($"EnemyBehavior {name}: 无法移动，未找到玩家！");
+        }
+    }
+    
+    /// <summary>
+    /// 获取当前移动方向
+    /// </summary>
+    public Vector2 GetCurrentMovementDirection()
+    {
+        return currentMovementDirection;
+    }
+    
+    /// <summary>
+    /// 设置攻击范围引用
+    /// </summary>
+    public void SetAttackArea(Transform attackAreaTransform)
+    {
+        attackArea = attackAreaTransform;
+        Debug.Log($"EnemyBehavior {name}: 设置攻击范围引用");
+    }
+}

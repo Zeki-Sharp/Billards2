@@ -338,6 +338,8 @@ public class PlayerCore : MonoBehaviour
             return;
         }
         
+        Debug.Log($"PlayerCore: 开始处理伤害，当前血量: {currentHealth}, 受到伤害: {damage}");
+        
         
         // 更新血量数据（使用实例变量）
         currentHealth -= damage;
@@ -345,10 +347,17 @@ public class PlayerCore : MonoBehaviour
         
         float maxHealth = playerData.maxHealth;
         
+        Debug.Log($"PlayerCore: 血量更新完成，当前血量: {currentHealth}/{maxHealth}");
+        
         // 更新血条
         if (healthBar != null)
         {
             healthBar.UpdateHealth(currentHealth, maxHealth);
+            Debug.Log("PlayerCore: 血条已更新");
+        }
+        else
+        {
+            Debug.LogWarning("PlayerCore: healthBar 为空，无法更新血条UI！");
         }
         
         // 触发血量变化事件

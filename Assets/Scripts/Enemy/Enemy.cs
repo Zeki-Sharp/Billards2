@@ -1,748 +1,252 @@
 using UnityEngine;
-using UnityEngine.UI;
 
+/// <summary>
+/// 敌人脚本 - 管理整个敌人生命周期
+/// </summary>
 public class Enemy : MonoBehaviour
 {
-    [Header("数据设置")]
-    public EnemyData enemyData; // 敌人配置数据
+    [Header("子对象引用")]
+    public Transform spawnPreview;        // 攻击预告预制体（首次出现用）
+    public Transform enemyItem;           // 敌人物体
+    public Transform attackArea;          // 攻击范围预制体
     
-    private float currentHealth;
-    private Player targetPlayer;
-    private PlayerCore targetPlayerCore;
+    [Header("事件")]
+    public System.Action<Enemy> OnTelegraphComplete;
+    public System.Action<Enemy> OnSpawnComplete;
+    public System.Action<Enemy, EnemyPhase> OnEnemyPhaseComplete;
     
-    // 防重复触发机制
-    private float lastAttackTime = 0f;
-    private const float ATTACK_COOLDOWN = 0.1f; // 0.1秒冷却时间
-    private BallPhysics ballPhysics;
-    private HealthBar healthBar; // 血条组件
-    private Animator enemyAnimator; // 敌人动画组件
+    private EnemyState currentState = EnemyState.None;
+    private EnemyBehavior enemyBehavior;
     
-    // 攻击间隔控制
-    private float lastEnemyAttackTime = 0f;
+    [Header("状态管理")]
+    private bool isFirstAppearance = true;  // 是否首次出现
     
-    // 巡逻移动相关
-    private Vector2 patrolDirection;
-    private Vector2 lastPosition;
-    private float lastMoveTime;
-    private Vector2 stuckCheckPosition; // 开始检查卡住时的位置
-    private float stuckCheckStartTime; // 开始检查卡住时的时间
+    [Header("测试模式")]
+    public bool testMode = false;
+    private int currentTestStep = 0;
     
-    // 移动距离相关
-    private bool hasMovedInCurrentPhase = false; // 当前阶段是否已经移动过
-    private Vector3 moveStartPosition; // 移动开始位置
-    private float currentMoveDistance = 0f; // 当前已移动距离
     
-    // 扇形攻击系统相关
-    private Vector2 lastMoveDirection; // 记录上次移动方向
-    private bool hasMovedThisPhase; // 当前阶段是否已移动
+    /// <summary>
+    /// 重置测试模式
+    /// </summary>
+    public void ResetTestMode()
+    {
+        currentTestStep = 0;
+        Debug.Log($"Enemy {name}: 重置测试模式");
+    }
     
-    // 事件
-    public System.Action<float> OnHealthChanged;
-    
-    // 调试信息
-    [SerializeField] private bool showDebugInfo = false;
     
     void Start()
     {
-        // 检查配置数据
-        if (enemyData == null)
+        // 获取行为组件
+        enemyBehavior = GetComponentInChildren<EnemyBehavior>();
+        if (enemyBehavior == null)
         {
-            Debug.LogError($"Enemy {name}: enemyData 未设置！");
-            return;
-        }
-        
-        // 初始化血量
-        currentHealth = enemyData.maxHealth;
-        targetPlayer = FindAnyObjectByType<Player>();
-        if (targetPlayer != null)
-        {
-            targetPlayerCore = targetPlayer.GetComponent<PlayerCore>();
-        }
-        
-        // 获取或添加 BallPhysics 组件
-        ballPhysics = GetComponent<BallPhysics>();
-        if (ballPhysics == null)
-        {
-            ballPhysics = gameObject.AddComponent<BallPhysics>();
-        }
-        
-        // 设置 BallData
-        if (enemyData.ballData != null)
-        {
-            ballPhysics.ballData = enemyData.ballData;
+            Debug.LogError($"Enemy {name}: 未找到EnemyBehavior组件！");
         }
         else
         {
-            Debug.LogError($"Enemy {name}: enemyData.ballData 未设置！");
+            // 设置攻击范围引用
+            if (attackArea != null)
+            {
+                enemyBehavior.SetAttackArea(attackArea);
+            }
         }
-        
-        
-        // 初始化血条
-        InitializeHealthBar();
-        
-        // 初始化动画组件
-        InitializeAnimator();
-        
-        // 初始化巡逻移动
-        InitializePatrolMovement();
-        
-        // 播放生成特效
-        PlaySpawnEffect();
     }
     
     void Update()
     {
-        // 检查是否在敌人阶段，只有在敌人阶段才执行AI逻辑
-        if (!IsInEnemyPhase())
+        if (testMode)
         {
-            // 重置移动状态，为下次敌人阶段做准备
-            ResetMoveState();
-            return; // 玩家阶段完全静止，不执行任何AI逻辑
-        }
-        
-        // 敌人阶段直接使用正常时间，不需要TimeManager
-        float deltaTime = Time.deltaTime;
-        
-        // 更新动画
-        UpdateAnimations(deltaTime);
-        
-        // 根据当前敌人阶段执行不同逻辑
-        if (ShouldEnableAI() && targetPlayerCore != null && IsAlive())
-        {
-            ExecuteCurrentPhaseLogic(deltaTime);
+            // 按空格键执行下一步
+            if (Input.GetKeyDown(KeyCode.Space))
+            {
+                ExecuteTestStep();
+            }
+            
+            // 按R键重置测试模式
+            if (Input.GetKeyDown(KeyCode.R))
+            {
+                ResetTestMode();
+            }
         }
     }
     
     /// <summary>
-    /// 检查是否在敌人阶段
+    /// 执行测试步骤
     /// </summary>
-    bool IsInEnemyPhase()
+    private void ExecuteTestStep()
     {
-        GameFlowController gameFlowController = GameFlowController.Instance;
-        return gameFlowController != null && gameFlowController.IsEnemyPhase;
-    }
-    
-    /// <summary>
-    /// 检查是否应该启用AI
-    /// </summary>
-    bool ShouldEnableAI()
-    {
-        return enemyData.enableAI;
-    }
-    
-    /// <summary>
-    /// 执行移动AI
-    /// </summary>
-    void ExecuteMovementAI(float deltaTime)
-    {
-        // 根据配置的移动方式执行不同的移动逻辑
-        switch (enemyData.movementType)
+        switch (currentTestStep)
         {
-            case MovementType.FollowPlayer:
-                MoveTowardsPlayer(deltaTime);
+            case 0:
+                Debug.Log("=== 测试步骤 1: 预告 ===");
+                StartTelegraph();
+                currentTestStep++;
                 break;
-            case MovementType.Patrol:
-                ExecutePatrolMovement(deltaTime);
+            case 1:
+                Debug.Log("=== 测试步骤 2: 生成 ===");
+                StartSpawn();
+                currentTestStep++;
+                break;
+            case 2:
+                Debug.Log("=== 测试步骤 3: 攻击 ===");
+                StartPhase(EnemyPhase.Attack);
+                currentTestStep++;
+                break;
+            case 3:
+                Debug.Log("=== 测试步骤 4: 移动 ===");
+                StartPhase(EnemyPhase.Move);
+                currentTestStep++;
+                break;
+            case 4:
+                Debug.Log("=== 测试完成，等待玩家阶段 ===");
+                // 不重置，等待玩家阶段
                 break;
         }
     }
     
     /// <summary>
-    /// 执行攻击AI
+    /// 开始预告
     /// </summary>
-    void ExecuteAttackAI()
+    public void StartTelegraph()
     {
-        // 攻击逻辑已移至敌人阶段控制器统一管理
-        // 不再需要根据AttackType执行不同逻辑
-    }
-    
-    void OnEnable()
-    {
-        // 订阅攻击事件
-        EventTrigger.OnAttack += HandleAttack;
+        Debug.Log($"Enemy {name}: 开始预告");
+        SetState(EnemyState.Telegraphing);
         
-        // 订阅敌人阶段事件
-        EnemyPhaseController.OnPhaseStart += OnPhaseStart;
-    }
-    
-    void OnDisable()
-    {
-        // 取消订阅攻击事件
-        EventTrigger.OnAttack -= HandleAttack;
-        
-        // 取消订阅敌人阶段事件
-        EnemyPhaseController.OnPhaseStart -= OnPhaseStart;
-    }
-    
-    
-    /// <summary>
-    /// 敌人朝向玩家移动
-    /// </summary>
-    void MoveTowardsPlayer(float deltaTime)
-    {
-        if (targetPlayerCore == null) return;
-        
-        // 获取移动速度（优先使用配置化设置）
-        float currentMoveSpeed = GetMoveSpeed();
-        
-        // 计算朝向玩家的方向
-        Vector2 direction = (targetPlayerCore.transform.position - transform.position).normalized;
-        
-        // 检查是否需要保持距离
-        if (enemyData.maintainDistance)
+        if (isFirstAppearance)
         {
-            float distance = Vector3.Distance(transform.position, targetPlayerCore.transform.position);
-            if (distance < enemyData.followMinDistance)
+            // 首次出现：显示攻击预告预制体
+            if (enemyItem != null)
             {
-                // 距离太近，远离目标
-                direction = -direction;
+                enemyItem.gameObject.SetActive(false);
             }
-            else if (distance > enemyData.followMaxDistance)
-            {
-                // 距离太远，接近目标
-                // direction 已经是朝向目标的方向
-            }
-            else
-            {
-                // 在合适距离内，停止移动
-                return;
-            }
-        }
-        
-        // 根据TimeManager设置决定是否使用缩放时间
-        float actualDeltaTime = deltaTime;
-        bool shouldAffect = TimeManager.Instance != null && TimeManager.Instance.ShouldAffectEnemyMovement();
-        if (!shouldAffect)
-        {
-            actualDeltaTime = Time.deltaTime; // 使用正常时间
-        }
-        
-        
-        // 移动敌人
-        transform.Translate(direction * currentMoveSpeed * actualDeltaTime);
-    }
-    
-    /// <summary>
-    /// 获取移动速度
-    /// </summary>
-    float GetMoveSpeed()
-    {
-        return enemyData.moveSpeed;
-    }
-    
-    /// <summary>
-    /// 初始化巡逻移动
-    /// </summary>
-    void InitializePatrolMovement()
-    {
-        // 随机选择初始方向
-        float randomAngle = Random.Range(0f, 360f);
-        patrolDirection = new Vector2(Mathf.Cos(randomAngle * Mathf.Deg2Rad), Mathf.Sin(randomAngle * Mathf.Deg2Rad));
-        
-        // 初始化位置记录
-        lastPosition = transform.position;
-        float currentTime = TimeManager.Instance != null ? TimeManager.Instance.GetScaledTime() : Time.time;
-        lastMoveTime = currentTime;
-        stuckCheckPosition = transform.position;
-        stuckCheckStartTime = currentTime;
-        
-    }
-    
-    /// <summary>
-    /// 执行巡逻移动（反弹巡逻）
-    /// </summary>
-    void ExecutePatrolMovement(float deltaTime)
-    {
-        
-        // 检查碰撞并处理反弹
-        CheckCollisionAndBounce();
-        
-        // 执行移动
-        float patrolSpeed = GetMoveSpeed() * enemyData.patrolSpeedMultiplier;
-        
-        // 根据TimeManager设置决定是否使用缩放时间
-        float actualDeltaTime = deltaTime;
-        if (TimeManager.Instance != null && !TimeManager.Instance.ShouldAffectEnemyMovement())
-        {
-            actualDeltaTime = Time.deltaTime;
-        }
-        
-        Vector2 movement = patrolDirection * patrolSpeed * actualDeltaTime;
-        transform.Translate(movement);
-        
-        // 更新位置记录
-        UpdatePositionTracking();
-        
-        // 检查是否卡住（在移动后检查）
-        if (CheckIfStuck())
-        {
-            // 强制随机方向
-            SetRandomDirection();
-        }
-    }
-    
-    /// <summary>
-    /// 检查是否卡住
-    /// </summary>
-    bool CheckIfStuck()
-    {
-        Vector2 currentPos = transform.position;
-        float totalDistanceMoved = Vector2.Distance(currentPos, stuckCheckPosition);
-        float currentTime = TimeManager.Instance != null ? TimeManager.Instance.GetScaledTime() : Time.time;
-        float timeSinceCheckStart = currentTime - stuckCheckStartTime;
-        
-        // 如果移动距离足够，重置检查
-        if (totalDistanceMoved >= enemyData.minMoveDistance)
-        {
-            stuckCheckPosition = currentPos;
-            stuckCheckStartTime = currentTime;
-            return false;
-        }
-        
-        // 如果时间超过了检测时间，且移动距离不够，则认为卡住
-        if (timeSinceCheckStart >= enemyData.stuckDetectionTime)
-        {
-            return true;
-        }
-        
-        return false;
-    }
-    
-    /// <summary>
-    /// 检查碰撞并处理反弹
-    /// </summary>
-    bool CheckCollisionAndBounce()
-    {
-        //使用射线检测前方是否有碰撞
-        float deltaTime = TimeManager.Instance != null ? TimeManager.Instance.GetEnemyDeltaTime() : Time.deltaTime;
-        float checkDistance = GetMoveSpeed() * enemyData.patrolSpeedMultiplier * deltaTime * 2f;
-        RaycastHit2D hit = Physics2D.Raycast(transform.position, patrolDirection, checkDistance);
-        
-        if (hit.collider != null && hit.collider.gameObject != gameObject)
-        {
-            // 计算反弹方向
-            Vector2 reflectDirection = Vector2.Reflect(patrolDirection, hit.normal);
             
-            // 添加随机偏移
-            float randomOffset = Random.Range(-enemyData.bounceRandomOffset, enemyData.bounceRandomOffset);
-            float newAngle = Mathf.Atan2(reflectDirection.y, reflectDirection.x) * Mathf.Rad2Deg + randomOffset;
-            patrolDirection = new Vector2(Mathf.Cos(newAngle * Mathf.Deg2Rad), Mathf.Sin(newAngle * Mathf.Deg2Rad));
-            
-            return true;
-        }
-        
-        return false;
-    }
-    
-    /// <summary>
-    /// 设置随机方向
-    /// </summary>
-    void SetRandomDirection()
-    {
-        float randomAngle = Random.Range(0f, 360f);
-        patrolDirection = new Vector2(Mathf.Cos(randomAngle * Mathf.Deg2Rad), Mathf.Sin(randomAngle * Mathf.Deg2Rad));
-        lastPosition = transform.position;
-        float currentTime = TimeManager.Instance != null ? TimeManager.Instance.GetScaledTime() : Time.time;
-        lastMoveTime = currentTime;
-        stuckCheckPosition = transform.position;
-        stuckCheckStartTime = currentTime;
-    }
-    
-    /// <summary>
-    /// 更新位置跟踪
-    /// </summary>
-    void UpdatePositionTracking()
-    {
-        lastPosition = transform.position;
-        float currentTime = TimeManager.Instance != null ? TimeManager.Instance.GetScaledTime() : Time.time;
-        lastMoveTime = currentTime;
-    }
-    
-    
-    /// <summary>
-    /// 获取攻击间隔
-    /// </summary>
-    float GetAttackInterval()
-    {
-        return enemyData.attackCooldown;
-    }
-    
-    
-    /// <summary>
-    /// 获取伤害值
-    /// </summary>
-    float GetDamage()
-    {
-        return enemyData.damage;
-    }
-    
-    void OnCollisionEnter2D(Collision2D collision)
-    {
-        // 撞墙时的处理
-        if (collision.gameObject.CompareTag("Wall"))
-        {
-            // 检查是否还能获得充能力（基于速度）
-            if (CanGetBoost())
+            if (spawnPreview != null)
             {
-                // 计算撞墙方向（从墙壁指向敌人）
-                Vector2 wallDirection = ((Vector2)transform.position - collision.contacts[0].point).normalized;
-                
-                // 给敌人添加撞墙充能力
-                Vector2 wallBoostForce = wallDirection * enemyData.ballData.hitBoostForce * enemyData.ballData.hitBoostMultiplier;
-                ballPhysics.ApplyForce(wallBoostForce);
+                spawnPreview.gameObject.SetActive(true);
             }
-        }
-    }
-    
-    
-    public void TakeDamage(float damage)
-    {
-        float oldHealth = currentHealth;
-        currentHealth -= damage;
-        currentHealth = Mathf.Max(0, currentHealth);
-        
-        float maxHealth = enemyData.maxHealth;
-        // 更新血条
-        if (healthBar != null)
-        {
-            healthBar.UpdateHealth(currentHealth, maxHealth);
-        }
-        
-        OnHealthChanged?.Invoke(currentHealth / maxHealth);
-        
-        // 检查死亡
-        if (currentHealth <= 0)
-        {
-            Die();
-        }
-    }
-    
-    void InitializeHealthBar()
-    {
-        // 查找血条组件
-        healthBar = GetComponentInChildren<HealthBar>();
-        if (healthBar != null)
-        {
-            healthBar.SetTarget(transform);
-            healthBar.UpdateHealth(currentHealth, enemyData.maxHealth);
+            
+            Debug.Log($"Enemy {name}: 首次出现，显示攻击预告");
         }
         else
         {
-            Debug.LogWarning($"敌人 {name} 未找到HealthBar组件，请确保血条预制体包含HealthBar脚本");
+            // 后续循环：更新攻击范围
+            enemyBehavior?.ExecuteTelegraphPhase();
+            Debug.Log($"Enemy {name}: 后续循环，更新攻击范围");
         }
     }
     
     /// <summary>
-    /// 初始化动画组件
+    /// 开始生成
     /// </summary>
-    void InitializeAnimator()
+    public void StartSpawn()
     {
-        enemyAnimator = GetComponent<Animator>();
-        if (enemyAnimator == null)
+        Debug.Log($"Enemy {name}: 开始生成");
+        SetState(EnemyState.Spawning);
+        
+        if (isFirstAppearance)
         {
-            Debug.LogWarning($"敌人 {name} 未找到Animator组件");
-        }
-    }
-    
-    /// <summary>
-    /// 更新敌人动画（根据设置决定是否应用时间缩放）
-    /// </summary>
-    void UpdateAnimations(float deltaTime)
-    {
-        if (enemyAnimator != null)
-        {
-            // 根据TimeManager设置决定是否应用时间缩放
-            float timeScale = 1f;
-            if (TimeManager.Instance != null && TimeManager.Instance.ShouldAffectEnemyAnimation())
+            // 首次出现：关闭攻击预告，显示敌人物体
+            if (spawnPreview != null)
             {
-                timeScale = TimeManager.Instance.GetEnemyTimeScale();
+                spawnPreview.gameObject.SetActive(false);
             }
             
-            enemyAnimator.speed = timeScale;
-        }
-    }
-    
-    void Die()
-    { 
-        // 禁用碰撞器，停止与白球的物理交互
-        Collider2D collider = GetComponent<Collider2D>();
-        if (collider != null)
-        {
-            collider.enabled = false;
-        }
-
-        // 触发死亡特效
-        EventTrigger.Dead(transform.position, Vector3.zero, gameObject);
-    }
-    
-    /// <summary>
-    /// 处理攻击事件
-    /// 当自己是攻击目标时处理伤害
-    /// </summary>
-    private void HandleAttack(AttackData attackData)
-    {
-        // 检查自己是否是攻击目标
-        if (attackData.Target == gameObject && attackData.Damage > 0f)
-        {
-            // 处理伤害
-            TakeDamage(attackData.Damage);
-        }
-    }
-    
-    public float GetHealthPercentage()
-    {
-        return currentHealth / enemyData.maxHealth;
-    }
-    
-    public bool IsAlive()
-    {
-        return currentHealth > 0;
-    }
-    
-    public float GetCurrentSpeed()
-    {
-        return ballPhysics != null ? ballPhysics.GetSpeed() : 0f;
-    }
-    
-    public bool IsMoving()
-    {
-        return ballPhysics != null && ballPhysics.IsMoving();
-    }
-    
-    // 检查是否还能获得充能力（基于速度）
-    private bool CanGetBoost()
-    {
-        return ballPhysics != null && ballPhysics.GetSpeed() > enemyData.ballData.boostSpeedThreshold;
-    }
-    
-    /// <summary>
-    /// 播放敌人生成特效
-    /// </summary>
-    void PlaySpawnEffect()
-    {
-        var effectPlayer = GetComponentInChildren<EffectPlayer>();
-        if (effectPlayer != null)
-        {
-            effectPlayer.PlayEffect("Enemy Spawn Effect", transform.position);
+            if (enemyItem != null)
+            {
+                enemyItem.gameObject.SetActive(true);
+            }
+            
+            // 标记为已出现，后续不再参与生成阶段
+            isFirstAppearance = false;
+            Debug.Log($"Enemy {name}: 首次生成完成，后续不再参与生成阶段");
         }
         else
         {
-            Debug.LogWarning($"敌人 {name} 未找到 EffectPlayer 组件，无法播放生成特效");
+            // 后续循环：跳过生成阶段
+            Debug.Log($"Enemy {name}: 后续循环，跳过生成阶段");
         }
+        
+        // 生成完成后设置为活跃状态
+        SetState(EnemyState.Active);
+        OnSpawnComplete?.Invoke(this);
     }
     
     /// <summary>
-    /// 执行移动指定距离的逻辑
+    /// 开始阶段
     /// </summary>
-    void ExecuteMoveForDistance(float deltaTime)
+    public void StartPhase(EnemyPhase phase)
     {
-        // 如果已经移动过，不再移动
-        if (hasMovedInCurrentPhase)
-        {
-            return;
-        }
+        Debug.Log($"Enemy {name}: 开始阶段 {phase}");
         
-        // 开始移动时记录起始位置
-        if (currentMoveDistance == 0f)
-        {
-            moveStartPosition = transform.position;
-            if (showDebugInfo)
-            {
-                Debug.Log($"Enemy {name}: 开始移动，目标距离: {enemyData.moveDistance}");
-            }
-        }
-        
-        // 计算移动方向
-        Vector2 moveDirection = GetMoveDirection();
-        
-        // 执行移动
-        float moveSpeed = GetMoveSpeed();
-        Vector2 movement = moveDirection * moveSpeed * deltaTime;
-        transform.Translate(movement);
-        
-        // 更新已移动距离
-        currentMoveDistance = Vector3.Distance(transform.position, moveStartPosition);
-        
-        // 检查是否达到目标距离
-        if (currentMoveDistance >= enemyData.moveDistance)
-        {
-            hasMovedInCurrentPhase = true;
-            if (showDebugInfo)
-            {
-                Debug.Log($"Enemy {name}: 移动完成，实际距离: {currentMoveDistance:F2}, 目标距离: {enemyData.moveDistance:F2}");
-            }
-        }
-    }
-    
-    /// <summary>
-    /// 获取移动方向
-    /// </summary>
-    Vector2 GetMoveDirection()
-    {
-        switch (enemyData.movementType)
-        {
-            case MovementType.FollowPlayer:
-                if (targetPlayerCore != null)
-                {
-                    return (targetPlayerCore.transform.position - transform.position).normalized;
-                }
-                else
-                {
-                    // 没有目标玩家，随机方向
-                    return GetRandomDirection();
-                }
-                
-            case MovementType.Patrol:
-                // 使用现有的巡逻方向
-                return patrolDirection;
-                
-            default:
-                return GetRandomDirection();
-        }
-    }
-    
-    /// <summary>
-    /// 获取随机方向
-    /// </summary>
-    Vector2 GetRandomDirection()
-    {
-        float randomAngle = Random.Range(0f, 360f);
-        return new Vector2(Mathf.Cos(randomAngle * Mathf.Deg2Rad), Mathf.Sin(randomAngle * Mathf.Deg2Rad));
-    }
-    
-    /// <summary>
-    /// 重置移动状态
-    /// </summary>
-    void ResetMoveState()
-    {
-        hasMovedInCurrentPhase = false;
-        currentMoveDistance = 0f;
-        moveStartPosition = transform.position;
-    }
-    
-    /// <summary>
-    /// 阶段开始事件处理
-    /// </summary>
-    void OnPhaseStart(EnemyPhase phase)
-    {
-        if (showDebugInfo)
-        {
-            Debug.Log($"Enemy {name}: 阶段开始 {phase}");
-        }
-        
-        // 重置阶段状态
-        ResetPhaseState();
-    }
-    
-    /// <summary>
-    /// 执行当前阶段逻辑
-    /// </summary>
-    void ExecuteCurrentPhaseLogic(float deltaTime)
-    {
-        if (EnemyPhaseController.Instance == null) return;
-        
-        EnemyPhase currentPhase = EnemyPhaseController.Instance.GetCurrentPhase();
-        
-        switch (currentPhase)
+        switch (phase)
         {
             case EnemyPhase.Attack:
-                Debug.Log($"Enemy {name}: 执行攻击阶段");
-                ExecuteSectorAttack();
+                StartAttackPhase();
                 break;
             case EnemyPhase.Move:
-                Debug.Log($"Enemy {name}: 执行移动阶段");
-                ExecuteMovePhase(deltaTime);
-                TrackMovementDirection(); // 跟踪移动方向
+                StartMovePhase();
+                break;
+            case EnemyPhase.Telegraph:
+                StartTelegraph();
+                break;
+            case EnemyPhase.Spawn:
+                StartSpawn();
                 break;
         }
     }
     
     /// <summary>
-    /// 执行攻击阶段
+    /// 开始攻击阶段
     /// </summary>
-    void ExecuteSectorAttack()
+    private void StartAttackPhase()
     {
-        if (showDebugInfo)
+        enemyBehavior?.ExecuteAttackPhase();
+        OnEnemyPhaseComplete?.Invoke(this, EnemyPhase.Attack);
+    }
+    
+    /// <summary>
+    /// 开始移动阶段
+    /// </summary>
+    private void StartMovePhase()
+    {
+        enemyBehavior?.ExecuteMovePhase();
+        OnEnemyPhaseComplete?.Invoke(this, EnemyPhase.Move);
+    }
+    
+    /// <summary>
+    /// 获取状态
+    /// </summary>
+    public EnemyState GetState()
+    {
+        return currentState;
+    }
+    
+    /// <summary>
+    /// 设置状态
+    /// </summary>
+    public void SetState(EnemyState newState)
+    {
+        currentState = newState;
+    }
+    
+    /// <summary>
+    /// 获取敌人行为组件
+    /// </summary>
+    public EnemyBehavior GetEnemyBehavior()
+    {
+        return enemyBehavior;
+    }
+    
+    /// <summary>
+    /// 设置敌人数据
+    /// </summary>
+    public void SetEnemyData(EnemyData data)
+    {
+        if (enemyBehavior != null)
         {
-            Debug.Log($"Enemy {name}: 执行攻击阶段");
+            enemyBehavior.enemyData = data;
         }
-        
-        // 完成攻击阶段
-        EnemyPhaseController.Instance.OnEnemyPhaseActionComplete();
-    }
-    
-    /// <summary>
-    /// 执行移动阶段
-    /// </summary>
-    void ExecuteMovePhase(float deltaTime)
-    {
-        // 执行移动逻辑（移动指定距离后停止）
-        ExecuteMoveForDistance(deltaTime);
-        
-        // 如果移动完成，通知阶段控制器
-        if (hasMovedInCurrentPhase)
-        {
-            EnemyPhaseController.Instance.OnEnemyPhaseActionComplete();
-        }
-    }
-    
-    
-    
-    
-    /// <summary>
-    /// 跟踪移动方向
-    /// </summary>
-    void TrackMovementDirection()
-    {
-        Vector2 currentPosition = transform.position;
-        if (lastPosition != Vector2.zero)
-        {
-            Vector2 movement = currentPosition - lastPosition;
-            if (movement.magnitude > 0.1f) // 避免微小移动
-            {
-                lastMoveDirection = movement.normalized;
-                hasMovedThisPhase = true;
-                
-                if (showDebugInfo)
-                {
-                    Debug.Log($"Enemy {name}: 移动方向更新为 {lastMoveDirection}");
-                }
-            }
-        }
-        lastPosition = currentPosition;
-    }
-    
-    /// <summary>
-    /// 显示攻击预告（由TelegraphManager调用）
-    /// </summary>
-    public void ShowAttackTelegraph()
-    {
-        if (showDebugInfo)
-        {
-            Debug.Log($"Enemy {name}: 显示攻击预告");
-        }
-        
-        // TODO: 这里将来会显示攻击范围
-        // 目前只是占位符，实际实现需要攻击范围系统
-    }
-    
-    
-    /// <summary>
-    /// 获取当前移动方向
-    /// </summary>
-    public Vector2 GetCurrentMovementDirection()
-    {
-        return lastMoveDirection;
-    }
-    
-    /// <summary>
-    /// 重置阶段状态
-    /// </summary>
-    void ResetPhaseState()
-    {
-        hasMovedInCurrentPhase = false;
-        currentMoveDistance = 0f;
-        moveStartPosition = transform.position;
-        hasMovedThisPhase = false; // 重置移动标记
     }
 }

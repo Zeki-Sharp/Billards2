@@ -1,36 +1,59 @@
 using UnityEngine;
-using System.Collections.Generic;
 
 /// <summary>
-/// 敌人阶段控制器
-/// 只负责阶段切换通知，不实现具体功能
+/// 敌人阶段控制器 - 管理游戏阶段转换
+/// 
+/// 【核心职责】：
+/// - 管理敌人阶段的循环（攻击 -> 移动 -> 生成 -> 预告）
+/// - 定时器控制阶段切换（每个阶段1秒）
+/// - 协调 EnemyController 执行具体阶段逻辑
+/// 
+/// 【阶段逻辑】：
+/// - 攻击：攻击上一回合预告的位置
+/// - 移动：敌人移动
+/// - 生成：生成上一回合预告的位置
+/// - 预告：预告下一个位置
 /// </summary>
 public class EnemyPhaseController : MonoBehaviour
 {
     public static EnemyPhaseController Instance { get; private set; }
     
     [Header("阶段设置")]
+    [SerializeField] private float phaseInterval = 1f; // 每个阶段间隔1秒
+    
+    [Header("调试")]
     [SerializeField] private bool showDebugInfo = true;
     
-    // 当前阶段
-    private EnemyPhase currentPhase = EnemyPhase.Attack;
+    // 当前敌人阶段
+    private EnemyPhase currentEnemyPhase = EnemyPhase.None;
+    
+    // 敌人阶段顺序
+    private readonly EnemyPhase[] enemyPhaseSequence = {
+        EnemyPhase.Attack,     // 攻击（攻击上一回合预告的位置）
+        EnemyPhase.Move,       // 移动
+        EnemyPhase.Spawn,      // 生成（生成上一回合预告的位置）
+        EnemyPhase.Telegraph   // 预告（更新下一个位置）
+    };
+    
+    private int currentEnemyPhaseIndex = 0;
+    
+    // 组件引用
+    private EnemyController enemyController;
     
     // 阶段切换事件
     public static System.Action<EnemyPhase> OnPhaseStart;
     public static System.Action<EnemyPhase> OnPhaseComplete;
+    public static System.Action OnEnemyPhaseComplete; // 整个敌人阶段完成事件
     
-    // 阶段完成计数
-    private int totalEnemies;
-    private int completedEnemies;
-    
-    // 敌人生成器引用
-    private EnemySpawner enemySpawner;
+    // 公共属性
+    public EnemyPhase CurrentEnemyPhase => currentEnemyPhase;
     
     void Awake()
     {
         if (Instance == null)
         {
             Instance = this;
+            DontDestroyOnLoad(gameObject);
         }
         else
         {
@@ -40,63 +63,99 @@ public class EnemyPhaseController : MonoBehaviour
     
     void Start()
     {
-        // 获取敌人生成器引用
-        enemySpawner = FindAnyObjectByType<EnemySpawner>();
-        if (enemySpawner == null)
-        {
-            Debug.LogWarning("EnemyPhaseController: 未找到EnemySpawner！");
-        }
-        
-        // 开始第一个阶段
-        StartPhase(EnemyPhase.Attack);
+        InitializeController();
+        // 不再自动开始阶段循环，由 GameFlowController 控制
+    }
+    
+    void OnDestroy()
+    {
+        CancelInvoke(); // 取消所有定时器
     }
     
     /// <summary>
-    /// 开始指定阶段
+    /// 初始化控制器
     /// </summary>
-    public void StartPhase(EnemyPhase phase)
+    void InitializeController()
     {
-        if (showDebugInfo)
+        // 查找 EnemyController
+        enemyController = FindFirstObjectByType<EnemyController>();
+        if (enemyController == null)
         {
-            Debug.Log($"EnemyPhaseController: 开始阶段 {phase}");
+            Debug.LogError("EnemyPhaseController: 未找到 EnemyController！");
         }
         
-        currentPhase = phase;
-        completedEnemies = 0;
+        if (showDebugInfo)
+        {
+            Debug.Log("EnemyPhaseController: 初始化完成");
+        }
+    }
+    
+    /// <summary>
+    /// 开始敌人阶段（由 GameFlowController 调用）
+    /// </summary>
+    public void StartEnemyPhase()
+    {
+        CancelInvoke(); // 确保取消所有之前的定时器
         
-        // 获取当前活跃敌人数量
-        UpdateEnemyCount();
+        if (showDebugInfo)
+        {
+            Debug.Log("=== 敌人阶段开始 (由 GameFlowController 触发) ===");
+        }
         
-        // 触发阶段开始事件
+        // 重置阶段索引
+        currentEnemyPhaseIndex = 0;
+        
+        // 开始执行第一个敌人阶段
+        ExecuteNextEnemyPhase();
+    }
+    
+    /// <summary>
+    /// 执行下一个敌人阶段
+    /// </summary>
+    void ExecuteNextEnemyPhase()
+    {
+        if (currentEnemyPhaseIndex >= enemyPhaseSequence.Length)
+        {
+            // 所有敌人阶段完成
+            if (showDebugInfo)
+            {
+                Debug.Log("=== 所有敌人阶段完成，通知 GameFlowController ===");
+            }
+            
+            // 通知 GameFlowController 敌人阶段完成
+            OnEnemyPhaseComplete?.Invoke();
+            return;
+        }
+        
+        // 获取当前阶段
+        EnemyPhase phase = enemyPhaseSequence[currentEnemyPhaseIndex];
+        currentEnemyPhase = phase;
+        
+        if (showDebugInfo)
+        {
+            string phaseDescription = GetPhaseDescription(phase);
+            Debug.Log($"--- 开始执行敌人子阶段: {phase} ({phaseDescription}) (索引: {currentEnemyPhaseIndex}) ---");
+        }
+        
+        // 通知阶段开始
         OnPhaseStart?.Invoke(phase);
         
-        // 处理特殊阶段（Spawn和Telegraph）
-        HandleSpecialPhases(phase);
-        
-        // 如果当前阶段没有敌人，直接完成
-        if (totalEnemies == 0)
+        // 执行具体阶段逻辑
+        if (enemyController != null)
         {
-            CompleteCurrentPhase();
+            enemyController.ExecutePhase(phase);
         }
-    }
-    
-    /// <summary>
-    /// 敌人完成当前阶段行为
-    /// </summary>
-    public void OnEnemyPhaseActionComplete()
-    {
-        completedEnemies++;
+        else
+        {
+            Debug.LogWarning("EnemyPhaseController: enemyController 为空！");
+        }
         
+        // 启动定时器，1秒后自动进入下一个阶段
         if (showDebugInfo)
         {
-            Debug.Log($"EnemyPhaseController: 敌人完成 {currentPhase} 阶段 ({completedEnemies}/{totalEnemies})");
+            Debug.Log($"--- 调度 {phaseInterval} 秒后进入下一个阶段 ---");
         }
-        
-        // 检查是否所有敌人都完成了当前阶段
-        if (completedEnemies >= totalEnemies)
-        {
-            CompleteCurrentPhase();
-        }
+        Invoke(nameof(CompleteCurrentPhase), phaseInterval);
     }
     
     /// <summary>
@@ -106,146 +165,66 @@ public class EnemyPhaseController : MonoBehaviour
     {
         if (showDebugInfo)
         {
-            Debug.Log($"EnemyPhaseController: 完成阶段 {currentPhase}");
+            Debug.Log($"--- 敌人子阶段完成: {currentEnemyPhase} ---");
         }
         
-        // 触发阶段完成事件
-        OnPhaseComplete?.Invoke(currentPhase);
+        // 通知阶段完成
+        OnPhaseComplete?.Invoke(currentEnemyPhase);
         
-        // 如果是预告阶段，直接结束敌人回合
-        if (currentPhase == EnemyPhase.Telegraph)
-        {
-            EndEnemyPhase();
-        }
-        else
-        {
-            // 切换到下一个阶段
-            SwitchToNextPhase();
-        }
+        // 进入下一个阶段
+        currentEnemyPhaseIndex++;
+        ExecuteNextEnemyPhase();
     }
+    
     
     /// <summary>
-    /// 切换到下一个阶段
+    /// 手动开始指定阶段（用于测试）
     /// </summary>
-    void SwitchToNextPhase()
+    public void StartPhase(EnemyPhase phase)
     {
-        EnemyPhase nextPhase = GetNextPhase(currentPhase);
+        currentEnemyPhase = phase;
+        OnPhaseStart?.Invoke(phase);
         
-        if (showDebugInfo)
+        if (enemyController != null)
         {
-            Debug.Log($"EnemyPhaseController: 切换到下一阶段 {nextPhase}");
-        }
-        
-        // 开始下一个阶段
-        StartPhase(nextPhase);
-    }
-    
-    /// <summary>
-    /// 获取下一个阶段
-    /// </summary>
-    EnemyPhase GetNextPhase(EnemyPhase current)
-    {
-        switch (current)
-        {
-            case EnemyPhase.Attack:
-                return EnemyPhase.Move;
-            case EnemyPhase.Move:
-                return EnemyPhase.Spawn;
-            case EnemyPhase.Spawn:
-                return EnemyPhase.Telegraph;
-            default:
-                return EnemyPhase.Attack;
+            enemyController.ExecutePhase(phase);
         }
     }
-    
-    /// <summary>
-    /// 结束敌人阶段，回到玩家阶段
-    /// </summary>
-    void EndEnemyPhase()
-    {
-        if (showDebugInfo)
-        {
-            Debug.Log("EnemyPhaseController: 敌人回合结束，回到玩家阶段");
-        }
-        
-        // 通知GameFlowController回到玩家阶段
-        if (GameFlowController.Instance != null)
-        {
-            GameFlowController.Instance.RequestNormalState();
-        }
-    }
-    
-    /// <summary>
-    /// 更新敌人数量
-    /// </summary>
-    void UpdateEnemyCount()
-    {
-        // 根据当前阶段获取相应的敌人数量
-        switch (currentPhase)
-        {
-            case EnemyPhase.Attack:
-            case EnemyPhase.Move:
-                // 攻击和移动阶段：统计当前活跃的敌人
-                totalEnemies = GetActiveEnemyCount();
-                break;
-            case EnemyPhase.Spawn:
-            case EnemyPhase.Telegraph:
-                // 生成和预告阶段：由EnemySpawner处理，等待1个完成信号
-                totalEnemies = 1;
-                break;
-        }
-        
-        if (showDebugInfo)
-        {
-            Debug.Log($"EnemyPhaseController: 当前阶段 {currentPhase} 需要处理 {totalEnemies} 个敌人");
-        }
-    }
-    
-    /// <summary>
-    /// 获取活跃敌人数量
-    /// </summary>
-    int GetActiveEnemyCount()
-    {
-        Enemy[] enemies = FindObjectsOfType<Enemy>();
-        int count = 0;
-        foreach (var enemy in enemies)
-        {
-            if (enemy.IsAlive())
-            {
-                count++;
-            }
-        }
-        return count;
-    }
-    
     
     /// <summary>
     /// 获取当前阶段
     /// </summary>
     public EnemyPhase GetCurrentPhase()
     {
-        return currentPhase;
+        return currentEnemyPhase;
     }
     
     /// <summary>
-    /// 检查是否在指定阶段
+    /// 强制开始敌人阶段（用于测试）
     /// </summary>
-    public bool IsInPhase(EnemyPhase phase)
+    public void ForceEnemyPhase()
     {
-        return currentPhase == phase;
+        CancelInvoke(); // 取消所有定时器
+        StartEnemyPhase();
     }
     
     /// <summary>
-    /// 处理特殊阶段（Spawn和Telegraph）
-    /// 现在所有组件都通过事件响应，不需要直接调用
+    /// 获取阶段描述
     /// </summary>
-    void HandleSpecialPhases(EnemyPhase phase)
+    string GetPhaseDescription(EnemyPhase phase)
     {
-        // 所有组件都订阅OnPhaseStart事件，不需要直接调用
-        // 特殊阶段由各组件自己处理并报告完成
-        if (showDebugInfo)
+        switch (phase)
         {
-            Debug.Log($"EnemyPhaseController: 特殊阶段 {phase} 由各组件通过事件响应处理");
+            case EnemyPhase.Attack:
+                return "攻击上一回合预告的位置";
+            case EnemyPhase.Move:
+                return "移动";
+            case EnemyPhase.Spawn:
+                return "生成上一回合预告的位置";
+            case EnemyPhase.Telegraph:
+                return "预告下一个位置";
+            default:
+                return "未知阶段";
         }
     }
 }

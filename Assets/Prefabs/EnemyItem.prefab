@@ -3592,8 +3592,8 @@ Transform:
   m_Children:
   - {fileID: 2292856086366352661}
   - {fileID: 9014636818200290605}
-  - {fileID: 4210520364887774481}
   - {fileID: 5042149488575394884}
+  - {fileID: 4210520364887774481}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!50 &8847496780498689127
@@ -3694,8 +3694,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b174bde790db6bc4f904b94447e341e4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  enemyData: {fileID: 11400000, guid: 8d46072aeaab4c44fab958850bbe7872, type: 2}
-  showDebugInfo: 0
+  spawnPreview: {fileID: 0}
+  enemyItem: {fileID: 0}
+  attackArea: {fileID: 0}
+  testMode: 0
 --- !u!1 &3650335641447170782
 GameObject:
   m_ObjectHideFlags: 0

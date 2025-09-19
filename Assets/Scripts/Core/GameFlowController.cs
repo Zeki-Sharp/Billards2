@@ -69,6 +69,15 @@ public class GameFlowController : MonoBehaviour
         }
     }
     
+    void OnDestroy()
+    {
+        // 取消事件订阅
+        if (enemyPhaseController != null)
+        {
+            EnemyPhaseController.OnEnemyPhaseComplete -= OnEnemyPhaseComplete;
+        }
+    }
+    
     // 事件监听已移除，改为直接引用通信
     
     void Update()
@@ -175,7 +184,7 @@ public class GameFlowController : MonoBehaviour
         // 启动敌人阶段控制器
         if (enemyPhaseController != null)
         {
-            enemyPhaseController.StartPhase(EnemyPhase.Attack);
+            enemyPhaseController.StartEnemyPhase();
         }
         else
         {
@@ -414,7 +423,19 @@ public class GameFlowController : MonoBehaviour
     
     public void SetEnemyPhaseController(EnemyPhaseController controller)
     {
+        // 取消之前的订阅
+        if (enemyPhaseController != null)
+        {
+            EnemyPhaseController.OnEnemyPhaseComplete -= OnEnemyPhaseComplete;
+        }
+        
         enemyPhaseController = controller;
+        
+        // 订阅新的事件
+        if (enemyPhaseController != null)
+        {
+            EnemyPhaseController.OnEnemyPhaseComplete += OnEnemyPhaseComplete;
+        }
     }
     
     #endregion
