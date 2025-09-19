@@ -198,6 +198,17 @@ public class Enemy : MonoBehaviour
     }
     
     /// <summary>
+    /// 更新攻击范围（不改变状态，仅用于已激活的敌人）
+    /// </summary>
+    public void UpdateAttackRange()
+    {
+        if (enemyBehavior != null)
+        {
+            enemyBehavior.ExecuteTelegraphPhase();
+        }
+    }
+    
+    /// <summary>
     /// 开始攻击阶段
     /// </summary>
     private void StartAttackPhase()

@@ -156,6 +156,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: SpawnPreview
       objectReference: {fileID: 0}
+    - target: {fileID: 2323225345840014394, guid: 3c3962aa0b8af3242b854ae1c03b6f7b, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 6650860153008292395, guid: 3c3962aa0b8af3242b854ae1c03b6f7b, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0

@@ -5,7 +5,7 @@ using UnityEngine;
 /// 
 /// 【核心职责】：
 /// - 管理敌人阶段的循环（攻击 -> 移动 -> 生成 -> 预告）
-/// - 定时器控制阶段切换（每个阶段1秒）
+/// - 响应 EnemyController 的阶段完成事件
 /// - 协调 EnemyController 执行具体阶段逻辑
 /// 
 /// 【阶段逻辑】：
@@ -17,9 +17,6 @@ using UnityEngine;
 public class EnemyPhaseController : MonoBehaviour
 {
     public static EnemyPhaseController Instance { get; private set; }
-    
-    [Header("阶段设置")]
-    [SerializeField] private float phaseInterval = 1f; // 每个阶段间隔1秒
     
     [Header("调试")]
     [SerializeField] private bool showDebugInfo = true;
@@ -70,6 +67,12 @@ public class EnemyPhaseController : MonoBehaviour
     void OnDestroy()
     {
         CancelInvoke(); // 取消所有定时器
+        
+        // 取消事件订阅
+        if (enemyController != null)
+        {
+            enemyController.OnPhaseCanSwitch -= OnEnemyPhaseCanSwitch;
+        }
     }
     
     /// <summary>
@@ -83,11 +86,31 @@ public class EnemyPhaseController : MonoBehaviour
         {
             Debug.LogError("EnemyPhaseController: 未找到 EnemyController！");
         }
+        else
+        {
+            // 订阅 EnemyController 的阶段切换事件
+            enemyController.OnPhaseCanSwitch += OnEnemyPhaseCanSwitch;
+        }
         
         if (showDebugInfo)
         {
             Debug.Log("EnemyPhaseController: 初始化完成");
         }
+    }
+    
+    /// <summary>
+    /// 敌人阶段可以切换的回调
+    /// </summary>
+    void OnEnemyPhaseCanSwitch(EnemyPhase completedPhase)
+    {
+        if (showDebugInfo)
+        {
+            Debug.Log($"EnemyPhaseController: 收到阶段完成通知 - {completedPhase}");
+        }
+        
+        // 进入下一个阶段
+        currentEnemyPhaseIndex++;
+        ExecuteNextEnemyPhase();
     }
     
     /// <summary>
@@ -150,31 +173,9 @@ public class EnemyPhaseController : MonoBehaviour
             Debug.LogWarning("EnemyPhaseController: enemyController 为空！");
         }
         
-        // 启动定时器，1秒后自动进入下一个阶段
-        if (showDebugInfo)
-        {
-            Debug.Log($"--- 调度 {phaseInterval} 秒后进入下一个阶段 ---");
-        }
-        Invoke(nameof(CompleteCurrentPhase), phaseInterval);
+        // 不再使用定时器，由 EnemyController 通知阶段完成
     }
     
-    /// <summary>
-    /// 完成当前阶段
-    /// </summary>
-    void CompleteCurrentPhase()
-    {
-        if (showDebugInfo)
-        {
-            Debug.Log($"--- 敌人子阶段完成: {currentEnemyPhase} ---");
-        }
-        
-        // 通知阶段完成
-        OnPhaseComplete?.Invoke(currentEnemyPhase);
-        
-        // 进入下一个阶段
-        currentEnemyPhaseIndex++;
-        ExecuteNextEnemyPhase();
-    }
     
     
     /// <summary>

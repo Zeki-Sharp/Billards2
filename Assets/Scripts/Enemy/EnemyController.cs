@@ -3,18 +3,24 @@ using System.Collections.Generic;
 using System.Linq;
 
 /// <summary>
-/// 敌人控制器 - 执行具体的敌人阶段逻辑
+/// 敌人控制器 - 管理敌人列表和阶段转换条件
 /// 
 /// 【核心职责】：
-/// - 管理所有敌人实例
+/// - 管理所有敌人实例列表
+/// - 控制阶段转换条件（1秒定时器）
 /// - 执行 EnemyPhaseController 下达的阶段命令
 /// - 协调 EnemySpawner 生成敌人
 /// - 向所有敌人发送阶段执行指令
+/// - 向 EnemyPhaseController 报告阶段完成
 /// </summary>
 public class EnemyController : MonoBehaviour
 {
     [Header("敌人管理")]
-    [SerializeField] private List<Enemy> allEnemies = new List<Enemy>();
+    [SerializeField] private List<Enemy> telegraphingEnemies = new List<Enemy>(); // 预告阶段的敌人
+    [SerializeField] private List<Enemy> activeEnemies = new List<Enemy>(); // 已激活的敌人
+    
+    [Header("阶段转换控制")]
+    [SerializeField] private float phaseInterval = 1f; // 每个阶段间隔1秒
     
     [Header("生成器引用")]
     private EnemySpawner enemySpawner;
@@ -25,6 +31,17 @@ public class EnemyController : MonoBehaviour
     [Header("调试")]
     [SerializeField] private bool showDebugInfo = true;
     
+    // 阶段转换事件
+    public System.Action<EnemyPhase> OnPhaseCanSwitch; // 阶段可以切换事件
+    
+    // 公共属性
+    public List<Enemy> TelegraphingEnemies => telegraphingEnemies.Where(e => e != null).ToList(); // 预告阶段敌人列表
+    public List<Enemy> ActiveEnemies => activeEnemies.Where(e => e != null).ToList(); // 激活敌人列表
+    public List<Enemy> AllEnemies => TelegraphingEnemies.Concat(ActiveEnemies).ToList(); // 所有敌人列表
+    public int TelegraphingEnemyCount => telegraphingEnemies.Count(e => e != null); // 预告阶段敌人数量
+    public int ActiveEnemyCount => activeEnemies.Count(e => e != null); // 激活敌人数量
+    public int TotalEnemyCount => TelegraphingEnemyCount + ActiveEnemyCount; // 总敌人数量
+    
     void Start()
     {
         InitializeController();
@@ -33,7 +50,8 @@ public class EnemyController : MonoBehaviour
     
     void OnDestroy()
     {
-        // 清理工作
+        // 取消所有定时器
+        CancelInvoke();
     }
     
     /// <summary>
@@ -62,41 +80,93 @@ public class EnemyController : MonoBehaviour
         Enemy[] existingEnemies = FindObjectsByType<Enemy>(FindObjectsSortMode.None);
         foreach (Enemy enemy in existingEnemies)
         {
-            RegisterEnemy(enemy);
+            // 现有敌人直接加入激活列表（假设它们已经是实体状态）
+            RegisterActiveEnemy(enemy);
         }
         
         if (showDebugInfo)
         {
-            Debug.Log($"EnemyController: 扫描到 {existingEnemies.Length} 个现有敌人");
+            Debug.Log($"EnemyController: 扫描到 {existingEnemies.Length} 个现有敌人，已加入激活列表");
         }
     }
     
     /// <summary>
-    /// 注册敌人
+    /// 注册预告阶段敌人
     /// </summary>
-    public void RegisterEnemy(Enemy enemy)
+    public void RegisterTelegraphingEnemy(Enemy enemy)
     {
-        if (enemy != null && !allEnemies.Contains(enemy))
+        if (enemy != null && !telegraphingEnemies.Contains(enemy) && !activeEnemies.Contains(enemy))
         {
-            allEnemies.Add(enemy);
+            telegraphingEnemies.Add(enemy);
             if (showDebugInfo)
             {
-                Debug.Log($"EnemyController: 注册敌人 {enemy.name}");
+                Debug.Log($"EnemyController: 注册预告阶段敌人 {enemy.name}");
             }
         }
     }
     
     /// <summary>
-    /// 注销敌人
+    /// 注册激活敌人
+    /// </summary>
+    public void RegisterActiveEnemy(Enemy enemy)
+    {
+        if (enemy != null && !activeEnemies.Contains(enemy))
+        {
+            // 如果之前在预告列表中，先移除
+            if (telegraphingEnemies.Contains(enemy))
+            {
+                telegraphingEnemies.Remove(enemy);
+            }
+            
+            activeEnemies.Add(enemy);
+            if (showDebugInfo)
+            {
+                Debug.Log($"EnemyController: 注册激活敌人 {enemy.name}");
+            }
+        }
+    }
+    
+    /// <summary>
+    /// 注销敌人（从所有列表中移除）
     /// </summary>
     public void UnregisterEnemy(Enemy enemy)
     {
-        if (enemy != null && allEnemies.Contains(enemy))
+        if (enemy != null)
         {
-            allEnemies.Remove(enemy);
-            if (showDebugInfo)
+            bool removed = false;
+            
+            if (telegraphingEnemies.Contains(enemy))
+            {
+                telegraphingEnemies.Remove(enemy);
+                removed = true;
+            }
+            
+            if (activeEnemies.Contains(enemy))
+            {
+                activeEnemies.Remove(enemy);
+                removed = true;
+            }
+            
+            if (removed && showDebugInfo)
             {
                 Debug.Log($"EnemyController: 注销敌人 {enemy.name}");
+            }
+        }
+    }
+    
+    /// <summary>
+    /// 将敌人从预告列表转移到激活列表
+    /// </summary>
+    public void TransferToActive(Enemy enemy)
+    {
+        if (enemy != null && telegraphingEnemies.Contains(enemy))
+        {
+            telegraphingEnemies.Remove(enemy);
+            activeEnemies.Add(enemy);
+            
+            if (showDebugInfo)
+            {
+                Debug.Log($"EnemyController: 敌人 {enemy.name} 从预告阶段转移到激活阶段");
             }
         }
     }
@@ -132,6 +202,22 @@ public class EnemyController : MonoBehaviour
                 Debug.LogWarning($"EnemyController: 未知阶段 {phase}");
                 break;
         }
+        
+        // 启动定时器，1秒后通知可以切换到下一个阶段
+        Invoke(nameof(NotifyPhaseCanSwitch), phaseInterval);
+    }
+    
+    /// <summary>
+    /// 通知阶段可以切换
+    /// </summary>
+    void NotifyPhaseCanSwitch()
+    {
+        if (showDebugInfo)
+        {
+            Debug.Log($"EnemyController: 阶段 {currentExecutingPhase} 完成，可以切换到下一个阶段");
+        }
+        
+        OnPhaseCanSwitch?.Invoke(currentExecutingPhase);
     }
     
     /// <summary>
@@ -144,19 +230,34 @@ public class EnemyController : MonoBehaviour
             Debug.Log("EnemyController: 执行预告阶段");
         }
         
-        // 生成新敌人（如果需要）
+        // 1. 生成新敌人（如果需要）并加入预告列表
         if (enemySpawner != null)
         {
             enemySpawner.GenerateEnemies();
         }
         
-        // 对所有敌人执行预告
-        foreach (Enemy enemy in allEnemies)
+        // 2. 对预告阶段的敌人执行预告（新生成的敌人）
+        foreach (Enemy enemy in telegraphingEnemies)
         {
             if (enemy != null)
             {
                 enemy.StartPhase(EnemyPhase.Telegraph);
             }
+        }
+        
+        // 3. 对已激活的敌人只更新攻击范围（不改变状态）
+        foreach (Enemy enemy in activeEnemies)
+        {
+            if (enemy != null)
+            {
+                // 只调用更新攻击范围的方法，不改变敌人状态
+                enemy.UpdateAttackRange();
+            }
+        }
+        
+        if (showDebugInfo)
+        {
+            Debug.Log($"EnemyController: 预告阶段完成 - 预告敌人: {telegraphingEnemies.Count}, 更新范围敌人: {activeEnemies.Count}");
         }
     }
     
@@ -170,13 +271,21 @@ public class EnemyController : MonoBehaviour
             Debug.Log("EnemyController: 执行生成阶段");
         }
         
-        // 对所有敌人执行生成
-        foreach (Enemy enemy in allEnemies)
+        // 对预告阶段的敌人执行生成，生成后转移到激活列表
+        var enemiesToTransfer = new List<Enemy>();
+        foreach (Enemy enemy in telegraphingEnemies)
         {
             if (enemy != null)
             {
                 enemy.StartPhase(EnemyPhase.Spawn);
+                enemiesToTransfer.Add(enemy);
             }
+        }
+        
+        // 将生成完成的敌人转移到激活列表
+        foreach (Enemy enemy in enemiesToTransfer)
+        {
+            TransferToActive(enemy);
         }
     }
     
@@ -190,13 +299,18 @@ public class EnemyController : MonoBehaviour
             Debug.Log("EnemyController: 执行攻击阶段");
         }
         
-        // 对所有敌人执行攻击
-        foreach (Enemy enemy in allEnemies)
+        // 只对已激活的敌人执行攻击
+        foreach (Enemy enemy in activeEnemies)
         {
             if (enemy != null)
             {
                 enemy.StartPhase(EnemyPhase.Attack);
             }
+        }
+        
+        if (showDebugInfo)
+        {
+            Debug.Log($"EnemyController: 攻击阶段执行完成，{activeEnemies.Count} 个已激活敌人参与攻击");
         }
     }
     
@@ -210,29 +324,18 @@ public class EnemyController : MonoBehaviour
             Debug.Log("EnemyController: 执行移动阶段");
         }
         
-        // 对所有敌人执行移动
-        foreach (Enemy enemy in allEnemies)
+        // 只对已激活的敌人执行移动
+        foreach (Enemy enemy in activeEnemies)
         {
             if (enemy != null)
             {
                 enemy.StartPhase(EnemyPhase.Move);
             }
         }
-    }
-    
-    /// <summary>
-    /// 获取所有敌人
-    /// </summary>
-    public List<Enemy> GetAllEnemies()
-    {
-        return allEnemies.Where(e => e != null).ToList();
-    }
-    
-    /// <summary>
-    /// 获取敌人数量
-    /// </summary>
-    public int GetEnemyCount()
-    {
-        return allEnemies.Count(e => e != null);
+        
+        if (showDebugInfo)
+        {
+            Debug.Log($"EnemyController: 移动阶段执行完成，{activeEnemies.Count} 个已激活敌人参与移动");
+        }
     }
 }
