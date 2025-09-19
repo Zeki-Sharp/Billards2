@@ -38,6 +38,25 @@ public class AttackRange : MonoBehaviour
             return;
         }
         
+        // 检查子物体Image是否有碰撞体组件
+        Transform imageTransform = transform.Find("Image");
+        if (imageTransform == null)
+        {
+            Debug.LogError($"【攻击范围检测】{name}: 未找到子物体Image！");
+        }
+        else
+        {
+            Collider2D collider = imageTransform.GetComponent<Collider2D>();
+            if (collider == null)
+            {
+                Debug.LogError($"【攻击范围检测】{name}: Image子物体上未找到碰撞体组件！");
+            }
+            else
+            {
+                Debug.Log($"【攻击范围检测】{name}: 找到Image子物体上的碰撞体组件: {collider.GetType().Name}, IsTrigger: {collider.isTrigger}");
+            }
+        }
+        
         // 初始状态为隐藏
         gameObject.SetActive(false);
         
@@ -95,11 +114,6 @@ public class AttackRange : MonoBehaviour
             
             // 立即应用朝向
             SetAttackDirection(telegraphedDirection);
-            
-            if (showDebugInfo)
-            {
-                Debug.Log($"AttackRange {name}: 预告阶段保存朝向 {telegraphedDirection} (玩家位置: {player.transform.position})");
-            }
         }
         else
         {
@@ -107,11 +121,6 @@ public class AttackRange : MonoBehaviour
             telegraphedDirection = Vector2.right;
             isDirectionSet = true;
             SetAttackDirection(telegraphedDirection);
-            
-            if (showDebugInfo)
-            {
-                Debug.Log($"AttackRange {name}: 未找到玩家，使用默认朝向");
-            }
         }
     }
     
@@ -123,17 +132,10 @@ public class AttackRange : MonoBehaviour
         if (isDirectionSet)
         {
             SetAttackDirection(telegraphedDirection);
-            if (showDebugInfo)
-            {
-                Debug.Log($"AttackRange {name}: 使用预告阶段保存的朝向 {telegraphedDirection}");
-            }
         }
         else
         {
-            if (showDebugInfo)
-            {
-                Debug.LogWarning($"AttackRange {name}: 朝向未设置，请先执行预告阶段");
-            }
+            Debug.LogWarning($"【攻击范围检测】{name}: 朝向未设置，请先执行预告阶段");
         }
     }
     
@@ -199,42 +201,36 @@ public class AttackRange : MonoBehaviour
     {
         List<GameObject> targets = new List<GameObject>();
         
-        // 查找玩家
-        GameObject player = GameObject.FindGameObjectWithTag("Player");
-        if (player != null)
+        // 查找子物体Image上的碰撞体
+        Transform imageTransform = transform.Find("Image");
+        if (imageTransform == null)
         {
-            // 计算到玩家的距离
-            float distanceToPlayer = Vector2.Distance(transform.position, player.transform.position);
-            
-            // 检查是否在攻击范围内
-            if (distanceToPlayer <= attackRange)
-            {
-                targets.Add(player);
-                
-                if (showDebugInfo)
-                {
-                    Debug.Log($"AttackRange {name}: 玩家在攻击范围内，距离: {distanceToPlayer:F2}");
-                }
-            }
-            else
-            {
-                if (showDebugInfo)
-                {
-                    Debug.Log($"AttackRange {name}: 玩家不在攻击范围内，距离: {distanceToPlayer:F2}, 范围: {attackRange}");
-                }
-            }
-        }
-        else
-        {
-            if (showDebugInfo)
-            {
-                Debug.LogWarning($"AttackRange {name}: 未找到玩家！");
-            }
+            Debug.LogError($"【攻击范围检测】{name}: 未找到子物体Image！");
+            return targets;
         }
         
-        if (showDebugInfo)
+        Collider2D attackCollider = imageTransform.GetComponent<Collider2D>();
+        if (attackCollider == null)
         {
-            Debug.Log($"AttackRange {name}: 检测到 {targets.Count} 个目标");
+            Debug.LogError($"【攻击范围检测】{name}: Image子物体上未找到碰撞体组件！");
+            return targets;
+        }
+        
+        // 使用OverlapCollider检测与当前碰撞体重叠的目标
+        List<Collider2D> overlappingColliders = new List<Collider2D>();
+        ContactFilter2D contactFilter = new ContactFilter2D();
+        contactFilter.useTriggers = true; // 只检测触发器
+        contactFilter.useLayerMask = true;
+        contactFilter.layerMask = Physics2D.AllLayers; // 检测所有层
+        
+        int overlapCount = attackCollider.Overlap(contactFilter, overlappingColliders);
+        
+        foreach (var collider in overlappingColliders)
+        {
+            if (collider.CompareTag("Player"))
+            {
+                targets.Add(collider.gameObject);
+            }
         }
         
         return targets;

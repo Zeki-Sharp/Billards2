@@ -65,8 +65,6 @@ public class EnemyBehavior : MonoBehaviour
     /// </summary>
     public void ExecuteAttackPhase()
     {
-        Debug.Log($"EnemyBehavior {name}: 执行攻击阶段");
-        
         if (attackRange != null)
         {
             // 使用预告阶段保存的朝向
@@ -74,10 +72,9 @@ public class EnemyBehavior : MonoBehaviour
             
             // 对攻击范围内的目标执行攻击
             var targets = attackRange.GetTargetsInRange();
+            
             foreach (var target in targets)
             {
-                Debug.Log($"EnemyBehavior {name}: 攻击目标 {target.name}");
-                
                 // 对玩家造成伤害
                 if (target.CompareTag("Player"))
                 {
@@ -87,7 +84,7 @@ public class EnemyBehavior : MonoBehaviour
         }
         else
         {
-            Debug.LogWarning($"EnemyBehavior {name}: AttackRange 未设置，无法执行攻击！");
+            Debug.LogWarning($"【攻击范围检测】EnemyBehavior {name}: AttackRange 未设置，无法执行攻击！");
         }
     }
     
@@ -98,15 +95,8 @@ public class EnemyBehavior : MonoBehaviour
     {
         if (enemyData == null)
         {
-            Debug.LogError($"EnemyBehavior {name}: EnemyData 未设置，无法造成伤害！");
+            Debug.LogError($"【攻击范围检测】EnemyBehavior {name}: EnemyData 未设置，无法造成伤害！");
             return;
-        }
-        
-        // 列出所有子物体
-        for (int i = 0; i < player.transform.childCount; i++)
-        {
-            Transform child = player.transform.GetChild(i);
-            Debug.Log($"EnemyBehavior {name}: 子物体 {i}: {child.name}");
         }
         
         // 在玩家及其子物体中查找 PlayerCore 组件
@@ -118,20 +108,10 @@ public class EnemyBehavior : MonoBehaviour
             
             // 对玩家造成伤害
             playerCore.TakeDamage(damage);
-            
-            Debug.Log($"EnemyBehavior {name}: 对玩家造成 {damage} 点伤害！");
         }
         else
         {
-            Debug.LogWarning($"EnemyBehavior {name}: 玩家及其子物体中没有找到 PlayerCore 组件，无法造成伤害！");
-            
-            // 尝试直接查找所有 PlayerCore 组件
-            PlayerCore[] allPlayerCores = FindObjectsByType<PlayerCore>(FindObjectsSortMode.None);
-            Debug.Log($"EnemyBehavior {name}: 场景中总共有 {allPlayerCores.Length} 个 PlayerCore 组件");
-            foreach (var core in allPlayerCores)
-            {
-                Debug.Log($"EnemyBehavior {name}: 找到 PlayerCore: {core.name} (父对象: {core.transform.parent?.name ?? "无"})");
-            }
+            Debug.LogWarning($"【攻击范围检测】EnemyBehavior {name}: 玩家及其子物体中没有找到 PlayerCore 组件，无法造成伤害！");
         }
     }
     
@@ -140,21 +120,17 @@ public class EnemyBehavior : MonoBehaviour
     /// </summary>
     public void ExecuteTelegraphPhase()
     {
-        Debug.Log($"EnemyBehavior {name}: 执行预告阶段 - 更新攻击范围");
-        
         // 更新攻击范围
         if (attackArea != null)
         {
             // 显示攻击范围
             attackArea.gameObject.SetActive(true);
-            Debug.Log($"EnemyBehavior {name}: 显示攻击范围");
         }
         
         if (attackRange != null)
         {
             // 更新攻击范围的方向和位置
             attackRange.ShowTelegraph();
-            Debug.Log($"EnemyBehavior {name}: 更新攻击范围方向");
         }
     }
     
