@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections;
 
 /// <summary>
 /// 敌人行为脚本 - 纯行为逻辑
@@ -10,6 +11,8 @@ public class EnemyBehavior : MonoBehaviour
     
     [Header("移动设置")]
     public float moveDistance = 2f;
+    public float moveSpeed = 3f;  // 移动速度（单位/秒）
+    private bool isMoving = false;  // 是否正在移动
     
     [Header("组件引用")]
     public AttackRange attackRange;
@@ -148,13 +151,14 @@ public class EnemyBehavior : MonoBehaviour
             Vector2 direction = (player.position - transform.position).normalized;
             currentMovementDirection = direction;
             
-            // 移动固定距离（移动根节点）
+            // 计算目标位置
             Vector2 targetPosition = (Vector2)transform.position + direction * moveDistance;
-            transform.position = targetPosition;
             
-            Debug.Log($"EnemyBehavior {name}: 向玩家方向移动 {moveDistance} 单位");
-            Debug.Log($"EnemyBehavior {name}: 移动后位置: {transform.position}");
-            Debug.Log($"EnemyBehavior {name}: 玩家位置: {player.position}");
+            // 设置移动状态
+            isMoving = true;
+            
+            // 开始平滑移动
+            StartCoroutine(MoveToTarget(targetPosition));
         }
         else
         {
@@ -163,11 +167,50 @@ public class EnemyBehavior : MonoBehaviour
     }
     
     /// <summary>
+    /// 平滑移动到目标位置
+    /// </summary>
+    IEnumerator MoveToTarget(Vector2 targetPosition)
+    {
+        Vector2 startPosition = transform.position;
+        float distance = Vector2.Distance(startPosition, targetPosition);
+        float moveTime = distance / moveSpeed;
+        
+        float elapsedTime = 0f;
+        
+        while (elapsedTime < moveTime)
+        {
+            elapsedTime += Time.deltaTime;
+            float progress = elapsedTime / moveTime;
+            
+            // 使用线性插值平滑移动
+            transform.position = Vector2.Lerp(startPosition, targetPosition, progress);
+            
+            yield return null;
+        }
+        
+        // 确保最终位置准确
+        transform.position = targetPosition;
+        
+        // 重置移动状态
+        isMoving = false;
+        
+        Debug.Log($"EnemyBehavior {name}: 移动完成，最终位置: {transform.position}");
+    }
+    
+    /// <summary>
     /// 获取当前移动方向
     /// </summary>
     public Vector2 GetCurrentMovementDirection()
     {
         return currentMovementDirection;
+    }
+    
+    /// <summary>
+    /// 检查是否正在移动
+    /// </summary>
+    public bool IsMoving()
+    {
+        return isMoving;
     }
     
     /// <summary>

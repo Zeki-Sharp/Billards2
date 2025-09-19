@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections;
 
 /// <summary>
 /// 敌人脚本 - 管理整个敌人生命周期
@@ -13,6 +14,8 @@ public class Enemy : MonoBehaviour
     [Header("事件")]
     public System.Action<Enemy> OnTelegraphComplete;
     public System.Action<Enemy> OnSpawnComplete;
+    public System.Action<Enemy> OnAttackComplete;
+    public System.Action<Enemy> OnMoveComplete;
     public System.Action<Enemy, EnemyPhase> OnEnemyPhaseComplete;
     
     private EnemyState currentState = EnemyState.None;
@@ -186,7 +189,7 @@ public class Enemy : MonoBehaviour
                 StartAttackPhase();
                 break;
             case EnemyPhase.Move:
-                StartMovePhase();
+                StartCoroutine(ExecuteMovePhaseCoroutine());
                 break;
             case EnemyPhase.Telegraph:
                 StartTelegraph();
@@ -206,6 +209,27 @@ public class Enemy : MonoBehaviour
         {
             enemyBehavior.ExecuteTelegraphPhase();
         }
+    }
+    
+    /// <summary>
+    /// 执行移动阶段的协程
+    /// </summary>
+    IEnumerator ExecuteMovePhaseCoroutine()
+    {
+        if (enemyBehavior != null)
+        {
+            // 开始移动
+            enemyBehavior.ExecuteMovePhase();
+            
+            // 等待移动完成（通过检查协程是否还在运行）
+            while (enemyBehavior.IsMoving())
+            {
+                yield return null;
+            }
+        }
+        
+        // 移动完成后触发事件
+        OnMoveComplete?.Invoke(this);
     }
     
     /// <summary>
