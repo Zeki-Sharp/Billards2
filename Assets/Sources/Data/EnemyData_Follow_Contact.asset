@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: EnemyData_Follow_Contact
   m_EditorClassIdentifier: 
   enemyName: 
-  enemyPrefab: {fileID: 2956119747917118404, guid: 92bb8c5569acb9348bf9d53ecaefe6fb, type: 3}
+  enemyContainerPrefab: {fileID: 7420645124294310907, guid: 3953b119ae556034889e4bc9a3e4948f, type: 3}
   enemyIcon: {fileID: 0}
   ballData: {fileID: 11400000, guid: d1c30c129175ecf48a42f1070d15a627, type: 2}
   maxHealth: 50
@@ -21,15 +21,8 @@ MonoBehaviour:
   attackCooldown: 1
   moveSpeed: 3
   enableAI: 1
-  attackType: 0
   movementType: 0
   attackRange: 3
-  contactRadius: 1
-  bulletPrefab: {fileID: 0}
-  bulletSpeed: 10
-  bulletDamage: 8
-  bulletLifetime: 3
-  bulletOffset: {x: 0, y: 0}
   followMinDistance: 1
   followMaxDistance: 5
   maintainDistance: 0

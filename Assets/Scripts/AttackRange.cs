@@ -20,6 +20,7 @@ public class AttackRange : MonoBehaviour
     
     // 组件引用
     private Enemy enemy;
+    private EnemySpawner enemySpawner;
     
     void Start()
     {
@@ -28,6 +29,14 @@ public class AttackRange : MonoBehaviour
         if (enemy == null)
         {
             Debug.LogError($"AttackRange {name}: 未找到Enemy组件！");
+            return;
+        }
+        
+        // 获取EnemySpawner组件
+        enemySpawner = FindAnyObjectByType<EnemySpawner>();
+        if (enemySpawner == null)
+        {
+            Debug.LogError($"AttackRange {name}: 未找到EnemySpawner组件！");
             return;
         }
         
@@ -82,6 +91,12 @@ public class AttackRange : MonoBehaviour
         if (showDebugInfo)
         {
             Debug.Log($"AttackRange {name}: 显示攻击预告");
+        }
+        
+        // 通知EnemySpawner攻击范围预告动画完成
+        if (enemySpawner != null)
+        {
+            enemySpawner.OnTelegraphAnimationComplete();
         }
     }
     

@@ -5,7 +5,7 @@ public class EnemyData : ScriptableObject
 {
     [Header("敌人基本信息")]
     public string enemyName;
-    public GameObject enemyPrefab;
+    public GameObject enemyContainerPrefab; // 敌人容器预制体（包含预告和敌人）
     public Sprite enemyIcon;
     
     [Header("物理数据")]

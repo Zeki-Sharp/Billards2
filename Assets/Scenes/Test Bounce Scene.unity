@@ -8766,9 +8766,11 @@ MonoBehaviour:
   reflectionLayers:
     serializedVersion: 2
     m_Bits: 4294967295
+  ignoreLayers:
+    serializedVersion: 2
+    m_Bits: 2
   reflectionOffset: 0.1
   ballTag: Player
-  rangeTag: Range
   enableDebugLog: 0
   showDebugGizmos: 0
 --- !u!114 &1360613288

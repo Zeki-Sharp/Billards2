@@ -19,8 +19,8 @@ public class EnemySpawner : MonoBehaviour
     public List<WaveConfig> waveConfigs = new List<WaveConfig>(); // 波次配置列表
     public bool loopWaves = true; // 是否循环波次
     
-    [Header("预览特效设置")]
-    public GameObject previewEffectPrefab; // 预告特效预制体（包含点位出现和点位消失子物体）
+    [Header("容器管理")]
+    // 不再需要单独的预告特效预制体，使用EnemyData中的容器预制体
     
     [Header("测试设置")]
     public KeyCode spawnKey = KeyCode.Space; // 手动触发下一波
@@ -31,11 +31,19 @@ public class EnemySpawner : MonoBehaviour
     
     private List<Enemy> spawnedEnemies = new List<Enemy>(); // 已生成的敌人列表
     
-    // 预告和生成控制
-    private List<GameObject> currentPreviewEffects = new List<GameObject>(); // 当前预告特效列表
+    // 容器管理
+    private List<EnemyContainer> currentContainers = new List<EnemyContainer>(); // 当前容器列表
     private List<Vector2> previewedPositions = new List<Vector2>(); // 预告的位置列表
     private List<EnemyData> previewedEnemyData = new List<EnemyData>(); // 预告的敌人数据列表
     private int currentWaveIndex = 0; // 当前波次索引
+    
+    // 生成动画完成计数
+    private int totalSpawnedEnemies = 0; // 本次生成的总敌人数量
+    private int completedSpawnAnimations = 0; // 已完成生成动画的敌人数量
+    
+    // 预告阶段完成计数
+    private int totalTelegraphAnimations = 0; // 预告阶段需要等待的动画总数
+    private int completedTelegraphAnimations = 0; // 已完成的预告动画数量
     
     void Start()
     {
@@ -61,15 +69,243 @@ public class EnemySpawner : MonoBehaviour
     /// </summary>
     void OnPhaseStart(EnemyPhase phase)
     {
+        Debug.Log($"EnemySpawner: 收到阶段事件 {phase}");
+        
         switch (phase)
         {
             case EnemyPhase.Spawn:
-                SpawnEnemies();
+                Debug.Log("EnemySpawner: 开始Spawn阶段");
+                SpawnEnemiesWithCallback();
                 break;
             case EnemyPhase.Telegraph:
-                StartPreview();
+                Debug.Log("EnemySpawner: 开始Telegraph阶段");
+                StartPreviewWithCallback();
                 break;
         }
+    }
+    
+    /// <summary>
+    /// 带回调的敌人生成
+    /// </summary>
+    void SpawnEnemiesWithCallback()
+    {
+        Debug.Log("开始生成敌人（带回调）");
+        
+        // 重置计数
+        totalSpawnedEnemies = 0;
+        completedSpawnAnimations = 0;
+        
+        if (currentContainers.Count == 0)
+        {
+            // 没有容器，不生成敌人
+            Debug.Log("没有容器，跳过生成");
+            OnSpawnAnimationComplete();
+        }
+        else
+        {
+            // 开始生成所有容器
+            foreach (var container in currentContainers)
+            {
+                if (container != null)
+                {
+                    container.OnSpawnComplete += OnContainerSpawnComplete;
+                    container.StartSpawn();
+                    totalSpawnedEnemies++;
+                }
+            }
+        }
+    }
+    
+    /// <summary>
+    /// 带回调的预告
+    /// </summary>
+    void StartPreviewWithCallback()
+    {
+        Debug.Log("开始预告下一波敌人（带回调）");
+        
+        // 重置预告计数
+        totalTelegraphAnimations = 0;
+        completedTelegraphAnimations = 0;
+        
+        // 预告下一波（currentWaveIndex + 1）
+        int previewWaveIndex = currentWaveIndex + 1;
+        if (previewWaveIndex >= waveConfigs.Count)
+        {
+            if (loopWaves)
+            {
+                previewWaveIndex = 0;
+            }
+            else
+            {
+                Debug.Log("所有波次已完成，跳过预告");
+                OnTelegraphAnimationComplete();
+                return;
+            }
+        }
+        
+        WaveConfig previewWave = waveConfigs[previewWaveIndex];
+        if (previewWave == null || previewWave.enemySpawns.Count == 0)
+        {
+            Debug.LogWarning($"第{previewWaveIndex + 1}波配置无效，跳过预告");
+            OnTelegraphAnimationComplete();
+            return;
+        }
+        
+        // 计算生成位置并记录
+        previewedPositions.Clear();
+        previewedEnemyData.Clear();
+        
+        foreach (var enemySpawn in previewWave.enemySpawns)
+        {
+            if (enemySpawn.enemyData == null) continue;
+            
+            for (int i = 0; i < enemySpawn.count; i++)
+            {
+                Vector2 spawnPosition;
+                if (enemySpawn.useRandomPosition)
+                {
+                    spawnPosition = GenerateRandomPosition();
+                }
+                else
+                {
+                    spawnPosition = enemySpawn.customPosition;
+                }
+                
+                // 记录位置和敌人数据
+                previewedPositions.Add(spawnPosition);
+                previewedEnemyData.Add(enemySpawn.enemyData);
+            }
+        }
+        
+        // 计算需要等待的动画数量
+        // 1. 生成预告动画（每个预告特效一个）
+        // 2. 敌人攻击范围预告动画（每个现有敌人一个）
+        totalTelegraphAnimations = previewedPositions.Count + GetActiveEnemyCount();
+        Debug.Log($"预告阶段需要等待 {totalTelegraphAnimations} 个动画完成");
+        
+        // 生成容器
+        for (int i = 0; i < previewedPositions.Count && i < previewedEnemyData.Count; i++)
+        {
+            Vector2 position = previewedPositions[i];
+            EnemyData enemyData = previewedEnemyData[i];
+            
+            if (enemyData != null && enemyData.enemyContainerPrefab != null)
+            {
+                GameObject containerObj = Instantiate(enemyData.enemyContainerPrefab, position, Quaternion.identity, enemyParent);
+                EnemyContainer container = containerObj.GetComponent<EnemyContainer>();
+                
+                if (container != null)
+                {
+                    container.SetEnemyData(enemyData);
+                    container.OnTelegraphComplete += OnContainerTelegraphComplete;
+                    container.StartTelegraph();
+                    currentContainers.Add(container);
+                    totalTelegraphAnimations++;
+                    Debug.Log($"开始容器预告 at {position}");
+                }
+                else
+                {
+                    Debug.LogError($"容器预制体 {enemyData.enemyContainerPrefab.name} 没有EnemyContainer组件！");
+                    Destroy(containerObj);
+                }
+            }
+            else
+            {
+                Debug.LogError($"敌人数据无效或容器预制体为空！");
+            }
+        }
+        
+        // 如果没有容器，立即完成
+        if (currentContainers.Count == 0)
+        {
+            Debug.LogError("没有有效的容器，跳过预告");
+            OnTelegraphAnimationComplete();
+        }
+    }
+    
+    /// <summary>
+    /// 容器预告完成回调
+    /// </summary>
+    void OnContainerTelegraphComplete(EnemyContainer container)
+    {
+        Debug.Log($"容器预告完成 at {container.transform.position}");
+        OnTelegraphAnimationComplete();
+    }
+    
+    /// <summary>
+    /// 容器生成完成回调
+    /// </summary>
+    void OnContainerSpawnComplete(EnemyContainer container)
+    {
+        Debug.Log($"容器生成完成 at {container.transform.position}");
+        
+        // 获取敌人组件并添加到列表
+        Enemy enemy = container.GetEnemy();
+        if (enemy != null)
+        {
+            spawnedEnemies.Add(enemy);
+        }
+        
+        OnSpawnAnimationComplete();
+    }
+    
+    /// <summary>
+    /// 带回调的敌人生成（已废弃，使用容器系统）
+    /// </summary>
+    void SpawnEnemyFromDataWithCallback(EnemyData enemyData, bool useRandomPosition = true, Vector2 customPosition = default)
+    {
+        Debug.LogWarning("SpawnEnemyFromDataWithCallback已废弃，请使用容器系统");
+        OnSpawnAnimationComplete();
+    }
+    
+    /// <summary>
+    /// 生成动画完成回调
+    /// </summary>
+    void OnSpawnAnimationComplete()
+    {
+        completedSpawnAnimations++;
+        Debug.Log($"敌人生成动画完成 {completedSpawnAnimations}/{totalSpawnedEnemies}");
+        
+        // 检查是否所有敌人生成动画都完成了
+        if (completedSpawnAnimations >= totalSpawnedEnemies)
+        {
+            Debug.Log("所有敌人生成动画完成，通知阶段完成");
+            
+            // 通知阶段完成
+            if (EnemyPhaseController.Instance != null)
+            {
+                EnemyPhaseController.Instance.OnEnemyPhaseActionComplete();
+            }
+        }
+    }
+    
+    /// <summary>
+    /// 预告动画完成回调
+    /// </summary>
+    public void OnTelegraphAnimationComplete()
+    {
+        completedTelegraphAnimations++;
+        Debug.Log($"预告动画完成 {completedTelegraphAnimations}/{totalTelegraphAnimations}");
+        
+        // 检查是否所有预告动画都完成了
+        if (completedTelegraphAnimations >= totalTelegraphAnimations)
+        {
+            Debug.Log("所有预告动画完成，通知阶段完成");
+            
+            // 通知阶段完成
+            if (EnemyPhaseController.Instance != null)
+            {
+                EnemyPhaseController.Instance.OnEnemyPhaseActionComplete();
+            }
+        }
+    }
+    
+    /// <summary>
+    /// 获取当前活跃敌人数量
+    /// </summary>
+    int GetActiveEnemyCount()
+    {
+        return spawnedEnemies.Count;
     }
     
     
@@ -114,40 +350,11 @@ public class EnemySpawner : MonoBehaviour
     }
     
     /// <summary>
-    /// 根据配置数据生成敌人
+    /// 根据配置数据生成敌人（已废弃，使用容器系统）
     /// </summary>
     void SpawnEnemyFromData(EnemyData enemyData, bool useRandomPosition = true, Vector2 customPosition = default)
     {
-        if (enemyData == null || enemyData.enemyPrefab == null)
-        {
-            Debug.LogError("敌人配置数据无效！");
-            return;
-        }
-        
-        Vector3 spawnPosition;
-        if (useRandomPosition)
-        {
-            spawnPosition = GenerateRandomPosition();
-        }
-        else
-        {
-            spawnPosition = customPosition;
-        }
-        
-        GameObject enemyObj = Instantiate(enemyData.enemyPrefab, spawnPosition, Quaternion.identity, enemyParent);
-        
-        // 获取敌人组件并设置配置数据
-        Enemy enemy = enemyObj.GetComponent<Enemy>();
-        if (enemy != null)
-        {
-            enemy.enemyData = enemyData;
-            spawnedEnemies.Add(enemy);
-        }
-        else
-        {
-            Debug.LogError("敌人预制体上没有Enemy组件！");
-            Destroy(enemyObj);
-        }
+        Debug.LogWarning("SpawnEnemyFromData已废弃，请使用容器系统");
     }
     
     
@@ -244,25 +451,33 @@ public class EnemySpawner : MonoBehaviour
             }
         }
         
-        // 生成预告特效
-        if (previewEffectPrefab != null)
+        // 生成容器（使用新的容器系统）
+        for (int i = 0; i < previewedPositions.Count && i < previewedEnemyData.Count; i++)
         {
-            foreach (var position in previewedPositions)
+            Vector2 position = previewedPositions[i];
+            EnemyData enemyData = previewedEnemyData[i];
+            
+            if (enemyData != null && enemyData.enemyContainerPrefab != null)
             {
-                GameObject previewEffect = Instantiate(previewEffectPrefab, position, Quaternion.identity);
-                currentPreviewEffects.Add(previewEffect);
+                GameObject containerObj = Instantiate(enemyData.enemyContainerPrefab, position, Quaternion.identity, enemyParent);
+                EnemyContainer container = containerObj.GetComponent<EnemyContainer>();
                 
-                // 播放"点位出现"特效
-                Transform appearChild = previewEffect.transform.Find("点位出现");
-                if (appearChild != null)
+                if (container != null)
                 {
-                    var appearMMFPlayer = appearChild.GetComponent<MMF_Player>();
-                    if (appearMMFPlayer != null)
-                    {
-                        appearMMFPlayer.PlayFeedbacks();
-                        Debug.Log($"播放点位出现特效 at {position}");
-                    }
+                    container.SetEnemyData(enemyData);
+                    container.StartTelegraph();
+                    currentContainers.Add(container);
+                    Debug.Log($"开始容器预告 at {position}");
                 }
+                else
+                {
+                    Debug.LogError($"容器预制体 {enemyData.enemyContainerPrefab.name} 没有EnemyContainer组件！");
+                    Destroy(containerObj);
+                }
+            }
+            else
+            {
+                Debug.LogError($"敌人数据无效或容器预制体为空！");
             }
         }
         
@@ -282,21 +497,13 @@ public class EnemySpawner : MonoBehaviour
     {
         Debug.Log("开始生成敌人");
         
-        // 播放"点位消失"特效
-        foreach (var previewEffect in currentPreviewEffects)
+        // 开始生成所有容器
+        foreach (var container in currentContainers)
         {
-            if (previewEffect != null)
+            if (container != null)
             {
-                Transform disappearChild = previewEffect.transform.Find("点位消失");
-                if (disappearChild != null)
-                {
-                    var disappearMMFPlayer = disappearChild.GetComponent<MMF_Player>();
-                    if (disappearMMFPlayer != null)
-                    {
-                        disappearMMFPlayer.PlayFeedbacks();
-                        Debug.Log($"播放点位消失特效 at {previewEffect.transform.position}");
-                    }
-                }
+                container.StartSpawn();
+                Debug.Log($"开始容器生成 at {container.transform.position}");
             }
         }
         
@@ -311,8 +518,8 @@ public class EnemySpawner : MonoBehaviour
             SpawnPreviewedWave();
         }
         
-        // 清理预告特效和数据
-        ClearPreviewEffects();
+        // 清理容器和数据
+        ClearContainers();
         
         // 通知阶段完成
         if (EnemyPhaseController.Instance != null)
@@ -325,38 +532,30 @@ public class EnemySpawner : MonoBehaviour
     
     
     /// <summary>
-    /// 使用预告位置生成敌人
+    /// 使用预告位置生成敌人（已废弃，使用容器系统）
     /// </summary>
     void SpawnPreviewedWave()
     {
-        Debug.Log("使用预告位置生成敌人");
-        
-        for (int i = 0; i < previewedPositions.Count && i < previewedEnemyData.Count; i++)
-        {
-            Vector2 spawnPosition = previewedPositions[i];
-            EnemyData enemyData = previewedEnemyData[i];
-            
-            SpawnEnemyFromData(enemyData, false, spawnPosition);
-            Debug.Log($"在预告位置 {spawnPosition} 生成敌人 {enemyData.name}");
-        }
-        
+        Debug.LogWarning("SpawnPreviewedWave已废弃，使用容器系统");
         // 切换到下一波
         currentWaveIndex++;
     }
     
     /// <summary>
-    /// 清理预告特效和数据
+    /// 清理容器和数据
     /// </summary>
-    void ClearPreviewEffects()
+    void ClearContainers()
     {
-        foreach (var effect in currentPreviewEffects)
+        foreach (var container in currentContainers)
         {
-            if (effect != null)
+            if (container != null)
             {
-                Destroy(effect);
+                container.OnTelegraphComplete -= OnContainerTelegraphComplete;
+                container.OnSpawnComplete -= OnContainerSpawnComplete;
+                Destroy(container.gameObject);
             }
         }
-        currentPreviewEffects.Clear();
+        currentContainers.Clear();
         
         // 清理记录的数据
         previewedPositions.Clear();
