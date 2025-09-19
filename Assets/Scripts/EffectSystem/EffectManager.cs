@@ -277,7 +277,13 @@ public class EffectManager : MonoBehaviour, MMEventListener<EffectEvent>, MMEven
         if (deathEffectEvent.DeadObject != null)
         {
             // 查找死亡对象下的 Effect Player (有 EffectPlayer 组件)
-            Transform effectPlayerTransform = deathEffectEvent.DeadObject.transform.Find("Effect Player");
+            // 路径: Enemy -> EnemyItem -> Effect Player
+            Transform enemyItemTransform = deathEffectEvent.DeadObject.transform.Find("EnemyItem");
+            Transform effectPlayerTransform = null;
+            if (enemyItemTransform != null)
+            {
+                effectPlayerTransform = enemyItemTransform.Find("Effect Player");
+            }
             if (effectPlayerTransform != null)
             {
                 EffectPlayer effectPlayer = effectPlayerTransform.GetComponent<EffectPlayer>();

@@ -19,8 +19,15 @@ public class EnemyBehavior : MonoBehaviour
     [Header("攻击范围管理")]
     private Transform attackArea;  // 攻击范围预制体引用
     
+    [Header("血量管理")]
+    private float currentHealth;
+    private bool isDead = false;
+    
     void Start()
     {
+        // 初始化血量
+        InitializeHealth();
+        
         // 如果手动配置了AttackRange，就不需要自动查找
         if (attackRange == null)
         {
@@ -37,6 +44,15 @@ public class EnemyBehavior : MonoBehaviour
         {
             Debug.LogWarning($"EnemyBehavior {name}: 未找到玩家！");
         }
+        
+        // 订阅攻击事件
+        EventTrigger.OnAttack += OnEnemyAttacked;
+    }
+    
+    void OnDestroy()
+    {
+        // 取消订阅攻击事件
+        EventTrigger.OnAttack -= OnEnemyAttacked;
     }
     
     void Update()
@@ -53,6 +69,9 @@ public class EnemyBehavior : MonoBehaviour
         
         if (attackRange != null)
         {
+            // 使用预告阶段保存的朝向
+            attackRange.ApplyTelegraphedDirection();
+            
             // 对攻击范围内的目标执行攻击
             var targets = attackRange.GetTargetsInRange();
             foreach (var target in targets)
@@ -107,7 +126,7 @@ public class EnemyBehavior : MonoBehaviour
             Debug.LogWarning($"EnemyBehavior {name}: 玩家及其子物体中没有找到 PlayerCore 组件，无法造成伤害！");
             
             // 尝试直接查找所有 PlayerCore 组件
-            PlayerCore[] allPlayerCores = FindObjectsOfType<PlayerCore>();
+            PlayerCore[] allPlayerCores = FindObjectsByType<PlayerCore>(FindObjectsSortMode.None);
             Debug.Log($"EnemyBehavior {name}: 场景中总共有 {allPlayerCores.Length} 个 PlayerCore 组件");
             foreach (var core in allPlayerCores)
             {
@@ -182,5 +201,123 @@ public class EnemyBehavior : MonoBehaviour
     {
         attackArea = attackAreaTransform;
         Debug.Log($"EnemyBehavior {name}: 设置攻击范围引用");
+    }
+    
+    /// <summary>
+    /// 初始化血量
+    /// </summary>
+    private void InitializeHealth()
+    {
+        if (enemyData != null)
+        {
+            currentHealth = enemyData.maxHealth;
+            isDead = false;
+            Debug.Log($"EnemyBehavior {name}: 初始化血量 {currentHealth}/{enemyData.maxHealth}");
+        }
+        else
+        {
+            Debug.LogError($"EnemyBehavior {name}: EnemyData 未设置，无法初始化血量！");
+        }
+    }
+    
+    /// <summary>
+    /// 敌人受击处理
+    /// </summary>
+    private void OnEnemyAttacked(AttackData attackData)
+    {
+        Debug.Log($"EnemyBehavior {name}: 接收到攻击事件 - 目标: {attackData.Target?.name}, 伤害: {attackData.Damage}, 攻击者: {attackData.Attacker?.name}");
+        
+        // 检查自己是否是攻击目标
+        if (attackData.Target == gameObject && attackData.Damage > 0f)
+        {
+            Debug.Log($"EnemyBehavior {name}: 受到 {attackData.Damage} 点伤害！");
+            
+            // 处理敌人受击逻辑
+            TakeDamage(attackData.Damage);
+        }
+        else
+        {
+            Debug.Log($"EnemyBehavior {name}: 不是攻击目标，忽略攻击事件");
+        }
+    }
+    
+    /// <summary>
+    /// 敌人受到伤害
+    /// </summary>
+    private void TakeDamage(float damage)
+    {
+        if (enemyData == null)
+        {
+            Debug.LogError($"EnemyBehavior {name}: EnemyData 未设置，无法处理伤害！");
+            return;
+        }
+        
+        if (isDead)
+        {
+            Debug.Log($"EnemyBehavior {name}: 敌人已死亡，无法受到伤害");
+            return;
+        }
+        
+        // 扣除血量
+        currentHealth -= damage;
+        currentHealth = Mathf.Max(0, currentHealth);
+        
+        Debug.Log($"EnemyBehavior {name}: 受到 {damage} 点伤害，当前血量: {currentHealth}/{enemyData.maxHealth}");
+        
+        // 触发受击特效
+        EventTrigger.Attack("EnemyHit", transform.position, Vector3.zero, gameObject, gameObject, 0f);
+        
+        // 检查是否死亡
+        if (currentHealth <= 0)
+        {
+            Die();
+        }
+    }
+    
+    /// <summary>
+    /// 敌人死亡
+    /// </summary>
+    private void Die()
+    {
+        if (isDead) return;
+        
+        isDead = true;
+        Debug.Log($"EnemyBehavior {name}: 敌人死亡！");
+        
+        // 检查敌人对象结构
+        Transform enemyItemTransform = transform.Find("EnemyItem");
+        if (enemyItemTransform != null)
+        {
+            Debug.Log($"EnemyBehavior {name}: 找到 EnemyItem");
+            Transform effectPlayerTransform = enemyItemTransform.Find("Effect Player");
+            if (effectPlayerTransform != null)
+            {
+                Debug.Log($"EnemyBehavior {name}: 找到 Effect Player");
+                Transform deadEffectTransform = effectPlayerTransform.Find("Dead Effect");
+                if (deadEffectTransform != null)
+                {
+                    Debug.Log($"EnemyBehavior {name}: 找到 Dead Effect");
+                }
+                else
+                {
+                    Debug.LogWarning($"EnemyBehavior {name}: 未找到 Dead Effect");
+                }
+            }
+            else
+            {
+                Debug.LogWarning($"EnemyBehavior {name}: 未找到 Effect Player");
+            }
+        }
+        else
+        {
+            Debug.LogWarning($"EnemyBehavior {name}: 未找到 EnemyItem");
+        }
+        
+        // 触发死亡特效
+        Debug.Log($"EnemyBehavior {name}: 触发死亡特效事件");
+        EventTrigger.Dead(transform.position, Vector3.zero, gameObject);
+        
+        // 禁用敌人行为
+        // gameObject.SetActive(false);
     }
 }

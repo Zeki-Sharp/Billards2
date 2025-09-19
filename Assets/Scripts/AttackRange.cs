@@ -24,6 +24,10 @@ public class AttackRange : MonoBehaviour
     private EnemyBehavior enemyBehavior;
     private EnemySpawner enemySpawner;
     
+    // 朝向缓存
+    private Vector2 telegraphedDirection = Vector2.right;  // 预告阶段保存的朝向
+    private bool isDirectionSet = false;  // 是否已设置朝向
+    
     void Start()
     {
         // 自动查找EnemyBehavior
@@ -54,11 +58,13 @@ public class AttackRange : MonoBehaviour
     public void ShowTelegraph()
     {
         gameObject.SetActive(true);
-        UpdateDirection();
+        
+        // 预告阶段：获取当前玩家位置并保存朝向
+        UpdateTelegraphDirection();
         
         if (showDebugInfo)
         {
-            Debug.Log($"AttackRange {name}: 显示攻击预告");
+            Debug.Log($"AttackRange {name}: 显示攻击预告，保存朝向: {telegraphedDirection}");
         }
     }
     
@@ -76,28 +82,57 @@ public class AttackRange : MonoBehaviour
     }
     
     /// <summary>
-    /// 更新攻击方向
+    /// 预告阶段：更新并保存攻击方向
     /// </summary>
-    void UpdateDirection()
+    void UpdateTelegraphDirection()
     {
-        // 直接朝向玩家当前位置
+        // 获取当前玩家位置
         Player player = FindAnyObjectByType<Player>();
         if (player != null)
         {
-            Vector2 playerDirection = (player.transform.position - transform.position).normalized;
-            SetAttackDirection(playerDirection);
+            telegraphedDirection = (player.transform.position - transform.position).normalized;
+            isDirectionSet = true;
+            
+            // 立即应用朝向
+            SetAttackDirection(telegraphedDirection);
+            
             if (showDebugInfo)
             {
-                Debug.Log($"AttackRange {name}: 朝向玩家当前位置 {playerDirection} (玩家位置: {player.transform.position})");
+                Debug.Log($"AttackRange {name}: 预告阶段保存朝向 {telegraphedDirection} (玩家位置: {player.transform.position})");
             }
         }
         else
         {
             // 默认方向
-            SetAttackDirection(Vector2.right);
+            telegraphedDirection = Vector2.right;
+            isDirectionSet = true;
+            SetAttackDirection(telegraphedDirection);
+            
             if (showDebugInfo)
             {
-                Debug.Log($"AttackRange {name}: 未找到玩家，使用默认方向");
+                Debug.Log($"AttackRange {name}: 未找到玩家，使用默认朝向");
+            }
+        }
+    }
+    
+    /// <summary>
+    /// 使用缓存的攻击方向（攻击阶段使用）
+    /// </summary>
+    public void ApplyTelegraphedDirection()
+    {
+        if (isDirectionSet)
+        {
+            SetAttackDirection(telegraphedDirection);
+            if (showDebugInfo)
+            {
+                Debug.Log($"AttackRange {name}: 使用预告阶段保存的朝向 {telegraphedDirection}");
+            }
+        }
+        else
+        {
+            if (showDebugInfo)
+            {
+                Debug.LogWarning($"AttackRange {name}: 朝向未设置，请先执行预告阶段");
             }
         }
     }
@@ -147,8 +182,7 @@ public class AttackRange : MonoBehaviour
         foreach (Transform child in children)
         {
             if (child.name.ToLower().Contains("end") || 
-                child.name.ToLower().Contains("point") ||
-                child.name.ToLower().Contains("tip"))
+                child.name.ToLower().Contains("point"))
             {
                 return child.position;
             }

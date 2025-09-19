@@ -229,16 +229,29 @@ public class PlayerCore : MonoBehaviour
         // 撞击敌人时的处理（只在Charging阶段）
         if (collision.gameObject.CompareTag("Enemy"))
         {
+            Debug.Log($"PlayerCore: 撞击敌人 {collision.gameObject.name}");
+            
             // 检查游戏状态，只在Charging阶段处理碰撞
             GameFlowController gameFlowController = GameFlowController.Instance;
-            if (gameFlowController != null && gameFlowController.IsChargingState)
+            if (gameFlowController != null)
             {
-                // Charging状态：玩家攻击敌人
-                AttackEnemy(collision);
+                Debug.Log($"PlayerCore: 当前游戏状态: {gameFlowController.CurrentState}, IsChargingState: {gameFlowController.IsChargingState}");
+                
+                if (gameFlowController.IsChargingState)
+                {
+                    // Charging状态：玩家攻击敌人
+                    Debug.Log("PlayerCore: 在Charging状态，执行攻击");
+                    AttackEnemy(collision);
+                }
+                else
+                {
+                    // 在Normal/Transition阶段，不处理碰撞（由Enemy处理）
+                    Debug.Log("PlayerCore: 不在Charging状态，不处理碰撞");
+                }
             }
             else
             {
-                // 在Normal/Transition阶段，不处理碰撞（由Enemy处理）
+                Debug.LogWarning("PlayerCore: GameFlowController 未找到！");
             }
         }
         
@@ -263,10 +276,13 @@ public class PlayerCore : MonoBehaviour
     /// </summary>
     void AttackEnemy(Collision2D collision)
     {
+        Debug.Log($"PlayerCore: AttackEnemy 被调用，目标: {collision.gameObject.name}");
+        
         // 防重复触发检查 - 只对同一个敌人进行冷却
         if (lastAttackedEnemy == collision.gameObject && 
             Time.time - lastAttackTime < ATTACK_COOLDOWN)
         {
+            Debug.Log("PlayerCore: 攻击冷却中，跳过");
             return;
         }
         
@@ -274,17 +290,23 @@ public class PlayerCore : MonoBehaviour
         lastAttackedEnemy = collision.gameObject;
         lastAttackTime = Time.time;
         
-        // 获取敌人组件
-        Enemy enemy = collision.gameObject.GetComponent<Enemy>();
-        if (enemy == null) return;
+        // 获取敌人组件（从父物体中查找）
+        Enemy enemy = collision.gameObject.GetComponentInParent<Enemy>();
+        if (enemy == null) 
+        {
+            Debug.LogWarning($"PlayerCore: 目标 {collision.gameObject.name} 及其父物体中没有 Enemy 组件");
+            return;
+        }
         
         // 计算伤害和碰撞信息
         float damage = playerData != null ? playerData.damage : 50f;
         Vector3 hitPosition = (transform.position + collision.transform.position) * 0.5f;
         Vector3 hitDirection = (collision.transform.position - transform.position).normalized;
         
+        Debug.Log($"PlayerCore: 触发攻击事件 - 伤害: {damage}, 目标: {enemy.gameObject.name}");
+        
         // 触发攻击事件，伤害处理由事件监听器处理
-        EventTrigger.Attack("Hit", hitPosition, hitDirection, gameObject, collision.gameObject, damage);
+        EventTrigger.Attack("Hit", hitPosition, hitDirection, gameObject, enemy.gameObject, damage);
         
         // 处理充能力逻辑
         BallPhysics enemyBallPhysics = collision.gameObject.GetComponent<BallPhysics>();
