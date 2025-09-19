@@ -339,4 +339,26 @@ public class EnemyBehavior : MonoBehaviour
         // 禁用敌人行为
         // gameObject.SetActive(false);
     }
+    
+    /// <summary>
+    /// 显示攻击范围并更新位置
+    /// </summary>
+    public void ShowAttackRange()
+    {
+        if (attackRange != null)
+        {
+            attackRange.ShowTelegraph();
+        }
+    }
+    
+    /// <summary>
+    /// 隐藏攻击范围
+    /// </summary>
+    public void HideAttackRange()
+    {
+        if (attackRange != null)
+        {
+            attackRange.HideTelegraph();
+        }
+    }
 }

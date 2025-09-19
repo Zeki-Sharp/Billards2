@@ -293,4 +293,26 @@ public class Enemy : MonoBehaviour
             enemyBehavior.enemyData = data;
         }
     }
+    
+    /// <summary>
+    /// 显示攻击范围并更新位置
+    /// </summary>
+    public void ShowAttackRange()
+    {
+        if (enemyBehavior != null)
+        {
+            enemyBehavior.ShowAttackRange();
+        }
+    }
+    
+    /// <summary>
+    /// 隐藏攻击范围
+    /// </summary>
+    public void HideAttackRange()
+    {
+        if (enemyBehavior != null)
+        {
+            enemyBehavior.HideAttackRange();
+        }
+    }
 }

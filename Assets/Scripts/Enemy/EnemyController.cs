@@ -264,13 +264,13 @@ public class EnemyController : MonoBehaviour
             }
         }
         
-        // 3. 对已激活的敌人只更新攻击范围（不改变状态）
+        // 3. 对已激活的敌人开启并更新攻击范围（不改变状态）
         foreach (Enemy enemy in activeEnemies)
         {
             if (enemy != null)
             {
-                // 只调用更新攻击范围的方法，不改变敌人状态
-                enemy.UpdateAttackRange();
+                // 开启攻击范围并更新位置
+                enemy.ShowAttackRange();
             }
         }
         
@@ -326,6 +326,9 @@ public class EnemyController : MonoBehaviour
                 enemy.StartPhase(EnemyPhase.Attack);
             }
         }
+        
+        // 攻击阶段结束后关闭所有敌人的攻击范围
+        CloseAllAttackRanges();
         
         if (showDebugInfo)
         {
@@ -391,6 +394,30 @@ public class EnemyController : MonoBehaviour
         {
         // 所有敌人移动完成，切换到下一个阶段
             NotifyPhaseCanSwitch();
+        }
+    }
+    
+    /// <summary>
+    /// 关闭所有敌人的攻击范围
+    /// </summary>
+    void CloseAllAttackRanges()
+    {
+        // 关闭已激活敌人的攻击范围
+        foreach (Enemy enemy in activeEnemies)
+        {
+            if (enemy != null)
+            {
+                enemy.HideAttackRange();
+            }
+        }
+        
+        // 关闭预告阶段敌人的攻击范围
+        foreach (Enemy enemy in telegraphingEnemies)
+        {
+            if (enemy != null)
+            {
+                enemy.HideAttackRange();
+            }
         }
     }
 }

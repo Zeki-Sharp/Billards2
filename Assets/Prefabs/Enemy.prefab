@@ -64,7 +64,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   enemyData: {fileID: 11400000, guid: ce82a34099b9d1f4899931eb09ed10ce, type: 2}
-  moveDistance: 2
+  moveDistance: 1.5
+  moveSpeed: 3
   attackRange: {fileID: 4942167022313840919}
 --- !u!1001 &1960770933747990719
 PrefabInstance:
@@ -74,6 +75,18 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 7059074934559455044}
     m_Modifications:
+    - target: {fileID: 2161087141868333465, guid: 92bb8c5569acb9348bf9d53ecaefe6fb, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 2.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 2161087141868333465, guid: 92bb8c5569acb9348bf9d53ecaefe6fb, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 2.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 2161087141868333465, guid: 92bb8c5569acb9348bf9d53ecaefe6fb, type: 3}
+      propertyPath: m_LocalScale.z
+      value: 2.5
+      objectReference: {fileID: 0}
     - target: {fileID: 2956119747917118404, guid: 92bb8c5569acb9348bf9d53ecaefe6fb, type: 3}
       propertyPath: m_Name
       value: EnemyItem
