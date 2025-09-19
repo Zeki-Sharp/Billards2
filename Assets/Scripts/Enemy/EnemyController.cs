@@ -22,6 +22,10 @@ public class EnemyController : MonoBehaviour
     [Header("阶段转换控制")]
     [SerializeField] private float phaseInterval = 1f; // 每个阶段间隔1秒
     
+    [Header("移动阶段控制")]
+    private int expectedMoveCompletions = 0; // 期望的移动完成数量
+    private int actualMoveCompletions = 0;   // 实际的移动完成数量
+    
     [Header("生成器引用")]
     private EnemySpawner enemySpawner;
     
@@ -119,6 +123,11 @@ public class EnemyController : MonoBehaviour
             }
             
             activeEnemies.Add(enemy);
+            
+            // 设置移动完成事件监听（先移除再添加，避免重复）
+            enemy.OnMoveComplete -= OnEnemyMoveComplete;
+            enemy.OnMoveComplete += OnEnemyMoveComplete;
+            
             if (showDebugInfo)
             {
                 Debug.Log($"EnemyController: 注册激活敌人 {enemy.name}");
@@ -144,6 +153,8 @@ public class EnemyController : MonoBehaviour
             if (activeEnemies.Contains(enemy))
             {
                 activeEnemies.Remove(enemy);
+                // 移除移动完成事件监听
+                enemy.OnMoveComplete -= OnEnemyMoveComplete;
                 removed = true;
             }
             
@@ -163,6 +174,10 @@ public class EnemyController : MonoBehaviour
         {
             telegraphingEnemies.Remove(enemy);
             activeEnemies.Add(enemy);
+            
+            // 设置移动完成事件监听（先移除再添加，避免重复）
+            enemy.OnMoveComplete -= OnEnemyMoveComplete;
+            enemy.OnMoveComplete += OnEnemyMoveComplete;
             
             if (showDebugInfo)
             {
@@ -188,23 +203,27 @@ public class EnemyController : MonoBehaviour
         {
             case EnemyPhase.Telegraph:
                 ExecuteTelegraphPhase();
+                // 启动定时器，1秒后通知可以切换到下一个阶段
+                Invoke(nameof(NotifyPhaseCanSwitch), phaseInterval);
                 break;
             case EnemyPhase.Spawn:
                 ExecuteSpawnPhase();
+                // 启动定时器，1秒后通知可以切换到下一个阶段
+                Invoke(nameof(NotifyPhaseCanSwitch), phaseInterval);
                 break;
             case EnemyPhase.Attack:
                 ExecuteAttackPhase();
+                // 启动定时器，1秒后通知可以切换到下一个阶段
+                Invoke(nameof(NotifyPhaseCanSwitch), phaseInterval);
                 break;
             case EnemyPhase.Move:
                 ExecuteMovePhase();
+                // 移动阶段使用回调，不启动定时器
                 break;
             default:
                 Debug.LogWarning($"EnemyController: 未知阶段 {phase}");
                 break;
         }
-        
-        // 启动定时器，1秒后通知可以切换到下一个阶段
-        Invoke(nameof(NotifyPhaseCanSwitch), phaseInterval);
     }
     
     /// <summary>
@@ -324,6 +343,21 @@ public class EnemyController : MonoBehaviour
             Debug.Log("EnemyController: 执行移动阶段");
         }
         
+        // 重置移动完成计数
+        expectedMoveCompletions = activeEnemies.Count(e => e != null);
+        actualMoveCompletions = 0;
+        
+        if (expectedMoveCompletions == 0)
+        {
+            // 如果没有激活的敌人，直接切换到下一个阶段
+            if (showDebugInfo)
+            {
+                Debug.Log("EnemyController: 没有激活的敌人，直接切换阶段");
+            }
+            NotifyPhaseCanSwitch();
+            return;
+        }
+        
         // 只对已激活的敌人执行移动
         foreach (Enemy enemy in activeEnemies)
         {
@@ -333,9 +367,30 @@ public class EnemyController : MonoBehaviour
             }
         }
         
-        if (showDebugInfo)
+        // 移动阶段开始，等待敌人移动完成
+    }
+    
+    /// <summary>
+    /// 敌人移动完成事件处理
+    /// </summary>
+    void OnEnemyMoveComplete(Enemy enemy)
+    {
+        // 检查当前是否在移动阶段
+        if (currentExecutingPhase != EnemyPhase.Move)
         {
-            Debug.Log($"EnemyController: 移动阶段执行完成，{activeEnemies.Count} 个已激活敌人参与移动");
+            // 非移动阶段的移动完成事件被忽略
+            return;
+        }
+        
+        actualMoveCompletions++;
+        
+        // 移除冗余的移动完成日志
+        
+        // 检查是否所有敌人都移动完成
+        if (actualMoveCompletions >= expectedMoveCompletions)
+        {
+        // 所有敌人移动完成，切换到下一个阶段
+            NotifyPhaseCanSwitch();
         }
     }
 }

@@ -221,10 +221,19 @@ public class Enemy : MonoBehaviour
             // 开始移动
             enemyBehavior.ExecuteMovePhase();
             
-            // 等待移动完成（通过检查协程是否还在运行）
-            while (enemyBehavior.IsMoving())
+            // 检查是否真正开始移动
+            if (enemyBehavior.IsMoving())
             {
-                yield return null;
+                // 等待移动完成
+                while (enemyBehavior.IsMoving())
+                {
+                    yield return null;
+                }
+            }
+            else
+            {
+                // 如果没有开始移动（比如找不到玩家），直接跳过
+                Debug.Log($"Enemy {name}: 无法移动，跳过移动阶段");
             }
         }
         
