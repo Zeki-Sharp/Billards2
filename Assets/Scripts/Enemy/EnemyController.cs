@@ -327,8 +327,8 @@ public class EnemyController : MonoBehaviour
             }
         }
         
-        // 攻击阶段结束后关闭所有敌人的攻击范围
-        CloseAllAttackRanges();
+        // 延迟关闭攻击范围，让特效有时间播放
+        Invoke(nameof(CloseAllAttackRanges), 0.5f);
         
         if (showDebugInfo)
         {

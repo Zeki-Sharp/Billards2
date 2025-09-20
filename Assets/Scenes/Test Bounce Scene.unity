@@ -119,98 +119,6 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
---- !u!1 &12897489
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 12897491}
-  - component: {fileID: 12897490}
-  m_Layer: 0
-  m_Name: EnemySpawner
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!114 &12897490
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 12897489}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fe803f38571597d4d9f7517dab3e277a, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  enemyParent: {fileID: 1579586301}
-  minX: -8
-  maxX: 8
-  minY: -4
-  maxY: 4
-  useCircularRange: 0
-  circularRadius: 8
-  waveConfigs:
-  - waveName: 
-    enemySpawns:
-    - enemyData: {fileID: 11400000, guid: ce82a34099b9d1f4899931eb09ed10ce, type: 2}
-      count: 4
-      useRandomPosition: 1
-      customPosition: {x: 0, y: 0}
-  - waveName: 
-    enemySpawns:
-    - enemyData: {fileID: 11400000, guid: ce82a34099b9d1f4899931eb09ed10ce, type: 2}
-      count: 4
-      useRandomPosition: 1
-      customPosition: {x: 0, y: 0}
-  - waveName: 
-    enemySpawns:
-    - enemyData: {fileID: 11400000, guid: 8d46072aeaab4c44fab958850bbe7872, type: 2}
-      count: 5
-      useRandomPosition: 1
-      customPosition: {x: 0, y: 0}
-  - waveName: 
-    enemySpawns:
-    - enemyData: {fileID: 11400000, guid: ce82a34099b9d1f4899931eb09ed10ce, type: 2}
-      count: 5
-      useRandomPosition: 1
-      customPosition: {x: 0, y: 0}
-  - waveName: 
-    enemySpawns:
-    - enemyData: {fileID: 11400000, guid: ce82a34099b9d1f4899931eb09ed10ce, type: 2}
-      count: 6
-      useRandomPosition: 1
-      customPosition: {x: 0, y: 0}
-  - waveName: 
-    enemySpawns:
-    - enemyData: {fileID: 11400000, guid: 8d46072aeaab4c44fab958850bbe7872, type: 2}
-      count: 6
-      useRandomPosition: 1
-      customPosition: {x: 0, y: 0}
-  loopWaves: 0
-  currentWaveIndex: 0
-  showDebugInfo: 1
-  showSpawnRange: 1
---- !u!4 &12897491
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 12897489}
-  serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 3.0468805, y: 7.419571, z: -0.07274454}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 1787785598}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &12911527
 GameObject:
   m_ObjectHideFlags: 0
@@ -700,7 +608,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 342166a24ee5e5641b03dc107d22ce86, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  allEnemies: []
+  telegraphingEnemies: []
+  activeEnemies: []
   phaseInterval: 1
   showDebugInfo: 1
 --- !u!4 &358353914
@@ -8287,7 +8196,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 342166a24ee5e5641b03dc107d22ce86, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  allEnemies: []
+  telegraphingEnemies: []
+  activeEnemies: []
   phaseInterval: 1
   showDebugInfo: 1
 --- !u!4 &889532727
@@ -8335,19 +8245,13 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   enemyParent: {fileID: 1579586301}
-  minX: -9
-  maxX: 9
-  minY: -4.5
-  maxY: 4.5
+  minX: -8
+  maxX: 8
+  minY: -4
+  maxY: 4
   useCircularRange: 0
   circularRadius: 8
   waveConfigs:
-  - waveName: 
-    enemySpawns:
-    - enemyData: {fileID: 11400000, guid: ce82a34099b9d1f4899931eb09ed10ce, type: 2}
-      count: 3
-      useRandomPosition: 1
-      customPosition: {x: 0, y: 0}
   - waveName: 
     enemySpawns:
     - enemyData: {fileID: 11400000, guid: ce82a34099b9d1f4899931eb09ed10ce, type: 2}
@@ -8358,6 +8262,12 @@ MonoBehaviour:
     enemySpawns:
     - enemyData: {fileID: 11400000, guid: ce82a34099b9d1f4899931eb09ed10ce, type: 2}
       count: 5
+      useRandomPosition: 1
+      customPosition: {x: 0, y: 0}
+  - waveName: 
+    enemySpawns:
+    - enemyData: {fileID: 11400000, guid: ce82a34099b9d1f4899931eb09ed10ce, type: 2}
+      count: 6
       useRandomPosition: 1
       customPosition: {x: 0, y: 0}
   loopWaves: 1
@@ -10054,7 +9964,6 @@ Transform:
   - {fileID: 1354289661}
   - {fileID: 12911529}
   - {fileID: 590523341}
-  - {fileID: 12897491}
   - {fileID: 1637308597}
   - {fileID: 1275009113}
   m_Father: {fileID: 0}

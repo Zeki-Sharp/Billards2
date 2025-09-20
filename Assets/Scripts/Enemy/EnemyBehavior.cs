@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Collections;
+using MoreMountains.Feedbacks;
 
 /// <summary>
 /// 敌人行为脚本 - 纯行为逻辑
@@ -16,6 +17,7 @@ public class EnemyBehavior : MonoBehaviour
     
     [Header("组件引用")]
     public AttackRange attackRange;
+    public MMFeedbacks attackEffect;  // 攻击特效MMF组件（直接引用）
     private Transform player;
     private Vector2 currentMovementDirection = Vector2.zero;
     
@@ -73,6 +75,18 @@ public class EnemyBehavior : MonoBehaviour
             // 使用预告阶段保存的朝向
             attackRange.ApplyTelegraphedDirection();
             
+            Debug.Log($"EnemyBehavior {name}: 执行一次攻击");
+            // 播放攻击特效
+            if (attackEffect != null)
+            {
+                Debug.Log($"【攻击特效】EnemyBehavior {name}: 播放MMF攻击特效");
+                attackEffect.PlayFeedbacks();
+            }
+            else
+            {
+                Debug.LogWarning($"【攻击特效】EnemyBehavior {name}: attackEffect 为空，无法播放攻击特效");
+            }
+            
             // 对攻击范围内的目标执行攻击
             var targets = attackRange.GetTargetsInRange();
             
@@ -111,6 +125,8 @@ public class EnemyBehavior : MonoBehaviour
             
             // 对玩家造成伤害
             playerCore.TakeDamage(damage);
+
+            EventTrigger.Attack("Hit", transform.position, Vector3.zero, gameObject, player, damage);
         }
         else
         {
