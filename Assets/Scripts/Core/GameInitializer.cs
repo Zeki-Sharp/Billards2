@@ -283,19 +283,6 @@ public class GameInitializer : MonoBehaviour
         }
     }
     
-    void OnPlayerInHole(Player player)
-    {
-        if (showDebugInfo)
-        {
-            Debug.Log("GameInitializer: 玩家进洞事件");
-        }
-        
-        // 将事件传递给GameFlowController处理
-        if (gameFlowController != null)
-        {
-            gameFlowController.OnPlayerInHole(player);
-        }
-    }
     
     #endregion
     

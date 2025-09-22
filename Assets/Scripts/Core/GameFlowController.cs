@@ -30,12 +30,7 @@ public class GameFlowController : MonoBehaviour
         EnemyPhase      // 敌人阶段：玩家控制完全禁用，敌人正常行动
     }
     
-    [Header("流程设置")]
-    // 移除了未使用的enableAutoTransition和transitionTimeout字段
-    
-    
-    [Header("调试")]
-    [SerializeField] private bool showDebugInfo = true;
+
     
     // 当前状态
     private GameFlowState currentState = GameFlowState.Normal;
@@ -80,10 +75,6 @@ public class GameFlowController : MonoBehaviour
     
     }
     
-    #region 状态管理
-    
-    
-    #endregion
     
     #region 状态切换
     
@@ -120,10 +111,6 @@ public class GameFlowController : MonoBehaviour
         
         // 触发时停出场特效
         EffectEvent.Trigger("Timestop Out Effect", Vector3.zero);
-        if (showDebugInfo)
-        {
-            Debug.Log("GameFlowController: 触发时停出场特效");
-        }
         
         // 开始过渡
         if (transitionManager != null)
@@ -143,10 +130,6 @@ public class GameFlowController : MonoBehaviour
         GameFlowState oldState = currentState;
         currentState = GameFlowState.EnemyPhase;
         
-        if (showDebugInfo)
-        {
-            Debug.Log("GameFlowController: 切换到敌人阶段");
-        }
         
         // 启动敌人阶段控制器
         if (enemyPhaseController != null)
@@ -172,10 +155,6 @@ public class GameFlowController : MonoBehaviour
     /// </summary>
     public void RequestChargingState()
     {
-        if (showDebugInfo)
-        {
-            Debug.Log("GameFlowController: 收到进入蓄力状态请求");
-        }
         
         // 直接切换，因为PlayerStateMachine已经验证了条件
         SwitchToChargingState();
@@ -186,11 +165,6 @@ public class GameFlowController : MonoBehaviour
     /// </summary>
     public void RequestTransitionState()
     {
-        if (showDebugInfo)
-        {
-            Debug.Log("GameFlowController: 收到进入过渡状态请求");
-        }
-        
         // 直接切换，因为PlayerStateMachine已经验证了条件
         SwitchToTransitionState();
     }
@@ -210,17 +184,10 @@ public class GameFlowController : MonoBehaviour
     
     #region 事件处理
 
-    
     public void OnEnemyPhaseComplete()
     {
         // 敌人阶段完成，回到正常状态
         SwitchToNormalState();
-    }
-    
-    public void OnPlayerInHole(Player player)
-    {
-        // 白球进洞，切换到过渡状态
-        SwitchToTransitionState();
     }
     
     #endregion
