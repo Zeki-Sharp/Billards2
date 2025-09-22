@@ -2,10 +2,10 @@ using UnityEngine;
 using MoreMountains.Tools;
 
 /// <summary>
-/// 游戏流程控制器 - 管理Normal、Charging、Transition三状态
+/// 游戏流程控制器 - 管理Normal、Charging、Moving、Transition四状态
 /// 
 /// 【核心职责】：
-/// - 管理游戏全局流程状态（Normal/Charging/Transition）
+/// - 管理游戏全局流程状态（Normal/Charging/Moving/Transition）
 /// - 协调时停系统、过渡系统、敌人系统等
 /// - 通过直接引用与Player系统通信
 /// 
@@ -26,6 +26,7 @@ public class GameFlowController : MonoBehaviour
     {
         Normal,         // 正常游戏状态：玩家移动躲避，敌人移动+射击
         Charging,       // 蓄力时停状态：完全时停，玩家瞄准蓄力
+        Moving,         // 移动状态：玩家球在物理移动中，敌人和子弹时停
         Transition,     // 过渡状态：玩家可移动，敌人和子弹仍时停，白球运动
         EnemyPhase      // 敌人阶段：玩家控制完全禁用，敌人正常行动
     }
@@ -70,12 +71,7 @@ public class GameFlowController : MonoBehaviour
         }
     }
     
-    void Update()
-    {
-    
-    }
-    
-    
+      
     #region 状态切换
     
     public void SwitchToNormalState()
@@ -102,7 +98,18 @@ public class GameFlowController : MonoBehaviour
         
     }
     
-    public void SwitchToTransitionState()
+    public void SwitchToMovingState()
+    {
+        if (currentState == GameFlowState.Moving) return;
+        
+        GameFlowState oldState = currentState;
+        currentState = GameFlowState.Moving;
+        
+        
+        // 触发状态变化事件
+        OnStateChanged?.Invoke(currentState);
+    }
+        public void SwitchToTransitionState()
     {
         if (currentState == GameFlowState.Transition) return;
         
@@ -161,6 +168,15 @@ public class GameFlowController : MonoBehaviour
     }
     
     /// <summary>
+    /// 请求进入移动状态（由PlayerStateMachine调用）
+    /// </summary>
+    public void RequestMovingState()
+    {
+        // 直接切换，因为PlayerStateMachine已经验证了条件
+        SwitchToMovingState();
+    }
+    
+    /// <summary>
     /// 请求进入过渡状态（由PlayerStateMachine调用）
     /// </summary>
     public void RequestTransitionState()
@@ -202,28 +218,14 @@ public class GameFlowController : MonoBehaviour
     
     
     #endregion
-    
-    #region 辅助方法
-    
-    string GetPreviousStateName()
-    {
-        switch (currentState)
-        {
-            case GameFlowState.Normal: return "Normal";
-            case GameFlowState.Charging: return "Charging";
-            case GameFlowState.Transition: return "Transition";
-            case GameFlowState.EnemyPhase: return "EnemyPhase";
-            default: return "Unknown";
-        }
-    }
-    
-    #endregion
+
     
     #region 公共属性
     
     public GameFlowState CurrentState => currentState;
     public bool IsNormalState => currentState == GameFlowState.Normal;
     public bool IsChargingState => currentState == GameFlowState.Charging;
+    public bool IsMovingState => currentState == GameFlowState.Moving;
     public bool IsTransitionState => currentState == GameFlowState.Transition;
     public bool IsEnemyPhase => currentState == GameFlowState.EnemyPhase;
     

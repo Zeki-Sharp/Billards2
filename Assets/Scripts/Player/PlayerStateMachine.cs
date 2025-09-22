@@ -114,7 +114,8 @@ public class PlayerStateMachine : MonoBehaviour
         }
         else if (toState == PlayerState.Moving && fromState == PlayerState.Charging)
         {
-            // 从蓄力到移动：GameFlow不变，不需要通知
+            // 从蓄力到移动：请求进入移动状态
+            gameFlowController.RequestMovingState();
         }
         else if (toState == PlayerState.Idle && fromState == PlayerState.Moving)
         {

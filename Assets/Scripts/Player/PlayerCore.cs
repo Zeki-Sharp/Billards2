@@ -226,27 +226,27 @@ public class PlayerCore : MonoBehaviour
     
     void OnCollisionEnter2D(Collision2D collision)
     {
-        // 撞击敌人时的处理（只在Charging阶段）
+        // 撞击敌人时的处理（只在Moving阶段）
         if (collision.gameObject.CompareTag("Enemy"))
         {
             Debug.Log($"PlayerCore: 撞击敌人 {collision.gameObject.name}");
             
-            // 检查游戏状态，只在Charging阶段处理碰撞
+            // 检查游戏状态，只在Moving阶段处理碰撞
             GameFlowController gameFlowController = GameFlowController.Instance;
             if (gameFlowController != null)
             {
-                Debug.Log($"PlayerCore: 当前游戏状态: {gameFlowController.CurrentState}, IsChargingState: {gameFlowController.IsChargingState}");
+                Debug.Log($"PlayerCore: 当前游戏状态: {gameFlowController.CurrentState}, IsMovingState: {gameFlowController.IsMovingState}");
                 
-                if (gameFlowController.IsChargingState)
+                if (gameFlowController.IsMovingState)
                 {
-                    // Charging状态：玩家攻击敌人
-                    Debug.Log("PlayerCore: 在Charging状态，执行攻击");
+                    // Moving状态：玩家攻击敌人
+                    Debug.Log("PlayerCore: 在Moving状态，执行攻击");
                     AttackEnemy(collision);
                 }
                 else
                 {
-                    // 在Normal/Transition阶段，不处理碰撞（由Enemy处理）
-                    Debug.Log("PlayerCore: 不在Charging状态，不处理碰撞");
+                    // 在其他阶段，不处理碰撞（由Enemy处理）
+                    Debug.Log("PlayerCore: 不在Moving状态，不处理碰撞");
                 }
             }
             else
@@ -272,7 +272,7 @@ public class PlayerCore : MonoBehaviour
     }
     
     /// <summary>
-    /// 玩家攻击敌人的逻辑（Charging阶段）
+    /// 玩家攻击敌人的逻辑（Moving阶段）
     /// </summary>
     void AttackEnemy(Collision2D collision)
     {
