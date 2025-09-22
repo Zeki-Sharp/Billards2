@@ -7,7 +7,7 @@ using UnityEngine;
 /// - 管理玩家的三种状态：Idle（空闲）、Charging（蓄力）、Moving（运动）
 /// - 处理状态间的转换逻辑和条件判断
 /// - 协调PlayerCore和AimController的UI显示
-/// - 通过直接引用与GameFlowController通信
+/// - 通过事件系统与PlayerPhaseController通信
 /// 
 /// 【状态定义】：
 /// - Idle: 可以移动和开始蓄力
@@ -17,8 +17,8 @@ using UnityEngine;
 /// 【设计原则】：
 /// - 单一职责：只管理玩家状态，不处理具体业务逻辑
 /// - 状态驱动：根据当前状态决定允许的操作
-/// - 直接通信：通过引用直接通知GameFlowController
-/// - 简单高效：避免复杂的事件系统
+/// - 事件通信：通过事件系统与PlayerPhaseController通信
+/// - 简单高效：专注于状态管理，不处理游戏流程
 /// </summary>
 public class PlayerStateMachine : MonoBehaviour
 {
@@ -42,7 +42,6 @@ public class PlayerStateMachine : MonoBehaviour
     // 组件引用
     private PlayerCore playerCore;
     private AimController aimController;
-    private GameFlowController gameFlowController;
     private ChargeSystem chargeSystem;
     private TransitionManager transitionManager;
     
@@ -54,7 +53,6 @@ public class PlayerStateMachine : MonoBehaviour
         // 获取组件引用
         playerCore = GetComponent<PlayerCore>();
         aimController = FindFirstObjectByType<AimController>();
-        gameFlowController = GameFlowController.Instance;
         chargeSystem = GetComponent<ChargeSystem>();
         transitionManager = FindFirstObjectByType<TransitionManager>();
         
@@ -104,25 +102,15 @@ public class PlayerStateMachine : MonoBehaviour
     /// </summary>
     void NotifyGameFlowStateChange(PlayerState fromState, PlayerState toState)
     {
-        if (gameFlowController == null) return;
+        // 现在由PlayerPhaseController来管理状态切换
+        // 这里只触发事件，让PlayerPhaseController监听
+        if (showDebugInfo)
+        {
+            Debug.Log($"PlayerStateMachine: 状态变化 {fromState} -> {toState}，通知PlayerPhaseController");
+        }
         
-        // 根据状态变化通知GameFlowController
-        if (toState == PlayerState.Charging && fromState == PlayerState.Idle)
-        {
-            // 从空闲到蓄力：请求进入蓄力状态
-            gameFlowController.RequestChargingState();
-        }
-        else if (toState == PlayerState.Moving && fromState == PlayerState.Charging)
-        {
-            // 从蓄力到移动：请求进入移动状态
-            gameFlowController.RequestMovingState();
-        }
-        else if (toState == PlayerState.Idle && fromState == PlayerState.Moving)
-        {
-            Debug.Log("PlayerStateMachine: 从移动到空闲：请求进入过渡状态");
-            // 从移动到空闲：请求进入过渡状态
-            gameFlowController.RequestTransitionState();
-        }
+        // 触发状态变化事件，PlayerPhaseController会监听这个事件
+        OnStateChanged?.Invoke(toState, fromState);
     }
     
     /// <summary>

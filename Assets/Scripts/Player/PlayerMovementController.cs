@@ -93,13 +93,13 @@ public class PlayerMovementController : MonoBehaviour
             return false;
         }
         
-        // 只在Transition状态下允许移动
-        if (!gameFlowController.IsTransitionState)
+        // 玩家阶段允许移动（具体子阶段由PlayerPhaseController管理）
+        if (gameFlowController.IsPlayerPhase)
         {
-            return false;
+            return true;
         }
         
-        return true;
+        return false;
     }
     
     /// <summary>

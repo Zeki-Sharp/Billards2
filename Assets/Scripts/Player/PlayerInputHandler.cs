@@ -13,7 +13,7 @@ using UnityEngine.InputSystem;
 /// 【设计原则】：
 /// - 作为输入的统一入口，避免其他组件直接检测输入
 /// - 与PlayerStateMachine协作，确保输入与状态一致
-/// - 通过GameFlowController.RequestChargingState()主动触发游戏状态变化
+/// - 通过PlayerStateMachine触发状态变化，由PlayerPhaseController管理子阶段
 /// </summary>
 public class PlayerInputHandler : MonoBehaviour
 {
@@ -25,7 +25,6 @@ public class PlayerInputHandler : MonoBehaviour
     private PlayerStateMachine stateMachine;
     private PlayerMovementController movementController;
     private PlayerCore playerCore;
-    private GameFlowController gameFlowController;
     
     // Input System支持
     private InputAction moveAction;
@@ -45,7 +44,6 @@ public class PlayerInputHandler : MonoBehaviour
         stateMachine = GetComponent<PlayerStateMachine>();
         movementController = GetComponent<PlayerMovementController>();
         playerCore = GetComponent<PlayerCore>();
-        gameFlowController = GameFlowController.Instance;
         
         // 初始化输入系统
         InitializeInputSystem();
@@ -183,6 +181,7 @@ public class PlayerInputHandler : MonoBehaviour
     void HandleInput()
     {
         // 敌人阶段完全禁用所有输入
+        GameFlowController gameFlowController = GameFlowController.Instance;
         if (gameFlowController != null && gameFlowController.IsEnemyPhase)
         {
             return; // 直接返回，不处理任何输入
@@ -222,12 +221,13 @@ public class PlayerInputHandler : MonoBehaviour
                 Debug.Log("PlayerInputHandler: 检测到攻击输入，开始检查蓄力条件");
             }
             
-            // 检查游戏状态，只能在Normal状态下蓄力
-            if (gameFlowController != null && !gameFlowController.IsNormalState)
+            // 检查游戏状态，只能在玩家阶段蓄力
+            GameFlowController gameFlowController = GameFlowController.Instance;
+            if (gameFlowController != null && !gameFlowController.IsPlayerPhase)
             {
                 if (showDebugInfo)
                 {
-                    Debug.Log($"PlayerInputHandler: 游戏状态不是Normal，无法蓄力 - 当前状态: {gameFlowController.CurrentState}");
+                    Debug.Log($"PlayerInputHandler: 不在玩家阶段，无法蓄力 - 当前状态: {gameFlowController.CurrentState}");
                 }
                 return;
             }

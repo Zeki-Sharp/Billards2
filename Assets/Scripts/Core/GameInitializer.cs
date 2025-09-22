@@ -1,8 +1,17 @@
 using UnityEngine;
 
 /// <summary>
-/// 游戏初始化器 - 负责游戏启动时的初始化工作
-/// 查找组件、建立引用关系、订阅事件、准备游戏场景
+/// 游戏初始化器 - 负责初始化游戏场景和组件
+/// 
+/// 【核心职责】：
+/// - 初始化游戏场景
+/// - 设置组件引用
+/// - 启动游戏流程
+/// 
+/// 【新架构说明】：
+/// - GameFlowController通过单例模式自动获取引用
+/// - PlayerPhaseController和EnemyPhaseController自动初始化
+/// - 不再需要手动设置复杂的组件引用
 /// </summary>
 public class GameInitializer : MonoBehaviour
 {
@@ -10,21 +19,12 @@ public class GameInitializer : MonoBehaviour
     [SerializeField] private bool autoInitializeOnStart = true;
     [SerializeField] private bool showDebugInfo = true;
     
-    // 需要初始化的组件
-    private GameManager gameManager;
+    // 核心组件引用
     private GameFlowController gameFlowController;
-    private PlayerStateMachine playerStateMachine;
-    private PlayerCore playerCore;
-    private ChargeSystem chargeSystem;
+    private GameManager gameManager;
     private TransitionManager transitionManager;
-    private TimeManager timeManager;
     private EnemyPhaseController enemyPhaseController;
-    
-    // 游戏对象引用
-    private Player player;
-    private Enemy[] enemies;
-    //private HoleManager holeManager;
-    private EnemySpawner enemySpawner;
+    private PlayerPhaseController playerPhaseController;
     
     void Start()
     {
@@ -34,28 +34,23 @@ public class GameInitializer : MonoBehaviour
         }
     }
     
-    #region 游戏初始化
-    
+    /// <summary>
+    /// 初始化游戏
+    /// </summary>
     public void InitializeGame()
     {
         if (showDebugInfo)
         {
-            Debug.Log("GameInitializer: 开始游戏初始化");
+            Debug.Log("GameInitializer: 开始初始化游戏");
         }
         
-        // 1. 查找核心组件
+        // 查找核心组件
         FindCoreComponents();
         
-        // 2. 查找游戏对象
-        FindGameObjects();
+        // 设置组件引用
+        SetupComponentReferences();
         
-        // 3. 建立引用关系
-        SetupReferences();
-        
-        // 4. 订阅事件
-        SubscribeToEvents();
-        
-        // 5. 准备游戏场景
+        // 准备游戏场景
         PrepareGameScene();
         
         if (showDebugInfo)
@@ -64,175 +59,74 @@ public class GameInitializer : MonoBehaviour
         }
     }
     
-    #endregion
-    
-    #region 组件查找
-    
+    /// <summary>
+    /// 查找核心组件
+    /// </summary>
     void FindCoreComponents()
     {
-        // 查找GameManager
-        gameManager = FindAnyObjectByType<GameManager>();
-        if (gameManager == null)
-        {
-            Debug.LogError("GameInitializer: 未找到GameManager！");
-            return;
-        }
-        
         // 查找GameFlowController
         gameFlowController = FindAnyObjectByType<GameFlowController>();
         if (gameFlowController == null)
         {
             Debug.LogError("GameInitializer: 未找到GameFlowController！");
-            return;
         }
         
-        // 查找其他核心组件（如果存在）
-        chargeSystem = FindAnyObjectByType<ChargeSystem>();
-        timeManager = FindAnyObjectByType<TimeManager>();
+        // 查找GameManager
+        gameManager = FindAnyObjectByType<GameManager>();
+        if (gameManager == null)
+        {
+            Debug.LogError("GameInitializer: 未找到GameManager！");
+        }
+        
+        // 查找TransitionManager
         transitionManager = FindAnyObjectByType<TransitionManager>();
+        if (transitionManager == null)
+        {
+            Debug.LogError("GameInitializer: 未找到TransitionManager！");
+        }
         
         // 查找EnemyPhaseController
         enemyPhaseController = FindAnyObjectByType<EnemyPhaseController>();
         if (enemyPhaseController == null)
         {
-            Debug.LogWarning("GameInitializer: 未找到EnemyPhaseController，将创建默认实例");
             // 创建EnemyPhaseController
-            GameObject controllerObj = new GameObject("EnemyPhaseController");
-            enemyPhaseController = controllerObj.AddComponent<EnemyPhaseController>();
+            GameObject enemyPhaseControllerGO = new GameObject("EnemyPhaseController");
+            enemyPhaseController = enemyPhaseControllerGO.AddComponent<EnemyPhaseController>();
+            // EnemyPhaseController已创建
         }
         
-        if (showDebugInfo)
+        // 查找PlayerPhaseController
+        playerPhaseController = FindAnyObjectByType<PlayerPhaseController>();
+        if (playerPhaseController == null)
         {
-            Debug.Log("GameInitializer: 核心组件查找完成");
+            // 创建PlayerPhaseController
+            GameObject playerPhaseControllerGO = new GameObject("PlayerPhaseController");
+            playerPhaseController = playerPhaseControllerGO.AddComponent<PlayerPhaseController>();
+            // PlayerPhaseController已创建
         }
     }
     
-    void FindGameObjects()
+    /// <summary>
+    /// 设置组件引用
+    /// </summary>
+    void SetupComponentReferences()
     {
-        // 查找玩家
-        player = FindAnyObjectByType<Player>();
-        if (player == null)
-        {
-            Debug.LogWarning("GameInitializer: 未找到Player！");
-        }
-        
-        // 查找所有敌人
-        enemies = FindObjectsByType<Enemy>(FindObjectsSortMode.None);
-        if (enemies.Length == 0)
-        {
-            Debug.LogWarning("GameInitializer: 未找到任何敌人！");
-        }
-        
-        // // 查找HoleManager
-        // holeManager = FindAnyObjectByType<HoleManager>();
-        // if (holeManager == null)
-        // {
-        //     Debug.LogWarning("GameInitializer: 未找到HoleManager！");
-        // }
-        
-        // 查找EnemySpawner
-        enemySpawner = FindAnyObjectByType<EnemySpawner>();
-        if (enemySpawner == null)
-        {
-            Debug.LogWarning("GameInitializer: 未找到EnemySpawner！");
-        }
-        
-        if (showDebugInfo)
-        {
-            Debug.Log($"GameInitializer: 游戏对象查找完成 - 白球: {player != null}, 敌人: {enemies.Length}");
-        }
-    }
-    
-    #endregion
-    
-    #region 引用设置
-    
-    void SetupReferences()
-    {
-        // 设置GameManager的组件引用
+        // 设置GameManager的引用
         if (gameManager != null)
         {
             gameManager.SetGameFlowController(gameFlowController);
             gameManager.SetTransitionManager(transitionManager);
         }
         
-        // 设置GameFlowController的组件引用
-        if (gameFlowController != null)
-        {
-            gameFlowController.SetPlayerStateMachine(playerStateMachine);
-            gameFlowController.SetPlayerCore(playerCore);
-            gameFlowController.SetTransitionManager(transitionManager);
-            gameFlowController.SetEnemyPhaseController(enemyPhaseController);
-            
-            // 设置Player相关引用
-            if (player != null)
-            {
-                PlayerStateMachine playerStateMachine = player.GetStateMachine();
-                PlayerCore playerCore = player.GetPlayerCore();
-                
-                if (playerStateMachine != null)
-                {
-                    gameFlowController.SetPlayerStateMachine(playerStateMachine);
-                }
-                
-                if (playerCore != null)
-                {
-                    gameFlowController.SetPlayerCore(playerCore);
-                }
-            }
-        }
-        
-        // 设置ChargeSystem的组件引用
-        if (chargeSystem != null)
-        {
-            
-            // 设置Player相关引用
-            if (player != null)
-            {
-                PlayerStateMachine playerStateMachine = player.GetStateMachine();
-                PlayerCore playerCore = player.GetPlayerCore();
-                AimController aimController = FindAnyObjectByType<AimController>();
-                
-                if (playerStateMachine != null)
-                {
-                    playerStateMachine.SetChargeSystem(chargeSystem);
-                }
-                
-                if (playerCore != null)
-                {
-                    playerCore.SetChargeSystem(chargeSystem);
-                }
-                
-                if (aimController != null)
-                {
-                    aimController.SetChargeSystem(chargeSystem);
-                }
-            }
-        }
-        
-        if (showDebugInfo)
-        {
-            Debug.Log("GameInitializer: 组件引用设置完成");
-        }
     }
     
-    #endregion
-    
-    #region 事件订阅
-    
-    void SubscribeToEvents()
-    {
-        
-    }
-    
-    #endregion
-    
-    #region 游戏场景准备
-    
+    /// <summary>
+    /// 准备游戏场景
+    /// </summary>
     void PrepareGameScene()
     {
-        // 敌人生成系统现在由手动控制，无需启动
-        if (enemySpawner != null)
+        // 准备敌人生成系统
+        if (enemyPhaseController != null)
         {
             if (showDebugInfo)
             {
@@ -243,7 +137,8 @@ public class GameInitializer : MonoBehaviour
         // 启动游戏流程
         if (gameFlowController != null)
         {
-            gameFlowController.StartNormalState();
+            // 新架构中游戏启动时直接进入玩家阶段
+            // GameFlowController会在Start()中自动启动玩家阶段
             if (showDebugInfo)
             {
                 Debug.Log("GameInitializer: 启动游戏流程");
@@ -251,43 +146,11 @@ public class GameInitializer : MonoBehaviour
         }
     }
     
-    #endregion
-    
-    #region 事件处理
-    
-    // void OnPlayerStopped()
-    // {
-    //     if (showDebugInfo)
-    //     {
-    //         //Debug.Log("GameInitializer: 玩家停止事件");
-    //     }
-        
-    //     // 将事件传递给GameFlowController处理
-    //     if (gameFlowController != null)
-    //     {
-    //         gameFlowController.OnPlayerStopped();
-    //     }
-    // }
-    
-    void OnEnemyPhaseComplete()
-    {
-        if (showDebugInfo)
-        {
-            Debug.Log("GameInitializer: 敌人阶段完成事件");
-        }
-        
-        // 将事件传递给GameFlowController处理
-        if (gameFlowController != null)
-        {
-            gameFlowController.OnEnemyPhaseComplete();
-        }
-    }
-    
-    
-    #endregion
-    
     #region 公共方法
     
+    /// <summary>
+    /// 重新初始化游戏
+    /// </summary>
     public void ReinitializeGame()
     {
         if (showDebugInfo)
@@ -298,6 +161,9 @@ public class GameInitializer : MonoBehaviour
         InitializeGame();
     }
     
+    /// <summary>
+    /// 设置自动初始化
+    /// </summary>
     public void SetAutoInitialize(bool autoInit)
     {
         autoInitializeOnStart = autoInit;

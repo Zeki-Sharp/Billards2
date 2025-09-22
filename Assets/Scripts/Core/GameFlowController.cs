@@ -2,18 +2,17 @@ using UnityEngine;
 using MoreMountains.Tools;
 
 /// <summary>
-/// 游戏流程控制器 - 管理Normal、Charging、Moving、Transition四状态
+/// 游戏流程控制器 - 只管理顶层阶段切换
 /// 
 /// 【核心职责】：
-/// - 管理游戏全局流程状态（Normal/Charging/Moving/Transition）
-/// - 协调时停系统、过渡系统、敌人系统等
-/// - 通过直接引用与Player系统通信
+/// - 管理顶层游戏阶段：PlayerPhase, EnemyPhase
+/// - 协调两个阶段控制器的切换
+/// - 不涉及任何子阶段的具体逻辑
 /// 
 /// 【设计原则】：
-/// - 不直接检测玩家输入（由PlayerInputHandler处理）
-/// - 通过直接引用与PlayerStateMachine通信
-/// - 专注于游戏流程逻辑，不处理具体的玩家行为
-/// - 简单高效：避免复杂的事件系统
+/// - 只管理顶层阶段切换
+/// - 通过事件系统与阶段控制器通信
+/// - 保持架构的对称性和清晰性
 /// </summary>
 public class GameFlowController : MonoBehaviour
 {
@@ -24,26 +23,21 @@ public class GameFlowController : MonoBehaviour
     /// </summary>
     public enum GameFlowState
     {
-        Normal,         // 正常游戏状态：玩家移动躲避，敌人移动+射击
-        Charging,       // 蓄力时停状态：完全时停，玩家瞄准蓄力
-        Moving,         // 移动状态：玩家球在物理移动中，敌人和子弹时停
-        Transition,     // 过渡状态：玩家可移动，敌人和子弹仍时停，白球运动
-        EnemyPhase      // 敌人阶段：玩家控制完全禁用，敌人正常行动
+        PlayerPhase,    // 玩家阶段（由PlayerPhaseController管理）
+        EnemyPhase      // 敌人阶段（由EnemyPhaseController管理）
     }
     
-
+    [Header("调试")]
+    [SerializeField] private bool showDebugInfo = true;
     
     // 当前状态
-    private GameFlowState currentState = GameFlowState.Normal;
+    private GameFlowState currentState = GameFlowState.PlayerPhase;
     
-    // 组件引用（由GameInitializer设置）
-    private TransitionManager transitionManager;
-    private PlayerStateMachine playerStateMachine;
-    private PlayerCore playerCore;
+    // 阶段控制器引用
+    private PlayerPhaseController playerPhaseController;
     private EnemyPhaseController enemyPhaseController;
-
     
-    // 事件（使用MM架构）
+    // 事件
     public System.Action<GameFlowState> OnStateChanged;
     public System.Action OnGameStart;
     
@@ -62,203 +56,163 @@ public class GameFlowController : MonoBehaviour
         }
     }
     
+    void Start()
+    {
+        // 延迟初始化，确保所有组件都已创建
+        StartCoroutine(DelayedInitialization());
+    }
+    
+    System.Collections.IEnumerator DelayedInitialization()
+    {
+        // 等待几帧，确保所有控制器都已创建和初始化
+        yield return new WaitForSeconds(0.1f);
+        
+        InitializeControllers();
+        SubscribeToEvents();
+        
+        // 启动游戏
+        OnGameStart?.Invoke();
+        
+        // 自动启动玩家阶段
+        SwitchToPlayerPhase();
+    }
+    
     void OnDestroy()
     {
-        // 取消事件订阅
-        if (enemyPhaseController != null)
+        UnsubscribeFromEvents();
+    }
+    
+    void InitializeControllers()
+    {
+        // 获取阶段控制器引用
+        playerPhaseController = PlayerPhaseController.Instance;
+        enemyPhaseController = EnemyPhaseController.Instance;
+        
+    }
+    
+    void SubscribeToEvents()
+    {
+        // 订阅PlayerPhaseController的完成事件
+        if (playerPhaseController != null)
         {
-            EnemyPhaseController.OnEnemyPhaseComplete -= OnEnemyPhaseComplete;
-        }
-    }
-    
-      
-    #region 状态切换
-    
-    public void SwitchToNormalState()
-    {
-        if (currentState == GameFlowState.Normal) return;
-        
-        GameFlowState oldState = currentState;
-        currentState = GameFlowState.Normal;
-        
-        // 触发状态变化事件
-        OnStateChanged?.Invoke(currentState);
-        
-    }
-    
-    public void SwitchToChargingState()
-    {
-        if (currentState == GameFlowState.Charging) return;
-        
-        GameFlowState oldState = currentState;
-        currentState = GameFlowState.Charging;
-        
-        // 触发状态变化事件
-        OnStateChanged?.Invoke(currentState);
-        
-    }
-    
-    public void SwitchToMovingState()
-    {
-        if (currentState == GameFlowState.Moving) return;
-        
-        GameFlowState oldState = currentState;
-        currentState = GameFlowState.Moving;
-        
-        
-        // 触发状态变化事件
-        OnStateChanged?.Invoke(currentState);
-    }
-        public void SwitchToTransitionState()
-    {
-        if (currentState == GameFlowState.Transition) return;
-        
-        GameFlowState oldState = currentState;
-        currentState = GameFlowState.Transition;
-        
-        // 触发时停出场特效
-        EffectEvent.Trigger("Timestop Out Effect", Vector3.zero);
-        
-        // 开始过渡
-        if (transitionManager != null)
-        {
-            transitionManager.StartTransition();
-        }
-        
-        // 触发状态变化事件
-        OnStateChanged?.Invoke(currentState);
-        
-    }
-    
-    public void SwitchToEnemyPhase()
-    {
-        if (currentState == GameFlowState.EnemyPhase) return;
-        
-        GameFlowState oldState = currentState;
-        currentState = GameFlowState.EnemyPhase;
-        
-        
-        // 启动敌人阶段控制器
-        if (enemyPhaseController != null)
-        {
-            enemyPhaseController.StartEnemyPhase();
+            playerPhaseController.OnPlayerPhaseComplete += OnPlayerPhaseComplete;
         }
         else
         {
-            Debug.LogWarning("GameFlowController: EnemyPhaseController 未设置！");
+            Debug.LogError("GameFlowController: PlayerPhaseController为null，无法订阅事件！");
         }
         
-        // 触发状态变化事件
-        OnStateChanged?.Invoke(currentState);
-        
-    }
-    
-    #endregion
-    
-    #region 直接通信方法
-    
-    /// <summary>
-    /// 请求进入蓄力状态（由PlayerStateMachine调用）
-    /// </summary>
-    public void RequestChargingState()
-    {
-        
-        // 直接切换，因为PlayerStateMachine已经验证了条件
-        SwitchToChargingState();
-    }
-    
-    /// <summary>
-    /// 请求进入移动状态（由PlayerStateMachine调用）
-    /// </summary>
-    public void RequestMovingState()
-    {
-        // 直接切换，因为PlayerStateMachine已经验证了条件
-        SwitchToMovingState();
-    }
-    
-    /// <summary>
-    /// 请求进入过渡状态（由PlayerStateMachine调用）
-    /// </summary>
-    public void RequestTransitionState()
-    {
-        // 直接切换，因为PlayerStateMachine已经验证了条件
-        SwitchToTransitionState();
-    }
-    
-    #endregion
-    
-    #region 游戏逻辑
-    
-    public void StartNormalState()
-    {
-        SwitchToNormalState();
-        OnGameStart?.Invoke();
-    }
-    
-    
-    #endregion
-    
-    #region 事件处理
-
-    public void OnEnemyPhaseComplete()
-    {
-        // 敌人阶段完成，回到正常状态
-        SwitchToNormalState();
-    }
-    
-    #endregion
-    
-    #region 组件引用设置
-    
-    
-    public void SetTransitionManager(TransitionManager manager)
-    {
-        transitionManager = manager;
-    }
-    
-    
-    #endregion
-
-    
-    #region 公共属性
-    
-    public GameFlowState CurrentState => currentState;
-    public bool IsNormalState => currentState == GameFlowState.Normal;
-    public bool IsChargingState => currentState == GameFlowState.Charging;
-    public bool IsMovingState => currentState == GameFlowState.Moving;
-    public bool IsTransitionState => currentState == GameFlowState.Transition;
-    public bool IsEnemyPhase => currentState == GameFlowState.EnemyPhase;
-    
-    #endregion
-    
-    #region 组件引用设置
-    
-    public void SetPlayerStateMachine(PlayerStateMachine stateMachine)
-    {
-        playerStateMachine = stateMachine;
-    }
-    
-    public void SetPlayerCore(PlayerCore core)
-    {
-        playerCore = core;
-    }
-    
-    public void SetEnemyPhaseController(EnemyPhaseController controller)
-    {
-        // 取消之前的订阅
-        if (enemyPhaseController != null)
-        {
-            EnemyPhaseController.OnEnemyPhaseComplete -= OnEnemyPhaseComplete;
-        }
-        
-        enemyPhaseController = controller;
-        
-        // 订阅新的事件
+        // 订阅EnemyPhaseController的完成事件
         if (enemyPhaseController != null)
         {
             EnemyPhaseController.OnEnemyPhaseComplete += OnEnemyPhaseComplete;
         }
+        else
+        {
+            Debug.LogError("GameFlowController: EnemyPhaseController为null，无法订阅事件！");
+        }
     }
+    
+    void UnsubscribeFromEvents()
+    {
+        // 取消订阅PlayerPhaseController的完成事件
+        if (playerPhaseController != null)
+        {
+            playerPhaseController.OnPlayerPhaseComplete -= OnPlayerPhaseComplete;
+        }
+        
+        // 取消订阅EnemyPhaseController的完成事件
+        if (enemyPhaseController != null)
+        {
+            EnemyPhaseController.OnEnemyPhaseComplete -= OnEnemyPhaseComplete;
+        }
+    }
+    
+    #region 阶段切换
+    
+    /// <summary>
+    /// 玩家阶段完成
+    /// </summary>
+    void OnPlayerPhaseComplete()
+    {
+        if (showDebugInfo)
+        {
+            Debug.Log("GameFlowController: 玩家阶段完成，切换到敌人阶段");
+        }
+        
+        SwitchToEnemyPhase();
+    }
+    
+    /// <summary>
+    /// 敌人阶段完成
+    /// </summary>
+    void OnEnemyPhaseComplete()
+    {
+        if (showDebugInfo)
+        {
+            Debug.Log("GameFlowController: 敌人阶段完成，切换到玩家阶段");
+        }
+        
+        SwitchToPlayerPhase();
+    }
+    
+    /// <summary>
+    /// 切换到玩家阶段
+    /// </summary>
+    void SwitchToPlayerPhase()
+    {
+        if (currentState == GameFlowState.PlayerPhase) return;
+        
+        currentState = GameFlowState.PlayerPhase;
+        
+        if (showDebugInfo)
+        {
+            Debug.Log("GameFlowController: 切换到玩家阶段");
+        }
+        
+        // 启动玩家阶段
+        if (playerPhaseController != null)
+        {
+            playerPhaseController.StartPlayerPhase();
+        }
+        else
+        {
+            Debug.LogError("GameFlowController: PlayerPhaseController 为 null！");
+        }
+        
+        OnStateChanged?.Invoke(currentState);
+    }
+    
+    /// <summary>
+    /// 切换到敌人阶段
+    /// </summary>
+    void SwitchToEnemyPhase()
+    {
+        if (currentState == GameFlowState.EnemyPhase) return;
+        
+        currentState = GameFlowState.EnemyPhase;
+        
+        if (showDebugInfo)
+        {
+            Debug.Log("GameFlowController: 切换到敌人阶段");
+        }
+        
+        // 启动敌人阶段
+        if (enemyPhaseController != null)
+        {
+            enemyPhaseController.StartEnemyPhase();
+        }
+        
+        OnStateChanged?.Invoke(currentState);
+    }
+    
+    #endregion
+    
+    #region 公共属性
+    
+    public GameFlowState CurrentState => currentState;
+    public bool IsPlayerPhase => currentState == GameFlowState.PlayerPhase;
+    public bool IsEnemyPhase => currentState == GameFlowState.EnemyPhase;
     
     #endregion
 }

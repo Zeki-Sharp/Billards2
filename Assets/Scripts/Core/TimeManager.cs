@@ -93,18 +93,22 @@ public class TimeManager : MonoBehaviour
         
         bool shouldSlowDown = false;
         
-        // 根据当前状态和设置决定是否时停
-        if (gameFlowController.IsChargingState && enableEnemyTimeStopInCharging)
+        // 根据当前玩家子阶段和设置决定是否时停
+        PlayerPhaseController playerPhaseController = PlayerPhaseController.Instance;
+        if (playerPhaseController != null)
         {
-            shouldSlowDown = true;
-        }
-        else if (gameFlowController.IsTransitionState && enableEnemyTimeStopInTransition)
-        {
-            shouldSlowDown = true;
-        }
-        else if (gameFlowController.IsNormalState && enableEnemyTimeStopInNormal)
-        {
-            shouldSlowDown = true;
+            if (playerPhaseController.CurrentSubPhase == PlayerPhaseController.PlayerSubPhase.Charging && enableEnemyTimeStopInCharging)
+            {
+                shouldSlowDown = true;
+            }
+            else if (playerPhaseController.CurrentSubPhase == PlayerPhaseController.PlayerSubPhase.Transition && enableEnemyTimeStopInTransition)
+            {
+                shouldSlowDown = true;
+            }
+            else if (playerPhaseController.CurrentSubPhase == PlayerPhaseController.PlayerSubPhase.Normal && enableEnemyTimeStopInNormal)
+            {
+                shouldSlowDown = true;
+            }
         }
         
         float timeScale = shouldSlowDown ? enemyTimeScale : 1f;
@@ -151,11 +155,12 @@ public class TimeManager : MonoBehaviour
     /// </summary>
     public bool IsEnemyTimeStopped()
     {
-        if (gameFlowController == null) return false;
+        PlayerPhaseController playerPhaseController = PlayerPhaseController.Instance;
+        if (playerPhaseController == null) return false;
         
-        bool chargingStop = gameFlowController.IsChargingState && enableEnemyTimeStopInCharging;
-        bool transitionStop = gameFlowController.IsTransitionState && enableEnemyTimeStopInTransition;
-        bool normalStop = gameFlowController.IsNormalState && enableEnemyTimeStopInNormal;
+        bool chargingStop = playerPhaseController.CurrentSubPhase == PlayerPhaseController.PlayerSubPhase.Charging && enableEnemyTimeStopInCharging;
+        bool transitionStop = playerPhaseController.CurrentSubPhase == PlayerPhaseController.PlayerSubPhase.Transition && enableEnemyTimeStopInTransition;
+        bool normalStop = playerPhaseController.CurrentSubPhase == PlayerPhaseController.PlayerSubPhase.Normal && enableEnemyTimeStopInNormal;
         
         bool result = chargingStop || transitionStop || normalStop;
         

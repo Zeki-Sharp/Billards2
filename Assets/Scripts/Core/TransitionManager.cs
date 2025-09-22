@@ -130,11 +130,8 @@ public class TransitionManager : MonoBehaviour
             timeStopEffect.ThresholdFadeOut();
         }
         
-        // 直接通知GameFlowController切换到敌人阶段
-        if (GameFlowController.Instance != null)
-        {
-            GameFlowController.Instance.SwitchToEnemyPhase();
-        }
+        // 通知PlayerPhaseController过渡完成
+        // PlayerPhaseController会处理后续的阶段切换
         
         if (showDebugInfo)
         {
