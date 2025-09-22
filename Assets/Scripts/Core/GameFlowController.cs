@@ -31,8 +31,7 @@ public class GameFlowController : MonoBehaviour
     }
     
     [Header("流程设置")]
-    [SerializeField] private bool enableAutoTransition = true;
-    [SerializeField] private float transitionTimeout = 5f; // 过渡状态超时时间
+    // 移除了未使用的enableAutoTransition和transitionTimeout字段
     
     
     [Header("调试")]
@@ -46,9 +45,7 @@ public class GameFlowController : MonoBehaviour
     private PlayerStateMachine playerStateMachine;
     private PlayerCore playerCore;
     private EnemyPhaseController enemyPhaseController;
-    
-    // 状态管理
-    private bool hasPlayerLaunched = false;
+
     
     // 事件（使用MM架构）
     public System.Action<GameFlowState> OnStateChanged;
@@ -78,40 +75,13 @@ public class GameFlowController : MonoBehaviour
         }
     }
     
-    // 事件监听已移除，改为直接引用通信
-    
     void Update()
     {
-        // 检查状态切换条件
-        CheckStateTransitions();
+    
     }
     
     #region 状态管理
     
-    /// <summary>
-    /// 检查状态切换条件
-    /// </summary>
-    void CheckStateTransitions()
-    {
-        switch (currentState)
-        {
-            case GameFlowState.Normal:
-                // 正常状态：不再自动检查进入蓄力状态
-                // 蓄力状态切换现在由PlayerStateMachine主动触发
-                break;
-            case GameFlowState.Charging:
-                // 蓄力状态：不再自动检查进入过渡状态
-                // 过渡状态切换现在由PlayerStateMachine主动触发
-                break;
-            case GameFlowState.Transition:
-                // 过渡状态：检查是否可以回到正常状态
-                if (CanReturnToNormalState())
-                {
-                    SwitchToNormalState();
-                }
-                break;
-        }
-    }
     
     #endregion
     
@@ -123,9 +93,6 @@ public class GameFlowController : MonoBehaviour
         
         GameFlowState oldState = currentState;
         currentState = GameFlowState.Normal;
-        
-        // 重置发射状态
-        hasPlayerLaunched = false;
         
         // 触发状态变化事件
         OnStateChanged?.Invoke(currentState);
@@ -198,87 +165,6 @@ public class GameFlowController : MonoBehaviour
     
     #endregion
     
-    #region 状态验证
-    
-    /// <summary>
-    /// 检查是否可以进入蓄力状态
-    /// 注意：不再直接检测输入，由PlayerInputHandler通过事件通知
-    /// </summary>
-    bool CanEnterChargingState()
-    {
-        if (showDebugInfo)
-        {
-            Debug.Log("GameFlowController: 检查是否可以进入蓄力状态");
-        }
-        
-        
-        // 检查玩家状态
-        if (playerStateMachine != null && !playerStateMachine.IsIdle)
-        {
-            if (showDebugInfo)
-            {
-                Debug.Log($"GameFlowController: 玩家不在Idle状态，无法进入蓄力状态 - 当前状态: {playerStateMachine.CurrentState}");
-            }
-            return false;
-        }
-        
-        // 检查玩家是否在物理移动
-        if (playerCore != null && playerCore.IsPhysicsMoving())
-        {
-            if (showDebugInfo)
-            {
-                Debug.Log("GameFlowController: 玩家正在物理移动，无法进入蓄力状态");
-            }
-            return false;
-        }
-        
-        if (showDebugInfo)
-        {
-            Debug.Log("GameFlowController: 所有条件满足，可以进入蓄力状态");
-        }
-        
-        // 现在由PlayerInputHandler主动调用RequestChargingState()来触发状态切换
-        // 这里只做基本的状态检查，不检测输入
-        return true;
-    }
-    
-    /// <summary>
-    /// 检查是否可以进入过渡状态
-    /// </summary>
-    bool CanEnterTransitionState()
-    {
-        // 只有在Charging状态下才能进入Transition
-        if (currentState != GameFlowState.Charging)
-        {
-            return false;
-        }
-        
-        return true;
-    }
-    
-    /// <summary>
-    /// 检查是否可以回到正常状态
-    /// </summary>
-    bool CanReturnToNormalState()
-    {
-        // 只在Transition状态下检查
-        if (currentState != GameFlowState.Transition)
-        {
-            return false;
-        }
-        
-        // 检查过渡是否完成
-        if (transitionManager != null && !transitionManager.IsTransitioning())
-        {
-            return true;
-        }
-        
-        
-        return false;
-    }
-    
-    #endregion
-    
     #region 直接通信方法
     
     /// <summary>
@@ -292,11 +178,6 @@ public class GameFlowController : MonoBehaviour
         }
         
         // 直接切换，因为PlayerStateMachine已经验证了条件
-        // 这里不再重复检查，避免时序问题
-        if (showDebugInfo)
-        {
-            Debug.Log("GameFlowController: PlayerStateMachine已验证条件，直接切换到蓄力状态");
-        }
         SwitchToChargingState();
     }
     
@@ -311,40 +192,12 @@ public class GameFlowController : MonoBehaviour
         }
         
         // 直接切换，因为PlayerStateMachine已经验证了条件
-        if (showDebugInfo)
-        {
-            Debug.Log("GameFlowController: PlayerStateMachine已验证条件，直接切换到过渡状态");
-        }
         SwitchToTransitionState();
-    }
-    
-    /// <summary>
-    /// 请求回到正常状态（由PlayerStateMachine调用）
-    /// </summary>
-    public void RequestNormalState()
-    {
-        if (showDebugInfo)
-        {
-            Debug.Log("GameFlowController: 收到回到正常状态请求");
-        }
-        
-        // 直接切换，因为PlayerStateMachine已经验证了条件
-        if (showDebugInfo)
-        {
-            Debug.Log("GameFlowController: PlayerStateMachine已验证条件，直接切换到正常状态");
-        }
-        SwitchToNormalState();
     }
     
     #endregion
     
     #region 游戏逻辑
-    
-    void LaunchPlayer()
-    {
-        hasPlayerLaunched = true;
-        
-    }
     
     public void StartNormalState()
     {

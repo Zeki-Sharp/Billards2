@@ -58,18 +58,6 @@ public class PlayerInputHandler : MonoBehaviour
     
     void Update()
     {
-        // 检查T键（测试功能）- 只在敌人阶段生效
-        if (Input.GetKeyDown(KeyCode.T))
-        {
-            if (gameFlowController != null && gameFlowController.IsEnemyPhase)
-            {
-                if (showDebugInfo)
-                {
-                    Debug.Log("PlayerInputHandler: 检测到T键，从敌人阶段回到玩家阶段");
-                }
-                gameFlowController.RequestNormalState(); // 回到玩家阶段
-            }
-        }
         
         // 更新输入状态
         UpdateInputState();
