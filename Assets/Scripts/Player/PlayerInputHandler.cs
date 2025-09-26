@@ -36,6 +36,7 @@ public class PlayerInputHandler : MonoBehaviour
     private PlayerStateMachine stateMachine;
     private PlayerMovementController movementController;
     private PlayerCore playerCore;
+    private PlayerInputPermissionManager permissionManager;
     
     // Input System支持
     private InputAction moveAction;
@@ -55,6 +56,14 @@ public class PlayerInputHandler : MonoBehaviour
         stateMachine = GetComponent<PlayerStateMachine>();
         movementController = GetComponent<PlayerMovementController>();
         playerCore = GetComponent<PlayerCore>();
+        permissionManager = GetComponent<PlayerInputPermissionManager>();
+        
+        // 确保权限管理器存在
+        if (permissionManager == null)
+        {
+            permissionManager = gameObject.AddComponent<PlayerInputPermissionManager>();
+            Debug.LogWarning("PlayerInputHandler: 自动添加PlayerInputPermissionManager组件");
+        }
         
         // 初始化输入系统
         InitializeInputSystem();
@@ -238,14 +247,14 @@ public class PlayerInputHandler : MonoBehaviour
     /// </summary>
     void HandleIdleInput()
     {
-        // 处理WASD移动 - 只在Transition阶段允许
-        if (movementController != null && CanMoveInCurrentSubPhase())
+        // 处理WASD移动 - 使用权限管理器检查
+        if (movementController != null && permissionManager.CanMoveInCurrentSubPhase())
         {
             movementController.HandleMovement(moveInput, isMovePressed);
         }
         
-        // 检测蓄力输入 - 只在Normal阶段允许
-        if (isAttackPressed && CanChargeInCurrentSubPhase())
+        // 检测蓄力输入 - 使用权限管理器检查
+        if (isAttackPressed && permissionManager.CanChargeInCurrentSubPhase())
         {
             if (showDebugInfo)
             {
@@ -272,59 +281,6 @@ public class PlayerInputHandler : MonoBehaviour
         }
     }
     
-    /// <summary>
-    /// 检查是否允许WASD移动（只检查玩家子阶段权限）
-    /// </summary>
-    bool CanMoveInCurrentSubPhase()
-    {
-        // 检查玩家子阶段（顶层阶段权限已在HandleInput()中检查）
-        PlayerPhaseController playerPhaseController = PlayerPhaseController.Instance;
-        if (playerPhaseController == null)
-        {
-            if (showDebugInfo)
-            {
-                Debug.LogWarning("PlayerInputHandler: PlayerPhaseController实例为空！");
-            }
-            return false;
-        }
-        
-        // 只在Transition子阶段允许WASD移动
-        bool canMove = playerPhaseController.CurrentSubPhase == PlayerPhaseController.PlayerSubPhase.Transition;
-        
-        if (showDebugInfo && !canMove)
-        {
-            Debug.Log($"PlayerInputHandler: 当前子阶段 {playerPhaseController.CurrentSubPhase} 不允许WASD移动");
-        }
-        
-        return canMove;
-    }
-    
-    /// <summary>
-    /// 检查是否允许蓄力输入（只检查玩家子阶段权限）
-    /// </summary>
-    bool CanChargeInCurrentSubPhase()
-    {
-        // 检查玩家子阶段（顶层阶段权限已在HandleInput()中检查）
-        PlayerPhaseController playerPhaseController = PlayerPhaseController.Instance;
-        if (playerPhaseController == null)
-        {
-            if (showDebugInfo)
-            {
-                Debug.LogWarning("PlayerInputHandler: PlayerPhaseController实例为空！");
-            }
-            return false;
-        }
-        
-        // 只在Normal子阶段允许蓄力输入
-        bool canCharge = playerPhaseController.CurrentSubPhase == PlayerPhaseController.PlayerSubPhase.Normal;
-        
-        if (showDebugInfo && !canCharge)
-        {
-            Debug.Log($"PlayerInputHandler: 当前子阶段 {playerPhaseController.CurrentSubPhase} 不允许蓄力输入");
-        }
-        
-        return canCharge;
-    }
     
     #endregion
     

@@ -35,7 +35,6 @@ public class PlayerCore : MonoBehaviour
     // 血量管理（实例变量，不从ScriptableObject读取）
     private float currentHealth;
     
-    // 蓄力相关（已移至ChargeSystem）
     
     // 防重复触发机制
     private GameObject lastAttackedEnemy = null;
