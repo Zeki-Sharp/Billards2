@@ -214,13 +214,6 @@ public class PlayerStateMachine : MonoBehaviour
     {
         if (currentState == PlayerState.Idle)
         {
-            // 如果正在WASD移动，先停止移动
-            PlayerMovementController movementController = GetComponent<PlayerMovementController>();
-            if (movementController != null)
-            {
-                movementController.StopWASDMovement();
-            }
-            
             SwitchToState(PlayerState.Charging);
         }
     }
