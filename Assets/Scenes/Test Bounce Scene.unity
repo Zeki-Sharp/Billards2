@@ -8560,6 +8560,9 @@ MonoBehaviour:
   ignoreLayers:
     serializedVersion: 2
     m_Bits: 2
+  playerLayer:
+    serializedVersion: 2
+    m_Bits: 8
   reflectionOffset: 0.1
   ballTag: Player
   enableDebugLog: 0
@@ -10869,6 +10872,18 @@ PrefabInstance:
       value: 3
       objectReference: {fileID: 0}
     - target: {fileID: 5182198335736264703, guid: 2d86053af5e50c446a06f75cbdecb65b, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 0.7
+      objectReference: {fileID: 0}
+    - target: {fileID: 5182198335736264703, guid: 2d86053af5e50c446a06f75cbdecb65b, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 0.7
+      objectReference: {fileID: 0}
+    - target: {fileID: 5182198335736264703, guid: 2d86053af5e50c446a06f75cbdecb65b, type: 3}
+      propertyPath: m_LocalScale.z
+      value: 0.7
+      objectReference: {fileID: 0}
+    - target: {fileID: 5182198335736264703, guid: 2d86053af5e50c446a06f75cbdecb65b, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0.02
       objectReference: {fileID: 0}
@@ -10919,6 +10934,10 @@ PrefabInstance:
     - target: {fileID: 7728727211215105518, guid: 2d86053af5e50c446a06f75cbdecb65b, type: 3}
       propertyPath: m_Layer
       value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 7844486164170001436, guid: 2d86053af5e50c446a06f75cbdecb65b, type: 3}
+      propertyPath: maxForce
+      value: 30
       objectReference: {fileID: 0}
     - target: {fileID: 8260504455540963710, guid: 2d86053af5e50c446a06f75cbdecb65b, type: 3}
       propertyPath: m_Layer

@@ -8,12 +8,15 @@ using UnityEngine.InputSystem;
 /// - 处理WASD移动输入和鼠标攻击输入
 /// - 支持New Input System和Legacy Input Manager
 /// - 根据玩家状态分发输入到相应组件
+/// - 检查游戏子阶段权限，控制WASD移动可用性
 /// - 主动通知GameFlowController进行状态切换
 /// 
 /// 【设计原则】：
 /// - 作为输入的统一入口，避免其他组件直接检测输入
 /// - 与PlayerStateMachine协作，确保输入与状态一致
 /// - 通过PlayerStateMachine触发状态变化，由PlayerPhaseController管理子阶段
+/// - 根据游戏子阶段控制WASD移动权限：只在Transition阶段允许WASD移动
+/// - 蓄力发射功能在所有玩家子阶段都可用（Normal, Charging, Moving, Transition）
 /// </summary>
 public class PlayerInputHandler : MonoBehaviour
 {
@@ -207,8 +210,8 @@ public class PlayerInputHandler : MonoBehaviour
     /// </summary>
     void HandleIdleInput()
     {
-        // 处理WASD移动
-        if (movementController != null)
+        // 处理WASD移动 - 只在Transition阶段允许
+        if (movementController != null && CanProcessMovementInCurrentPhase())
         {
             movementController.HandleMovement(moveInput, isMovePressed);
         }
@@ -250,6 +253,33 @@ public class PlayerInputHandler : MonoBehaviour
         {
             stateMachine.LaunchCharged();
         }
+    }
+    
+    /// <summary>
+    /// 检查当前子阶段是否允许WASD移动
+    /// </summary>
+    bool CanProcessMovementInCurrentPhase()
+    {
+        // 获取PlayerPhaseController引用
+        PlayerPhaseController playerPhaseController = PlayerPhaseController.Instance;
+        if (playerPhaseController == null)
+        {
+            if (showDebugInfo)
+            {
+                Debug.LogWarning("PlayerInputHandler: PlayerPhaseController实例为空！");
+            }
+            return false;
+        }
+        
+        // 只在Transition子阶段允许WASD移动
+        bool canMove = playerPhaseController.CurrentSubPhase == PlayerPhaseController.PlayerSubPhase.Transition;
+        
+        if (showDebugInfo && !canMove)
+        {
+            Debug.Log($"PlayerInputHandler: 当前子阶段 {playerPhaseController.CurrentSubPhase} 不允许WASD移动");
+        }
+        
+        return canMove;
     }
     
     #endregion
