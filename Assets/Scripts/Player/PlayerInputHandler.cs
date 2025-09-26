@@ -16,9 +16,15 @@ using UnityEngine.InputSystem;
 /// - 作为权限控制的唯一决策点，避免重复的权限检查
 /// - 与PlayerStateMachine协作，确保输入与状态一致
 /// - 通过PlayerStateMachine触发状态变化，由PlayerPhaseController管理子阶段
-/// - 整合顶层阶段和子阶段的权限检查，提供统一的权限控制
+/// - 在HandleInput()开始进行统一的顶层阶段权限检查
+/// - 在各个输入处理方法中进行具体的子阶段权限检查
 /// - WASD移动权限：只在Transition阶段允许
-/// - 蓄力发射功能在所有玩家子阶段都可用（Normal, Charging, Moving, Transition）
+/// - 蓄力输入权限：只在Normal阶段允许
+/// 
+/// 【权限检查优化】：
+/// - 顶层阶段权限检查：在HandleInput()开始统一检查，避免重复
+/// - 子阶段权限检查：在具体输入处理方法中检查，逻辑清晰
+/// - 消除了重复的GameFlowController检查，提高性能
 /// </summary>
 public class PlayerInputHandler : MonoBehaviour
 {
@@ -185,14 +191,34 @@ public class PlayerInputHandler : MonoBehaviour
     /// </summary>
     void HandleInput()
     {
-        // 敌人阶段完全禁用所有输入
+        // 统一权限检查：检查顶层游戏阶段
         GameFlowController gameFlowController = GameFlowController.Instance;
-        if (gameFlowController != null && gameFlowController.IsEnemyPhase)
+        if (gameFlowController == null)
+        {
+            if (showDebugInfo)
+            {
+                Debug.LogWarning("PlayerInputHandler: GameFlowController实例为空！");
+            }
+            return;
+        }
+        
+        // 敌人阶段完全禁用所有输入
+        if (gameFlowController.IsEnemyPhase)
         {
             return; // 直接返回，不处理任何输入
         }
         
-        // 根据当前状态处理输入
+        // 非玩家阶段也禁用所有输入
+        if (!gameFlowController.IsPlayerPhase)
+        {
+            if (showDebugInfo)
+            {
+                Debug.Log($"PlayerInputHandler: 非玩家阶段，禁用所有输入 - 当前状态: {gameFlowController.CurrentState}");
+            }
+            return;
+        }
+        
+        // 现在确定在玩家阶段，根据当前状态处理具体输入
         switch (stateMachine.CurrentState)
         {
             case PlayerStateMachine.PlayerState.Idle:
@@ -213,28 +239,17 @@ public class PlayerInputHandler : MonoBehaviour
     void HandleIdleInput()
     {
         // 处理WASD移动 - 只在Transition阶段允许
-        if (movementController != null && CanProcessMovementInCurrentPhase())
+        if (movementController != null && CanMoveInCurrentSubPhase())
         {
             movementController.HandleMovement(moveInput, isMovePressed);
         }
         
-        // 检测蓄力输入，先检查游戏状态和能量门槛
-        if (isAttackPressed)
+        // 检测蓄力输入 - 只在Normal阶段允许
+        if (isAttackPressed && CanChargeInCurrentSubPhase())
         {
             if (showDebugInfo)
             {
-                Debug.Log("PlayerInputHandler: 检测到攻击输入，开始检查蓄力条件");
-            }
-            
-            // 检查游戏状态，只能在玩家阶段蓄力
-            GameFlowController gameFlowController = GameFlowController.Instance;
-            if (gameFlowController != null && !gameFlowController.IsPlayerPhase)
-            {
-                if (showDebugInfo)
-                {
-                    Debug.Log($"PlayerInputHandler: 不在玩家阶段，无法蓄力 - 当前状态: {gameFlowController.CurrentState}");
-                }
-                return;
+                Debug.Log("PlayerInputHandler: 检测到攻击输入，开始蓄力");
             }
             
             // 开始蓄力
@@ -258,32 +273,11 @@ public class PlayerInputHandler : MonoBehaviour
     }
     
     /// <summary>
-    /// 检查是否允许WASD移动（整合顶层阶段和子阶段权限检查）
+    /// 检查是否允许WASD移动（只检查玩家子阶段权限）
     /// </summary>
-    bool CanProcessMovementInCurrentPhase()
+    bool CanMoveInCurrentSubPhase()
     {
-        // 1. 检查顶层游戏阶段
-        GameFlowController gameFlowController = GameFlowController.Instance;
-        if (gameFlowController == null)
-        {
-            if (showDebugInfo)
-            {
-                Debug.LogWarning("PlayerInputHandler: GameFlowController实例为空！");
-            }
-            return false;
-        }
-        
-        // 敌人阶段完全禁用移动
-        if (gameFlowController.IsEnemyPhase)
-        {
-            if (showDebugInfo)
-            {
-                Debug.Log("PlayerInputHandler: 敌人阶段，不允许WASD移动");
-            }
-            return false;
-        }
-        
-        // 2. 检查玩家子阶段
+        // 检查玩家子阶段（顶层阶段权限已在HandleInput()中检查）
         PlayerPhaseController playerPhaseController = PlayerPhaseController.Instance;
         if (playerPhaseController == null)
         {
@@ -303,6 +297,33 @@ public class PlayerInputHandler : MonoBehaviour
         }
         
         return canMove;
+    }
+    
+    /// <summary>
+    /// 检查是否允许蓄力输入（只检查玩家子阶段权限）
+    /// </summary>
+    bool CanChargeInCurrentSubPhase()
+    {
+        // 检查玩家子阶段（顶层阶段权限已在HandleInput()中检查）
+        PlayerPhaseController playerPhaseController = PlayerPhaseController.Instance;
+        if (playerPhaseController == null)
+        {
+            if (showDebugInfo)
+            {
+                Debug.LogWarning("PlayerInputHandler: PlayerPhaseController实例为空！");
+            }
+            return false;
+        }
+        
+        // 只在Normal子阶段允许蓄力输入
+        bool canCharge = playerPhaseController.CurrentSubPhase == PlayerPhaseController.PlayerSubPhase.Normal;
+        
+        if (showDebugInfo && !canCharge)
+        {
+            Debug.Log($"PlayerInputHandler: 当前子阶段 {playerPhaseController.CurrentSubPhase} 不允许蓄力输入");
+        }
+        
+        return canCharge;
     }
     
     #endregion
