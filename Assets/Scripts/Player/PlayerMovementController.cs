@@ -6,19 +6,20 @@ using UnityEngine;
 /// 【核心职责】：
 /// - 处理WASD键盘输入控制的微调移动
 /// - 管理微调移动的速度和方向控制
-/// - 与GameFlowController协调，确保移动权限
 /// - 提供平滑的微调移动协程
+/// - 实现移动的物理逻辑和性能优化
 /// 
 /// 【主要功能】：
 /// - WASD移动：实时响应键盘输入，直接设置球体速度
 /// - 微调移动：平滑移动到指定位置（协程实现）
-/// - 移动权限：检查游戏状态，确保在正确状态下才能移动
 /// - 移动停止：响应蓄力输入，立即停止WASD移动
+/// - 移动状态管理：跟踪移动状态和方向变化
 /// 
 /// 【设计原则】：
-/// - 专注移动控制，不处理输入检测（由PlayerInputHandler处理）
+/// - 专注移动实现，不处理输入检测（由PlayerInputHandler处理）
+/// - 不处理权限检查（由PlayerInputHandler统一管理）
 /// - 与物理系统协作，区分微调移动和物理发射移动
-/// - 状态感知：根据游戏状态决定是否允许移动
+/// - 假设调用者已经验证了移动权限
 /// </summary>
 public class PlayerMovementController : MonoBehaviour
 {
@@ -57,11 +58,7 @@ public class PlayerMovementController : MonoBehaviour
     /// <param name="isPressed">是否按下移动键</param>
     public void HandleMovement(Vector2 moveInput, bool isPressed)
     {
-        // 检查是否允许移动
-        if (!CanMove())
-        {
-            return;
-        }
+        // 权限检查由PlayerInputHandler负责，这里直接处理移动逻辑
         
         // 如果有输入，应用微调力
         if (isPressed && moveInput.magnitude > 0.1f)
@@ -73,33 +70,6 @@ public class PlayerMovementController : MonoBehaviour
             // 没有输入时停止球体
             StopMovement();
         }
-    }
-    
-    /// <summary>
-    /// 检查是否可以移动
-    /// </summary>
-    bool CanMove()
-    {
-        // 检查游戏状态
-        if (gameFlowController == null)
-        {
-            Debug.LogWarning("PlayerMovementController: GameFlowController实例为空！");
-            return false;
-        }
-        
-        // 敌人阶段完全禁用移动
-        if (gameFlowController.IsEnemyPhase)
-        {
-            return false;
-        }
-        
-        // 玩家阶段允许移动（具体子阶段由PlayerPhaseController管理）
-        if (gameFlowController.IsPlayerPhase)
-        {
-            return true;
-        }
-        
-        return false;
     }
     
     /// <summary>

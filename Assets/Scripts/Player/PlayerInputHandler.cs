@@ -2,20 +2,22 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 
 /// <summary>
-/// 玩家输入处理器 - 统一处理所有玩家输入
+/// 玩家输入处理器 - 统一处理所有玩家输入和权限控制
 /// 
 /// 【核心职责】：
 /// - 处理WASD移动输入和鼠标攻击输入
 /// - 支持New Input System和Legacy Input Manager
 /// - 根据玩家状态分发输入到相应组件
-/// - 检查游戏子阶段权限，控制WASD移动可用性
+/// - 统一管理所有输入权限控制（顶层阶段 + 子阶段）
 /// - 主动通知GameFlowController进行状态切换
 /// 
 /// 【设计原则】：
 /// - 作为输入的统一入口，避免其他组件直接检测输入
+/// - 作为权限控制的唯一决策点，避免重复的权限检查
 /// - 与PlayerStateMachine协作，确保输入与状态一致
 /// - 通过PlayerStateMachine触发状态变化，由PlayerPhaseController管理子阶段
-/// - 根据游戏子阶段控制WASD移动权限：只在Transition阶段允许WASD移动
+/// - 整合顶层阶段和子阶段的权限检查，提供统一的权限控制
+/// - WASD移动权限：只在Transition阶段允许
 /// - 蓄力发射功能在所有玩家子阶段都可用（Normal, Charging, Moving, Transition）
 /// </summary>
 public class PlayerInputHandler : MonoBehaviour
@@ -256,11 +258,32 @@ public class PlayerInputHandler : MonoBehaviour
     }
     
     /// <summary>
-    /// 检查当前子阶段是否允许WASD移动
+    /// 检查是否允许WASD移动（整合顶层阶段和子阶段权限检查）
     /// </summary>
     bool CanProcessMovementInCurrentPhase()
     {
-        // 获取PlayerPhaseController引用
+        // 1. 检查顶层游戏阶段
+        GameFlowController gameFlowController = GameFlowController.Instance;
+        if (gameFlowController == null)
+        {
+            if (showDebugInfo)
+            {
+                Debug.LogWarning("PlayerInputHandler: GameFlowController实例为空！");
+            }
+            return false;
+        }
+        
+        // 敌人阶段完全禁用移动
+        if (gameFlowController.IsEnemyPhase)
+        {
+            if (showDebugInfo)
+            {
+                Debug.Log("PlayerInputHandler: 敌人阶段，不允许WASD移动");
+            }
+            return false;
+        }
+        
+        // 2. 检查玩家子阶段
         PlayerPhaseController playerPhaseController = PlayerPhaseController.Instance;
         if (playerPhaseController == null)
         {
