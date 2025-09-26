@@ -12,6 +12,7 @@ public class AimLineReflectionCalculator : MonoBehaviour
     [SerializeField] private float reflectionLength = 10f;  // 反射后线段固定长度
     [SerializeField] private LayerMask reflectionLayers = -1;  // 可反射的层
     [SerializeField] private LayerMask ignoreLayers = 2;  // 忽略的层（Layer 1 = TransparentFX，用于攻击范围）
+    [SerializeField] private LayerMask playerLayer = 8;  // Player层
     [SerializeField] private float reflectionOffset = 0.01f;  // 反射点偏移，避免重复碰撞
     [SerializeField] private string ballTag = "Player";  // 球体标签，射线检测时排除
     
@@ -78,30 +79,29 @@ public class AimLineReflectionCalculator : MonoBehaviour
         List<Vector3> pathPoints = new List<Vector3>();
         pathPoints.Add(startPos);
         
-        // 从白球边缘开始射线检测，避免击中白球本身
-        Vector3 ballOffset = direction.normalized * ballRadius;
-        Vector3 currentPos = startPos + ballOffset;
+        // 从白球中心开始圆形投射
+        Vector3 currentPos = startPos;
         Vector2 currentDir = direction.normalized;
         
-        // 计算实际检测的层：排除忽略的层（攻击范围层）
-        LayerMask actualLayers = reflectionLayers & ~ignoreLayers;
+        // 计算实际检测的层：排除忽略的层（攻击范围层）和Player层
+        LayerMask actualLayers = reflectionLayers & ~ignoreLayers & ~playerLayer;
         
-        // 执行第一次射线检测，排除攻击范围层
-        RaycastHit2D hit = Physics2D.Raycast(currentPos, currentDir, maxDistance, actualLayers);
-        
-        // 如果击中了白球，继续射线检测直到找到非白球碰撞
-        while (hit.collider != null && hit.collider.CompareTag(ballTag))
-        {
-            // 从当前碰撞点继续射线检测
-            Vector3 newStartPos = (Vector3)hit.point + (Vector3)currentDir * 0.1f; // 小偏移避免重复碰撞
-            hit = Physics2D.Raycast(newStartPos, currentDir, maxDistance - Vector3.Distance(currentPos, newStartPos), actualLayers);
-        }
+        // 执行第一次圆形投射，排除攻击范围层和Player层
+        RaycastHit2D hit = Physics2D.CircleCast(currentPos, ballRadius, currentDir, maxDistance, actualLayers);
         
         if (hit.collider != null)
         {
             // 有碰撞，发生反射
-            Vector3 hitPoint = hit.point;
-            pathPoints.Add(hitPoint);
+            // 计算球体中心在碰撞时的位置：碰撞点 + 法向量 * 球半径
+            Vector3 ballCenterAtHit = (Vector3)hit.point + (Vector3)hit.normal * ballRadius;
+            pathPoints.Add(ballCenterAtHit);
+            
+            // 调试信息
+            if (enableDebugLog)
+            {
+                Debug.Log($"hit.point: {hit.point}, hit.normal: {hit.normal}, ballRadius: {ballRadius}");
+                Debug.Log($"ballCenterAtHit: {ballCenterAtHit}");
+            }
             
             // 计算反射方向
             Vector2 normal = hit.normal;
@@ -111,20 +111,21 @@ public class AimLineReflectionCalculator : MonoBehaviour
             // 检查反射方向是否有效
             if (currentDir.magnitude > 0.01f)
             {
-                // 从碰撞点开始，检查反射后是否还有第二次碰撞
-                Vector3 reflectionStartPos = hitPoint + (Vector3)currentDir * reflectionOffset;
-                RaycastHit2D secondHit = Physics2D.Raycast(reflectionStartPos, currentDir, reflectionLength, actualLayers);
+                // 从球体中心位置开始，检查反射后是否还有第二次碰撞
+                Vector3 reflectionStartPos = ballCenterAtHit + (Vector3)currentDir * reflectionOffset;
+                RaycastHit2D secondHit = Physics2D.CircleCast(reflectionStartPos, ballRadius, currentDir, reflectionLength, actualLayers);
                 
                 if (secondHit.collider != null)
                 {
                     // 有第二次碰撞，直接到第二次碰撞位置结束
-                    Vector3 secondHitPoint = secondHit.point;
-                    pathPoints.Add(secondHitPoint);
+                    // 计算球体中心在第二次碰撞时的位置：碰撞点 + 法向量 * 球半径
+                    Vector3 secondBallCenterAtHit = (Vector3)secondHit.point + (Vector3)secondHit.normal * ballRadius;
+                    pathPoints.Add(secondBallCenterAtHit);
                 }
                 else
                 {
                     // 没有第二次碰撞，延伸到固定长度
-                    Vector3 reflectionEndPoint = hitPoint + (Vector3)currentDir * reflectionLength;
+                    Vector3 reflectionEndPoint = ballCenterAtHit + (Vector3)currentDir * reflectionLength;
                     pathPoints.Add(reflectionEndPoint);
                 }
             }

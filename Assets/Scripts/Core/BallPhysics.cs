@@ -84,8 +84,12 @@ public class BallPhysics : MonoBehaviour
         // 只有当ballCollider不为null时才设置其属性
         if (ballCollider != null)
         {
-            ballCollider.radius = ballData.radius;
+            // 不要修改CircleCollider2D的半径，只读取
             ballCollider.isTrigger = false;
+            
+            // 计算实际的世界空间半径（考虑缩放）并更新ballData
+            float actualRadius = ballCollider.radius * Mathf.Max(transform.lossyScale.x, transform.lossyScale.y);
+            ballData.radius = actualRadius;
         }
         
         // 创建物理材质（只有当ballCollider存在时才设置）

@@ -567,14 +567,14 @@ public class AimController : MonoBehaviour
             var calculator = reflectionCalculator as AimLineReflectionCalculator;
             if (calculator != null)
             {
-                // 获取白球半径
+                // 获取白球半径（从BallData获取，已包含实际的世界空间半径）
                 float ballRadius = 0.5f; // 默认半径
                 if (playerCore != null)
                 {
-                    CircleCollider2D ballCollider = playerCore.GetComponent<CircleCollider2D>();
-                    if (ballCollider != null)
+                    BallPhysics ballPhysics = playerCore.GetComponent<BallPhysics>();
+                    if (ballPhysics != null && ballPhysics.ballData != null)
                     {
-                        ballRadius = ballCollider.radius;
+                        ballRadius = ballPhysics.ballData.radius;
                     }
                 }
                 
