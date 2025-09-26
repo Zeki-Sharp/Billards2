@@ -194,8 +194,8 @@ public class PlayerStateMachine : MonoBehaviour
     /// </summary>
     void UpdateIdleState()
     {
-        // 检查是否在物理移动（排除WASD微调移动）
-        if (playerCore != null && playerCore.IsPhysicsMoving() && !playerCore.IsMicroMoving())
+        // 检查是否在物理移动（排除WASD移动）
+        if (playerCore != null && playerCore.IsPhysicsMoving() && !playerCore.IsMoving())
         {
             SwitchToState(PlayerState.Moving);
         }

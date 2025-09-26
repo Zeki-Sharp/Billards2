@@ -142,13 +142,13 @@ public class PlayerCore : MonoBehaviour
     }
     
     /// <summary>
-    /// 是否在微调移动（由MovementController管理）
+    /// 是否在WASD移动（由MovementController管理）
     /// </summary>
-    public bool IsMicroMoving()
+    public bool IsMoving()
     {
         // 这个方法由PlayerMovementController实现
         PlayerMovementController movementController = GetComponent<PlayerMovementController>();
-        return movementController != null && movementController.IsMicroMoving;
+        return movementController != null && movementController.IsMoving;
     }
     
     #endregion
@@ -519,7 +519,7 @@ public class PlayerCore : MonoBehaviour
         PlayerMovementController movementController = GetComponent<PlayerMovementController>();
         if (movementController != null)
         {
-            // 停止微调移动
+            // 停止WASD移动
             movementController.StopWASDMovement();
         }
         

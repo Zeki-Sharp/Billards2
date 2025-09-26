@@ -52,15 +52,6 @@ public class BallData : ScriptableObject
     [Tooltip("时间阻尼开始时间（秒）")]
     public float timeDampingStartTime = 2.0f;
     
-    [Header("微调移动设置")]
-    [Tooltip("微调移动力度")]
-    public float microMoveForce = 10f;
-    [Tooltip("微调移动最大速度")]
-    public float microMoveMaxSpeed = 10f;
-    [Tooltip("微调移动阻尼")]
-    public float microMoveDamping = 0.8f;
-    [Tooltip("微调移动冷却时间")]
-    public float microMoveCooldown = 0.1f;
     
     [Header("性能优化")]
     public float updateThreshold = 0.1f; // 参数变化阈值，避免频繁更新

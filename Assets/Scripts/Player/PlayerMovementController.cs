@@ -1,24 +1,22 @@
 using UnityEngine;
 
 /// <summary>
-/// 玩家移动控制器 - 处理WASD移动和微调移动
+/// 玩家移动控制器 - 处理WASD移动
 /// 
 /// 【核心职责】：
-/// - 处理WASD键盘输入控制的微调移动
-/// - 管理微调移动的速度和方向控制
-/// - 提供平滑的微调移动协程
+/// - 处理WASD键盘输入控制的移动
+/// - 管理移动的速度和方向控制
 /// - 实现移动的物理逻辑和性能优化
 /// 
 /// 【主要功能】：
 /// - WASD移动：实时响应键盘输入，直接设置球体速度
-/// - 微调移动：平滑移动到指定位置（协程实现）
 /// - 移动停止：响应蓄力输入，立即停止WASD移动
 /// - 移动状态管理：跟踪移动状态和方向变化
 /// 
 /// 【设计原则】：
 /// - 专注移动实现，不处理输入检测（由PlayerInputHandler处理）
 /// - 不处理权限检查（由PlayerInputHandler统一管理）
-/// - 与物理系统协作，区分微调移动和物理发射移动
+/// - 与物理系统协作，区分WASD移动和物理发射移动
 /// - 假设调用者已经验证了移动权限
 /// </summary>
 public class PlayerMovementController : MonoBehaviour
@@ -32,8 +30,7 @@ public class PlayerMovementController : MonoBehaviour
     private PlayerData playerData;
     
     // 移动状态
-    private bool isMicroMoving = false;
-    private float lastMicroMoveTime = 0f;
+    private bool isMoving = false;
     private Vector2 lastInputDirection = Vector2.zero;
     
     void Start()
@@ -103,8 +100,7 @@ public class PlayerMovementController : MonoBehaviour
         }
         
         // 更新状态
-        isMicroMoving = true;
-        lastMicroMoveTime = Time.time;
+        isMoving = true;
     }
     
     /// <summary>
@@ -112,9 +108,9 @@ public class PlayerMovementController : MonoBehaviour
     /// </summary>
     void StopMovement()
     {
-        if (isMicroMoving)
+        if (isMoving)
         {
-            isMicroMoving = false;
+            isMoving = false;
             lastInputDirection = Vector2.zero;
             
             if (playerCore != null)
@@ -130,9 +126,9 @@ public class PlayerMovementController : MonoBehaviour
     /// </summary>
     public void StopWASDMovement()
     {
-        if (isMicroMoving)
+        if (isMoving)
         {
-            isMicroMoving = false;
+            isMoving = false;
             lastInputDirection = Vector2.zero;
             
             if (playerCore != null)
@@ -145,90 +141,18 @@ public class PlayerMovementController : MonoBehaviour
     
     #endregion
     
-    #region 微调移动
-    
-    /// <summary>
-    /// 微调移动（由外部调用）
-    /// </summary>
-    /// <param name="direction">移动方向</param>
-    /// <param name="distance">移动距离</param>
-    public void MicroMove(Vector2 direction, float distance)
-    {
-        // 检查方向向量是否有效
-        if (direction.magnitude < 0.1f)
-        {
-            return;
-        }
-        
-        // 如果正在进行微调移动，停止当前的移动
-        if (isMicroMoving)
-        {
-            StopAllCoroutines();
-            isMicroMoving = false;
-        }
-        
-        // 如果白球正在物理移动，不能进行微调
-        if (playerCore != null && playerCore.IsPhysicsMoving())
-        {
-            return;
-        }
-        
-        // 获取当前位置
-        Vector2 currentPosition = transform.position;
-        
-        // 计算目标位置
-        Vector2 targetPosition = currentPosition + direction.normalized * distance;
-        
-        
-        // 开始平滑移动协程
-        StartCoroutine(SmoothMicroMove(targetPosition));
-    }
-    
-    /// <summary>
-    /// 平滑微调移动协程
-    /// </summary>
-    System.Collections.IEnumerator SmoothMicroMove(Vector2 targetPosition)
-    {
-        isMicroMoving = true;
-        Vector2 startPosition = transform.position;
-        float distance = Vector2.Distance(startPosition, targetPosition);
-        float microMoveSpeed = playerData != null ? playerData.microMoveSpeed : 5f;
-        float duration = distance / microMoveSpeed;
-        float elapsedTime = 0f;
-        
-        while (elapsedTime < duration && isMicroMoving)
-        {
-            elapsedTime += Time.deltaTime;
-            float t = elapsedTime / duration;
-            
-            // 使用平滑插值
-            transform.position = Vector2.Lerp(startPosition, targetPosition, t);
-            
-            yield return null;
-        }
-        
-        // 只有在没有被中断的情况下才设置最终位置
-        if (isMicroMoving)
-        {
-            // 确保最终位置准确
-            transform.position = targetPosition;
-            isMicroMoving = false;
-        }
-    }
-    
-    #endregion
     
     #region 公共属性
     
     /// <summary>
-    /// 是否正在进行微调移动
+    /// 是否正在进行WASD移动
     /// </summary>
-    public bool IsMicroMoving => isMicroMoving;
+    public bool IsMoving => isMoving;
     
     /// <summary>
-    /// 微调移动最大速度
+    /// 移动最大速度
     /// </summary>
-    public float MicroMoveSpeed => playerData != null ? playerData.microMoveSpeed : 5f;
+    public float MoveSpeed => playerData != null ? playerData.microMoveSpeed : 5f;
     
     #endregion
 }
