@@ -29,29 +29,32 @@ public class EffectPlayer : MonoBehaviour
     /// </summary>
     void InitializeEffects()
     {
-        // 使用EffectMapping自动查找所有特效
+        // 使用EffectMapping自动查找所有特效，只保存找到的特效
         foreach (string eventType in EffectMapping.GetAllEventTypes())
         {
             string mmfObjectName = EffectMapping.GetMMFObjectName(eventType);
             if (!string.IsNullOrEmpty(mmfObjectName))
             {
                 var mmfPlayer = FindEffectInChildren(mmfObjectName);
-                effects[eventType] = mmfPlayer;
-                
-                if (enableDebugLog)
+                if (mmfPlayer != null)  // 只有找到特效才添加到字典中
                 {
-                    if (mmfPlayer != null)
+                    effects[eventType] = mmfPlayer;
+                    
+                    if (enableDebugLog)
                         Debug.Log($"EffectPlayer 找到特效: {eventType} -> {mmfObjectName}");
-                    else
-                        Debug.LogWarning($"EffectPlayer 未找到特效: {eventType} -> {mmfObjectName}");
+                }
+                else
+                {
+                    if (enableDebugLog)
+                        Debug.LogWarning($"EffectPlayer 未找到特效: {eventType} -> {mmfObjectName}，跳过添加");
                 }
             }
         }
         
         if (enableDebugLog)
         {
-            var foundEffects = effects.Where(kvp => kvp.Value != null).Select(kvp => $"{kvp.Key}:{kvp.Value != null}");
-            Debug.Log($"EffectPlayer 初始化完成 - {gameObject.name}: " + string.Join(", ", foundEffects));
+            var foundEffects = effects.Keys.ToArray();
+            Debug.Log($"EffectPlayer 初始化完成 - {gameObject.name}: 找到 {foundEffects.Length} 个特效 - {string.Join(", ", foundEffects)}");
         }
     }
     

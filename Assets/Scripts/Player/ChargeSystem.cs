@@ -77,9 +77,7 @@ public class ChargeSystem : MonoBehaviour
         chargingPower = 0f;
         currentForce = minForce;
         timestopEffectTriggered = false; // 重置时停特效状态
-        
-        GameEventBus.PublishChargingStarted();
-        
+
         if (showDebugInfo)
         {
             Debug.Log("ChargeSystem: 开始蓄力");

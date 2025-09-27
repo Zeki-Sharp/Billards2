@@ -202,7 +202,7 @@ public class PlayerCore : MonoBehaviour
         }
         
         // 触发发射特效事件
-        gameObject.PublishEffect("Launch", transform.position, direction);
+        gameObject.PublishEffect("Launch Effect", transform.position, direction);
         
         // 使用 BallPhysics 的发射方法
         float launchSpeed = force;
