@@ -2,8 +2,19 @@ using UnityEngine;
 using UnityEngine.Rendering;
 
 /// <summary>
-/// 时停特效控制器
-/// 专门管理 Global Volume 的 intensity 参数
+/// 时停特效控制器 - 事件驱动的特效系统
+/// 
+/// 【核心职责】：
+/// - 管理 Global Volume 的 intensity 参数
+/// - 响应蓄力进度事件控制特效强度
+/// - 支持多种时停模式（实时、门槛）
+/// - 处理特效的淡入淡出动画
+/// 
+/// 【设计原则】：
+/// - 事件驱动架构，松耦合通信
+/// - 专注特效逻辑，不处理业务逻辑
+/// - 通过GameEventBus响应蓄力进度事件
+/// - 可独立测试和扩展
 /// </summary>
 public class TimeStopEffect : MonoBehaviour
 {
@@ -54,11 +65,20 @@ public class TimeStopEffect : MonoBehaviour
             }
         }
         
+        // 订阅蓄力进度事件
+        GameEventBus.OnChargingProgressChanged += SetIntensity;
+        
         // 初始化时停效果为关闭状态
         if (globalVolume != null)
         {
             globalVolume.weight = 0f;
         }
+    }
+    
+    void OnDestroy()
+    {
+        // 取消订阅蓄力进度事件
+        GameEventBus.OnChargingProgressChanged -= SetIntensity;
     }
     
     /// <summary>

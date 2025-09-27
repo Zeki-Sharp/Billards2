@@ -2,7 +2,19 @@ using UnityEngine;
 using MoreMountains.Tools;
 
 /// <summary>
-/// 过渡状态管理器 - 管理从蓄力状态到正常状态的过渡
+/// 过渡状态管理器 - 事件驱动的过渡系统
+/// 
+/// 【核心职责】：
+/// - 管理从蓄力状态到正常状态的过渡
+/// - 响应蓄力停止事件设置过渡时长
+/// - 控制时停特效的淡出动画
+/// - 协调游戏流程状态变化
+/// 
+/// 【设计原则】：
+/// - 事件驱动架构，松耦合通信
+/// - 专注过渡逻辑，不处理业务逻辑
+/// - 通过GameEventBus响应蓄力事件
+/// - 可独立测试和扩展
 /// </summary>
 public class TransitionManager : MonoBehaviour
 {
@@ -37,6 +49,15 @@ public class TransitionManager : MonoBehaviour
         {
             Debug.LogWarning("TransitionManager: 未找到TimeStopEffect，时停特效淡出将不可用");
         }
+        
+        // 订阅蓄力停止事件
+        GameEventBus.OnChargingStopped += OnChargingStopped;
+    }
+    
+    void OnDestroy()
+    {
+        // 取消订阅蓄力停止事件
+        GameEventBus.OnChargingStopped -= OnChargingStopped;
     }
     
     void Update()
@@ -153,5 +174,20 @@ public class TransitionManager : MonoBehaviour
     public float GetRemainingTime()
     {
         return transitionTimer;
+    }
+    
+    /// <summary>
+    /// 蓄力停止事件处理
+    /// </summary>
+    void OnChargingStopped()
+    {
+        // 获取当前蓄力进度，设置过渡时长
+        // 这里需要从ChargeSystem获取蓄力进度
+        ChargeSystem chargeSystem = FindFirstObjectByType<ChargeSystem>();
+        if (chargeSystem != null)
+        {
+            float chargingPower = chargeSystem.GetChargingPower();
+            SetTransitionDurationFromCharging(chargingPower);
+        }
     }
 }

@@ -68,6 +68,16 @@ public static class GameEventBus
     /// </summary>
     public static event System.Action OnChargingStarted;
     
+    /// <summary>
+    /// 停止蓄力事件
+    /// </summary>
+    public static event System.Action OnChargingStopped;
+    
+    /// <summary>
+    /// 重置蓄力事件
+    /// </summary>
+    public static event System.Action OnChargingReset;
+    
     #endregion
     
     #region 游戏状态事件 (新增)
@@ -192,6 +202,22 @@ public static class GameEventBus
     }
     
     /// <summary>
+    /// 发布停止蓄力事件
+    /// </summary>
+    public static void PublishChargingStopped()
+    {
+        OnChargingStopped?.Invoke();
+    }
+    
+    /// <summary>
+    /// 发布重置蓄力事件
+    /// </summary>
+    public static void PublishChargingReset()
+    {
+        OnChargingReset?.Invoke();
+    }
+    
+    /// <summary>
     /// 发布玩家状态变化事件
     /// </summary>
     /// <param name="playerState">玩家状态</param>
@@ -308,6 +334,8 @@ public static class GameEventBus
                $"- OnChargingProgressChanged: {OnChargingProgressChanged?.GetInvocationList()?.Length ?? 0} 订阅者\n" +
                $"- OnForceChanged: {OnForceChanged?.GetInvocationList()?.Length ?? 0} 订阅者\n" +
                $"- OnChargingStarted: {OnChargingStarted?.GetInvocationList()?.Length ?? 0} 订阅者\n" +
+               $"- OnChargingStopped: {OnChargingStopped?.GetInvocationList()?.Length ?? 0} 订阅者\n" +
+               $"- OnChargingReset: {OnChargingReset?.GetInvocationList()?.Length ?? 0} 订阅者\n" +
                $"- OnPlayerStateChanged: {OnPlayerStateChanged?.GetInvocationList()?.Length ?? 0} 订阅者\n" +
                $"- OnGameFlowStateChanged: {OnGameFlowStateChanged?.GetInvocationList()?.Length ?? 0} 订阅者";
     }

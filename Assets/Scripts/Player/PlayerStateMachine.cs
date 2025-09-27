@@ -1,24 +1,24 @@
 using UnityEngine;
 
 /// <summary>
-/// 玩家状态机 - 管理玩家的状态转换和逻辑
+/// 玩家状态机 - 事件驱动的状态管理系统
 /// 
 /// 【核心职责】：
 /// - 管理玩家的三种状态：Idle（空闲）、Charging（蓄力）、Moving（运动）
-/// - 处理状态间的转换逻辑和条件判断
-/// - 协调PlayerCore和AimController的UI显示
-/// - 通过事件系统与PlayerPhaseController通信
+/// - 响应蓄力事件进行状态转换
+/// - 通过事件系统与其他组件通信
+/// - 协调游戏流程状态变化
 /// 
 /// 【状态定义】：
 /// - Idle: 可以移动和开始蓄力
-/// - Charging: 不能移动，显示瞄准线，更新蓄力进度
+/// - Charging: 蓄力中，显示瞄准线
 /// - Moving: 物理发射移动中，不能进行任何操作
 /// 
 /// 【设计原则】：
-/// - 单一职责：只管理玩家状态，不处理具体业务逻辑
-/// - 状态驱动：根据当前状态决定允许的操作
-/// - 事件通信：通过事件系统与PlayerPhaseController通信
-/// - 简单高效：专注于状态管理，不处理游戏流程
+/// - 事件驱动架构，松耦合通信
+/// - 单一职责：只管理状态转换
+/// - 通过GameEventBus响应蓄力事件
+/// - 可独立测试和扩展
 /// </summary>
 public class PlayerStateMachine : MonoBehaviour
 {
@@ -41,9 +41,7 @@ public class PlayerStateMachine : MonoBehaviour
     
     // 组件引用
     private PlayerCore playerCore;
-    private AimController aimController;
     private ChargeSystem chargeSystem;
-    private TransitionManager transitionManager;
     
     // 事件
     public System.Action<PlayerState, PlayerState> OnStateChanged;
@@ -52,10 +50,11 @@ public class PlayerStateMachine : MonoBehaviour
     {
         // 获取组件引用
         playerCore = GetComponent<PlayerCore>();
-        aimController = FindFirstObjectByType<AimController>();
         chargeSystem = GetComponent<ChargeSystem>();
-        transitionManager = FindFirstObjectByType<TransitionManager>();
         
+        // 订阅蓄力事件
+        GameEventBus.OnChargingStarted += OnChargingStarted;
+        GameEventBus.OnChargingStopped += OnChargingStopped;
         
         // 初始化状态
         currentState = initialState;
@@ -65,6 +64,13 @@ public class PlayerStateMachine : MonoBehaviour
         {
             Debug.Log($"PlayerStateMachine: 初始化完成，初始状态: {currentState}");
         }
+    }
+    
+    void OnDestroy()
+    {
+        // 取消订阅蓄力事件
+        GameEventBus.OnChargingStarted -= OnChargingStarted;
+        GameEventBus.OnChargingStopped -= OnChargingStopped;
     }
     
     void Update()
@@ -143,11 +149,7 @@ public class PlayerStateMachine : MonoBehaviour
                 // 清理空闲状态
                 break;
             case PlayerState.Charging:
-                // 清理蓄力状态
-                if (chargeSystem != null)
-                {
-                    chargeSystem.StopCharging();
-                }
+                // 清理蓄力状态 - 现在由事件驱动，不需要直接调用
                 break;
             case PlayerState.Moving:
                 // 清理运动状态
@@ -166,17 +168,7 @@ public class PlayerStateMachine : MonoBehaviour
                 // 进入空闲状态
                 break;
             case PlayerState.Charging:
-                // 进入蓄力状态
-                if (chargeSystem != null)
-                {
-                    chargeSystem.StartCharging();
-                }
-                
-                // 显示蓄力UI
-                if (aimController != null)
-                {
-                    aimController.ShowChargingUI();
-                }
+                // 进入蓄力状态 - 现在由事件驱动，不需要直接调用
                 break;
             case PlayerState.Moving:
                 // 进入运动状态
@@ -208,9 +200,9 @@ public class PlayerStateMachine : MonoBehaviour
     #region 外部接口
     
     /// <summary>
-    /// 开始蓄力（由输入系统调用）
+    /// 蓄力开始事件处理
     /// </summary>
-    public void StartCharging()
+    void OnChargingStarted()
     {
         if (currentState == PlayerState.Idle)
         {
@@ -219,32 +211,15 @@ public class PlayerStateMachine : MonoBehaviour
     }
     
     /// <summary>
-    /// 发射蓄力（由输入系统调用）
+    /// 蓄力停止事件处理
     /// </summary>
-    public void LaunchCharged()
+    void OnChargingStopped()
     {
         if (currentState == PlayerState.Charging)
         {
             // 获取充能进度
             float chargingPower = chargeSystem != null ? chargeSystem.GetChargingPower() : 0f;
             
-            // 设置transition时长
-            if (transitionManager != null)
-            {
-                transitionManager.SetTransitionDurationFromCharging(chargingPower);
-            }
-            
-            // 隐藏蓄力UI
-            if (aimController != null)
-            {
-                aimController.HideChargingUI();
-            }
-            
-            // 停止蓄力（但不重置，因为要发射）
-            if (chargeSystem != null)
-            {
-                chargeSystem.StopCharging();
-            }
             
             // 发射
             if (playerCore != null)
@@ -269,17 +244,8 @@ public class PlayerStateMachine : MonoBehaviour
     {
         if (currentState == PlayerState.Moving)
         {
-            // 重置蓄力系统
-            if (chargeSystem != null)
-            {
-                chargeSystem.ResetCharging();
-            }
-            
-            // 隐藏蓄力UI
-            if (aimController != null)
-            {
-                aimController.HideChargingUI();
-            }
+            // 发布蓄力重置事件
+            GameEventBus.PublishChargingReset();
             
             SwitchToState(PlayerState.Idle);
         }

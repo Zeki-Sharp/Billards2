@@ -1,19 +1,28 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+/// <summary>
+/// 瞄准线控制器 - 事件驱动的瞄准线系统
+/// 
+/// 【核心职责】：
+/// - 管理瞄准线显示和隐藏
+/// - 响应蓄力事件控制UI状态
+/// - 处理瞄准方向计算和更新
+/// - 协调反射计算器和渲染器
+/// 
+/// 【设计原则】：
+/// - 事件驱动架构，松耦合通信
+/// - 专注瞄准线逻辑，不处理蓄力计算
+/// - 通过GameEventBus响应蓄力事件
+/// - 可独立测试和扩展
+/// </summary>
 public class AimController : MonoBehaviour
 {
     // 常量定义
     private const float DEFAULT_BALL_RADIUS = 0.5f;
     
     [Header("瞄准设置")]
-    public float aimLineLength = 3f; // 瞄准线固定长度（反射计算器失败时的后备方案）
     
-    [Header("蓄力系统")]
-    public ChargeSystem chargeSystem; // 蓄力系统引用
-    
-    [Header("UI设置")]
-    public ChargeBarUI chargeBarUI; // 蓄力条UI
     
     [Header("球体设置")]
     public PlayerCore playerCore; // 玩家核心引用
@@ -35,11 +44,26 @@ public class AimController : MonoBehaviour
     private bool isVisible = false; // 是否显示瞄准线
     private Vector2 aimDirection;
     
-    // 事件 (已迁移到 GameEventBus)
-    
     void Start()
     {
         InitializeController();
+        
+        // 订阅蓄力事件
+        GameEventBus.OnChargingStarted += ShowChargingUI;
+        GameEventBus.OnChargingStopped += HideChargingUI;
+        GameEventBus.OnChargingReset += HideChargingUI;
+    }
+    
+    void OnDestroy()
+    {
+        // 取消订阅蓄力事件
+        GameEventBus.OnChargingStarted -= ShowChargingUI;
+        GameEventBus.OnChargingStopped -= HideChargingUI;
+        GameEventBus.OnChargingReset -= HideChargingUI;
+        
+        // 取消订阅蓄力进度事件
+        GameEventBus.OnChargingProgressChanged -= UpdateChargingProgress;
+        GameEventBus.OnForceChanged -= UpdateForceDisplay;
     }
     
     void Update()
@@ -65,17 +89,7 @@ public class AimController : MonoBehaviour
             return;
         }
         
-        if (chargeSystem == null)
-        {
-            Debug.LogError("AimController: ChargeSystem 未设置！请在Inspector中设置ChargeSystem引用");
-            return;
-        }
         
-        if (chargeBarUI == null)
-        {
-            Debug.LogError("AimController: ChargeBarUI 未设置！请在Inspector中设置ChargeBarUI引用");
-            return;
-        }
         
         // 初始化组件
         InitializeReflectionCalculator();
@@ -177,29 +191,20 @@ public class AimController : MonoBehaviour
     }
     
     /// <summary>
-    /// 显示蓄力UI（由外部调用）
+    /// 显示蓄力UI（由蓄力事件调用）
     /// </summary>
     public void ShowChargingUI()
     {
         isVisible = true;
         
-        // 显示蓄力条
-        if (chargeBarUI != null)
-        {
-            chargeBarUI.SetVisible(true);
-        }
-        else
-        {
-            Debug.LogWarning("AimController: ChargeBarUI 未设置，无法显示蓄力条");
-        }
         
-        // 订阅 GameEventBus 事件
+        // 订阅蓄力进度事件
         GameEventBus.OnChargingProgressChanged += UpdateChargingProgress;
         GameEventBus.OnForceChanged += UpdateForceDisplay;
         
         if (showDebugInfo)
         {
-            Debug.Log("AimController: 已订阅 GameEventBus 事件");
+            Debug.Log("AimController: 已订阅蓄力进度事件");
         }
         
         // 触发蓄力开始特效
@@ -207,7 +212,6 @@ public class AimController : MonoBehaviour
         {
             playerCore.gameObject.PublishEffect("ChargeStart", playerCore.transform.position);
         }
-        
     }
     
     /// <summary>
@@ -218,11 +222,6 @@ public class AimController : MonoBehaviour
     {
         if (!isVisible) return;
         
-        // 更新蓄力条UI
-        if (chargeBarUI != null)
-        {
-            chargeBarUI.UpdateCharge(chargingProgress);
-        }
     }
     
     /// <summary>
@@ -238,22 +237,16 @@ public class AimController : MonoBehaviour
     }
     
     /// <summary>
-    /// 隐藏蓄力UI（由外部调用）
+    /// 隐藏蓄力UI（由蓄力事件调用）
     /// </summary>
     public void HideChargingUI()
     {
         isVisible = false;
         
-        // 取消订阅蓄力系统事件
-        // 取消订阅 GameEventBus 事件
+        // 取消订阅蓄力进度事件
         GameEventBus.OnChargingProgressChanged -= UpdateChargingProgress;
         GameEventBus.OnForceChanged -= UpdateForceDisplay;
         
-        // 隐藏蓄力条
-        if (chargeBarUI != null)
-        {
-            chargeBarUI.SetVisible(false);
-        }
     }
     
     void UpdateAimLine()
@@ -304,22 +297,20 @@ public class AimController : MonoBehaviour
         }
         else
         {
-            // 反射计算器失败时，使用简单瞄准线作为后备
-            Vector3 endPos = startPos + (Vector3)aimDirection * aimLineLength;
-            aimLineRenderer.RenderSimpleAimLine(startPos, endPos);
+            // 反射计算器未初始化时，不显示瞄准线
+            aimLineRenderer.ClearAllLines();
+            if (showDebugInfo)
+            {
+                Debug.LogWarning("AimController: 反射计算器未初始化，无法显示瞄准线");
+            }
         }
     }
     
     
-    
     // 公共方法
-    public float GetCurrentForce()
-    {
-        return chargeSystem != null ? chargeSystem.GetCurrentForce() : 0f;
-    }
     
     /// <summary>
-    /// 是否正在显示蓄力UI
+    /// 是否正在显示瞄准线（与蓄力状态关联）
     /// </summary>
     public bool IsVisible()
     {
@@ -331,52 +322,6 @@ public class AimController : MonoBehaviour
         return aimDirection;
     }
     
-    // 手动设置白球引用（用于运行时动态设置）
-    public void SetPlayerCore(PlayerCore core)
-    {
-        playerCore = core;
-    }
-    
-    // 手动设置蓄力系统引用（用于运行时动态设置）
-    public void SetChargeSystem(ChargeSystem system)
-    {
-        chargeSystem = system;
-    }
-    
-    // 手动设置相机引用
-    public void SetCamera(Camera camera)
-    {
-        cam = camera;
-    }
-    
-    // 重置控制器状态
-    public void ResetController()
-    {
-        isVisible = false;
-        aimDirection = Vector2.zero;
-        
-        // 取消订阅蓄力系统事件
-        // 取消订阅 GameEventBus 事件
-        GameEventBus.OnChargingProgressChanged -= UpdateChargingProgress;
-        GameEventBus.OnForceChanged -= UpdateForceDisplay;
-        
-        if (chargeBarUI != null)
-        {
-            chargeBarUI.SetVisible(false);
-        }
-        
-        if (aimLineRenderer != null)
-        {
-            aimLineRenderer.ClearAllLines();
-        }
-        
-        // 清除反射路径
-        if (reflectionCalculator != null)
-        {
-            reflectionCalculator.ClearPath();
-        }
-        
-    }
     
     // 反射相关方法
     

@@ -1,24 +1,25 @@
 using UnityEngine;
 
 /// <summary>
-/// 玩家总控制器 - 协调所有玩家组件
+/// 玩家总控制器 - 事件驱动的组件协调器
 /// 
 /// 【核心职责】：
 /// - 作为Player系统的总协调器和管理器
 /// - 自动初始化和配置所有Player子组件
 /// - 提供统一的对外接口和组件访问
-/// - 处理组件间的事件协调和状态同步
+/// - 响应状态变化事件进行协调
 /// 
 /// 【管理组件】：
 /// - PlayerCore: 核心业务逻辑（物理、蓄力、血量）
-/// - PlayerStateMachine: 玩家状态管理
-/// - PlayerInputHandler: 输入处理
-/// - PlayerMovementController: 移动控制
+/// - PlayerStateMachine: 玩家状态管理（事件驱动）
+/// - PlayerInputHandler: 输入处理（事件驱动）
+/// - PlayerMovementController: 移动控制（事件驱动）
 /// 
 /// 【设计原则】：
+/// - 事件驱动架构，松耦合通信
 /// - 使用协调器模式，不直接处理业务逻辑
 /// - 自动组件管理，减少手动配置
-/// - 提供清晰的公共API供外部调用
+/// - 通过事件系统响应状态变化
 /// </summary>
 public class Player : MonoBehaviour
 {
@@ -139,11 +140,6 @@ public class Player : MonoBehaviour
             Debug.Log("Player: 进入蓄力状态 - 显示瞄准线，停止移动");
         }
         
-        // 停止WASD移动
-        if (movementController != null)
-        {
-            movementController.StopWASDMovement();
-        }
     }
     
     /// <summary>

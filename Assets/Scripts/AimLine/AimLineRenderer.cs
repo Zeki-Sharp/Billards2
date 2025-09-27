@@ -30,7 +30,6 @@ public class AimLineRenderer : MonoBehaviour
     [SerializeField] private bool showDebugInfo = false;
     
     // 渲染对象管理
-    private LineRenderer mainAimLine;
     private List<LineRenderer> segmentLines = new List<LineRenderer>();
     private GameObject lineContainer;
     
@@ -81,39 +80,6 @@ public class AimLineRenderer : MonoBehaviour
         lineContainer.transform.SetParent(transform);
     }
     
-    /// <summary>
-    /// 渲染简单瞄准线（无反射）
-    /// </summary>
-    /// <param name="startPos">起始位置</param>
-    /// <param name="endPos">结束位置</param>
-    public void RenderSimpleAimLine(Vector3 startPos, Vector3 endPos)
-    {
-        // 清除分段线段
-        ClearSegmentLines();
-        
-        // 创建或更新主瞄准线
-        if (mainAimLine == null)
-        {
-            mainAimLine = CreateMainAimLine();
-        }
-        
-        // 设置线条位置
-        mainAimLine.positionCount = 2;
-        mainAimLine.SetPosition(0, startPos);
-        mainAimLine.SetPosition(1, endPos);
-        
-        // 应用材质效果
-        if (materialController != null)
-        {
-            float segmentLength = Vector3.Distance(startPos, endPos);
-            materialController.UpdateSegmentMaterial(mainAimLine, segmentLength, true);
-        }
-        
-        if (showDebugInfo)
-        {
-            Debug.Log($"AimLineRenderer: 渲染简单瞄准线 - 起点: {startPos}, 终点: {endPos}");
-        }
-    }
     
     /// <summary>
     /// 渲染分段反射瞄准线
@@ -127,21 +93,12 @@ public class AimLineRenderer : MonoBehaviour
             return;
         }
         
-        // 隐藏主瞄准线
-        if (mainAimLine != null)
-        {
-            mainAimLine.positionCount = 0;
-        }
         
         // 清除旧的分段线段
         ClearSegmentLines();
         
         // 获取线条宽度
         float lineWidth = defaultLineWidth;
-        if (mainAimLine != null)
-        {
-            lineWidth = mainAimLine.startWidth;
-        }
         
         // 根据路径点数创建分段
         int segmentCount = pathPoints.Count - 1;
@@ -197,31 +154,10 @@ public class AimLineRenderer : MonoBehaviour
     /// </summary>
     public void ClearAllLines()
     {
-        // 清除主瞄准线
-        if (mainAimLine != null)
-        {
-            mainAimLine.positionCount = 0;
-        }
-        
         // 清除分段线段
         ClearSegmentLines();
     }
     
-    /// <summary>
-    /// 创建主瞄准线
-    /// </summary>
-    LineRenderer CreateMainAimLine()
-    {
-        GameObject lineObj = new GameObject("MainAimLine");
-        lineObj.transform.SetParent(lineContainer.transform);
-        
-        LineRenderer lineRenderer = lineObj.AddComponent<LineRenderer>();
-        
-        // 设置基础属性
-        SetupLineRenderer(lineRenderer);
-        
-        return lineRenderer;
-    }
     
     /// <summary>
     /// 创建分段线段
@@ -341,7 +277,6 @@ public class AimLineRenderer : MonoBehaviour
     public string GetRenderStats()
     {
         return $"渲染器状态:\n" +
-               $"- 主瞄准线: {(mainAimLine != null ? "已创建" : "未创建")}\n" +
                $"- 分段线段数: {segmentLines.Count}\n" +
                $"- 材质控制器: {(materialController != null ? "已连接" : "未连接")}\n" +
                $"- 线条宽度: {defaultLineWidth}\n" +

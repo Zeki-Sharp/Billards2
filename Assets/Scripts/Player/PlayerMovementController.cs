@@ -1,23 +1,24 @@
 using UnityEngine;
 
 /// <summary>
-/// 玩家移动控制器 - 处理WASD移动
+/// 玩家移动控制器 - 事件驱动的移动系统
 /// 
 /// 【核心职责】：
 /// - 处理WASD键盘输入控制的移动
+/// - 响应蓄力事件停止移动
 /// - 管理移动的速度和方向控制
 /// - 实现移动的物理逻辑和性能优化
 /// 
 /// 【主要功能】：
 /// - WASD移动：实时响应键盘输入，直接设置球体速度
-/// - 移动停止：响应蓄力输入，立即停止WASD移动
+/// - 移动停止：响应蓄力开始事件，立即停止WASD移动
 /// - 移动状态管理：跟踪移动状态和方向变化
 /// 
 /// 【设计原则】：
-/// - 专注移动实现，不处理输入检测（由PlayerInputHandler处理）
-/// - 不处理权限检查（由PlayerInputHandler统一管理）
+/// - 事件驱动架构，松耦合通信
+/// - 专注移动实现，不处理输入检测
+/// - 通过GameEventBus响应蓄力事件
 /// - 与物理系统协作，区分WASD移动和物理发射移动
-/// - 假设调用者已经验证了移动权限
 /// </summary>
 public class PlayerMovementController : MonoBehaviour
 {
@@ -26,7 +27,6 @@ public class PlayerMovementController : MonoBehaviour
     
     // 组件引用
     private PlayerCore playerCore;
-    private GameFlowController gameFlowController;
     private PlayerData playerData;
     
     // 移动状态
@@ -37,13 +37,21 @@ public class PlayerMovementController : MonoBehaviour
     {
         // 获取组件引用
         playerCore = GetComponent<PlayerCore>();
-        gameFlowController = GameFlowController.Instance;
         
         // 获取PlayerData引用
         if (playerCore != null)
         {
             playerData = playerCore.playerData;
         }
+        
+        // 订阅蓄力开始事件
+        GameEventBus.OnChargingStarted += StopWASDMovement;
+    }
+    
+    void OnDestroy()
+    {
+        // 取消订阅蓄力开始事件
+        GameEventBus.OnChargingStarted -= StopWASDMovement;
     }
     
     #region 移动处理

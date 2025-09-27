@@ -8,13 +8,11 @@ using UnityEngine.InputSystem;
 /// - 处理WASD移动输入和鼠标蓄力输入
 /// - 使用New Input System进行输入检测
 /// - 与PlayerInputPermissionManager协作进行权限检查
-/// - 与PlayerStateMachine协作处理蓄力状态
 /// 
 /// 【设计原则】：
 /// - 作为输入的统一入口，避免其他组件直接检测输入
 /// - 专注于输入检测和分发，权限检查委托给PlayerInputPermissionManager
 /// - 通过权限管理器检查所有输入权限
-/// - 与PlayerStateMachine协作处理蓄力状态变化
 /// 
 /// 【输入类型】：
 /// - 移动输入：WASD键盘输入，用于控制玩家移动
@@ -26,9 +24,8 @@ public class PlayerInputHandler : MonoBehaviour
     [SerializeField] private bool showDebugInfo = true;
     
     // 组件引用
-    private PlayerStateMachine stateMachine;
-    private PlayerMovementController movementController;
-    private PlayerInputPermissionManager permissionManager;
+    private PlayerMovementController movementController; // 需要处理WASD移动
+    private PlayerInputPermissionManager permissionManager; // 需要权限检查
     
     // Input System支持
     private InputAction moveAction;
@@ -45,7 +42,6 @@ public class PlayerInputHandler : MonoBehaviour
     void Start()
     {
         // 获取组件引用
-        stateMachine = GetComponent<PlayerStateMachine>();
         movementController = GetComponent<PlayerMovementController>();
         permissionManager = GetComponent<PlayerInputPermissionManager>();
         
@@ -172,20 +168,22 @@ public class PlayerInputHandler : MonoBehaviour
         {
             if (showDebugInfo)
             {
-                Debug.Log("PlayerInputHandler: 检测到蓄力输入，开始蓄力");
+                Debug.Log("PlayerInputHandler: 检测到蓄力输入，发布蓄力开始事件");
             }
             
-            // 开始蓄力
-            if (stateMachine != null)
-            {
-                stateMachine.StartCharging();
-            }
+            // 直接发布蓄力开始事件
+            GameEventBus.PublishChargingStarted();
         }
         
-        // 处理蓄力释放 - 蓄力状态下释放鼠标
-        if (isChargeReleased && stateMachine != null && stateMachine.CurrentState == PlayerStateMachine.PlayerState.Charging)
+        if (isChargeReleased)
         {
-            stateMachine.LaunchCharged();
+            if (showDebugInfo)
+            {
+                Debug.Log("PlayerInputHandler: 检测到蓄力释放，发布蓄力停止事件");
+            }
+            
+            // 直接发布蓄力停止事件
+            GameEventBus.PublishChargingStopped();
         }
     }
     

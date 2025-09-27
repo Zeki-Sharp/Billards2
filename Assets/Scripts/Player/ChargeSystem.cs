@@ -36,30 +36,23 @@ public class ChargeSystem : MonoBehaviour
     
     // 时停特效状态
     private bool timestopEffectTriggered = false; // 是否已触发时停入场特效
-    private TransitionManager transitionManager; // 用于获取门槛值
-    private TimeStopEffect timeStopEffect; // 时停特效控制器
     
-    
-    // 事件 (已迁移到 GameEventBus)
-    
-    public System.Action OnChargingCompleted; // 蓄力完成
-    public System.Action OnChargingStopped; // 停止蓄力
     
     void Start()
     {
-        // 获取TransitionManager引用
-        transitionManager = FindFirstObjectByType<TransitionManager>();
-        if (transitionManager == null)
-        {
-            Debug.LogWarning("ChargeSystem: 未找到TransitionManager，时停特效门槛值将使用默认值");
-        }
         
-        // 获取TimeStopEffect引用
-        timeStopEffect = FindFirstObjectByType<TimeStopEffect>();
-        if (timeStopEffect == null)
-        {
-            Debug.LogWarning("ChargeSystem: 未找到TimeStopEffect，时停特效将不可用");
-        }
+        // 订阅蓄力事件
+        GameEventBus.OnChargingStarted += StartCharging;
+        GameEventBus.OnChargingStopped += StopCharging;
+        GameEventBus.OnChargingReset += ResetCharging;
+    }
+    
+    void OnDestroy()
+    {
+        // 取消订阅蓄力事件
+        GameEventBus.OnChargingStarted -= StartCharging;
+        GameEventBus.OnChargingStopped -= StopCharging;
+        GameEventBus.OnChargingReset -= ResetCharging;
     }
     
     void Update()
@@ -101,7 +94,6 @@ public class ChargeSystem : MonoBehaviour
         if (!isCharging) return;
         
         isCharging = false;
-        OnChargingStopped?.Invoke();
         
         if (showDebugInfo)
         {
@@ -143,8 +135,6 @@ public class ChargeSystem : MonoBehaviour
         float chargingTime = Time.time - chargingStartTime;
         chargingPower = Mathf.Clamp01(chargingTime / maxChargingTime);
         
-        // 更新时停特效强度
-        UpdateTimestopEffect();
         
         // 计算当前力度
         CalculateCurrentForce();
@@ -163,7 +153,6 @@ public class ChargeSystem : MonoBehaviour
         if (chargingPower >= 1f)
         {
             chargingPower = 1f;
-            OnChargingCompleted?.Invoke();
             
             if (showDebugInfo)
             {
@@ -285,16 +274,6 @@ public class ChargeSystem : MonoBehaviour
     
     #region 时停特效管理
     
-    /// <summary>
-    /// 检查时停特效触发
-    /// </summary>
-    private void UpdateTimestopEffect()
-    {
-        if (timeStopEffect == null) return;
-        
-        // 直接设置时停特效强度（跟随充能进度）
-        timeStopEffect.SetIntensity(chargingPower);
-    }
     
     #endregion
     
