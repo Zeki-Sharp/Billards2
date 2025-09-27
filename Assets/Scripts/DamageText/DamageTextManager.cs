@@ -70,13 +70,13 @@ public class DamageTextManager : MonoBehaviour
     void OnEnable()
     {
         // 订阅攻击事件
-        EventTrigger.OnAttack += HandleAttack;
+        GameEventBus.OnAttack += HandleAttack;
     }
     
     void OnDisable()
     {
         // 取消订阅攻击事件
-        EventTrigger.OnAttack -= HandleAttack;
+        GameEventBus.OnAttack -= HandleAttack;
     }
     
     /// <summary>

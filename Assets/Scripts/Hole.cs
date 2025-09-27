@@ -16,7 +16,7 @@
 //                 Debug.Log($"敌人 {enemy.name} 进入hole，直接死亡");
                 
 //                 // 触发敌人进洞特效事件
-//                 EventTrigger.HoleEnter(other.transform.position, other.gameObject);
+//                 GameEventBus.PublishEffectEvent("HoleEnter", other.transform.position, Vector3.zero, other.gameObject);
                 
 //                 // 通过伤害系统处理，造成足够大的伤害直接死亡
 //                 float maxHealth = enemy.playerData != null ? enemy.playerData.maxHealth : 100f;
@@ -33,7 +33,7 @@
 //                 Debug.Log("玩家进入hole，触发事件");
                 
 //                 // 触发玩家进洞特效事件
-//                 EventTrigger.HoleEnter(other.transform.position, other.gameObject);
+//                 GameEventBus.PublishEffectEvent("HoleEnter", other.transform.position, Vector3.zero, other.gameObject);
                 
 //                 Debug.Log($"OnPlayerInHole事件订阅者数量: {OnPlayerInHole?.GetInvocationList()?.Length ?? 0}");
 //                 // 触发事件，让GameManager处理

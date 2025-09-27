@@ -238,7 +238,7 @@ public class PlayerPhaseController : MonoBehaviour
         }
         
         // 触发Normal特效
-        EffectEvent.Trigger("Normal Effect", Vector3.zero);
+        GameEventBus.PublishEffectEvent("Normal Effect", Vector3.zero);
         
         // Normal子阶段开始，等待PlayerStateMachine状态变化
         
@@ -252,7 +252,7 @@ public class PlayerPhaseController : MonoBehaviour
     {
         // 时停效果由ChargeSystem控制
         // 触发蓄力特效
-        EffectEvent.Trigger("Charge Effect", Vector3.zero);
+        GameEventBus.PublishEffectEvent("Charge Effect", Vector3.zero);
         
         // Charging子阶段开始，等待PlayerStateMachine状态变化
         
@@ -272,7 +272,7 @@ public class PlayerPhaseController : MonoBehaviour
         }
         
         // 触发发射特效
-        EffectEvent.Trigger("Launch Effect", Vector3.zero);
+        GameEventBus.PublishEffectEvent("Launch Effect", Vector3.zero);
         
         // Moving子阶段开始，等待PlayerStateMachine状态变化
         
@@ -293,7 +293,7 @@ public class PlayerPhaseController : MonoBehaviour
         }
         
         // 触发时停出场特效
-        EffectEvent.Trigger("Timestop Out Effect", Vector3.zero);
+        GameEventBus.PublishEffectEvent("Timestop Out Effect", Vector3.zero);
     }
     
     /// <summary>

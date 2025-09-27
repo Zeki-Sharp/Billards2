@@ -1,5 +1,10 @@
 using UnityEngine;
 
+/// <summary>
+/// 游戏事件数据结构定义
+/// 纯数据结构，不包含业务逻辑
+/// 事件触发请使用 GameEventBus
+/// </summary>
 
 /// <summary>
 /// 特效事件定义（简化版）
@@ -15,27 +20,7 @@ public struct EffectEvent
     public string TargetTag;         // 目标标签（Player, Enemy等）
     public GameObject TargetObject;  // 目标对象
     
-    /// <summary>
-    /// 触发特效事件
-    /// </summary>
-    public static void Trigger(string effectType, Vector3 position, Vector3 direction = default, GameObject targetObject = null, string targetTag = "")
-    {
-        var effectEvent = new EffectEvent
-        {
-            EffectType = effectType,
-            Position = position,
-            Direction = direction,
-            TargetObject = targetObject,
-            TargetTag = targetTag,
-            Intensity = 1f
-        };
-        
-        MoreMountains.Tools.MMEventManager.TriggerEvent(effectEvent);
-    }
 }
-
-// 旧的 AttackEvent 和 DeathEvent 已移除，改用新的分离式架构
-
 
 
 /// <summary>
@@ -96,29 +81,6 @@ public struct AttackEffectEvent
     public float WallHitRotationAngle;    // 墙面撞击旋转角度
     public Vector3 WallHitPositionOffset; // 墙面撞击位置偏移
     
-    /// <summary>
-    /// 触发攻击特效事件
-    /// </summary>
-    public static void Trigger(AttackData attackData)
-    {
-        var attackEffectEvent = new AttackEffectEvent
-        {
-            AttackType = attackData.AttackType,
-            Position = attackData.Position,
-            Direction = attackData.Direction,
-            Attacker = attackData.Attacker,
-            Target = attackData.Target,
-            Damage = attackData.Damage,
-            AttackerTag = attackData.AttackerTag,
-            TargetTag = attackData.TargetTag,
-            HitNormal = attackData.HitNormal,
-            HitSpeed = attackData.HitSpeed,
-            WallHitRotationAngle = attackData.WallHitRotationAngle,
-            WallHitPositionOffset = attackData.WallHitPositionOffset
-        };
-        
-        MoreMountains.Tools.MMEventManager.TriggerEvent(attackEffectEvent);
-    }
 }
 
 /// <summary>
@@ -133,21 +95,5 @@ public struct DeathEffectEvent
     public GameObject DeadObject;   // 死亡对象
     public string DeadObjectTag;    // 死亡对象标签
     
-    /// <summary>
-    /// 触发死亡特效事件
-    /// </summary>
-    public static void Trigger(DeathData deathData)
-    {
-        var deathEffectEvent = new DeathEffectEvent
-        {
-            DeathType = deathData.DeathType,
-            Position = deathData.Position,
-            Direction = deathData.Direction,
-            DeadObject = deathData.DeadObject,
-            DeadObjectTag = deathData.DeadObjectTag
-        };
-        
-        MoreMountains.Tools.MMEventManager.TriggerEvent(deathEffectEvent);
-    }
 }
 

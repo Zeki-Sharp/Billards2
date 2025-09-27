@@ -43,7 +43,7 @@ public class Wall : MonoBehaviour
             Vector3 hitNormal = collision.contacts[0].normal;
             
             // 撞墙特效由攻击者（白球）触发，这里不需要重复触发
-            // 玩家会在 PlayerCore.cs 中调用 EventTrigger.Attack("Hit", ...)
+            // 玩家会在 PlayerCore.cs 中调用 GameEventBus.PublishAttack(...)
             
             // 更新最后撞墙时间
             lastHitTimes[hitObject] = Time.time;

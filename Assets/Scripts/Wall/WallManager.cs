@@ -123,8 +123,24 @@ public class WallManager : MonoBehaviour
                 positionOffset = positionController.CalculatePositionOffset(wallHitPosition, hitNormal, wallHitDirection, currentSpeed);
             }
             
-            // 使用 EventTrigger 系统触发墙壁受击特效（带计算器参数）
-            EventTrigger.Attack("Hit", wallHitPosition, wallHitDirection, hitObject, wallTransform.gameObject, hitNormal, currentSpeed, rotationAngle, positionOffset);
+            // 使用 GameEventBus 系统触发墙壁受击特效（带计算器参数）
+            var attackData = new AttackData
+            {
+                AttackType = "Hit",
+                Position = wallHitPosition,
+                Direction = wallHitDirection,
+                Attacker = hitObject,
+                Target = wallTransform.gameObject,
+                Damage = 0f,
+                AttackTime = Time.time,
+                AttackerTag = hitObject.tag,
+                TargetTag = wallTransform.gameObject.tag,
+                HitNormal = hitNormal,
+                HitSpeed = currentSpeed,
+                WallHitRotationAngle = rotationAngle,
+                WallHitPositionOffset = positionOffset
+            };
+            GameEventBus.PublishAttack(attackData);
             
             if (enableDebugLog)
             {

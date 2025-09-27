@@ -4,13 +4,7 @@ using UnityEngine;
 public class AimController : MonoBehaviour
 {
     // 常量定义
-    private const float DEFAULT_LINE_WIDTH = 0.1f;
-    private const int DEFAULT_SORTING_ORDER = 10;
-    private const int DEFAULT_CAP_VERTICES = 8;
-    private const float MIN_DIRECTION_MAGNITUDE = 0.1f;
     private const float DEFAULT_BALL_RADIUS = 0.5f;
-    private const float MIN_ANGLE_THRESHOLD = 0.01f;
-    private const float BACKOFF_MULTIPLIER = 0.5f;
     
     [Header("瞄准设置")]
     public float aimLineLength = 3f; // 瞄准线固定长度（反射计算器失败时的后备方案）
@@ -28,7 +22,7 @@ public class AimController : MonoBehaviour
     public Camera targetCamera; // 目标相机，如果为空则使用主相机
     
     [Header("反射计算器")]
-    public MonoBehaviour reflectionCalculator; // 反射计算器引用
+    public AimLineReflectionCalculator reflectionCalculator; // 反射计算器引用
     
     [Header("渲染器")]
     public AimLineRenderer aimLineRenderer; // 瞄准线渲染器引用
@@ -40,10 +34,8 @@ public class AimController : MonoBehaviour
     private Camera cam;
     private bool isVisible = false; // 是否显示瞄准线
     private Vector2 aimDirection;
-    private List<Vector3> reflectionPath = new List<Vector3>();
     
-    // 事件
-    public System.Action<Vector2, float> OnLaunch;
+    // 事件 (已迁移到 GameEventBus)
     
     void Start()
     {
@@ -52,24 +44,6 @@ public class AimController : MonoBehaviour
     
     void Update()
     {
-        // 如果PlayerCore还没有找到，尝试再次查找
-        if (playerCore == null)
-        {
-            playerCore = FindAnyObjectByType<PlayerCore>();
-            if (playerCore != null)
-            {
-                // 设置瞄准线
-                SetupAimLine();
-                
-                // 初始化反射计算器
-                InitializeReflectionCalculator();
-                
-                // 初始化渲染器
-                InitializeRenderer();
-                
-            }
-        }
-        
         UpdateAimLine();
         UpdateAimDirection();
     }
@@ -84,106 +58,35 @@ public class AimController : MonoBehaviour
             return;
         }
         
-        // 获取玩家核心 - 使用延迟查找
+        // 验证必需组件
         if (playerCore == null)
         {
-            playerCore = FindAnyObjectByType<PlayerCore>();
-            if (playerCore == null)
-            {
-                Debug.LogWarning("AimController: 当前找不到PlayerCore，将在下一帧重试");
-                // 即使没有PlayerCore，也要设置瞄准线
-                SetupAimLine();
-                // 使用协程延迟查找
-                StartCoroutine(DelayedPlayerCoreSearch());
-                return;
-            }
+            Debug.LogError("AimController: PlayerCore 未设置！请在Inspector中设置PlayerCore引用");
+            return;
         }
         
-        // 获取蓄力系统 - 使用延迟查找
         if (chargeSystem == null)
         {
-            chargeSystem = FindAnyObjectByType<ChargeSystem>();
-            if (chargeSystem == null)
-            {
-                Debug.LogWarning("AimController: 当前找不到ChargeSystem，将在下一帧重试");
-                return;
-            }
+            Debug.LogError("AimController: ChargeSystem 未设置！请在Inspector中设置ChargeSystem引用");
+            return;
         }
         
-        // 获取蓄力条UI - 使用延迟查找
         if (chargeBarUI == null)
         {
-            chargeBarUI = FindAnyObjectByType<ChargeBarUI>();
-            if (chargeBarUI == null)
-            {
-                if (showDebugInfo)
-                {
-                    Debug.LogWarning("AimController: 当前找不到ChargeBarUI，将在下一帧重试");
-                }
-                return;
-            }
+            Debug.LogError("AimController: ChargeBarUI 未设置！请在Inspector中设置ChargeBarUI引用");
+            return;
         }
         
-        // 设置瞄准线
-        SetupAimLine();
-        
-        // 初始化反射计算器
+        // 初始化组件
         InitializeReflectionCalculator();
-        
-        // 初始化渲染器
         InitializeRenderer();
         
+        if (showDebugInfo)
+        {
+            Debug.Log("AimController: 初始化完成");
+        }
     }
     
-    /// <summary>
-    /// 延迟查找PlayerCore的协程
-    /// </summary>
-    System.Collections.IEnumerator DelayedPlayerCoreSearch()
-    {
-        int maxAttempts = 30; // 最多尝试30次（约0.5秒）
-        int attempts = 0;
-        
-        while (playerCore == null && attempts < maxAttempts)
-        {
-            yield return new WaitForEndOfFrame();
-            playerCore = FindAnyObjectByType<PlayerCore>();
-            attempts++;
-        }
-        
-        if (playerCore != null)
-        {
-            
-            // 查找蓄力系统
-            if (chargeSystem == null)
-            {
-                chargeSystem = FindAnyObjectByType<ChargeSystem>();
-            }
-            
-            // 查找蓄力条UI
-            if (chargeBarUI == null)
-            {
-                chargeBarUI = FindAnyObjectByType<ChargeBarUI>();
-                if (chargeBarUI == null && showDebugInfo)
-                {
-                    Debug.LogWarning("AimController: 延迟查找仍未找到ChargeBarUI");
-                }
-            }
-            
-            // 设置瞄准线
-            SetupAimLine();
-            
-            // 初始化反射计算器
-            InitializeReflectionCalculator();
-            
-            // 初始化渲染器
-            InitializeRenderer();
-            
-        }
-        else
-        {
-            Debug.LogError("AimController: 延迟查找失败，无法找到PlayerCore！");
-        }
-    }
     
     void SetupAimLine()
     {
@@ -204,14 +107,9 @@ public class AimController : MonoBehaviour
             }
         }
         
-        // 订阅反射计算器事件
-        if (reflectionCalculator != null)
+        if (reflectionCalculator != null && showDebugInfo)
         {
-            var calculator = reflectionCalculator as AimLineReflectionCalculator;
-            if (calculator != null)
-            {
-                calculator.OnPathCalculated += OnReflectionPathCalculated;
-            }
+            Debug.Log("AimController: 反射计算器初始化完成");
         }
         else
         {
@@ -219,10 +117,6 @@ public class AimController : MonoBehaviour
         }
     }
     
-    void OnReflectionPathCalculated(List<Vector3> pathPoints)
-    {
-        reflectionPath = new List<Vector3>(pathPoints);
-    }
     
     void InitializeRenderer()
     {
@@ -236,14 +130,11 @@ public class AimController : MonoBehaviour
             }
         }
         
-        if (aimLineRenderer != null)
+        if (aimLineRenderer != null && showDebugInfo)
         {
-            if (showDebugInfo)
-            {
-                Debug.Log("AimController: 渲染器初始化完成");
-            }
+            Debug.Log("AimController: 渲染器初始化完成");
         }
-        else
+        else if (aimLineRenderer == null)
         {
             Debug.LogWarning("AimController: 渲染器初始化失败");
         }
@@ -256,15 +147,16 @@ public class AimController : MonoBehaviour
     {
         if (playerCore == null || cam == null) return;
         
-        // 获取鼠标屏幕坐标
-        Vector3 mouseScreenPos = Input.mousePosition;
+        // 直接使用New Input System更新瞄准方向
+        Vector2 mousePos = UnityEngine.InputSystem.Mouse.current.position.ReadValue();
+        Vector3 mouseScreenPos = new Vector3(mousePos.x, mousePos.y, 0f);
         
         // 转换为世界坐标
         Vector3 mouseWorldPos = GetMouseWorldPosition(mouseScreenPos);
         
         // 计算瞄准方向 - 从白球指向鼠标的方向
         Vector3 direction = mouseWorldPos - playerCore.transform.position;
-        if (direction.magnitude > MIN_DIRECTION_MAGNITUDE) // 避免零向量
+        if (direction.magnitude > 0.1f) // 避免零向量
         {
             aimDirection = direction.normalized;
         }
@@ -298,33 +190,22 @@ public class AimController : MonoBehaviour
         }
         else
         {
-            // 尝试重新查找
-            chargeBarUI = FindAnyObjectByType<ChargeBarUI>();
-            if (chargeBarUI != null)
-            {
-                chargeBarUI.SetVisible(true);
-            }
-            else if (showDebugInfo)
-            {
-                Debug.LogWarning("AimController: 无法找到ChargeBarUI");
-            }
+            Debug.LogWarning("AimController: ChargeBarUI 未设置，无法显示蓄力条");
         }
         
-        // 订阅蓄力系统事件
-        if (chargeSystem != null)
+        // 订阅 GameEventBus 事件
+        GameEventBus.OnChargingProgressChanged += UpdateChargingProgress;
+        GameEventBus.OnForceChanged += UpdateForceDisplay;
+        
+        if (showDebugInfo)
         {
-            chargeSystem.OnChargingProgressChanged += UpdateChargingProgress;
-            chargeSystem.OnForceChanged += UpdateForceDisplay;
-        }
-        else if (showDebugInfo)
-        {
-            Debug.LogWarning("AimController: ChargeSystem 为 null，无法订阅事件");
+            Debug.Log("AimController: 已订阅 GameEventBus 事件");
         }
         
         // 触发蓄力开始特效
         if (playerCore != null)
         {
-            EventTrigger.ChargeStart(playerCore.transform.position, playerCore.gameObject);
+            playerCore.gameObject.PublishEffect("ChargeStart", playerCore.transform.position);
         }
         
     }
@@ -364,11 +245,9 @@ public class AimController : MonoBehaviour
         isVisible = false;
         
         // 取消订阅蓄力系统事件
-        if (chargeSystem != null)
-        {
-            chargeSystem.OnChargingProgressChanged -= UpdateChargingProgress;
-            chargeSystem.OnForceChanged -= UpdateForceDisplay;
-        }
+        // 取消订阅 GameEventBus 事件
+        GameEventBus.OnChargingProgressChanged -= UpdateChargingProgress;
+        GameEventBus.OnForceChanged -= UpdateForceDisplay;
         
         // 隐藏蓄力条
         if (chargeBarUI != null)
@@ -409,33 +288,23 @@ public class AimController : MonoBehaviour
         // 使用反射计算器计算路径
         if (reflectionCalculator != null)
         {
-            var calculator = reflectionCalculator as AimLineReflectionCalculator;
-            if (calculator != null)
+            // 获取白球半径（从BallData获取，已包含实际的世界空间半径）
+            float ballRadius = DEFAULT_BALL_RADIUS; // 默认半径
+            if (playerCore != null)
             {
-                // 获取白球半径（从BallData获取，已包含实际的世界空间半径）
-                float ballRadius = DEFAULT_BALL_RADIUS; // 默认半径
-                if (playerCore != null)
+                BallPhysics ballPhysics = playerCore.GetComponent<BallPhysics>();
+                if (ballPhysics != null && ballPhysics.ballData != null)
                 {
-                    BallPhysics ballPhysics = playerCore.GetComponent<BallPhysics>();
-                    if (ballPhysics != null && ballPhysics.ballData != null)
-                    {
-                        ballRadius = ballPhysics.ballData.radius;
-                    }
+                    ballRadius = ballPhysics.ballData.radius;
                 }
-                
-                List<Vector3> pathPoints = calculator.CalculateReflectionPath(startPos, aimDirection, ballRadius);
-                aimLineRenderer.RenderSegmentedAimLine(pathPoints);
             }
-            else
-            {
-                // 反射计算器失败时，使用简单瞄准线作为后备
-                Vector3 endPos = startPos + (Vector3)aimDirection * aimLineLength;
-                aimLineRenderer.RenderSimpleAimLine(startPos, endPos);
-            }
+            
+            List<Vector3> pathPoints = reflectionCalculator.CalculateReflectionPath(startPos, aimDirection, ballRadius);
+            aimLineRenderer.RenderSegmentedAimLine(pathPoints);
         }
         else
         {
-            // 反射计算器未设置时，使用简单瞄准线
+            // 反射计算器失败时，使用简单瞄准线作为后备
             Vector3 endPos = startPos + (Vector3)aimDirection * aimLineLength;
             aimLineRenderer.RenderSimpleAimLine(startPos, endPos);
         }
@@ -487,11 +356,9 @@ public class AimController : MonoBehaviour
         aimDirection = Vector2.zero;
         
         // 取消订阅蓄力系统事件
-        if (chargeSystem != null)
-        {
-            chargeSystem.OnChargingProgressChanged -= UpdateChargingProgress;
-            chargeSystem.OnForceChanged -= UpdateForceDisplay;
-        }
+        // 取消订阅 GameEventBus 事件
+        GameEventBus.OnChargingProgressChanged -= UpdateChargingProgress;
+        GameEventBus.OnForceChanged -= UpdateForceDisplay;
         
         if (chargeBarUI != null)
         {
@@ -506,11 +373,7 @@ public class AimController : MonoBehaviour
         // 清除反射路径
         if (reflectionCalculator != null)
         {
-            var calculator = reflectionCalculator as AimLineReflectionCalculator;
-            if (calculator != null)
-            {
-                calculator.ClearPath();
-            }
+            reflectionCalculator.ClearPath();
         }
         
     }
@@ -519,23 +382,15 @@ public class AimController : MonoBehaviour
     
     public AimLineReflectionCalculator GetReflectionCalculator()
     {
-        return reflectionCalculator as AimLineReflectionCalculator;
+        return reflectionCalculator;
     }
     
-    public List<Vector3> GetCurrentReflectionPath()
-    {
-        return reflectionPath != null ? new List<Vector3>(reflectionPath) : new List<Vector3>();
-    }
     
     public string GetReflectionStats()
     {
         if (reflectionCalculator != null)
         {
-            var calculator = reflectionCalculator as AimLineReflectionCalculator;
-            if (calculator != null)
-            {
-                return calculator.GetReflectionStats();
-            }
+            return reflectionCalculator.GetReflectionStats();
         }
         return "反射计算器未初始化";
     }

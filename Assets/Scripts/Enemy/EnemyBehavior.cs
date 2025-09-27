@@ -51,13 +51,13 @@ public class EnemyBehavior : MonoBehaviour
         }
         
         // 订阅攻击事件
-        EventTrigger.OnAttack += OnEnemyAttacked;
+        GameEventBus.OnAttack += OnEnemyAttacked;
     }
     
     void OnDestroy()
     {
         // 取消订阅攻击事件
-        EventTrigger.OnAttack -= OnEnemyAttacked;
+        GameEventBus.OnAttack -= OnEnemyAttacked;
     }
     
     void Update()
@@ -126,7 +126,7 @@ public class EnemyBehavior : MonoBehaviour
             // 对玩家造成伤害
             playerCore.TakeDamage(damage);
 
-            EventTrigger.Attack("Hit", transform.position, Vector3.zero, gameObject, player, damage);
+            gameObject.PublishAttack("Hit", transform.position, player, damage);
         }
         else
         {
@@ -300,7 +300,7 @@ public class EnemyBehavior : MonoBehaviour
         Debug.Log($"EnemyBehavior {name}: 受到 {damage} 点伤害，当前血量: {currentHealth}/{enemyData.maxHealth}");
         
         // 触发受击特效
-        EventTrigger.Attack("EnemyHit", transform.position, Vector3.zero, gameObject, gameObject, 0f);
+        gameObject.PublishAttack("EnemyHit", transform.position, gameObject, 0f);
         
         // 检查是否死亡
         if (currentHealth <= 0)
@@ -350,7 +350,7 @@ public class EnemyBehavior : MonoBehaviour
         
         // 触发死亡特效
         Debug.Log($"EnemyBehavior {name}: 触发死亡特效事件");
-        EventTrigger.Dead(transform.position, Vector3.zero, gameObject);
+        gameObject.PublishDeath("EnemyDeath", transform.position);
         
         // 禁用敌人行为
         // gameObject.SetActive(false);

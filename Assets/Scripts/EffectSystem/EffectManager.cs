@@ -76,7 +76,7 @@ public class EffectManager : MonoBehaviour, MMEventListener<EffectEvent>, MMEven
         if (enableDebugLog)
         {
             Debug.Log("测试 MMEventManager 是否工作...");
-            EffectEvent.Trigger("Test", Vector3.zero);
+            GameEventBus.PublishEffectEvent("Test", Vector3.zero);
         }
     }
     

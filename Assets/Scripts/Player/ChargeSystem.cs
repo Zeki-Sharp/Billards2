@@ -40,10 +40,8 @@ public class ChargeSystem : MonoBehaviour
     private TimeStopEffect timeStopEffect; // 时停特效控制器
     
     
-    // 事件
-    public System.Action<float> OnChargingProgressChanged; // 蓄力进度变化 (0-1)
-    public System.Action<float> OnForceChanged; // 力度变化
-    public System.Action OnChargingStarted; // 开始蓄力
+    // 事件 (已迁移到 GameEventBus)
+    
     public System.Action OnChargingCompleted; // 蓄力完成
     public System.Action OnChargingStopped; // 停止蓄力
     
@@ -87,7 +85,7 @@ public class ChargeSystem : MonoBehaviour
         currentForce = minForce;
         timestopEffectTriggered = false; // 重置时停特效状态
         
-        OnChargingStarted?.Invoke();
+        GameEventBus.PublishChargingStarted();
         
         if (showDebugInfo)
         {
@@ -121,8 +119,8 @@ public class ChargeSystem : MonoBehaviour
         chargingStartTime = 0f;
         currentForce = 0f;
         
-        OnChargingProgressChanged?.Invoke(0f);
-        OnForceChanged?.Invoke(0f);
+        GameEventBus.PublishChargingProgressChanged(0f);
+        GameEventBus.PublishForceChanged(0f);
         
         if (showDebugInfo)
         {
@@ -152,8 +150,8 @@ public class ChargeSystem : MonoBehaviour
         CalculateCurrentForce();
         
         // 触发事件
-        OnChargingProgressChanged?.Invoke(chargingPower);
-        OnForceChanged?.Invoke(currentForce);
+        GameEventBus.PublishChargingProgressChanged(chargingPower);
+        GameEventBus.PublishForceChanged(currentForce);
         
         // 调试信息
         if (showDebugInfo && Time.frameCount % 30 == 0) // 每30帧打印一次

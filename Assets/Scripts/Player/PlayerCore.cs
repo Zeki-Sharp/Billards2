@@ -53,13 +53,13 @@ public class PlayerCore : MonoBehaviour
     void OnEnable()
     {
         // 订阅攻击事件
-        EventTrigger.OnAttack += HandleAttack;
+        GameEventBus.OnAttack += HandleAttack;
     }
     
     void OnDisable()
     {
         // 取消订阅攻击事件
-        EventTrigger.OnAttack -= HandleAttack;
+        GameEventBus.OnAttack -= HandleAttack;
     }
     
     #region 初始化
@@ -202,7 +202,7 @@ public class PlayerCore : MonoBehaviour
         }
         
         // 触发发射特效事件
-        EventTrigger.Launch(transform.position, direction, gameObject);
+        gameObject.PublishEffect("Launch", transform.position, direction);
         
         // 使用 BallPhysics 的发射方法
         float launchSpeed = force;
@@ -305,7 +305,7 @@ public class PlayerCore : MonoBehaviour
         Debug.Log($"PlayerCore: 触发攻击事件 - 伤害: {damage}, 目标: {enemy.gameObject.name}");
         
         // 触发攻击事件，伤害处理由事件监听器处理
-        EventTrigger.Attack("Hit", hitPosition, hitDirection, gameObject, enemy.gameObject, damage);
+        gameObject.PublishAttack("Hit", hitPosition, enemy.gameObject, damage);
         
         // 处理充能力逻辑
         BallPhysics enemyBallPhysics = collision.gameObject.GetComponent<BallPhysics>();
