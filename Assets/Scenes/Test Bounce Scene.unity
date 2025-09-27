@@ -8534,9 +8534,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 07880cd37e99074408a4dee92b460510, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  aimLineLength: 5
-  chargeSystem: {fileID: 6734338411020087302}
-  chargeBarUI: {fileID: 1394519833}
   playerCore: {fileID: 6734338411020087296}
   targetCamera: {fileID: 859979524}
   reflectionCalculator: {fileID: 1360613287}
@@ -8846,17 +8843,6 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 3953b119ae556034889e4bc9a3e4948f, type: 3}
---- !u!114 &1394519833 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 7487340331778245147, guid: 2d86053af5e50c446a06f75cbdecb65b, type: 3}
-  m_PrefabInstance: {fileID: 5924173280866626688}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 60a34d02fd7e8e24f86d80d7d49b8996, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!1 &1398340945
 GameObject:
   m_ObjectHideFlags: 0
@@ -10996,17 +10982,6 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 96bb1e49ec5d79d4ea2302f5e0e9b548, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
---- !u!114 &6734338411020087302 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 7844486164170001436, guid: 2d86053af5e50c446a06f75cbdecb65b, type: 3}
-  m_PrefabInstance: {fileID: 5924173280866626688}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 99fb07427277eeb4aa1f7dae44de0546, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
 --- !u!1660057539 &9223372036854775807

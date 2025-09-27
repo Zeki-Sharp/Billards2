@@ -31,13 +31,6 @@ public class GameManager : MonoBehaviour
     private TimeManager timeManager;
     private TransitionManager transitionManager;
     
-    // 事件
-    public System.Action<bool> OnGameStateChanged; // 游戏状态变化
-    public System.Action<int> OnScoreChanged; // 分数变化
-    public System.Action<int> OnHealthChanged; // 生命值变化
-    public System.Action<int> OnWaveChanged; // 波次变化
-    public System.Action OnGameOver; // 游戏结束
-    public System.Action OnGameWin; // 游戏胜利
     
     void Awake()
     {
@@ -93,10 +86,10 @@ public class GameManager : MonoBehaviour
         currentWave = 1;
         
         // 触发初始化事件
-        OnScoreChanged?.Invoke(score);
-        OnHealthChanged?.Invoke(playerHealth);
-        OnWaveChanged?.Invoke(currentWave);
-        OnGameStateChanged?.Invoke(isGameActive);
+        GameEventBus.PublishScoreChanged(score);
+        GameEventBus.PublishHealthChanged(playerHealth);
+        GameEventBus.PublishWaveChanged(currentWave);
+        GameEventBus.PublishGameStateChanged(isGameActive);
         
         if (showDebugInfo)
         {
@@ -138,8 +131,8 @@ public class GameManager : MonoBehaviour
             Debug.Log($"GameManager: 游戏胜利！最终分数: {score}, 完成波次: {currentWave}");
         }
         
-        OnGameWin?.Invoke();
-        OnGameStateChanged?.Invoke(isGameActive);
+        GameEventBus.PublishGameWin();
+        GameEventBus.PublishGameStateChanged(isGameActive);
     }
     
     void GameOver()
@@ -154,8 +147,8 @@ public class GameManager : MonoBehaviour
             Debug.Log($"GameManager: 游戏结束！最终分数: {score}, 完成波次: {currentWave}");
         }
         
-        OnGameOver?.Invoke();
-        OnGameStateChanged?.Invoke(isGameActive);
+        GameEventBus.PublishGameOver();
+        GameEventBus.PublishGameStateChanged(isGameActive);
     }
     
     #endregion
@@ -167,7 +160,7 @@ public class GameManager : MonoBehaviour
         if (isGameOver) return;
         
         score += points;
-        OnScoreChanged?.Invoke(score);
+        GameEventBus.PublishScoreChanged(score);
         
         if (showDebugInfo)
         {
@@ -180,7 +173,7 @@ public class GameManager : MonoBehaviour
         if (isGameOver) return;
         
         playerHealth = Mathf.Max(0, playerHealth - damage);
-        OnHealthChanged?.Invoke(playerHealth);
+        GameEventBus.PublishHealthChanged(playerHealth);
         
         if (showDebugInfo)
         {
@@ -193,7 +186,7 @@ public class GameManager : MonoBehaviour
         if (isGameOver) return;
         
         playerHealth = Mathf.Min(maxHealth, playerHealth + healAmount);
-        OnHealthChanged?.Invoke(playerHealth);
+        GameEventBus.PublishHealthChanged(playerHealth);
         
         if (showDebugInfo)
         {
@@ -206,7 +199,7 @@ public class GameManager : MonoBehaviour
         if (isGameOver) return;
         
         currentWave++;
-        OnWaveChanged?.Invoke(currentWave);
+        GameEventBus.PublishWaveChanged(currentWave);
         
         if (showDebugInfo)
         {

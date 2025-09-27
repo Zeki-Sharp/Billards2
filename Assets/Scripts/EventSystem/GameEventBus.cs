@@ -18,7 +18,7 @@ using UnityEngine;
 /// </summary>
 public static class GameEventBus
 {
-    #region 游戏逻辑事件 (C# Action)
+    #region 核心游戏事件
     
     /// <summary>
     /// 攻击事件
@@ -30,20 +30,6 @@ public static class GameEventBus
     /// </summary>
     public static event System.Action<DeathData> OnDeath;
     
-    #endregion
-    
-    #region 瞄准线事件 (新增)
-    
-    /// <summary>
-    /// 瞄准方向变化事件
-    /// </summary>
-    public static event System.Action<Vector2> OnAimDirectionChanged;
-    
-    /// <summary>
-    /// 瞄准线可见性变化事件
-    /// </summary>
-    public static event System.Action<bool> OnAimVisibilityChanged;
-    
     /// <summary>
     /// 发射事件
     /// </summary>
@@ -51,17 +37,12 @@ public static class GameEventBus
     
     #endregion
     
-    #region 蓄力系统事件 (新增)
+    #region 玩家状态事件
     
     /// <summary>
-    /// 蓄力进度变化事件
+    /// 玩家状态变化事件
     /// </summary>
-    public static event System.Action<float> OnChargingProgressChanged;
-    
-    /// <summary>
-    /// 力度变化事件
-    /// </summary>
-    public static event System.Action<float> OnForceChanged;
+    public static event System.Action<PlayerStateMachine.PlayerState> OnPlayerStateChanged;
     
     /// <summary>
     /// 开始蓄力事件
@@ -80,160 +61,164 @@ public static class GameEventBus
     
     #endregion
     
-    #region 游戏状态事件 (新增)
-    
-    /// <summary>
-    /// 玩家状态变化事件
-    /// </summary>
-    public static event System.Action<PlayerStateMachine.PlayerState> OnPlayerStateChanged;
+    #region 游戏流程事件
     
     /// <summary>
     /// 游戏流程状态变化事件
     /// </summary>
     public static event System.Action<GameFlowController.GameFlowState> OnGameFlowStateChanged;
     
+    /// <summary>
+    /// 游戏状态变化事件
+    /// </summary>
+    public static event System.Action<bool> OnGameStateChanged;
+    
+    /// <summary>
+    /// 游戏结束事件
+    /// </summary>
+    public static event System.Action OnGameOver;
+    
+    /// <summary>
+    /// 游戏胜利事件
+    /// </summary>
+    public static event System.Action OnGameWin;
+    
     #endregion
     
-    #region 统一事件发布接口
+    #region 游戏数据事件
+    
+    /// <summary>
+    /// 分数变化事件
+    /// </summary>
+    public static event System.Action<int> OnScoreChanged;
+    
+    /// <summary>
+    /// 生命值变化事件
+    /// </summary>
+    public static event System.Action<int> OnHealthChanged;
+    
+    /// <summary>
+    /// 波次变化事件
+    /// </summary>
+    public static event System.Action<int> OnWaveChanged;
+    
+    #endregion
+    
+    #region UI/表现事件
+    
+    /// <summary>
+    /// 瞄准方向变化事件
+    /// </summary>
+    public static event System.Action<Vector2> OnAimDirectionChanged;
+    
+    /// <summary>
+    /// 瞄准线可见性变化事件
+    /// </summary>
+    public static event System.Action<bool> OnAimVisibilityChanged;
+    
+    /// <summary>
+    /// 蓄力进度变化事件
+    /// </summary>
+    public static event System.Action<float> OnChargingProgressChanged;
+    
+    /// <summary>
+    /// 力度变化事件
+    /// </summary>
+    public static event System.Action<float> OnForceChanged;
+    
+    #endregion
+    
+    #region 事件发布方法
     
     /// <summary>
     /// 发布攻击事件
     /// </summary>
-    /// <param name="attackData">攻击数据</param>
-    public static void PublishAttack(AttackData attackData)
-    {
-        // 触发游戏逻辑事件
-        OnAttack?.Invoke(attackData);
-        
-        // 触发表现事件 (通过 MMEventManager)
-        var attackEffectEvent = new AttackEffectEvent
-        {
-            AttackType = attackData.AttackType,
-            Position = attackData.Position,
-            Direction = attackData.Direction,
-            Attacker = attackData.Attacker,
-            Target = attackData.Target,
-            Damage = attackData.Damage,
-            AttackerTag = attackData.AttackerTag,
-            TargetTag = attackData.TargetTag,
-            HitNormal = attackData.HitNormal,
-            HitSpeed = attackData.HitSpeed,
-            WallHitRotationAngle = attackData.WallHitRotationAngle,
-            WallHitPositionOffset = attackData.WallHitPositionOffset
-        };
-        
-        MoreMountains.Tools.MMEventManager.TriggerEvent(attackEffectEvent);
-    }
+    public static void PublishAttack(AttackData attackData) => OnAttack?.Invoke(attackData);
     
     /// <summary>
     /// 发布死亡事件
     /// </summary>
-    /// <param name="deathData">死亡数据</param>
-    public static void PublishDeath(DeathData deathData)
-    {
-        // 触发游戏逻辑事件
-        OnDeath?.Invoke(deathData);
-        
-        // 触发表现事件 (通过 MMEventManager)
-        var deathEffectEvent = new DeathEffectEvent
-        {
-            DeathType = deathData.DeathType,
-            Position = deathData.Position,
-            Direction = deathData.Direction,
-            DeadObject = deathData.DeadObject,
-            DeadObjectTag = deathData.DeadObjectTag
-        };
-        
-        MoreMountains.Tools.MMEventManager.TriggerEvent(deathEffectEvent);
-    }
-    
-    /// <summary>
-    /// 发布瞄准方向变化事件
-    /// </summary>
-    /// <param name="direction">瞄准方向</param>
-    public static void PublishAimDirectionChanged(Vector2 direction)
-    {
-        OnAimDirectionChanged?.Invoke(direction);
-    }
-    
-    /// <summary>
-    /// 发布瞄准线可见性变化事件
-    /// </summary>
-    /// <param name="isVisible">是否可见</param>
-    public static void PublishAimVisibilityChanged(bool isVisible)
-    {
-        OnAimVisibilityChanged?.Invoke(isVisible);
-    }
+    public static void PublishDeath(DeathData deathData) => OnDeath?.Invoke(deathData);
     
     /// <summary>
     /// 发布发射事件
     /// </summary>
-    /// <param name="direction">发射方向</param>
-    /// <param name="force">发射力度</param>
-    public static void PublishLaunch(Vector2 direction, float force)
-    {
-        OnLaunch?.Invoke(direction, force);
-    }
-    
-    /// <summary>
-    /// 发布蓄力进度变化事件
-    /// </summary>
-    /// <param name="progress">蓄力进度 (0-1)</param>
-    public static void PublishChargingProgressChanged(float progress)
-    {
-        OnChargingProgressChanged?.Invoke(progress);
-    }
-    
-    /// <summary>
-    /// 发布力度变化事件
-    /// </summary>
-    /// <param name="force">力度值</param>
-    public static void PublishForceChanged(float force)
-    {
-        OnForceChanged?.Invoke(force);
-    }
-    
-    /// <summary>
-    /// 发布开始蓄力事件
-    /// </summary>
-    public static void PublishChargingStarted()
-    {
-        OnChargingStarted?.Invoke();
-    }
-    
-    /// <summary>
-    /// 发布停止蓄力事件
-    /// </summary>
-    public static void PublishChargingStopped()
-    {
-        OnChargingStopped?.Invoke();
-    }
-    
-    /// <summary>
-    /// 发布重置蓄力事件
-    /// </summary>
-    public static void PublishChargingReset()
-    {
-        OnChargingReset?.Invoke();
-    }
+    public static void PublishLaunch(Vector2 direction, float force) => OnLaunch?.Invoke(direction, force);
     
     /// <summary>
     /// 发布玩家状态变化事件
     /// </summary>
-    /// <param name="playerState">玩家状态</param>
-    public static void PublishPlayerStateChanged(PlayerStateMachine.PlayerState playerState)
-    {
-        OnPlayerStateChanged?.Invoke(playerState);
-    }
+    public static void PublishPlayerStateChanged(PlayerStateMachine.PlayerState playerState) => OnPlayerStateChanged?.Invoke(playerState);
+    
+    /// <summary>
+    /// 发布开始蓄力事件
+    /// </summary>
+    public static void PublishChargingStarted() => OnChargingStarted?.Invoke();
+    
+    /// <summary>
+    /// 发布停止蓄力事件
+    /// </summary>
+    public static void PublishChargingStopped() => OnChargingStopped?.Invoke();
+    
+    /// <summary>
+    /// 发布重置蓄力事件
+    /// </summary>
+    public static void PublishChargingReset() => OnChargingReset?.Invoke();
     
     /// <summary>
     /// 发布游戏流程状态变化事件
     /// </summary>
-    /// <param name="gameFlowState">游戏流程状态</param>
-    public static void PublishGameFlowStateChanged(GameFlowController.GameFlowState gameFlowState)
-    {
-        OnGameFlowStateChanged?.Invoke(gameFlowState);
-    }
+    public static void PublishGameFlowStateChanged(GameFlowController.GameFlowState gameFlowState) => OnGameFlowStateChanged?.Invoke(gameFlowState);
+    
+    /// <summary>
+    /// 发布游戏状态变化事件
+    /// </summary>
+    public static void PublishGameStateChanged(bool isGameActive) => OnGameStateChanged?.Invoke(isGameActive);
+    
+    /// <summary>
+    /// 发布游戏结束事件
+    /// </summary>
+    public static void PublishGameOver() => OnGameOver?.Invoke();
+    
+    /// <summary>
+    /// 发布游戏胜利事件
+    /// </summary>
+    public static void PublishGameWin() => OnGameWin?.Invoke();
+    
+    /// <summary>
+    /// 发布分数变化事件
+    /// </summary>
+    public static void PublishScoreChanged(int score) => OnScoreChanged?.Invoke(score);
+    
+    /// <summary>
+    /// 发布生命值变化事件
+    /// </summary>
+    public static void PublishHealthChanged(int health) => OnHealthChanged?.Invoke(health);
+    
+    /// <summary>
+    /// 发布波次变化事件
+    /// </summary>
+    public static void PublishWaveChanged(int wave) => OnWaveChanged?.Invoke(wave);
+    
+    /// <summary>
+    /// 发布瞄准方向变化事件
+    /// </summary>
+    public static void PublishAimDirectionChanged(Vector2 direction) => OnAimDirectionChanged?.Invoke(direction);
+    
+    /// <summary>
+    /// 发布瞄准线可见性变化事件
+    /// </summary>
+    public static void PublishAimVisibilityChanged(bool isVisible) => OnAimVisibilityChanged?.Invoke(isVisible);
+    
+    /// <summary>
+    /// 发布蓄力进度变化事件
+    /// </summary>
+    public static void PublishChargingProgressChanged(float progress) => OnChargingProgressChanged?.Invoke(progress);
+    
+    /// <summary>
+    /// 发布力度变化事件
+    /// </summary>
+    public static void PublishForceChanged(float force) => OnForceChanged?.Invoke(force);
     
     #endregion
     
@@ -337,7 +322,13 @@ public static class GameEventBus
                $"- OnChargingStopped: {OnChargingStopped?.GetInvocationList()?.Length ?? 0} 订阅者\n" +
                $"- OnChargingReset: {OnChargingReset?.GetInvocationList()?.Length ?? 0} 订阅者\n" +
                $"- OnPlayerStateChanged: {OnPlayerStateChanged?.GetInvocationList()?.Length ?? 0} 订阅者\n" +
-               $"- OnGameFlowStateChanged: {OnGameFlowStateChanged?.GetInvocationList()?.Length ?? 0} 订阅者";
+               $"- OnGameFlowStateChanged: {OnGameFlowStateChanged?.GetInvocationList()?.Length ?? 0} 订阅者\n" +
+               $"- OnGameStateChanged: {OnGameStateChanged?.GetInvocationList()?.Length ?? 0} 订阅者\n" +
+               $"- OnScoreChanged: {OnScoreChanged?.GetInvocationList()?.Length ?? 0} 订阅者\n" +
+               $"- OnHealthChanged: {OnHealthChanged?.GetInvocationList()?.Length ?? 0} 订阅者\n" +
+               $"- OnWaveChanged: {OnWaveChanged?.GetInvocationList()?.Length ?? 0} 订阅者\n" +
+               $"- OnGameOver: {OnGameOver?.GetInvocationList()?.Length ?? 0} 订阅者\n" +
+               $"- OnGameWin: {OnGameWin?.GetInvocationList()?.Length ?? 0} 订阅者";
     }
     
     #endregion
