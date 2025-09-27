@@ -155,14 +155,19 @@ public class PlayerInputHandler : MonoBehaviour
     /// </summary>
     void HandleInput()
     {
+        // 首先检查顶层权限：是否在玩家阶段
+        if (!permissionManager.CanProcessInputInCurrentPhase())
+        {
+            return; // 不在玩家阶段，不处理任何输入
+        }
         
-        // 处理WASD移动
+        // 处理WASD移动（只在Transition子阶段允许）
         if (movementController != null && permissionManager.CanMoveInCurrentSubPhase())
         {
             movementController.HandleMovement(moveInput, isMovePressed);
         }
         
-        // 处理蓄力输入
+        // 处理蓄力输入（只在Normal子阶段允许）
         if (isChargePressed && permissionManager.CanChargeInCurrentSubPhase())
         {
             if (showDebugInfo)
