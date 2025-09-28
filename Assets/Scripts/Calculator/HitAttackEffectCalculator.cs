@@ -32,27 +32,19 @@ public static class HitAttackEffectCalculator
     /// </summary>
     private static void SetMMFPositionParameters(GameObject globalEffect, Vector3 position)
     {
-        // 找到 EffectPlayer 子对象
-        var effectPlayer = globalEffect.transform.Find("EffectPlayer");
-        if (effectPlayer == null) return;
+        // 直接查找 MMF_Player 组件（新架构）
+        var mmfPlayer = globalEffect.GetComponentInChildren<MMF_Player>();
+        if (mmfPlayer == null) return;
         
-        // 找到 Hit Attack Effect 子对象
-        var hitAttackEffect = effectPlayer.Find("Hit Attack Effect");
-        if (hitAttackEffect == null) return;
-        
-        var mmfPlayer = hitAttackEffect.GetComponent<MMFeedbacks>();
-        if (mmfPlayer is MMF_Player mmfPlayerComponent)
+        // 查找所有 MMF_Position 反馈
+        var positionFeedbacks = mmfPlayer.GetFeedbacksOfType<MMF_Position>();
+        if (positionFeedbacks != null && positionFeedbacks.Count > 0)
         {
-            // 查找所有 MMF_Position 反馈
-            var positionFeedbacks = mmfPlayerComponent.GetFeedbacksOfType<MMF_Position>();
-            if (positionFeedbacks != null && positionFeedbacks.Count > 0)
+            // 设置所有 Position 反馈的位置
+            foreach (var positionFeedback in positionFeedbacks)
             {
-                // 设置所有 Position 反馈的位置
-                foreach (var positionFeedback in positionFeedbacks)
-                {
-                    positionFeedback.DestinationPosition = position;
-                    positionFeedback.InitialPosition = position; // 立即出现在目标位置
-                }
+                positionFeedback.DestinationPosition = position;
+                positionFeedback.InitialPosition = position; // 立即出现在目标位置
             }
         }
     }

@@ -25,8 +25,6 @@ public class PlayerPhaseController : MonoBehaviour
         Transition      // 过渡状态：玩家可移动，敌人和子弹仍时停，白球运动
     }
     
-    [Header("调试")]
-    [SerializeField] private bool showDebugInfo = true;
     
     // 当前子阶段
     private PlayerSubPhase currentSubPhase = PlayerSubPhase.Normal;
@@ -238,7 +236,6 @@ public class PlayerPhaseController : MonoBehaviour
         }
         
         // 触发Normal特效
-        GameEventBus.PublishEffectEvent("Normal Effect", Vector3.zero);
         
         // Normal子阶段开始，等待PlayerStateMachine状态变化
         
@@ -252,7 +249,7 @@ public class PlayerPhaseController : MonoBehaviour
     {
         // 时停效果由ChargeSystem控制
         // 触发蓄力特效
-        GameEventBus.PublishEffectEvent("Charge Effect", Vector3.zero);
+        //GameEventBus.PublishEffectEvent("Charge", Vector3.zero);
         
         // Charging子阶段开始，等待PlayerStateMachine状态变化
         
@@ -271,8 +268,6 @@ public class PlayerPhaseController : MonoBehaviour
             timeStopEffect.SetIntensityImmediate(1f);
         }
         
-        // 触发发射特效
-        GameEventBus.PublishEffectEvent("Launch Effect", Vector3.zero);
         
         // Moving子阶段开始，等待PlayerStateMachine状态变化
         
@@ -293,7 +288,6 @@ public class PlayerPhaseController : MonoBehaviour
         }
         
         // 触发时停出场特效
-        GameEventBus.PublishEffectEvent("Timestop Out Effect", Vector3.zero);
     }
     
     /// <summary>

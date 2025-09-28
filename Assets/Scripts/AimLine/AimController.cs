@@ -210,7 +210,7 @@ public class AimController : MonoBehaviour
         // 触发蓄力开始特效
         if (playerCore != null)
         {
-            playerCore.gameObject.PublishEffect("Charge Effect", playerCore.transform.position);
+            playerCore.gameObject.PublishEffect("Charge", playerCore.transform.position);
         }
     }
     

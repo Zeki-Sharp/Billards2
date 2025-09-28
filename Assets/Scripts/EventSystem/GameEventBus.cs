@@ -222,10 +222,15 @@ public static class GameEventBus
     
     #endregion
     
-    #region 特效事件发布 (直接使用 MMEventManager)
+    #region 特效事件
     
     /// <summary>
-    /// 发布特效事件 - 直接使用 MMEventManager
+    /// 特效事件
+    /// </summary>
+    public static event System.Action<EffectEvent> OnEffect;
+    
+    /// <summary>
+    /// 发布特效事件 - 统一事件系统
     /// </summary>
     /// <param name="effectType">特效类型</param>
     /// <param name="position">特效位置</param>
@@ -244,7 +249,7 @@ public static class GameEventBus
             Intensity = 1f
         };
         
-        MoreMountains.Tools.MMEventManager.TriggerEvent(effectEvent);
+        OnEffect?.Invoke(effectEvent);
     }
     
     #endregion

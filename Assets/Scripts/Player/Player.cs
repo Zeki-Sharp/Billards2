@@ -1,4 +1,7 @@
 using UnityEngine;
+using MoreMountains.Feedbacks;
+using System.Collections.Generic;
+using DeepSpaceLabs.SAM;
 
 /// <summary>
 /// 玩家总控制器 - 事件驱动的组件协调器
@@ -32,12 +35,28 @@ public class Player : MonoBehaviour
     [SerializeField] private PlayerInputHandler inputHandler;
     [SerializeField] private PlayerMovementController movementController;
     
+    [Header("特效配置")]
+    [Tooltip("玩家特效配置列表，在 Inspector 中直接拖拽 MMF_Player 组件")]
+    public List<EffectConfig> effects = new List<EffectConfig>();
+    
     [Header("调试")]
     [SerializeField] private bool showDebugInfo = true;
     
     void Start()
     {
         InitializePlayer();
+    }
+    
+    void OnEnable()
+    {
+        // 注册所有特效到新的特效管理器
+        RegisterEffects();
+    }
+    
+    void OnDisable()
+    {
+        // 注销所有特效
+        UnregisterEffects();
     }
     
     /// <summary>
@@ -232,4 +251,36 @@ public class Player : MonoBehaviour
     }
     
     #endregion
+    
+    #region 特效管理
+    
+    /// <summary>
+    /// 注册所有特效到特效管理器
+    /// </summary>
+    void RegisterEffects()
+    {
+        foreach (var effect in effects)
+        {
+            if (effect.IsValid())
+            {
+                EffectManager.Instance.RegisterEffect(gameObject, effect.key, effect.mmfPlayer);
+            }
+            else
+            {
+                Debug.LogWarning($"Player: 无效的特效配置: {effect.GetDebugInfo()}");
+            }
+        }
+    }
+    
+    /// <summary>
+    /// 注销所有特效
+    /// </summary>
+    void UnregisterEffects()
+    {
+        EffectManager.Instance.UnregisterEffect(gameObject);
+    }
+    
+    #endregion
+    
+    
 }

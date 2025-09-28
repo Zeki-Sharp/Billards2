@@ -1,5 +1,8 @@
 using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
+using MoreMountains.Feedbacks;
+using DeepSpaceLabs.SAM;
 
 /// <summary>
 /// 敌人脚本 - 管理整个敌人生命周期
@@ -24,19 +27,13 @@ public class Enemy : MonoBehaviour
     [Header("状态管理")]
     private bool isFirstAppearance = true;  // 是否首次出现
     
-    [Header("测试模式")]
-    public bool testMode = false;
-    private int currentTestStep = 0;
+    
+    [Header("特效配置")]
+    [Tooltip("敌人特效配置列表，在 Inspector 中直接拖拽 MMF_Player 组件")]
+    public List<EffectConfig> effects = new List<EffectConfig>();
     
     
-    /// <summary>
-    /// 重置测试模式
-    /// </summary>
-    public void ResetTestMode()
-    {
-        currentTestStep = 0;
-        Debug.Log($"Enemy {name}: 重置测试模式");
-    }
+
     
     
     void Start()
@@ -57,57 +54,24 @@ public class Enemy : MonoBehaviour
         }
     }
     
-    void Update()
+    void OnEnable()
     {
-        if (testMode)
-        {
-            // 按空格键执行下一步
-            if (Input.GetKeyDown(KeyCode.Space))
-            {
-                ExecuteTestStep();
-            }
-            
-            // 按R键重置测试模式
-            if (Input.GetKeyDown(KeyCode.R))
-            {
-                ResetTestMode();
-            }
-        }
+        // 注册所有特效到新的特效管理器
+        RegisterEffects();
     }
     
-    /// <summary>
-    /// 执行测试步骤
-    /// </summary>
-    private void ExecuteTestStep()
+    void OnDisable()
     {
-        switch (currentTestStep)
-        {
-            case 0:
-                Debug.Log("=== 测试步骤 1: 预告 ===");
-                StartTelegraph();
-                currentTestStep++;
-                break;
-            case 1:
-                Debug.Log("=== 测试步骤 2: 生成 ===");
-                StartSpawn();
-                currentTestStep++;
-                break;
-            case 2:
-                Debug.Log("=== 测试步骤 3: 攻击 ===");
-                StartPhase(EnemyPhase.Attack);
-                currentTestStep++;
-                break;
-            case 3:
-                Debug.Log("=== 测试步骤 4: 移动 ===");
-                StartPhase(EnemyPhase.Move);
-                currentTestStep++;
-                break;
-            case 4:
-                Debug.Log("=== 测试完成，等待玩家阶段 ===");
-                // 不重置，等待玩家阶段
-                break;
-        }
+        // 注销所有特效
+        UnregisterEffects();
     }
+    
+    void Update()
+    {
+        
+    }
+    
+    
     
     /// <summary>
     /// 开始预告
@@ -315,4 +279,36 @@ public class Enemy : MonoBehaviour
             enemyBehavior.HideAttackRange();
         }
     }
+    
+    #region 特效管理
+    
+    /// <summary>
+    /// 注册所有特效到特效管理器
+    /// </summary>
+    void RegisterEffects()
+    {
+        foreach (var effect in effects)
+        {
+            if (effect.IsValid())
+            {
+                EffectManager.Instance.RegisterEffect(gameObject, effect.key, effect.mmfPlayer);
+            }
+            else
+            {
+                Debug.LogWarning($"Enemy {name}: 无效的特效配置: {effect.GetDebugInfo()}");
+            }
+        }
+    }
+    
+    /// <summary>
+    /// 注销所有特效
+    /// </summary>
+    void UnregisterEffects()
+    {
+        EffectManager.Instance.UnregisterEffect(gameObject);
+    }
+
+    #endregion
+    
+    
 }

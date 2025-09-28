@@ -1,5 +1,7 @@
 using UnityEngine;
 using System.Collections.Generic;
+using MoreMountains.Feedbacks;
+using DeepSpaceLabs.SAM;
 
 /// <summary>
 /// 墙壁管理器 - 统一管理所有子墙壁的撞墙特效
@@ -10,6 +12,9 @@ public class WallManager : MonoBehaviour
     [Header("撞墙特效设置")]
     public float wallHitEffectCooldown = 0.5f; // 撞墙特效冷却时间（秒）
     public float minWallHitSpeed = 1.0f; // 最小撞墙速度阈值
+    
+    [Header("特效配置")]
+    public List<EffectConfig> effects = new List<EffectConfig>();
     
     // 注意：墙面撞击的旋转和位置摇晃 Controller 会自动在子物体中查找，不需要手动配置引用
     
@@ -26,6 +31,18 @@ public class WallManager : MonoBehaviour
     {
         // 初始化墙壁管理器
         InitializeWallManager();
+    }
+    
+    void OnEnable()
+    {
+        // 注册特效
+        RegisterEffects();
+    }
+    
+    void OnDisable()
+    {
+        // 注销特效
+        UnregisterEffects();
     }
     
     /// <summary>
@@ -115,12 +132,14 @@ public class WallManager : MonoBehaviour
             if (rotationController != null)
             {
                 rotationAngle = rotationController.CalculateRotationAngle(wallHitPosition, hitNormal, currentSpeed);
+                Debug.Log($"🔧 [DEBUG] WallHitRotationController 计算旋转角度: {rotationAngle:F2}°");
             }
             
             var positionController = GetComponentInChildren<WallHitPositionController>();
             if (positionController != null)
             {
                 positionOffset = positionController.CalculatePositionOffset(wallHitPosition, hitNormal, wallHitDirection, currentSpeed);
+                Debug.Log($"🔧 [DEBUG] WallHitPositionController 计算位置偏移: {positionOffset}");
             }
             
             // 使用 GameEventBus 系统触发墙壁受击特效（带计算器参数）
@@ -140,7 +159,15 @@ public class WallManager : MonoBehaviour
                 WallHitRotationAngle = rotationAngle,
                 WallHitPositionOffset = positionOffset
             };
+            
+            Debug.Log($"🔧 [DEBUG] AttackData 创建完成 - WallHitRotationAngle: {attackData.WallHitRotationAngle:F2}°, " +
+                     $"WallHitPositionOffset: {attackData.WallHitPositionOffset}, HitSpeed: {attackData.HitSpeed:F2}");
+            
+            // 触发全局攻击事件（用于其他对象的受击特效）
             GameEventBus.PublishAttack(attackData);
+            
+            // 播放墙壁自己的受击特效
+            EffectManager.Instance.PlayEffect(gameObject, "Be Hit", attackData);
             
             if (enableDebugLog)
             {
@@ -228,4 +255,31 @@ public class WallManager : MonoBehaviour
     {
         return wallSegments.Count;
     }
+    
+    #region 特效管理方法
+    
+    /// <summary>
+    /// 注册所有特效
+    /// </summary>
+    void RegisterEffects()
+    {
+        foreach (var effect in effects)
+        {
+            if (effect.IsValid())
+            {
+                EffectManager.Instance.RegisterEffect(gameObject, effect.key, effect.mmfPlayer);
+            }
+        }
+    }
+    
+    /// <summary>
+    /// 注销所有特效
+    /// </summary>
+    void UnregisterEffects()
+    {
+        EffectManager.Instance.UnregisterEffect(gameObject);
+    }
+    
+    #endregion
+    
 }
