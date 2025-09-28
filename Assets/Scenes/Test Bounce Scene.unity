@@ -244,7 +244,7 @@ MonoBehaviour:
     + \u76F4\u63A5\u5F15\u7528 \u67B6\u6784\n\u5168\u5C40\u7279\u6548\uFF1A\u955C\u5934\u6447\u6643\u3001\u5168\u5C40\u97F3\u6548\u7B49\uFF08\u5728EffectManager\u4E0A\uFF09\n\u5BF9\u8C61\u7279\u6548\uFF1A\u7C92\u5B50\u7279\u6548\u3001\u5BF9\u8C61\u52A8\u753B\u7B49\uFF08\u5728\u76EE\u6807\u5BF9\u8C61\u4E0A\uFF09\n\u914D\u7F6E\u65B9\u5F0F\uFF1A\u5728Inspector\u4E2D\u76F4\u63A5\u62D6\u62FDMMF_Player\u7EC4\u4EF6"
   enableDebugLog: 1
   globalEffects:
-  - key: GlobalHitAttack
+  - effectType: 0
     mmfPlayer: {fileID: 842057709}
     enableDebugLog: 0
 --- !u!1 &80823470
@@ -8291,7 +8291,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1351027086}
-  - component: {fileID: 1351027087}
   m_Layer: 0
   m_Name: EffectPlayer
   m_TagString: Untagged
@@ -8315,18 +8314,6 @@ Transform:
   - {fileID: 1398340946}
   m_Father: {fileID: 1807813347}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1351027087
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1351027085}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c2fa73978eb192048979b1e651051dfb, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!1 &1354289659
 GameObject:
   m_ObjectHideFlags: 0
@@ -9323,6 +9310,17 @@ MonoBehaviour:
   minSpeedMultiplier: 0.1
   maxSpeedMultiplier: 1
   enableDebugLog: 0
+--- !u!114 &1448665083 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 8772439200271523911, guid: 2d86053af5e50c446a06f75cbdecb65b, type: 3}
+  m_PrefabInstance: {fileID: 5924173280866626688}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6da43522623d4704e979466dc7650b65, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &1494413362
 GameObject:
   m_ObjectHideFlags: 0
@@ -10222,7 +10220,7 @@ MonoBehaviour:
   wallHitEffectCooldown: 0.2
   minWallHitSpeed: 0.5
   effects:
-  - key: Be Hit
+  - effectType: 2
     mmfPlayer: {fileID: 1398340947}
     enableDebugLog: 0
   enableDebugLog: 1
@@ -10654,6 +10652,34 @@ PrefabInstance:
     - target: {fileID: 3251294568684493535, guid: 2d86053af5e50c446a06f75cbdecb65b, type: 3}
       propertyPath: m_Name
       value: Player
+      objectReference: {fileID: 0}
+    - target: {fileID: 4109773013413894966, guid: 2d86053af5e50c446a06f75cbdecb65b, type: 3}
+      propertyPath: effects.Array.size
+      value: 4
+      objectReference: {fileID: 0}
+    - target: {fileID: 4109773013413894966, guid: 2d86053af5e50c446a06f75cbdecb65b, type: 3}
+      propertyPath: effects.Array.data[4].key
+      value: Hit Attack
+      objectReference: {fileID: 0}
+    - target: {fileID: 4109773013413894966, guid: 2d86053af5e50c446a06f75cbdecb65b, type: 3}
+      propertyPath: effects.Array.data[4].mmfPlayer
+      value: 
+      objectReference: {fileID: 1448665083}
+    - target: {fileID: 4109773013413894966, guid: 2d86053af5e50c446a06f75cbdecb65b, type: 3}
+      propertyPath: effects.Array.data[0].effectType
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 4109773013413894966, guid: 2d86053af5e50c446a06f75cbdecb65b, type: 3}
+      propertyPath: effects.Array.data[1].effectType
+      value: 4
+      objectReference: {fileID: 0}
+    - target: {fileID: 4109773013413894966, guid: 2d86053af5e50c446a06f75cbdecb65b, type: 3}
+      propertyPath: effects.Array.data[2].effectType
+      value: 5
+      objectReference: {fileID: 0}
+    - target: {fileID: 4109773013413894966, guid: 2d86053af5e50c446a06f75cbdecb65b, type: 3}
+      propertyPath: effects.Array.data[3].effectType
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 5182198335736264703, guid: 2d86053af5e50c446a06f75cbdecb65b, type: 3}
       propertyPath: m_LocalPosition.x

@@ -172,7 +172,7 @@ public class WallManager : MonoBehaviour
             GameEventBus.PublishAttack(attackData);
             
             // 播放墙壁自己的受击特效
-            EffectManager.Instance.PlayEffect(gameObject, "Be Hit", attackData);
+            EffectManager.Instance.PlayEffect(gameObject, EffectType.BeHit, attackData: attackData);
             
             if (enableDebugLog)
             {
@@ -272,7 +272,7 @@ public class WallManager : MonoBehaviour
         {
             if (effect.IsValid())
             {
-                EffectManager.Instance.RegisterEffect(gameObject, effect.key, effect.mmfPlayer);
+                EffectManager.Instance.RegisterEffect(gameObject, effect.effectType, effect.mmfPlayer);
             }
         }
     }

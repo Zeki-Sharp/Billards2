@@ -51,16 +51,16 @@ MonoBehaviour:
   enemyItem: {fileID: 3210614334249002462}
   attackArea: {fileID: 8794704125978389554}
   effects:
-  - key: Hit Attack
+  - effectType: 0
     mmfPlayer: {fileID: 8813354259064772836}
     enableDebugLog: 0
-  - key: Be Hit
+  - effectType: 2
     mmfPlayer: {fileID: 449473815224375414}
     enableDebugLog: 0
-  - key: Dead
+  - effectType: 3
     mmfPlayer: {fileID: 8419464080632728091}
     enableDebugLog: 0
-  - key: Spawn
+  - effectType: 0
     mmfPlayer: {fileID: 6649304171052959320}
     enableDebugLog: 0
 --- !u!114 &8860770280083431608

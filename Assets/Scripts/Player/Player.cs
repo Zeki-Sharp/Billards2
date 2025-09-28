@@ -263,7 +263,7 @@ public class Player : MonoBehaviour
         {
             if (effect.IsValid())
             {
-                EffectManager.Instance.RegisterEffect(gameObject, effect.key, effect.mmfPlayer);
+                EffectManager.Instance.RegisterEffect(gameObject, effect.effectType, effect.mmfPlayer);
             }
             else
             {

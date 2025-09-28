@@ -5,11 +5,40 @@ using MoreMountains.Feedbacks;
 
 namespace DeepSpaceLabs.SAM
 {
-/// <summary>
+    /// <summary>
+    /// 特效类型枚举 - 提供类型安全的特效键名
+    /// </summary>
+    public enum EffectType
+    {
+        // 全局特效
+        GlobalHitAttack,
+        
+        // 攻击特效
+        Hit,
+        BeHit,
+        
+        // 死亡特效
+        Dead,
+        
+        // 玩家特效
+        Launch,     // 发射特效
+        Charge      // 蓄力特效
+    }
+
+    /// <summary>
+    /// 攻击类型常量
+    /// </summary>
+    public static class AttackTypes
+    {
+        public const string Hit = "Hit";
+    }
+
+    /// <summary>
     /// 特效管理器 - 统一的特效管理系统
     /// 基于注册机制，监听游戏事件，管理所有特效的注册和播放
-/// </summary>
-public class EffectManager : MonoBehaviour
+    /// 支持枚举类型安全的特效键名，提供统一的特效播放接口
+    /// </summary>
+    public class EffectManager : MonoBehaviour
 {
         #region 单例模式
         
@@ -23,6 +52,7 @@ public class EffectManager : MonoBehaviour
                                   "配置方式：在Inspector中直接拖拽MMF_Player组件";
     
     [Header("特效设置")]
+        [Tooltip("启用调试日志")]
         public bool enableDebugLog = true;
     
     [Header("全局特效配置")]
@@ -57,20 +87,11 @@ public class EffectManager : MonoBehaviour
     /// </summary>
     void RegisterGlobalEffects()
     {
-        if (enableDebugLog)
-        {
-            Debug.Log($"EffectManager: 开始注册全局特效，共{globalEffects.Count}个");
-        }
-        
         foreach (var effect in globalEffects)
         {
             if (effect.IsValid())
             {
-                RegisterEffect(gameObject, effect.key, effect.mmfPlayer);
-                if (enableDebugLog)
-                {
-                    Debug.Log($"EffectManager: 已注册全局特效 - {effect.key} -> {effect.mmfPlayer.name}");
-                }
+                RegisterEffect(gameObject, effect.effectType, effect.mmfPlayer);
             }
             else
             {
@@ -87,11 +108,6 @@ public class EffectManager : MonoBehaviour
         // 订阅游戏逻辑事件
         GameEventBus.OnAttack += OnAttackEvent;
         GameEventBus.OnDeath += OnDeathEvent;
-        if (enableDebugLog)
-        {
-            Debug.Log("EffectManager 已订阅 GameEventBus 统一事件系统");
-            Debug.Log($"EffectManager 实例: {Instance?.name}, 当前对象: {gameObject.name}");
-        }
     }
     
     void OnDisable()
@@ -110,22 +126,38 @@ public class EffectManager : MonoBehaviour
         
         /// <summary>
         /// 核心注册字典：GameObject -> Dictionary<effectKey, MMF_Player>
-        /// 每个特效都是一个完整的MMF Player组件，包含多个Feedbacks
+        /// 每个特效都引用一个MMF Player组件，包含多个Feedbacks
         /// </summary>
         private Dictionary<GameObject, Dictionary<string, MMF_Player>> effectObjMMPlayerMap;
+        
+        /// <summary>
+        /// 枚举解析缓存：字符串 -> EffectType
+        /// 避免重复的字符串解析操作，提升性能
+        /// </summary>
+        private static readonly Dictionary<string, EffectType> EffectTypeCache = new Dictionary<string, EffectType>();
         
         #endregion
         
         #region 注册管理方法
         
+        /// <summary>
+        /// 注册特效到中央管理器（枚举版本 - 推荐使用）
+        /// </summary>
+        /// <param name="effectObj">特效所属的游戏对象</param>
+        /// <param name="effectType">特效类型枚举</param>
+        /// <param name="mmfPlayer">MMF Player组件引用</param>
+        public void RegisterEffect(GameObject effectObj, EffectType effectType, MMF_Player mmfPlayer)
+        {
+            RegisterEffect(effectObj, effectType.ToString(), mmfPlayer);
+        }
         
         /// <summary>
-        /// 注册特效到中央管理器
+        /// 注册特效到中央管理器（内部实现）
         /// </summary>
         /// <param name="effectObj">特效所属的游戏对象</param>
         /// <param name="effectKey">特效键名</param>
         /// <param name="mmfPlayer">MMF Player组件引用</param>
-        public void RegisterEffect(GameObject effectObj, string effectKey, MMF_Player mmfPlayer)
+        private void RegisterEffect(GameObject effectObj, string effectKey, MMF_Player mmfPlayer)
         {
             if (effectObj == null)
             {
@@ -155,19 +187,11 @@ public class EffectManager : MonoBehaviour
             // 检查是否重复注册
             if (playerMap.ContainsKey(effectKey))
             {
-                if (enableDebugLog)
-                {
-                    Debug.LogWarning($"EffectManager: 特效 {effectKey} 重复注册，将覆盖原有注册");
-                }
+                Debug.LogWarning($"EffectManager: 特效 {effectKey} 重复注册，将覆盖原有注册");
             }
             
             // 注册特效
             playerMap[effectKey] = mmfPlayer;
-            
-            if (enableDebugLog)
-            {
-                Debug.Log($"EffectManager: 成功注册特效 {effectObj.name}.{effectKey} -> {mmfPlayer.name}");
-            }
         }
         
         /// <summary>
@@ -180,146 +204,113 @@ public class EffectManager : MonoBehaviour
             
             if (effectObjMMPlayerMap.TryGetValue(effectObj, out var playerMap))
             {
-                int effectCount = playerMap.Count;
                 effectObjMMPlayerMap.Remove(effectObj);
-                
-                if (enableDebugLog)
-                {
-                    Debug.Log($"EffectManager: 成功注销对象 {effectObj.name} 的 {effectCount} 个特效");
-                }
             }
         }
         
-        /// <summary>
-        /// 注销指定特效
-        /// </summary>
-        /// <param name="effectObj">特效所属的游戏对象</param>
-        /// <param name="effectKey">特效键名</param>
-        public void UnregisterEffect(GameObject effectObj, string effectKey)
-        {
-            if (effectObj == null || string.IsNullOrEmpty(effectKey)) return;
-            
-            if (effectObjMMPlayerMap.TryGetValue(effectObj, out var playerMap))
-            {
-                if (playerMap.ContainsKey(effectKey))
-                {
-                    playerMap.Remove(effectKey);
-                    
-                    if (enableDebugLog)
-                    {
-                        Debug.Log($"EffectManager: 成功注销特效 {effectObj.name}.{effectKey}");
-                    }
-                    
-                    // 如果对象没有特效了，移除对象条目
-                    if (playerMap.Count == 0)
-                    {
-                        effectObjMMPlayerMap.Remove(effectObj);
-                    }
-                }
-            }
-        }
         
         #endregion
         
         #region 特效播放方法
     
-    /// <summary>
-        /// 播放特效 - 使用 AttackData 复杂参数
-    /// </summary>
+        /// <summary>
+        /// 统一的特效播放方法（枚举版本 - 推荐使用）
+        /// </summary>
         /// <param name="effectObj">特效所属的游戏对象</param>
-        /// <param name="effectKey">特效键名</param>
-        /// <param name="attackData">攻击数据</param>
-        public void PlayEffect(GameObject effectObj, string effectKey, AttackData attackData)
+        /// <param name="effectType">特效类型枚举</param>
+        /// <param name="position">特效位置（可选）</param>
+        /// <param name="direction">特效方向（可选）</param>
+        /// <param name="attackData">攻击数据（可选）</param>
+        /// <param name="deathData">死亡数据（可选）</param>
+        public void PlayEffect(GameObject effectObj, EffectType effectType, 
+            Vector3? position = null, 
+            Vector3? direction = null, 
+            AttackData? attackData = null, 
+            DeathData? deathData = null)
         {
+            string effectKey = effectType.ToString();
+            
             if (!TryGetEffect(effectObj, effectKey, out var mmfPlayer))
                 return;
             
-            // 设置特效位置和方向
-            if (attackData.Position != Vector3.zero)
-            {
-                mmfPlayer.transform.position = attackData.Position;
-            }
+            // 确定位置和方向
+            Vector3 finalPosition = position ?? attackData?.Position ?? deathData?.Position ?? Vector3.zero;
+            Vector3 finalDirection = direction ?? attackData?.Direction ?? deathData?.Direction ?? Vector3.zero;
             
-            if (attackData.Direction != Vector3.zero)
-            {
-                mmfPlayer.transform.rotation = Quaternion.LookRotation(attackData.Direction);
-            }
+            // 设置位置和方向
+            if (finalPosition != Vector3.zero)
+                mmfPlayer.transform.position = finalPosition;
             
-            // 传递复杂参数到 MMF Player
-            SetMMFPlayerParameters(mmfPlayer, attackData, effectKey);
+            if (finalDirection != Vector3.zero)
+                mmfPlayer.transform.rotation = Quaternion.LookRotation(finalDirection);
+            
+            // 设置复杂参数
+            if (attackData.HasValue)
+            {
+                SetMMFPlayerParameters(mmfPlayer, attackData.Value, effectKey);
+            }
             
             // 播放特效
             mmfPlayer.PlayFeedbacks();
-            
-            if (enableDebugLog)
-            {
-                Debug.Log($"EffectManager: 播放特效 {effectObj.name}.{effectKey} at {attackData.Position}");
-            }
+        }
+        
+        
+        /// <summary>
+        /// 便利方法：使用 AttackData 播放特效（枚举版本 - 推荐）
+        /// </summary>
+        public void PlayAttackEffect(GameObject effectObj, EffectType effectType, AttackData attackData)
+        {
+            PlayEffect(effectObj, effectType, attackData: attackData);
         }
         
         /// <summary>
-        /// 播放特效 - 使用基础参数
+        /// 便利方法：使用基础参数播放特效（枚举版本 - 推荐）
         /// </summary>
-        /// <param name="effectObj">特效所属的游戏对象</param>
-        /// <param name="effectKey">特效键名</param>
-        /// <param name="position">特效位置</param>
-        /// <param name="direction">特效方向</param>
-        public void PlayEffect(GameObject effectObj, string effectKey, Vector3 position, Vector3 direction = default)
+        public void PlayBasicEffect(GameObject effectObj, EffectType effectType, Vector3 position, Vector3 direction = default)
         {
-            if (!TryGetEffect(effectObj, effectKey, out var mmfPlayer))
-                return;
-            
-            // 设置特效位置和方向
-            mmfPlayer.transform.position = position;
-            
-            if (direction != Vector3.zero)
-            {
-                mmfPlayer.transform.rotation = Quaternion.LookRotation(direction);
-            }
-            
-            // 播放特效
-            mmfPlayer.PlayFeedbacks();
-            
-            if (enableDebugLog)
-            {
-                Debug.Log($"EffectManager: 播放特效 {effectObj.name}.{effectKey} at {position}");
-            }
+            PlayEffect(effectObj, effectType, position, direction);
         }
         
         /// <summary>
-        /// 播放特效 - 使用 DeathData 参数
+        /// 便利方法：使用 DeathData 播放特效（枚举版本 - 推荐）
         /// </summary>
-        /// <param name="effectObj">特效所属的游戏对象</param>
-        /// <param name="effectKey">特效键名</param>
-        /// <param name="deathData">死亡数据</param>
-        public void PlayEffect(GameObject effectObj, string effectKey, DeathData deathData)
+        public void PlayDeathEffect(GameObject effectObj, EffectType effectType, DeathData deathData)
         {
-            if (!TryGetEffect(effectObj, effectKey, out var mmfPlayer))
-                return;
-            
-            // 设置特效位置和方向
-            if (deathData.Position != Vector3.zero)
-            {
-                mmfPlayer.transform.position = deathData.Position;
-            }
-            
-            if (deathData.Direction != Vector3.zero)
-            {
-                mmfPlayer.transform.rotation = Quaternion.LookRotation(deathData.Direction);
-            }
-            
-            // 播放特效
-            mmfPlayer.PlayFeedbacks();
-            
-            if (enableDebugLog)
-            {
-                Debug.Log($"EffectManager: 播放特效 {effectObj.name}.{effectKey} at {deathData.Position}");
-            }
+            PlayEffect(effectObj, effectType, deathData: deathData);
         }
+        
         
         #endregion
         
         #region 辅助方法
+        
+        /// <summary>
+        /// 缓存的枚举解析方法
+        /// </summary>
+        /// <param name="effectTypeString">特效类型字符串</param>
+        /// <param name="effectType">输出的枚举值</param>
+        /// <returns>是否解析成功</returns>
+        private static bool TryParseEffectType(string effectTypeString, out EffectType effectType)
+        {
+            if (string.IsNullOrEmpty(effectTypeString))
+            {
+                effectType = default;
+                return false;
+            }
+            
+            if (EffectTypeCache.TryGetValue(effectTypeString, out effectType))
+            {
+                return true;
+            }
+            
+            if (System.Enum.TryParse<EffectType>(effectTypeString, out effectType))
+            {
+                EffectTypeCache[effectTypeString] = effectType;
+                return true;
+            }
+            
+            return false;
+        }
         
         /// <summary>
         /// 获取特效引用
@@ -332,56 +323,19 @@ public class EffectManager : MonoBehaviour
         {
             mmfPlayer = null;
             
-            if (effectObj == null)
-            {
-                if (enableDebugLog)
-                    Debug.LogWarning("EffectManager: 播放特效时 effectObj 为 null");
+            if (effectObj == null || string.IsNullOrEmpty(effectKey))
                 return false;
-            }
             
-            if (string.IsNullOrEmpty(effectKey))
+            if (!effectObjMMPlayerMap.TryGetValue(effectObj, out var playerMap) ||
+                !playerMap.TryGetValue(effectKey, out mmfPlayer) ||
+                mmfPlayer == null ||
+                !effectObj.activeInHierarchy)
             {
-                if (enableDebugLog)
-                    Debug.LogWarning("EffectManager: 播放特效时 effectKey 为空");
-                return false;
-            }
-            
-            if (!effectObjMMPlayerMap.TryGetValue(effectObj, out var playerMap))
-            {
-                if (enableDebugLog)
-                    Debug.LogWarning($"EffectManager: 对象 {effectObj.name} 未注册任何特效");
-                return false;
-            }
-            
-            if (!playerMap.TryGetValue(effectKey, out mmfPlayer))
-            {
-                if (enableDebugLog)
-                    Debug.LogWarning($"EffectManager: 对象 {effectObj.name} 未注册特效 {effectKey}");
-                return false;
-            }
-            
-            if (mmfPlayer == null)
-            {
-                if (enableDebugLog)
-                    Debug.LogWarning($"EffectManager: 特效 {effectObj.name}.{effectKey} 的 MMF Player 引用为 null");
-                return false;
-            }
-            
-            // 检查对象是否仍然活跃
-            if (!effectObj.activeInHierarchy)
-            {
-                if (enableDebugLog)
-                    Debug.LogWarning($"EffectManager: 对象 {effectObj.name} 不在活跃层级中，跳过特效播放");
                 return false;
             }
             
             return true;
         }
-        
-        /// <summary>
-        /// 设置 MMF Player 的复杂参数
-        /// </summary>
-        /// <param name="mmfPlayer">MMF Player 组件</param>
         
         /// <summary>
         /// 设置 MMF Player 参数
@@ -394,7 +348,7 @@ public class EffectManager : MonoBehaviour
             if (mmfPlayer == null) return;
             
             // 全局特效始终使用真实碰撞位置，不使用墙壁偏移
-            bool isGlobalEffect = effectKey == "GlobalHitAttack";
+            bool isGlobalEffect = effectKey == EffectType.GlobalHitAttack.ToString();
             bool isWallHit = !isGlobalEffect && MMFPlayerParameterSetter.IsWallHitEffect(effectKey);
             
             MMFPlayerParameterSetter.SetEffectPosition(
@@ -408,12 +362,6 @@ public class EffectManager : MonoBehaviour
             if (isWallHit && attackData.HitNormal != Vector3.zero)
             {
                 MMFPlayerParameterSetter.SetWallHitParameters(mmfPlayer, attackData);
-                
-                if (enableDebugLog)
-                {
-                    Debug.Log($"EffectManager: 设置墙壁撞击参数 - Normal: {attackData.HitNormal}, Speed: {attackData.HitSpeed:F2}, " +
-                             $"Rotation: {attackData.WallHitRotationAngle:F2}°, PositionOffset: {attackData.WallHitPositionOffset}");
-                }
             }
         }
         
@@ -449,18 +397,18 @@ public class EffectManager : MonoBehaviour
         }
         
         /// <summary>
-        /// 检查特效是否已注册
+        /// 检查特效是否已注册（枚举版本 - 推荐使用）
         /// </summary>
         /// <param name="effectObj">特效所属的游戏对象</param>
-        /// <param name="effectKey">特效键名</param>
+        /// <param name="effectType">特效类型枚举</param>
         /// <returns>是否已注册</returns>
-        public bool IsEffectRegistered(GameObject effectObj, string effectKey)
+        public bool IsEffectRegistered(GameObject effectObj, EffectType effectType)
         {
-            if (effectObj == null || string.IsNullOrEmpty(effectKey))
+            if (effectObj == null)
                 return false;
                 
             return effectObjMMPlayerMap.TryGetValue(effectObj, out var playerMap) && 
-                   playerMap.ContainsKey(effectKey);
+                   playerMap.ContainsKey(effectType.ToString());
         }
         
         /// <summary>
@@ -489,7 +437,15 @@ public class EffectManager : MonoBehaviour
             // 播放目标对象特效 - 使用新架构
             if (effectEvent.TargetObject != null)
             {
-                Instance.PlayEffect(effectEvent.TargetObject, effectEvent.EffectType, effectEvent.Position, effectEvent.Direction);
+                // 使用缓存的枚举解析
+                if (TryParseEffectType(effectEvent.EffectType, out var effectType))
+                {
+                    PlayEffect(effectEvent.TargetObject, effectType, effectEvent.Position, effectEvent.Direction);
+                }
+                else
+                {
+                    Debug.LogWarning($"EffectManager: 无法识别的特效类型: {effectEvent.EffectType}");
+                }
             }
         }
     
@@ -499,69 +455,57 @@ public class EffectManager : MonoBehaviour
     /// </summary>
     public void OnAttackEvent(AttackData attackData)
     {
-        if (enableDebugLog)
+        PlayAttackerEffect(attackData);
+        PlayGlobalEffect(attackData);
+        PlayTargetEffect(attackData);
+    }
+    
+    /// <summary>
+    /// 播放攻击者特效
+    /// </summary>
+    private void PlayAttackerEffect(AttackData attackData)
+    {
+        PlayEffectDirectly(EffectType.Hit, attackData.Position, attackData.Direction, 
+                          attackData.Attacker, attackData.AttackerTag, attackData);
+    }
+    
+    /// <summary>
+    /// 播放全局特效（只对Player发起的Hit攻击）
+    /// </summary>
+    private void PlayGlobalEffect(AttackData attackData)
+    {
+        if (attackData.Attacker != null && attackData.Attacker.CompareTag("Player") && 
+            attackData.AttackType == AttackTypes.Hit)
         {
-            Debug.Log($"EffectManager 收到攻击事件: {attackData.AttackType} -> {attackData.Attacker?.name} 攻击 {attackData.Target?.name}");
-        }
-        
-            // 播放攻击者特效 - 直接使用配置的键名
-            PlayEffectDirectly(attackData.AttackType, attackData.Position, attackData.Direction, attackData.Attacker, attackData.AttackerTag, attackData);
-            
-            // 播放全局特效（只对Player发起的Hit攻击）
-            if (attackData.Attacker != null && attackData.Attacker.CompareTag("Player") && 
-                attackData.AttackType == "Hit")
-            {
-                PlayEffectDirectly("GlobalHitAttack", attackData.Position, attackData.Direction, 
-                                 gameObject, "EffectManager", attackData);
-                
-                if (enableDebugLog)
-                {
-                    Debug.Log($"EffectManager: 播放全局特效 - GlobalHitAttack at {attackData.Position}");
-                }
-            }
-        
-            // 播放受击者特效 - 直接使用配置的键名
-        if (enableDebugLog)
-        {
-            Debug.Log($"EffectManager: 检查受击特效 - 目标: {attackData.Target?.name}, 目标标签: {attackData.TargetTag}");
-        }
-        
-        if (ShouldPlayBeHitEffect(attackData.Target))
-        {
-            if (enableDebugLog)
-            {
-                Debug.Log($"EffectManager: 尝试播放受击特效 - 目标: {attackData.Target?.name}, 键名: Be Hit");
-            }
-            
-            PlayEffectDirectly("Be Hit", attackData.Position, attackData.Direction, attackData.Target, attackData.TargetTag, attackData);
-            
-            if (enableDebugLog)
-            {
-                    Debug.Log($"EffectManager 已播放特效: {attackData.AttackType} 和 Be Hit");
-            }
-        }
-        else
-        {
-            if (enableDebugLog)
-            {
-                Debug.Log($"EffectManager 跳过受击特效播放 - 目标状态不允许");
-            }
+            PlayEffectDirectly(EffectType.GlobalHitAttack, attackData.Position, attackData.Direction, 
+                             gameObject, "EffectManager", attackData);
         }
     }
     
     /// <summary>
-    /// 直接播放特效，使用 AttackData 的所有参数
+    /// 播放受击者特效
     /// </summary>
-        private void PlayEffectDirectly(string effectType, Vector3 position, Vector3 direction, GameObject targetObject, string targetTag, AttackData attackData)
+    private void PlayTargetEffect(AttackData attackData)
+    {
+        if (ShouldPlayBeHitEffect(attackData.Target))
         {
-            // 播放目标对象特效 - 使用新架构
+            PlayEffectDirectly(EffectType.BeHit, attackData.Position, attackData.Direction, 
+                              attackData.Target, attackData.TargetTag, attackData);
+        }
+    }
+    
+    /// <summary>
+    /// 直接播放特效，使用传入的位置和方向参数（枚举版本 - 推荐）
+    /// </summary>
+        private void PlayEffectDirectly(EffectType effectType, Vector3 position, Vector3 direction, GameObject targetObject, string targetTag, AttackData attackData)
+        {
+            // 播放目标对象特效 - 使用传入的位置和方向参数
             if (targetObject != null)
             {
-                PlayEffect(targetObject, effectType, attackData);
-                if (enableDebugLog)
-                    Debug.Log($"播放对象{effectType}特效 - {targetObject.name} at {position}, 速度: {attackData.HitSpeed:F2}");
+                PlayEffect(targetObject, effectType, position, direction, attackData);
             }
         }
+        
     
     /// <summary>
     /// 检查是否应该播放受击特效
@@ -577,10 +521,6 @@ public class EffectManager : MonoBehaviour
             PlayerStateMachine stateMachine = target.GetComponent<PlayerStateMachine>();
             if (stateMachine != null && !stateMachine.IsIdle)
             {
-                if (enableDebugLog)
-                {
-                    Debug.Log($"EffectManager: 玩家不在Idle状态，跳过受击特效 - 当前状态: {stateMachine.CurrentState}");
-                }
                 return false;
             }
         }
@@ -594,25 +534,16 @@ public class EffectManager : MonoBehaviour
     /// </summary>
     public void OnDeathEvent(DeathData deathData)
     {
-        if (enableDebugLog)
-        {
-            Debug.Log($"EffectManager 收到死亡事件: {deathData.DeathType}, 位置: {deathData.Position}, 对象: {deathData.DeadObject?.name}");
-        }
-        
-            // 播放死亡特效 - 使用新架构，使用配置的键名
+        // 播放死亡特效
         if (deathData.DeadObject != null)
-            {
-                Instance.PlayEffect(deathData.DeadObject, "Dead", deathData);
-                        if (enableDebugLog)
-                {
-                    Debug.Log($"EffectManager: 播放敌人 {deathData.DeadObject.name} 的死亡特效");
-                }
-            }
-            else
-            {
-                Debug.LogWarning("EffectManager: 死亡事件中没有死亡对象");
-            }
+        {
+            Instance.PlayEffect(deathData.DeadObject, EffectType.Dead, deathData: deathData);
         }
+        else
+        {
+            Debug.LogWarning("EffectManager: 死亡事件中没有死亡对象");
+        }
+    }
         
         #endregion
         
