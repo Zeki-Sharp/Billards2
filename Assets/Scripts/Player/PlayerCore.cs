@@ -299,8 +299,14 @@ public class PlayerCore : MonoBehaviour
         
         // 计算伤害和碰撞信息
         float damage = playerData != null ? playerData.damage : 50f;
-        Vector3 hitPosition = (transform.position + collision.transform.position) * 0.5f;
+        Vector3 hitPosition = collision.contacts[0].point; // 使用实际碰撞点
         Vector3 hitDirection = (collision.transform.position - transform.position).normalized;
+        
+        // 添加位置验证日志
+        Vector3 oldHitPosition = (transform.position + collision.transform.position) * 0.5f;
+        float positionDifference = Vector3.Distance(hitPosition, oldHitPosition);
+        Debug.Log($"PlayerCore碰撞位置验证 - 实际碰撞点: {hitPosition}, " +
+                  $"旧方法位置: {oldHitPosition}, 位置差异: {positionDifference:F3}");
         
         Debug.Log($"PlayerCore: 触发攻击事件 - 伤害: {damage}, 目标: {enemy.gameObject.name}");
         

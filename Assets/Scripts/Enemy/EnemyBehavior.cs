@@ -299,9 +299,6 @@ public class EnemyBehavior : MonoBehaviour
         
         Debug.Log($"EnemyBehavior {name}: 受到 {damage} 点伤害，当前血量: {currentHealth}/{enemyData.maxHealth}");
         
-        // 触发受击特效
-        gameObject.PublishAttack("EnemyHit", transform.position, gameObject, 0f);
-        
         // 检查是否死亡
         if (currentHealth <= 0)
         {

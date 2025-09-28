@@ -25,6 +25,10 @@ public class EffectManager : MonoBehaviour
     [Header("特效设置")]
         public bool enableDebugLog = true;
     
+    [Header("全局特效配置")]
+    [Tooltip("全局特效配置列表，在 Inspector 中直接拖拽 MMF_Player 组件")]
+    public List<EffectConfig> globalEffects = new List<EffectConfig>();
+    
     
     void Awake()
     {
@@ -40,6 +44,39 @@ public class EffectManager : MonoBehaviour
             return;
         }
         
+    }
+    
+    void Start()
+    {
+        // 注册全局特效到EffectManager自己
+        RegisterGlobalEffects();
+    }
+    
+    /// <summary>
+    /// 注册全局特效
+    /// </summary>
+    void RegisterGlobalEffects()
+    {
+        if (enableDebugLog)
+        {
+            Debug.Log($"EffectManager: 开始注册全局特效，共{globalEffects.Count}个");
+        }
+        
+        foreach (var effect in globalEffects)
+        {
+            if (effect.IsValid())
+            {
+                RegisterEffect(gameObject, effect.key, effect.mmfPlayer);
+                if (enableDebugLog)
+                {
+                    Debug.Log($"EffectManager: 已注册全局特效 - {effect.key} -> {effect.mmfPlayer.name}");
+                }
+            }
+            else
+            {
+                Debug.LogWarning($"EffectManager: 无效的全局特效配置: {effect.GetDebugInfo()}");
+            }
+        }
     }
     
     void OnEnable()
@@ -209,7 +246,7 @@ public class EffectManager : MonoBehaviour
             }
             
             // 传递复杂参数到 MMF Player
-            SetMMFPlayerParameters(mmfPlayer, attackData);
+            SetMMFPlayerParameters(mmfPlayer, attackData, effectKey);
             
             // 播放特效
             mmfPlayer.PlayFeedbacks();
@@ -345,80 +382,32 @@ public class EffectManager : MonoBehaviour
         /// 设置 MMF Player 的复杂参数
         /// </summary>
         /// <param name="mmfPlayer">MMF Player 组件</param>
+        
+        /// <summary>
+        /// 设置 MMF Player 参数
+        /// </summary>
+        /// <param name="mmfPlayer">MMF Player 组件</param>
         /// <param name="attackData">攻击数据</param>
-        private void SetMMFPlayerParameters(MMF_Player mmfPlayer, AttackData attackData)
+        /// <param name="effectKey">特效键名</param>
+        private void SetMMFPlayerParameters(MMF_Player mmfPlayer, AttackData attackData, string effectKey)
         {
             if (mmfPlayer == null) return;
             
-            // 设置撞击相关的参数
-            if (attackData.HitNormal != Vector3.zero)
+            // 全局特效始终使用真实碰撞位置，不使用墙壁偏移
+            bool isGlobalEffect = effectKey == "GlobalHitAttack";
+            bool isWallHit = !isGlobalEffect && MMFPlayerParameterSetter.IsWallHitEffect(effectKey);
+            
+            MMFPlayerParameterSetter.SetEffectPosition(
+                mmfPlayer, 
+                attackData.Position, 
+                isWallHit, 
+                attackData.WallHitPositionOffset
+            );
+            
+            // 如果是墙壁特效，设置墙壁专用参数
+            if (isWallHit && attackData.HitNormal != Vector3.zero)
             {
-                // 查找所有 MMF_Position 反馈，设置位置偏移
-                var positionFeedbacks = mmfPlayer.GetFeedbacksOfType<MMF_Position>();
-                if (positionFeedbacks != null && positionFeedbacks.Count > 0)
-                {
-                    foreach (var positionFeedback in positionFeedbacks)
-                    {
-                        // 应用墙壁撞击的位置偏移（由 WallHitPositionController 计算）
-                        Vector3 finalPosition = attackData.Position + attackData.WallHitPositionOffset;
-                        positionFeedback.DestinationPosition = finalPosition;
-                        positionFeedback.InitialPosition = finalPosition;
-                    }
-                }
-                
-                // 查找所有 MMF_PositionSpring 反馈，设置位置弹簧效果
-                var positionSpringFeedbacks = mmfPlayer.GetFeedbacksOfType<MMF_PositionSpring>();
-                if (positionSpringFeedbacks != null && positionSpringFeedbacks.Count > 0)
-                {
-                    foreach (var springFeedback in positionSpringFeedbacks)
-                    {
-                        // 使用旧系统的正确方法：直接设置属性
-                        springFeedback.BumpPositionMin = Vector3.zero;
-                        springFeedback.BumpPositionMax = attackData.WallHitPositionOffset;
-                    }
-                }
-                
-                // 查找所有 MMF_Rotation 反馈，设置旋转角度
-                var rotationFeedbacks = mmfPlayer.GetFeedbacksOfType<MMF_Rotation>();
-                if (rotationFeedbacks != null && rotationFeedbacks.Count > 0)
-                {
-                    foreach (var rotationFeedback in rotationFeedbacks)
-                    {
-                        // 应用墙壁撞击的旋转角度（由 WallHitRotationController 计算）
-                        // 使用旧系统的正确方法：直接设置 RemapCurveOne
-                        rotationFeedback.RemapCurveOne = attackData.WallHitRotationAngle;
-                    }
-                }
-                
-                // 查找所有 MMF_Scale 反馈，根据撞击速度设置缩放
-                var scaleFeedbacks = mmfPlayer.GetFeedbacksOfType<MMF_Scale>();
-                if (scaleFeedbacks != null && scaleFeedbacks.Count > 0)
-                {
-                    // 根据撞击速度计算缩放强度（0.5-2.0范围）
-                    float speedRatio = Mathf.Clamp01(attackData.HitSpeed / 50f);
-                    float scaleMultiplier = Mathf.Lerp(0.5f, 2.0f, speedRatio);
-                    Vector3 scale = Vector3.one * scaleMultiplier;
-                    
-                    foreach (var scaleFeedback in scaleFeedbacks)
-                    {
-                        try
-                        {
-                            // 尝试设置缩放参数
-                            var scaleField = scaleFeedback.GetType().GetField("DestinationScale");
-                            if (scaleField != null)
-                            {
-                                scaleField.SetValue(scaleFeedback, scale);
-                            }
-                        }
-                        catch (System.Exception e)
-                        {
-                            if (enableDebugLog)
-                            {
-                                Debug.LogWarning($"EffectManager: 设置缩放参数失败 - {e.Message}");
-                            }
-                        }
-                    }
-                }
+                MMFPlayerParameterSetter.SetWallHitParameters(mmfPlayer, attackData);
                 
                 if (enableDebugLog)
                 {
@@ -517,11 +506,34 @@ public class EffectManager : MonoBehaviour
         
             // 播放攻击者特效 - 直接使用配置的键名
             PlayEffectDirectly(attackData.AttackType, attackData.Position, attackData.Direction, attackData.Attacker, attackData.AttackerTag, attackData);
+            
+            // 播放全局特效（只对Player发起的Hit攻击）
+            if (attackData.Attacker != null && attackData.Attacker.CompareTag("Player") && 
+                attackData.AttackType == "Hit")
+            {
+                PlayEffectDirectly("GlobalHitAttack", attackData.Position, attackData.Direction, 
+                                 gameObject, "EffectManager", attackData);
+                
+                if (enableDebugLog)
+                {
+                    Debug.Log($"EffectManager: 播放全局特效 - GlobalHitAttack at {attackData.Position}");
+                }
+            }
         
             // 播放受击者特效 - 直接使用配置的键名
+        if (enableDebugLog)
+        {
+            Debug.Log($"EffectManager: 检查受击特效 - 目标: {attackData.Target?.name}, 目标标签: {attackData.TargetTag}");
+        }
+        
         if (ShouldPlayBeHitEffect(attackData.Target))
         {
-                PlayEffectDirectly("Be Hit", attackData.Position, attackData.Direction, attackData.Target, attackData.TargetTag, attackData);
+            if (enableDebugLog)
+            {
+                Debug.Log($"EffectManager: 尝试播放受击特效 - 目标: {attackData.Target?.name}, 键名: Be Hit");
+            }
+            
+            PlayEffectDirectly("Be Hit", attackData.Position, attackData.Direction, attackData.Target, attackData.TargetTag, attackData);
             
             if (enableDebugLog)
             {
@@ -545,7 +557,7 @@ public class EffectManager : MonoBehaviour
             // 播放目标对象特效 - 使用新架构
             if (targetObject != null)
             {
-                Instance.PlayEffect(targetObject, effectType, attackData);
+                PlayEffect(targetObject, effectType, attackData);
                 if (enableDebugLog)
                     Debug.Log($"播放对象{effectType}特效 - {targetObject.name} at {position}, 速度: {attackData.HitSpeed:F2}");
             }

@@ -142,6 +142,11 @@ public class WallManager : MonoBehaviour
                 Debug.Log($"🔧 [DEBUG] WallHitPositionController 计算位置偏移: {positionOffset}");
             }
             
+            // 添加位置验证日志
+            Debug.Log($"WallManager碰撞位置验证 - 实际碰撞点: {wallHitPosition}, " +
+                     $"碰撞对象位置: {hitObject.transform.position}, " +
+                     $"墙壁位置: {wallTransform.position}");
+            
             // 使用 GameEventBus 系统触发墙壁受击特效（带计算器参数）
             var attackData = new AttackData
             {
