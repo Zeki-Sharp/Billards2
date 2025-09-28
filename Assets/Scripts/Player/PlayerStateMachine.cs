@@ -278,10 +278,6 @@ public class PlayerStateMachine : MonoBehaviour
     
     #endregion
     
-    #region 事件处理
-    
-    
-    #endregion
     
     #region 组件设置
     
