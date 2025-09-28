@@ -8485,6 +8485,11 @@ MonoBehaviour:
   defaultLineWidth: 0.1
   defaultSortingOrder: 10
   defaultCapVertices: 8
+  collisionIndicatorSprite: {fileID: -2413806693520163455, guid: a86470a33a6bf42c4b3595704624658b, type: 3}
+  indicatorSize: 0.8
+  indicatorColor: {r: 1, g: 1, b: 1, a: 0.5882353}
+  indicatorSortingOrder: 11
+  showCollisionIndicators: 1
   materialController: {fileID: 0}
   showDebugInfo: 0
 --- !u!1 &1361499547

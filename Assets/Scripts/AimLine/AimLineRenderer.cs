@@ -23,6 +23,13 @@ public class AimLineRenderer : MonoBehaviour
     [SerializeField] private int defaultSortingOrder = 10;
     [SerializeField] private int defaultCapVertices = 8;
     
+    [Header("碰撞指示器设置")]
+    [SerializeField] private Sprite collisionIndicatorSprite; // 碰撞指示器图片
+    [SerializeField] private float indicatorSize = 0.3f; // 指示器大小
+    [SerializeField] private Color indicatorColor = Color.red; // 指示器颜色
+    [SerializeField] private int indicatorSortingOrder = 11; // 指示器排序顺序（比瞄准线高）
+    [SerializeField] private bool showCollisionIndicators = true; // 是否显示碰撞指示器
+    
     [Header("组件引用")]
     [SerializeField] private AimLineMaterialController materialController;
     
@@ -31,7 +38,9 @@ public class AimLineRenderer : MonoBehaviour
     
     // 渲染对象管理
     private List<LineRenderer> segmentLines = new List<LineRenderer>();
+    private List<GameObject> collisionIndicators = new List<GameObject>();
     private GameObject lineContainer;
+    private GameObject indicatorContainer;
     
     // 常量定义
     private const float MIN_ANGLE_THRESHOLD = 0.01f;
@@ -59,6 +68,7 @@ public class AimLineRenderer : MonoBehaviour
         
         // 创建渲染容器
         CreateLineContainer();
+        CreateIndicatorContainer();
         
         if (showDebugInfo)
         {
@@ -80,6 +90,20 @@ public class AimLineRenderer : MonoBehaviour
         lineContainer.transform.SetParent(transform);
     }
     
+    /// <summary>
+    /// 创建指示器容器
+    /// </summary>
+    void CreateIndicatorContainer()
+    {
+        if (indicatorContainer != null)
+        {
+            DestroyImmediate(indicatorContainer);
+        }
+        
+        indicatorContainer = new GameObject("CollisionIndicatorContainer");
+        indicatorContainer.transform.SetParent(transform);
+    }
+    
     
     /// <summary>
     /// 渲染分段反射瞄准线
@@ -94,8 +118,9 @@ public class AimLineRenderer : MonoBehaviour
         }
         
         
-        // 清除旧的分段线段
+        // 清除旧的分段线段和指示器
         ClearSegmentLines();
+        ClearCollisionIndicators();
         
         // 获取线条宽度
         float lineWidth = defaultLineWidth;
@@ -143,6 +168,12 @@ public class AimLineRenderer : MonoBehaviour
             }
         }
         
+        // 渲染碰撞指示器
+        if (showCollisionIndicators)
+        {
+            RenderCollisionIndicators(pathPoints);
+        }
+        
         if (showDebugInfo)
         {
             Debug.Log($"AimLineRenderer: 渲染分段瞄准线 - 段数: {segmentCount}, 路径点: {pathPoints.Count}");
@@ -154,8 +185,9 @@ public class AimLineRenderer : MonoBehaviour
     /// </summary>
     public void ClearAllLines()
     {
-        // 清除分段线段
+        // 清除分段线段和指示器
         ClearSegmentLines();
+        ClearCollisionIndicators();
     }
     
     
@@ -240,6 +272,96 @@ public class AimLineRenderer : MonoBehaviour
     }
     
     /// <summary>
+    /// 清除所有碰撞指示器
+    /// </summary>
+    void ClearCollisionIndicators()
+    {
+        foreach (GameObject indicator in collisionIndicators)
+        {
+            if (indicator != null)
+            {
+                DestroyImmediate(indicator);
+            }
+        }
+        collisionIndicators.Clear();
+    }
+    
+    /// <summary>
+    /// 渲染碰撞指示器
+    /// </summary>
+    /// <param name="pathPoints">路径点列表</param>
+    void RenderCollisionIndicators(List<Vector3> pathPoints)
+    {
+        if (pathPoints == null || pathPoints.Count <= 2)
+        {
+            return; // 只有起点和终点，没有碰撞点
+        }
+        
+        // 除了起点和终点，其他点都是碰撞点
+        for (int i = 1; i < pathPoints.Count - 1; i++)
+        {
+            CreateCollisionIndicator(pathPoints[i], i - 1);
+        }
+    }
+    
+    /// <summary>
+    /// 创建单个碰撞指示器
+    /// </summary>
+    /// <param name="position">指示器位置</param>
+    /// <param name="index">指示器索引</param>
+    void CreateCollisionIndicator(Vector3 position, int index)
+    {
+        GameObject indicatorObj = new GameObject($"CollisionIndicator_{index}");
+        indicatorObj.transform.SetParent(indicatorContainer.transform);
+        indicatorObj.transform.position = position;
+        
+        // 添加SpriteRenderer组件
+        SpriteRenderer spriteRenderer = indicatorObj.AddComponent<SpriteRenderer>();
+        
+        // 设置图片
+        if (collisionIndicatorSprite != null)
+        {
+            spriteRenderer.sprite = collisionIndicatorSprite;
+        }
+        else
+        {
+            // 如果没有设置图片，使用默认的白色方块
+            spriteRenderer.sprite = CreateDefaultIndicatorSprite();
+        }
+        
+        // 设置属性
+        spriteRenderer.color = indicatorColor;
+        spriteRenderer.sortingOrder = indicatorSortingOrder;
+        spriteRenderer.transform.localScale = Vector3.one * indicatorSize;
+        
+        collisionIndicators.Add(indicatorObj);
+        
+        if (showDebugInfo)
+        {
+            Debug.Log($"AimLineRenderer: 创建碰撞指示器 - 位置: {position}, 索引: {index}");
+        }
+    }
+    
+    /// <summary>
+    /// 创建默认指示器图片（当没有设置自定义图片时）
+    /// </summary>
+    /// <returns>默认的白色方块Sprite</returns>
+    Sprite CreateDefaultIndicatorSprite()
+    {
+        // 创建一个简单的白色方块作为默认指示器
+        Texture2D texture = new Texture2D(32, 32);
+        Color[] pixels = new Color[32 * 32];
+        for (int i = 0; i < pixels.Length; i++)
+        {
+            pixels[i] = Color.white;
+        }
+        texture.SetPixels(pixels);
+        texture.Apply();
+        
+        return Sprite.Create(texture, new Rect(0, 0, 32, 32), new Vector2(0.5f, 0.5f));
+    }
+    
+    /// <summary>
     /// 计算端点回退距离
     /// </summary>
     float CalculateBackoff(Vector3 point1, Vector3 point2, Vector3 point3, float lineWidth)
@@ -272,14 +394,58 @@ public class AimLineRenderer : MonoBehaviour
     }
     
     /// <summary>
+    /// 设置碰撞指示器图片
+    /// </summary>
+    /// <param name="sprite">指示器图片</param>
+    public void SetCollisionIndicatorSprite(Sprite sprite)
+    {
+        collisionIndicatorSprite = sprite;
+    }
+    
+    /// <summary>
+    /// 设置指示器大小
+    /// </summary>
+    /// <param name="size">指示器大小</param>
+    public void SetIndicatorSize(float size)
+    {
+        indicatorSize = Mathf.Max(0.1f, size);
+    }
+    
+    /// <summary>
+    /// 设置指示器颜色
+    /// </summary>
+    /// <param name="color">指示器颜色</param>
+    public void SetIndicatorColor(Color color)
+    {
+        indicatorColor = color;
+    }
+    
+    /// <summary>
+    /// 设置是否显示碰撞指示器
+    /// </summary>
+    /// <param name="show">是否显示</param>
+    public void SetShowCollisionIndicators(bool show)
+    {
+        showCollisionIndicators = show;
+        if (!show)
+        {
+            ClearCollisionIndicators();
+        }
+    }
+    
+    /// <summary>
     /// 获取渲染统计信息
     /// </summary>
     public string GetRenderStats()
     {
         return $"渲染器状态:\n" +
                $"- 分段线段数: {segmentLines.Count}\n" +
+               $"- 碰撞指示器数: {collisionIndicators.Count}\n" +
                $"- 材质控制器: {(materialController != null ? "已连接" : "未连接")}\n" +
                $"- 线条宽度: {defaultLineWidth}\n" +
-               $"- 排序顺序: {defaultSortingOrder}";
+               $"- 排序顺序: {defaultSortingOrder}\n" +
+               $"- 指示器显示: {(showCollisionIndicators ? "启用" : "禁用")}\n" +
+               $"- 指示器大小: {indicatorSize}\n" +
+               $"- 指示器颜色: {indicatorColor}";
     }
 }
