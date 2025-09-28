@@ -316,39 +316,17 @@ public class EnemyBehavior : MonoBehaviour
         isDead = true;
         Debug.Log($"EnemyBehavior {name}: 敌人死亡！");
         
-        // 检查敌人对象结构
-        Transform enemyItemTransform = transform.Find("EnemyItem");
-        if (enemyItemTransform != null)
-        {
-            Debug.Log($"EnemyBehavior {name}: 找到 EnemyItem");
-            Transform effectPlayerTransform = enemyItemTransform.Find("Effect Player");
-            if (effectPlayerTransform != null)
-            {
-                Debug.Log($"EnemyBehavior {name}: 找到 Effect Player");
-                Transform deadEffectTransform = effectPlayerTransform.Find("Dead Effect");
-                if (deadEffectTransform != null)
-                {
-                    Debug.Log($"EnemyBehavior {name}: 找到 Dead Effect");
-                }
-                else
-                {
-                    Debug.LogWarning($"EnemyBehavior {name}: 未找到 Dead Effect");
-                }
-            }
-            else
-            {
-                Debug.LogWarning($"EnemyBehavior {name}: 未找到 Effect Player");
-            }
-        }
-        else
-        {
-            Debug.LogWarning($"EnemyBehavior {name}: 未找到 EnemyItem");
-        }
-        
         // 触发死亡特效
         Debug.Log($"EnemyBehavior {name}: 触发死亡特效事件");
         gameObject.PublishDeath("EnemyDeath", transform.position);
         
+        /// 禁用collider（解决碰撞问题）
+        Collider2D[] colliders = GetComponentsInChildren<Collider2D>();
+        foreach (var collider in colliders)
+        {
+            collider.enabled = false;
+        }
+
         // 禁用敌人行为
         // gameObject.SetActive(false);
     }
