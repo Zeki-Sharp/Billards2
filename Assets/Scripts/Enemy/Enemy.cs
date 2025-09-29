@@ -287,6 +287,15 @@ public class Enemy : MonoBehaviour
     /// </summary>
     void RegisterEffects()
     {
+        // 检查 EffectManager 是否已初始化
+        if (EffectManager.Instance == null)
+        {
+            Debug.LogWarning($"Enemy {name}: EffectManager 尚未初始化，延迟注册特效");
+            // 使用协程延迟注册
+            StartCoroutine(DelayedRegisterEffects());
+            return;
+        }
+        
         foreach (var effect in effects)
         {
             if (effect.IsValid())
@@ -301,11 +310,37 @@ public class Enemy : MonoBehaviour
     }
     
     /// <summary>
+    /// 延迟注册特效的协程
+    /// </summary>
+    System.Collections.IEnumerator DelayedRegisterEffects()
+    {
+        // 等待 EffectManager 初始化完成
+        while (EffectManager.Instance == null)
+        {
+            yield return null;
+        }
+        
+        // 重新注册特效
+        foreach (var effect in effects)
+        {
+            if (effect.IsValid())
+            {
+                EffectManager.Instance.RegisterEffect(gameObject, effect.effectType, effect.mmfPlayer);
+            }
+        }
+        
+        Debug.Log($"Enemy {name}: 延迟注册特效完成");
+    }
+    
+    /// <summary>
     /// 注销所有特效
     /// </summary>
     void UnregisterEffects()
     {
-        EffectManager.Instance.UnregisterEffect(gameObject);
+        if (EffectManager.Instance != null)
+        {
+            EffectManager.Instance.UnregisterEffect(gameObject);
+        }
     }
 
     #endregion

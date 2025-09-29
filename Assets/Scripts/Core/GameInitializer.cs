@@ -1,4 +1,5 @@
 using UnityEngine;
+using DeepSpaceLabs.SAM;
 
 /// <summary>
 /// 游戏初始化器 - 负责初始化游戏场景和组件
@@ -25,6 +26,7 @@ public class GameInitializer : MonoBehaviour
     private TransitionManager transitionManager;
     private EnemyPhaseController enemyPhaseController;
     private PlayerPhaseController playerPhaseController;
+    private EffectManager effectManager;
     
     void Start()
     {
@@ -64,6 +66,26 @@ public class GameInitializer : MonoBehaviour
     /// </summary>
     void FindCoreComponents()
     {
+        // 优先初始化EffectManager，因为其他组件在OnEnable时需要访问它
+        effectManager = FindAnyObjectByType<EffectManager>();
+        if (effectManager == null)
+        {
+            // 创建EffectManager
+            GameObject effectManagerGO = new GameObject("EffectManager");
+            effectManager = effectManagerGO.AddComponent<EffectManager>();
+            if (showDebugInfo)
+            {
+                Debug.Log("GameInitializer: 已创建EffectManager");
+            }
+        }
+        else
+        {
+            if (showDebugInfo)
+            {
+                Debug.Log("GameInitializer: 找到现有EffectManager");
+            }
+        }
+        
         // 查找GameFlowController
         gameFlowController = FindAnyObjectByType<GameFlowController>();
         if (gameFlowController == null)
@@ -92,7 +114,10 @@ public class GameInitializer : MonoBehaviour
             // 创建EnemyPhaseController
             GameObject enemyPhaseControllerGO = new GameObject("EnemyPhaseController");
             enemyPhaseController = enemyPhaseControllerGO.AddComponent<EnemyPhaseController>();
-            // EnemyPhaseController已创建
+            if (showDebugInfo)
+            {
+                Debug.Log("GameInitializer: 已创建EnemyPhaseController");
+            }
         }
         
         // 查找PlayerPhaseController
@@ -102,7 +127,10 @@ public class GameInitializer : MonoBehaviour
             // 创建PlayerPhaseController
             GameObject playerPhaseControllerGO = new GameObject("PlayerPhaseController");
             playerPhaseController = playerPhaseControllerGO.AddComponent<PlayerPhaseController>();
-            // PlayerPhaseController已创建
+            if (showDebugInfo)
+            {
+                Debug.Log("GameInitializer: 已创建PlayerPhaseController");
+            }
         }
     }
     
