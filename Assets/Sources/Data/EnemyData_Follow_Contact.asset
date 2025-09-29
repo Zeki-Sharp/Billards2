@@ -26,7 +26,7 @@ MonoBehaviour:
   followConfig:
     moveSpeed: 3
     moveDistance: 2
-    minDistance: 2
+    minDistance: 1.5
   fleeConfig:
     moveSpeed: 3
     moveDistance: 2
