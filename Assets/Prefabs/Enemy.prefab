@@ -76,7 +76,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   enemyData: {fileID: 11400000, guid: ce82a34099b9d1f4899931eb09ed10ce, type: 2}
-  moveDistance: 1.5
+  moveDistance: 2
   moveSpeed: 3
   attackRange: {fileID: 4942167022313840919}
   attackEffect: {fileID: 8813354259064772836}

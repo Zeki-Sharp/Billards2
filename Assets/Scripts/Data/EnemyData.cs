@@ -17,26 +17,20 @@ public class EnemyData : ScriptableObject
     public float attackCooldown = 1f;
     public float moveSpeed = 2f;
     
+    [Header("攻击配置")]
+    public float attackRange = 3f;  // 保留用于其他用途，如检测范围
+    
     [Header("AI配置")]
     public bool enableAI = true;
     public MovementType movementType = MovementType.FollowPlayer;
     
-    [Header("攻击配置")]
-    public float attackRange = 3f;  // 保留用于其他用途，如检测范围
+
     
-    [Header("跟随移动配置")]
-    public float followMinDistance = 1f;
-    public float followMaxDistance = 5f;
-    public bool maintainDistance = false;
+    [ConditionalField("movementType", false, false, MovementType.FollowPlayer)]
+    public FollowMovementConfig followConfig = new FollowMovementConfig();
     
-    [Header("巡逻移动配置")]
-    public float patrolSpeedMultiplier = 0.8f;
-    public float stuckDetectionTime = 1.5f;
-    public float bounceRandomOffset = 8f;
-    public float minMoveDistance = 0.1f;
-    
-    [Header("移动距离配置")]
-    public float moveDistance = 3f;  // 每次移动的距离
+    [ConditionalField("movementType", false, false, MovementType.Flee)]
+    public FleeMovementConfig fleeConfig = new FleeMovementConfig();
     
     [Header("生成配置")]
     public int spawnWeight = 1;

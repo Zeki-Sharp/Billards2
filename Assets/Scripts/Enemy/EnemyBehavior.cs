@@ -11,9 +11,10 @@ public class EnemyBehavior : MonoBehaviour
     public EnemyData enemyData;
     
     [Header("移动设置")]
-    public float moveDistance = 2f;
-    public float moveSpeed = 3f;  // 移动速度（单位/秒）
     private bool isMoving = false;  // 是否正在移动
+    
+    [Header("行为系统")]
+    private IMovementBehavior movementBehavior;  // 移动行为组件
     
     [Header("组件引用")]
     public AttackRange attackRange;
@@ -32,6 +33,9 @@ public class EnemyBehavior : MonoBehaviour
     {
         // 初始化血量
         InitializeHealth();
+        
+        // 初始化行为系统
+        InitializeBehavior();
         
         // 如果手动配置了AttackRange，就不需要自动查找
         if (attackRange == null)
@@ -158,27 +162,25 @@ public class EnemyBehavior : MonoBehaviour
     /// </summary>
     public void ExecuteMovePhase()
     {
-        Debug.Log($"EnemyBehavior {name}: 执行移动阶段");
+        Debug.Log($"EnemyBehavior {name}: 执行移动阶段 - 行为类型: {enemyData?.movementType}");
         Debug.Log($"EnemyBehavior {name}: 移动前位置: {transform.position}");
         
-        if (player != null)
+        if (player != null && movementBehavior != null)
         {
-            // 计算向玩家移动的方向
-            Vector2 direction = (player.position - transform.position).normalized;
-            currentMovementDirection = direction;
-            
-            // 计算目标位置
-            Vector2 targetPosition = (Vector2)transform.position + direction * moveDistance;
+            // 使用行为系统执行移动
+            Vector2 targetPosition = movementBehavior.ExecuteMovement(transform, player, enemyData);
+            currentMovementDirection = movementBehavior.GetMovementDirection();
             
             // 设置移动状态
             isMoving = true;
+            movementBehavior.SetMoving(true);
             
             // 开始平滑移动
             StartCoroutine(MoveToTarget(targetPosition));
         }
         else
         {
-            Debug.LogWarning($"EnemyBehavior {name}: 无法移动，未找到玩家！");
+            Debug.LogWarning($"EnemyBehavior {name}: 无法移动，未找到玩家或行为组件！");
         }
     }
     
@@ -189,7 +191,10 @@ public class EnemyBehavior : MonoBehaviour
     {
         Vector2 startPosition = transform.position;
         float distance = Vector2.Distance(startPosition, targetPosition);
-        float moveTime = distance / moveSpeed;
+        
+        // 根据行为类型获取对应的移动速度
+        float currentMoveSpeed = GetCurrentMoveSpeed();
+        float moveTime = distance / currentMoveSpeed;
         
         float elapsedTime = 0f;
         
@@ -209,6 +214,7 @@ public class EnemyBehavior : MonoBehaviour
         
         // 重置移动状态
         isMoving = false;
+        movementBehavior?.SetMoving(false);
         
         Debug.Log($"EnemyBehavior {name}: 移动完成，最终位置: {transform.position}");
     }
@@ -218,7 +224,7 @@ public class EnemyBehavior : MonoBehaviour
     /// </summary>
     public Vector2 GetCurrentMovementDirection()
     {
-        return currentMovementDirection;
+        return movementBehavior?.GetMovementDirection() ?? currentMovementDirection;
     }
     
     /// <summary>
@@ -226,7 +232,25 @@ public class EnemyBehavior : MonoBehaviour
     /// </summary>
     public bool IsMoving()
     {
-        return isMoving;
+        return movementBehavior?.IsMoving() ?? isMoving;
+    }
+    
+    /// <summary>
+    /// 获取当前移动速度
+    /// </summary>
+    private float GetCurrentMoveSpeed()
+    {
+        if (enemyData == null) return 3f; // 默认速度
+        
+        switch (enemyData.movementType)
+        {
+            case MovementType.FollowPlayer:
+                return enemyData.followConfig.moveSpeed;
+            case MovementType.Flee:
+                return enemyData.fleeConfig.moveSpeed;
+            default:
+                return 3f; // 默认速度
+        }
     }
     
     /// <summary>
@@ -236,6 +260,23 @@ public class EnemyBehavior : MonoBehaviour
     {
         attackArea = attackAreaTransform;
         Debug.Log($"EnemyBehavior {name}: 设置攻击范围引用");
+    }
+    
+    /// <summary>
+    /// 初始化行为系统
+    /// </summary>
+    private void InitializeBehavior()
+    {
+        if (enemyData != null)
+        {
+            // 根据配置创建移动行为
+            movementBehavior = BehaviorFactory.CreateMovementBehavior(enemyData.movementType);
+            Debug.Log($"EnemyBehavior {name}: 初始化行为系统 - 移动类型: {enemyData.movementType}");
+        }
+        else
+        {
+            Debug.LogError($"EnemyBehavior {name}: EnemyData 未设置，无法初始化行为系统！");
+        }
     }
     
     /// <summary>

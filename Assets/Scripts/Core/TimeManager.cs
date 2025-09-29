@@ -45,9 +45,7 @@ public class TimeManager : MonoBehaviour
     
     [Tooltip("是否影响敌人攻击间隔")]
     public bool affectEnemyAttackInterval = true;
-    
-    [Header("调试")]
-    [SerializeField] private bool showDebugInfo = true;
+
     
     private GameFlowController gameFlowController;
     

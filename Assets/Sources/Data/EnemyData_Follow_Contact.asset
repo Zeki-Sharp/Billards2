@@ -20,17 +20,17 @@ MonoBehaviour:
   damage: 10
   attackCooldown: 1
   moveSpeed: 3
+  attackRange: 3
   enableAI: 1
   movementType: 0
-  attackRange: 3
-  followMinDistance: 1
-  followMaxDistance: 5
-  maintainDistance: 0
-  patrolSpeedMultiplier: 1
-  stuckDetectionTime: 0.2
-  bounceRandomOffset: 8
-  minMoveDistance: 0.2
-  moveDistance: 1
+  followConfig:
+    moveSpeed: 3
+    moveDistance: 2
+    minDistance: 2
+  fleeConfig:
+    moveSpeed: 3
+    moveDistance: 2
+    triggerDistance: 5
   spawnWeight: 1
   spawnCost: 1
   isBoss: 0
