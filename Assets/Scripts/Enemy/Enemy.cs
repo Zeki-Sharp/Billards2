@@ -314,9 +314,16 @@ public class Enemy : MonoBehaviour
     /// </summary>
     System.Collections.IEnumerator DelayedRegisterEffects()
     {
-        // 等待 EffectManager 初始化完成
+        // 等待 EffectManager 初始化完成，如果不存在则创建
         while (EffectManager.Instance == null)
         {
+            // 如果场景中没有 EffectManager，创建一个
+            if (FindAnyObjectByType<EffectManager>() == null)
+            {
+                GameObject effectManagerGO = new GameObject("EffectManager");
+                effectManagerGO.AddComponent<EffectManager>();
+                Debug.Log($"Enemy {name}: 自动创建 EffectManager");
+            }
             yield return null;
         }
         

@@ -26,10 +26,6 @@ public class GameManager : MonoBehaviour
     [Header("调试")]
     [SerializeField] private bool showDebugInfo = true;
     
-    // 组件引用（由GameInitializer设置）
-    private GameFlowController gameFlowController;
-    private TimeManager timeManager;
-    private TransitionManager transitionManager;
     
     
     void Awake()
@@ -256,26 +252,6 @@ public class GameManager : MonoBehaviour
     
     #endregion
     
-    #region 组件引用设置（由GameInitializer调用）
-    
-    public void SetGameFlowController(GameFlowController controller)
-    {
-        gameFlowController = controller;
-    }
-    
-    
-    public void SetTimeManager(TimeManager manager)
-    {
-        timeManager = manager;
-    }
-    
-    public void SetTransitionManager(TransitionManager manager)
-    {
-        transitionManager = manager;
-    }
-    
-    
-    #endregion
     
     #region 公共属性
     
