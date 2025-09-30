@@ -149,7 +149,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   transitionDuration: 1
-  enableAutoTransition: 1
   minTransitionTime: 0
   maxTransitionTime: 1.2
   transitionThreshold: 0.3
@@ -8068,6 +8067,10 @@ MonoBehaviour:
     count: 2
     useRandomPosition: 1
     customPosition: {x: 0, y: 0}
+  - enemyData: {fileID: 11400000, guid: 2b3490ac9962fd84fbac65c5de60aa85, type: 2}
+    count: 3
+    useRandomPosition: 1
+    customPosition: {x: 0, y: 0}
   generateInitialEnemies: 1
   waveConfigs:
   - waveName: 
@@ -8216,7 +8219,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dc9dadbfaafbeaa47a17372a28c440f1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  showDebugInfo: 1
 --- !u!4 &1275009113
 Transform:
   m_ObjectHideFlags: 0
@@ -10616,7 +10618,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7844486164170001436, guid: 2d86053af5e50c446a06f75cbdecb65b, type: 3}
       propertyPath: useCyclingCharge
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 8772439200271523911, guid: 2d86053af5e50c446a06f75cbdecb65b, type: 3}
       propertyPath: managedReferences[3244891126871883917].TargetFeedbacks

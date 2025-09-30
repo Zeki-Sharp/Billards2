@@ -24,6 +24,9 @@ public class EnemyData : ScriptableObject
     [ConditionalField("attackType", false, false, AttackType.Ranged)]
     public RangedAttackConfig rangedConfig = new RangedAttackConfig();
     
+    [ConditionalField("attackType", false, false, AttackType.Thorn)]
+    public ThornAttackConfig thornConfig = new ThornAttackConfig();
+    
     [Header("AI配置")]
     public bool enableAI = true;
     public MovementType movementType = MovementType.FollowPlayer;

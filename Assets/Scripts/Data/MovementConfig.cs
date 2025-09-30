@@ -36,27 +36,3 @@ public class FleeMovementConfig
     [Tooltip("接近玩家时的移动距离")]
     public float approachMoveDistance = 3f;
 }
-
-/// <summary>
-/// 远程攻击配置
-/// </summary>
-[System.Serializable]
-public class RangedAttackConfig
-{
-    [Header("远程攻击配置")]
-    [Tooltip("检测玩家的范围")]
-    public float detectionRange = 8f;
-    
-    [Tooltip("投射到玩家附近的距离")]
-    public float projectionDistance = 2f;
-    
-    [Tooltip("攻击冷却时间")]
-    public float cooldown = 2f;
-    
-    [Header("随机偏移设置")]
-    [Tooltip("是否使用随机偏移")]
-    public bool useRandomOffset = true;
-    
-    [Tooltip("随机偏移范围")]
-    public float randomOffsetRange = 1f;
-}

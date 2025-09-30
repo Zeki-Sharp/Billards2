@@ -31,6 +31,14 @@ public class EnemyBehavior : MonoBehaviour
     private float currentHealth;
     private bool isDead = false;
     
+    [Header("陷阱系统")]
+    private bool isTrapMode = false;   // 是否处于陷阱模式（玩家碰撞时触发陷阱伤害而非攻击敌人）
+    
+    /// <summary>
+    /// 是否处于陷阱模式（公开属性，供 PlayerCore 检查）
+    /// </summary>
+    public bool IsTrapMode => isTrapMode;
+    
     void Start()
     {
         // 如果 enemyData 已经设置（手动放置的敌人），直接初始化
@@ -380,6 +388,52 @@ public class EnemyBehavior : MonoBehaviour
         if (currentHealth <= 0)
         {
             Die();
+        }
+    }
+    
+    /// <summary>
+    /// 设置陷阱模式（由攻击行为调用）
+    /// </summary>
+    public void SetTrapMode(bool trapMode)
+    {
+        isTrapMode = trapMode;
+        Debug.Log($"EnemyBehavior {name}: 陷阱模式设置为 {(trapMode ? "开启" : "关闭")}");
+    }
+    
+    /// <summary>
+    /// 对玩家造成陷阱伤害（由 PlayerCore 触发碰撞时调用）
+    /// 攻击者是敌人，受击者是玩家
+    /// </summary>
+    public void DealTrapDamageToPlayer(GameObject playerObject, Vector3 hitPosition)
+    {
+        if (enemyData == null)
+        {
+            Debug.LogWarning($"EnemyBehavior {name}: enemyData 为空，无法造成陷阱伤害");
+            return;
+        }
+        
+        // 查找 PlayerCore 组件
+        PlayerCore playerCore = playerObject.GetComponent<PlayerCore>();
+        if (playerCore == null)
+        {
+            playerCore = playerObject.GetComponentInChildren<PlayerCore>();
+        }
+        
+        if (playerCore != null)
+        {
+            float damage = enemyData.damage;
+            
+            // 对玩家造成伤害（忽略阶段）
+            playerCore.TakeDamageIgnorePhase(damage);
+            
+            // 发布攻击事件（触发受击特效）
+            gameObject.PublishAttack("Hit", hitPosition, playerObject, damage);
+            
+            Debug.Log($"EnemyBehavior {name}: 陷阱对玩家造成 {damage} 点伤害");
+        }
+        else
+        {
+            Debug.LogWarning($"EnemyBehavior {name}: 玩家对象中未找到 PlayerCore 组件");
         }
     }
     

@@ -225,33 +225,51 @@ public class PlayerCore : MonoBehaviour
     
     void OnCollisionEnter2D(Collision2D collision)
     {
-        // 撞击敌人时的处理（只在Moving阶段）
-        if (collision.gameObject.CompareTag("Enemy"))
+        // 检查是否碰到敌人或其子物体
+        EnemyBehavior enemy = collision.gameObject.GetComponent<EnemyBehavior>();
+        if (enemy == null)
         {
-            Debug.Log($"PlayerCore: 撞击敌人 {collision.gameObject.name}");
-            
-            // 检查玩家阶段状态，只在Moving子阶段处理碰撞
-            PlayerPhaseController playerPhaseController = PlayerPhaseController.Instance;
-            if (playerPhaseController != null)
+            enemy = collision.gameObject.GetComponentInParent<EnemyBehavior>();
+        }
+        
+        if (enemy != null)
+        {
+            // 检查是否处于陷阱模式
+            if (enemy.IsTrapMode)
             {
-                Debug.Log($"PlayerCore: 当前玩家子阶段: {playerPhaseController.CurrentSubPhase}");
-                
-                if (playerPhaseController.CurrentSubPhase == PlayerPhaseController.PlayerSubPhase.Moving)
-                {
-                    // Moving子阶段：玩家攻击敌人
-                    Debug.Log("PlayerCore: 在Moving子阶段，执行攻击");
-                    AttackEnemy(collision);
-                }
-                else
-                {
-                    // 在其他子阶段，不处理碰撞（由Enemy处理）
-                    Debug.Log("PlayerCore: 不在Moving子阶段，不处理碰撞");
-                }
+                Debug.Log($"PlayerCore: 碰到陷阱模式的敌人 {collision.gameObject.name}");
+                HandleTrapCollision(collision);
+                return; // 陷阱伤害玩家，玩家不攻击敌人
             }
             else
             {
-                Debug.LogWarning("PlayerCore: PlayerPhaseController 未找到！");
+                // 正常敌人，玩家攻击
+                Debug.Log($"PlayerCore: 碰到敌人 {collision.gameObject.name}");
+                
+                // 检查玩家阶段状态，只在Moving子阶段处理碰撞
+                PlayerPhaseController playerPhaseController = PlayerPhaseController.Instance;
+                if (playerPhaseController != null)
+                {
+                    Debug.Log($"PlayerCore: 当前玩家子阶段: {playerPhaseController.CurrentSubPhase}");
+                    
+                    if (playerPhaseController.CurrentSubPhase == PlayerPhaseController.PlayerSubPhase.Moving)
+                    {
+                        // Moving子阶段：玩家攻击敌人
+                        Debug.Log("PlayerCore: 在Moving子阶段，执行攻击");
+                        AttackEnemy(collision);
+                    }
+                    else
+                    {
+                        // 在其他子阶段，不处理碰撞
+                        Debug.Log("PlayerCore: 不在Moving子阶段，不处理碰撞");
+                    }
+                }
+                else
+                {
+                    Debug.LogWarning("PlayerCore: PlayerPhaseController 未找到！");
+                }
             }
+            return;
         }
         
         // 撞击边界时的处理
@@ -271,11 +289,49 @@ public class PlayerCore : MonoBehaviour
     }
     
     /// <summary>
+    /// 处理陷阱碰撞（不受阶段限制）
+    /// </summary>
+    void HandleTrapCollision(Collision2D collision)
+    {
+        // 从陷阱找到父物体的 EnemyBehavior
+        EnemyBehavior enemy = collision.gameObject.GetComponentInParent<EnemyBehavior>();
+        if (enemy == null)
+        {
+            Debug.LogWarning($"PlayerCore: 陷阱 {collision.gameObject.name} 未找到 EnemyBehavior");
+            return;
+        }
+        
+        // 获取玩家对象（向上查找带 Player Tag 的）
+        GameObject playerObject = gameObject;
+        Transform current = transform;
+        while (current != null)
+        {
+            if (current.CompareTag("Player"))
+            {
+                playerObject = current.gameObject;
+                break;
+            }
+            current = current.parent;
+        }
+        
+        // 让敌人对玩家造成陷阱伤害（攻击者发布事件）
+        Vector3 hitPosition = collision.contacts[0].point;
+        enemy.DealTrapDamageToPlayer(playerObject, hitPosition);
+    }
+    
+    /// <summary>
     /// 玩家攻击敌人的逻辑（Moving阶段）
     /// </summary>
     void AttackEnemy(Collision2D collision)
     {
         Debug.Log($"PlayerCore: AttackEnemy 被调用，目标: {collision.gameObject.name}");
+        
+        // 如果碰到的是陷阱，不攻击敌人
+        if (collision.gameObject.CompareTag("Trap"))
+        {
+            Debug.Log("PlayerCore: 碰到陷阱，不攻击敌人");
+            return;
+        }
         
         // 防重复触发检查 - 只对同一个敌人进行冷却
         if (lastAttackedEnemy == collision.gameObject && 
@@ -348,7 +404,7 @@ public class PlayerCore : MonoBehaviour
     #region 血量系统
     
     /// <summary>
-    /// 受到伤害
+    /// 受到伤害（阶段性，只在EnemyPhase生效）
     /// </summary>
     public void TakeDamage(float damage)
     {
@@ -367,7 +423,32 @@ public class PlayerCore : MonoBehaviour
         
         Debug.Log($"PlayerCore: 开始处理伤害，当前血量: {currentHealth}, 受到伤害: {damage}");
         
+        // 执行扣血
+        ApplyDamage(damage);
+    }
+    
+    /// <summary>
+    /// 受到伤害（忽略阶段限制，用于陷阱等持续性伤害）
+    /// </summary>
+    public void TakeDamageIgnorePhase(float damage)
+    {
+        if (playerData == null)
+        {
+            Debug.LogError("PlayerCore: playerData 为空，无法处理伤害！");
+            return;
+        }
         
+        Debug.Log($"PlayerCore: 受到持续性伤害（忽略阶段），当前血量: {currentHealth}, 受到伤害: {damage}");
+        
+        // 执行扣血
+        ApplyDamage(damage);
+    }
+    
+    /// <summary>
+    /// 应用伤害（共用的扣血逻辑）
+    /// </summary>
+    private void ApplyDamage(float damage)
+    {
         // 更新血量数据（使用实例变量）
         currentHealth -= damage;
         currentHealth = Mathf.Max(0, currentHealth);

@@ -513,17 +513,17 @@ namespace DeepSpaceLabs.SAM
     /// </summary>
     private bool ShouldPlayBeHitEffect(GameObject target)
     {
-        if (target == null) return false;
+        // if (target == null) return false;
         
-        // 检查玩家状态，只有在Idle状态才能播放受击特效
-        if (target.CompareTag("Player"))
-        {
-            PlayerStateMachine stateMachine = target.GetComponent<PlayerStateMachine>();
-            if (stateMachine != null && !stateMachine.IsIdle)
-            {
-                return false;
-            }
-        }
+        // // 检查玩家状态，只有在Idle状态才能播放受击特效
+        // if (target.CompareTag("Player"))
+        // {
+        //     PlayerStateMachine stateMachine = target.GetComponent<PlayerStateMachine>();
+        //     if (stateMachine != null && !stateMachine.IsIdle)
+        //     {
+        //         return false;
+        //     }
+        // }
         
         return true;
     }

@@ -6,7 +6,8 @@ using UnityEngine;
 public enum AttackType
 {
     Melee,    // 近战攻击
-    Ranged    // 远程攻击
+    Ranged,   // 远程攻击
+    Thorn     // 棘刺攻击（持续性陷阱）
 }
 
 /// <summary>

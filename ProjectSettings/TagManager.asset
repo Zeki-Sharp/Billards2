@@ -8,6 +8,7 @@ TagManager:
   - Enemy
   - Hole
   - Range
+  - Trap
   layers:
   - Default
   - TransparentFX
