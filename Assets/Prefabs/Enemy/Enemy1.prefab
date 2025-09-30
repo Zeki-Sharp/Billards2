@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 7459211324280403568}
   - component: {fileID: 8860770280083431608}
   m_Layer: 0
-  m_Name: Enemy
+  m_Name: Enemy1
   m_TagString: Enemy
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -76,8 +76,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   enemyData: {fileID: 11400000, guid: ce82a34099b9d1f4899931eb09ed10ce, type: 2}
-  moveDistance: 2
-  moveSpeed: 3
   attackRange: {fileID: 4942167022313840919}
   attackEffect: {fileID: 8813354259064772836}
 --- !u!1001 &1960770933747990719

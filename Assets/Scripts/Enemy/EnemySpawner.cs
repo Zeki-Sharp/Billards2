@@ -23,6 +23,10 @@ public class EnemySpawner : MonoBehaviour
     [SerializeField] private bool useCircularRange = false; // 是否使用圆形范围
     [SerializeField] private float circularRadius = 8f; // 圆形范围半径
     
+    [Header("初始敌人配置")]
+    [SerializeField] private List<EnemySpawn> initialEnemies = new List<EnemySpawn>();
+    [SerializeField] private bool generateInitialEnemies = true;
+    
     [Header("波次配置")]
     [SerializeField] private List<WaveConfig> waveConfigs = new List<WaveConfig>();
     [SerializeField] private bool loopWaves = true;
@@ -38,6 +42,12 @@ public class EnemySpawner : MonoBehaviour
     void Start()
     {
         InitializeSpawner();
+        
+        // 生成初始敌人
+        if (generateInitialEnemies)
+        {
+            GenerateInitialEnemies();
+        }
     }
     
     /// <summary>
@@ -99,7 +109,35 @@ public class EnemySpawner : MonoBehaviour
     }
     
     /// <summary>
-    /// 生成敌人
+    /// 生成初始敌人（游戏开始时调用）
+    /// </summary>
+    public void GenerateInitialEnemies()
+    {
+        if (initialEnemies.Count == 0)
+        {
+            if (showDebugInfo)
+            {
+                Debug.Log("EnemySpawner: 没有配置初始敌人");
+            }
+            return;
+        }
+        
+        if (showDebugInfo)
+        {
+            Debug.Log($"EnemySpawner: 开始生成初始敌人");
+        }
+        
+        // 使用通用方法生成敌人
+        GenerateEnemiesFromList(initialEnemies);
+        
+        if (showDebugInfo)
+        {
+            Debug.Log("EnemySpawner: 初始敌人生成完成");
+        }
+    }
+    
+    /// <summary>
+    /// 生成敌人（回合开始时调用）
     /// </summary>
     public void GenerateEnemies()
     {
@@ -118,17 +156,25 @@ public class EnemySpawner : MonoBehaviour
             Debug.Log($"EnemySpawner: 开始生成波次 {currentWave.waveName} 的敌人");
         }
         
-        // 生成每种类型的敌人
-        foreach (var enemySpawn in currentWave.enemySpawns)
+        // 使用通用方法生成敌人
+        GenerateEnemiesFromList(currentWave.enemySpawns);
+        
+        // 进入下一个波次
+        AdvanceToNextWave();
+    }
+    
+    /// <summary>
+    /// 从敌人列表生成敌人（通用方法）
+    /// </summary>
+    void GenerateEnemiesFromList(List<EnemySpawn> enemySpawns)
+    {
+        foreach (var enemySpawn in enemySpawns)
         {
             for (int i = 0; i < enemySpawn.count; i++)
             {
                 GenerateSingleEnemy(enemySpawn);
             }
         }
-        
-        // 进入下一个波次
-        AdvanceToNextWave();
     }
     
     /// <summary>
@@ -159,11 +205,15 @@ public class EnemySpawner : MonoBehaviour
             {
                 enemyController.RegisterTelegraphingEnemy(enemy);
             }
+            
+            if (showDebugInfo)
+            {
+                Debug.Log($"EnemySpawner: 生成敌人 {enemySpawn.enemyData.enemyName} 在位置 {spawnPosition}");
+            }
         }
-        
-        if (showDebugInfo)
+        else
         {
-            Debug.Log($"EnemySpawner: 生成敌人 {enemySpawn.enemyData.enemyName} 在位置 {spawnPosition}");
+            Debug.LogError($"EnemySpawner: 在 {enemyInstance.name} 上未找到 Enemy 组件！");
         }
     }
     

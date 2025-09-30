@@ -8,6 +8,7 @@ using MoreMountains.Feedbacks;
 public class EnemyBehavior : MonoBehaviour
 {
     [Header("数据设置")]
+    [Tooltip("敌人数据配置。手动放置的敌人需要在此配置，通过 EnemySpawner 生成的敌人会自动设置")]
     public EnemyData enemyData;
     
     [Header("移动设置")]
@@ -31,11 +32,17 @@ public class EnemyBehavior : MonoBehaviour
     
     void Start()
     {
-        // 初始化血量
-        InitializeHealth();
-        
-        // 初始化行为系统
-        InitializeBehavior();
+        // 如果 enemyData 已经设置（手动放置的敌人），直接初始化
+        if (enemyData != null)
+        {
+            Debug.Log($"EnemyBehavior {name}: 检测到手动配置的 EnemyData，直接初始化");
+            InitializeHealth();
+            InitializeBehavior();
+        }
+        else
+        {
+            Debug.Log($"EnemyBehavior {name}: 等待 SetEnemyData 调用（通过 EnemySpawner 生成）");
+        }
         
         // 如果手动配置了AttackRange，就不需要自动查找
         if (attackRange == null)
@@ -56,6 +63,8 @@ public class EnemyBehavior : MonoBehaviour
         
         // 订阅攻击事件
         GameEventBus.OnAttack += OnEnemyAttacked;
+        
+        Debug.Log($"EnemyBehavior {name}: Start 完成");
     }
     
     void OnDestroy()
@@ -114,6 +123,7 @@ public class EnemyBehavior : MonoBehaviour
     /// </summary>
     private void DealDamageToPlayer(GameObject player)
     {
+        Debug.Log($"EnemyBehavior {name}: DealDamageToPlayer 被调用，enemyData 状态: {(enemyData != null ? $"已设置({enemyData.enemyName})" : "未设置")}");
         if (enemyData == null)
         {
             Debug.LogError($"【攻击范围检测】EnemyBehavior {name}: EnemyData 未设置，无法造成伤害！");
@@ -260,6 +270,28 @@ public class EnemyBehavior : MonoBehaviour
     {
         attackArea = attackAreaTransform;
         Debug.Log($"EnemyBehavior {name}: 设置攻击范围引用");
+    }
+    
+    /// <summary>
+    /// 设置敌人数据（由 EnemySpawner 调用）
+    /// </summary>
+    public void SetEnemyData(EnemyData data)
+    {
+        Debug.Log($"EnemyBehavior {name}: SetEnemyData 被调用，传入数据: {(data != null ? data.enemyName : "null")}");
+        enemyData = data;
+        
+        if (enemyData != null)
+        {
+            Debug.Log($"EnemyBehavior {name}: 设置敌人数据成功 - {enemyData.enemyName}，移动类型: {enemyData.movementType}");
+            // 重新初始化
+            InitializeHealth();
+            InitializeBehavior();
+            Debug.Log($"EnemyBehavior {name}: 初始化完成，enemyData 状态: {(enemyData != null ? "已设置" : "未设置")}");
+        }
+        else
+        {
+            Debug.LogError($"EnemyBehavior {name}: 设置的 EnemyData 为空！");
+        }
     }
     
     /// <summary>

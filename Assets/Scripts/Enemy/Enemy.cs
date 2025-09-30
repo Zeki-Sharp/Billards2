@@ -38,6 +38,8 @@ public class Enemy : MonoBehaviour
     
     void Start()
     {
+        Debug.Log($"Enemy {name}: Start 方法被调用");
+        
         // 获取行为组件
         enemyBehavior = GetComponentInChildren<EnemyBehavior>();
         if (enemyBehavior == null)
@@ -46,6 +48,7 @@ public class Enemy : MonoBehaviour
         }
         else
         {
+            Debug.Log($"Enemy {name}: 成功找到 EnemyBehavior 组件");
             // 设置攻击范围引用
             if (attackArea != null)
             {
@@ -252,9 +255,24 @@ public class Enemy : MonoBehaviour
     /// </summary>
     public void SetEnemyData(EnemyData data)
     {
+        Debug.Log($"Enemy {name}: SetEnemyData 被调用，传入数据: {(data != null ? data.enemyName : "null")}");
+        
+        // 如果 enemyBehavior 还没有初始化，先尝试获取
+        if (enemyBehavior == null)
+        {
+            Debug.Log($"Enemy {name}: enemyBehavior 为空，尝试获取组件");
+            enemyBehavior = GetComponentInChildren<EnemyBehavior>();
+        }
+        
         if (enemyBehavior != null)
         {
-            enemyBehavior.enemyData = data;
+            Debug.Log($"Enemy {name}: 找到 enemyBehavior，调用 SetEnemyData");
+            enemyBehavior.SetEnemyData(data);
+            Debug.Log($"Enemy {name}: 成功设置敌人数据，移动类型: {data.movementType}");
+        }
+        else
+        {
+            Debug.LogError($"Enemy {name}: enemyBehavior 为空，无法设置敌人数据！");
         }
     }
     
