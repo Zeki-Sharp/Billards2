@@ -19,11 +19,9 @@ public class ChargeSystem : MonoBehaviour
 {
     [Header("蓄力设置")]
     [SerializeField] private float maxChargingTime = 3f; // 最大蓄力时间
-    [SerializeField] private float chargingSpeed = 1f; // 蓄力速度（已弃用，保留兼容性）
     [SerializeField] private float maxForce = 25f; // 最大力度
     [SerializeField] private float minForce = 5f; // 最小力度
     [SerializeField] private bool useCyclingCharge = false; // 是否使用循环蓄力
-    [SerializeField] private float cycleSpeed = 3f; // 循环速度
     
     [Header("调试")]
     [SerializeField] private bool showDebugInfo = true;
@@ -131,14 +129,24 @@ public class ChargeSystem : MonoBehaviour
         
         // 计算蓄力进度
         float chargingTime = Time.time - chargingStartTime;
-        chargingPower = Mathf.Clamp01(chargingTime / maxChargingTime);
+        chargingPower = Mathf. Clamp01(chargingTime / maxChargingTime);
         
         
         // 计算当前力度
         CalculateCurrentForce();
         
         // 触发事件
-        GameEventBus.PublishChargingProgressChanged(chargingPower);
+        if (useCyclingCharge)
+        {
+            // 循环蓄力：UI 应该显示力度的归一化值（0-1 循环变化）
+            float normalizedForce = (currentForce - minForce) / (maxForce - minForce);
+            GameEventBus.PublishChargingProgressChanged(normalizedForce);
+        }
+        else
+        {
+            // 线性蓄力：UI 显示蓄力进度
+            GameEventBus.PublishChargingProgressChanged(chargingPower);
+        }
         GameEventBus.PublishForceChanged(currentForce);
         
         // 调试信息
@@ -166,22 +174,25 @@ public class ChargeSystem : MonoBehaviour
     {
         if (useCyclingCharge)
         {
-            // 循环蓄力：在最小和最大力度之间循环
-            float range = maxForce - minForce;
-            float cycleTime = 2f / cycleSpeed;
-            float time = Time.time % cycleTime;
+            // 循环蓄力：力度在 minForce 和 maxForce 之间反复循环
+            // 0-maxChargingTime: min → max (上升)
+            // maxChargingTime-2*maxChargingTime: max → min (下降)
+            // 2*maxChargingTime-3*maxChargingTime: min → max (上升)
+            // ...持续循环
             
-            float cycleValue;
-            if (time < cycleTime * 0.5f)
+            float chargingTime = Time.time - chargingStartTime;
+            float cycleProgress = (chargingTime / maxChargingTime) % 2f;  // 0-2 循环
+            
+            if (cycleProgress < 1f)
             {
-                cycleValue = time / (cycleTime * 0.5f);
+                // 上升阶段：minForce → maxForce
+                currentForce = Mathf.Lerp(minForce, maxForce, cycleProgress);
             }
             else
             {
-                cycleValue = 2f - (time / (cycleTime * 0.5f));
+                // 下降阶段：maxForce → minForce
+                currentForce = Mathf.Lerp(maxForce, minForce, cycleProgress - 1f);
             }
-            
-            currentForce = minForce + cycleValue * range;
         }
         else
         {
@@ -241,30 +252,28 @@ public class ChargeSystem : MonoBehaviour
     /// <summary>
     /// 设置蓄力参数
     /// </summary>
-    public void SetChargingParameters(float maxTime, float speed, float maxF, float minF)
+    public void SetChargingParameters(float maxTime, float maxF, float minF)
     {
         maxChargingTime = maxTime;
-        chargingSpeed = speed;
         maxForce = maxF;
         minForce = minF;
         
         if (showDebugInfo)
         {
-            Debug.Log($"ChargeSystem: 更新蓄力参数 - 最大时间: {maxTime}, 速度: {speed}, 最大力度: {maxF}, 最小力度: {minF}");
+            Debug.Log($"ChargeSystem: 更新蓄力参数 - 最大时间: {maxTime}, 最大力度: {maxF}, 最小力度: {minF}");
         }
     }
     
     /// <summary>
     /// 设置循环蓄力模式
     /// </summary>
-    public void SetCyclingMode(bool useCycling, float cycleS = 3f)
+    public void SetCyclingMode(bool useCycling)
     {
         useCyclingCharge = useCycling;
-        cycleSpeed = cycleS;
         
         if (showDebugInfo)
         {
-            Debug.Log($"ChargeSystem: 设置循环模式 - 使用循环: {useCycling}, 循环速度: {cycleS}");
+            Debug.Log($"ChargeSystem: 设置循环模式 - 使用循环: {useCycling}");
         }
     }
     
@@ -278,11 +287,9 @@ public class ChargeSystem : MonoBehaviour
     #region 公共属性
     
     public float MaxChargingTime => maxChargingTime;
-    public float ChargingSpeed => chargingSpeed;
     public float MaxForce => maxForce;
     public float MinForce => minForce;
     public bool UseCyclingCharge => useCyclingCharge;
-    public float CycleSpeed => cycleSpeed;
     
     #endregion
     

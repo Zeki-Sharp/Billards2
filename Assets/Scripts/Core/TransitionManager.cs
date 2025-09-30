@@ -20,7 +20,6 @@ public class TransitionManager : MonoBehaviour
 {
     [Header("过渡设置")]
     [SerializeField] private float transitionDuration = 3f; // 过渡持续时间
-    [SerializeField] private bool enableAutoTransition = true; // 自动过渡
     
     [Header("动态Transition设置")]
     [SerializeField] private float minTransitionTime = 1f;        // 最小transition时间

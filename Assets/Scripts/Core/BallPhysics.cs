@@ -19,9 +19,6 @@ public class BallPhysics : MonoBehaviour
     private float ballStartTime = 0f;
     private bool isMoving = false;
     
-    // 调试设置
-    private bool enableDebugLog = true;
-    
     // 反弹方向检测
     private Vector2 lastReflectionDirection = Vector2.zero;
     

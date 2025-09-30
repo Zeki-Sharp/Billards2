@@ -23,7 +23,6 @@ using UnityEngine;
 public class PlayerMovementController : MonoBehaviour
 {
     [Header("移动设置")]
-    [SerializeField] private bool showDebugInfo = true;
     
     // 组件引用
     private PlayerCore playerCore;
