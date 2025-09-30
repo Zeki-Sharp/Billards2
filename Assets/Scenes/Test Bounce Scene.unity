@@ -8060,48 +8060,44 @@ MonoBehaviour:
   circularRadius: 8
   initialEnemies:
   - enemyData: {fileID: 11400000, guid: ce82a34099b9d1f4899931eb09ed10ce, type: 2}
-    count: 2
+    count: 0
     useRandomPosition: 1
     customPosition: {x: 0, y: 0}
   - enemyData: {fileID: 11400000, guid: 8d46072aeaab4c44fab958850bbe7872, type: 2}
-    count: 2
+    count: 0
     useRandomPosition: 1
     customPosition: {x: 0, y: 0}
   - enemyData: {fileID: 11400000, guid: 2b3490ac9962fd84fbac65c5de60aa85, type: 2}
-    count: 3
+    count: 2
     useRandomPosition: 1
     customPosition: {x: 0, y: 0}
   generateInitialEnemies: 1
   waveConfigs:
   - waveName: 
     enemySpawns:
+    - enemyData: {fileID: 11400000, guid: 2b3490ac9962fd84fbac65c5de60aa85, type: 2}
+      count: 2
+      useRandomPosition: 1
+      customPosition: {x: 0, y: 0}
+  - waveName: 
+    enemySpawns:
     - enemyData: {fileID: 11400000, guid: ce82a34099b9d1f4899931eb09ed10ce, type: 2}
       count: 1
       useRandomPosition: 1
       customPosition: {x: 0, y: 0}
-    - enemyData: {fileID: 11400000, guid: 8d46072aeaab4c44fab958850bbe7872, type: 2}
+    - enemyData: {fileID: 11400000, guid: 2b3490ac9962fd84fbac65c5de60aa85, type: 2}
       count: 2
       useRandomPosition: 1
       customPosition: {x: 0, y: 0}
   - waveName: 
-    enemySpawns:
-    - enemyData: {fileID: 11400000, guid: ce82a34099b9d1f4899931eb09ed10ce, type: 2}
-      count: 0
-      useRandomPosition: 1
-      customPosition: {x: 0, y: 0}
+    enemySpawns: []
   - waveName: 
     enemySpawns:
     - enemyData: {fileID: 11400000, guid: 8d46072aeaab4c44fab958850bbe7872, type: 2}
-      count: 0
-      useRandomPosition: 1
-      customPosition: {x: 0, y: 0}
-  - waveName: 
-    enemySpawns:
-    - enemyData: {fileID: 11400000, guid: ce82a34099b9d1f4899931eb09ed10ce, type: 2}
       count: 2
       useRandomPosition: 1
       customPosition: {x: 0, y: 0}
-    - enemyData: {fileID: 11400000, guid: 8d46072aeaab4c44fab958850bbe7872, type: 2}
+    - enemyData: {fileID: 11400000, guid: ce82a34099b9d1f4899931eb09ed10ce, type: 2}
       count: 1
       useRandomPosition: 1
       customPosition: {x: 0, y: 0}

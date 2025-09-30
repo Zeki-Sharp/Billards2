@@ -8,7 +8,7 @@ using MoreMountains.Feedbacks;
 public class ThornAttackBehavior : BaseAttackBehavior
 {
     private int currentRound = 0;
-    private int lastActivateRound = -999;
+    private int lastActivateRound = 1;  // 初始化为1，让第一回合处于冷却状态（灰色，不伤害玩家）
     private bool isThornActive = false;
     private float lastDamageTime = 0f;
     
@@ -31,6 +31,10 @@ public class ThornAttackBehavior : BaseAttackBehavior
         // 获取 EnemyBehavior 组件
         EnemyBehavior enemyBehavior = enemyTransform.GetComponent<EnemyBehavior>();
         
+        // 确保攻击范围始终显示
+        attackRange.gameObject.SetActive(true);
+        attackRange.ShowTelegraph();
+        
         if (isInCooldown)
         {
             // 冷却中
@@ -42,9 +46,13 @@ public class ThornAttackBehavior : BaseAttackBehavior
                 enemyBehavior.SetTrapMode(false);
             }
             
+            // 更新视觉为冷却状态（灰色）
             UpdateVisual(attackRange, false, config);
-            attackRange.gameObject.SetActive(config.showCooldownState);  // 根据配置决定是否显示冷却状态
-            Debug.Log($"ThornAttackBehavior: 冷却中 ({roundsSinceLastActivate}/{config.cooldownRounds})");
+            
+            // 禁用碰撞体（冷却时玩家可以攻击敌人）
+            SetColliderEnabled(attackRange, false);
+            
+            Debug.Log($"ThornAttackBehavior: 冷却中 ({roundsSinceLastActivate}/{config.cooldownRounds}) - 显示灰色，碰撞体禁用");
             return;
         }
         
@@ -59,14 +67,13 @@ public class ThornAttackBehavior : BaseAttackBehavior
             enemyBehavior.SetTrapMode(true);
         }
         
-        // 显示攻击范围（棘刺作为子物体，跟随敌人）
-        attackRange.gameObject.SetActive(true);
-        attackRange.ShowTelegraph();
-        
-        // 更新视觉为激活状态
+        // 更新视觉为激活状态（红色）
         UpdateVisual(attackRange, true, config);
         
-        Debug.Log($"ThornAttackBehavior: 棘刺激活 - 回合 {currentRound}");
+        // 启用碰撞体（激活时触发陷阱伤害）
+        SetColliderEnabled(attackRange, true);
+        
+        Debug.Log($"ThornAttackBehavior: 棘刺激活 - 回合 {currentRound} - 显示红色，碰撞体启用");
     }
     
     /// <summary>
@@ -116,8 +123,6 @@ public class ThornAttackBehavior : BaseAttackBehavior
     /// </summary>
     private void UpdateVisual(AttackRange attackRange, bool isActive, ThornAttackConfig config)
     {
-        if (!config.showCooldownState && !isActive) return;
-        
         // 查找 Image 子物体
         Transform imageTransform = attackRange.transform.Find("Image");
         if (imageTransform == null) return;
@@ -127,7 +132,7 @@ public class ThornAttackBehavior : BaseAttackBehavior
         if (spriteRenderer != null)
         {
             spriteRenderer.color = isActive ? config.activeColor : config.cooldownColor;
-            Debug.Log($"ThornAttackBehavior: 更新视觉状态 - {(isActive ? "激活" : "冷却")}");
+            Debug.Log($"ThornAttackBehavior: 更新视觉状态 - {(isActive ? "激活(红色)" : "冷却(灰色)")}");
             return;
         }
         
@@ -136,8 +141,31 @@ public class ThornAttackBehavior : BaseAttackBehavior
         if (uiImage != null)
         {
             uiImage.color = isActive ? config.activeColor : config.cooldownColor;
-            Debug.Log($"ThornAttackBehavior: 更新视觉状态 - {(isActive ? "激活" : "冷却")}");
+            Debug.Log($"ThornAttackBehavior: 更新视觉状态 - {(isActive ? "激活(红色)" : "冷却(灰色)")}");
         }
+    }
+    
+    /// <summary>
+    /// 控制碰撞体启用/禁用
+    /// </summary>
+    private void SetColliderEnabled(AttackRange attackRange, bool enabled)
+    {
+        // 查找 Image 子物体（碰撞体在这里）
+        Transform imageTransform = attackRange.transform.Find("Image");
+        if (imageTransform == null)
+        {
+            Debug.LogWarning($"ThornAttackBehavior: 未找到 Image 子物体，无法控制碰撞体");
+            return;
+        }
+        
+        // 获取所有碰撞体组件
+        Collider2D[] colliders = imageTransform.GetComponents<Collider2D>();
+        foreach (var collider in colliders)
+        {
+            collider.enabled = enabled;
+        }
+        
+        Debug.Log($"ThornAttackBehavior: 碰撞体 {(enabled ? "启用" : "禁用")}");
     }
 }
 
