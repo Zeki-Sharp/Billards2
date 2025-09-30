@@ -17,7 +17,7 @@ MonoBehaviour:
   playerIcon: {fileID: 0}
   ballData: {fileID: 11400000, guid: 5753a6296cab86e45ba7c2b9bfd00e6e, type: 2}
   maxHealth: 100
-  damage: 50
+  damage: 20
   microMoveSpeed: 2
   canLevelUp: 0
   startingLevel: 1

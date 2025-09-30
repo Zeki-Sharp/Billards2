@@ -16,6 +16,7 @@ public class EnemyBehavior : MonoBehaviour
     
     [Header("行为系统")]
     private IMovementBehavior movementBehavior;  // 移动行为组件
+    private IAttackBehavior attackBehavior;      // 攻击行为组件
     
     [Header("组件引用")]
     public AttackRange attackRange;
@@ -83,38 +84,17 @@ public class EnemyBehavior : MonoBehaviour
     /// </summary>
     public void ExecuteAttackPhase()
     {
-        if (attackRange != null)
+        // 使用攻击行为系统执行攻击
+        if (attackBehavior != null && attackRange != null)
         {
-            // 使用预告阶段保存的朝向
-            attackRange.ApplyTelegraphedDirection();
+            attackBehavior.ExecuteAttack(transform, player, enemyData, attackRange, attackEffect);
+            Debug.Log($"EnemyBehavior {name}: 执行攻击 - 攻击类型: {enemyData.attackType}");
             
-            Debug.Log($"EnemyBehavior {name}: 执行一次攻击");
-            // 播放攻击特效
-            if (attackEffect != null)
-            {
-                Debug.Log($"【攻击特效】EnemyBehavior {name}: 播放MMF攻击特效");
-                attackEffect.PlayFeedbacks();
-            }
-            else
-            {
-                Debug.LogWarning($"【攻击特效】EnemyBehavior {name}: attackEffect 为空，无法播放攻击特效");
-            }
-            
-            // 对攻击范围内的目标执行攻击
-            var targets = attackRange.GetTargetsInRange();
-            
-            foreach (var target in targets)
-            {
-                // 对玩家造成伤害
-                if (target.CompareTag("Player"))
-                {
-                    DealDamageToPlayer(target);
-                }
-            }
+            // 注意：清理将在移动阶段开始时执行，避免在攻击特效播放时立即恢复位置
         }
         else
         {
-            Debug.LogWarning($"【攻击范围检测】EnemyBehavior {name}: AttackRange 未设置，无法执行攻击！");
+            Debug.LogWarning($"EnemyBehavior {name}: 攻击行为或攻击范围未设置，无法执行攻击！");
         }
     }
     
@@ -160,10 +140,15 @@ public class EnemyBehavior : MonoBehaviour
             attackArea.gameObject.SetActive(true);
         }
         
-        if (attackRange != null)
+        // 使用攻击行为系统执行预告
+        if (attackBehavior != null && attackRange != null)
         {
-            // 更新攻击范围的方向和位置
-            attackRange.ShowTelegraph();
+            attackBehavior.ExecuteTelegraph(transform, player, enemyData, attackRange);
+            Debug.Log($"EnemyBehavior {name}: 执行攻击预告 - 攻击类型: {enemyData.attackType}");
+        }
+        else
+        {
+            Debug.LogWarning($"EnemyBehavior {name}: 攻击行为或攻击范围未设置");
         }
     }
     
@@ -173,6 +158,14 @@ public class EnemyBehavior : MonoBehaviour
     public void ExecuteMovePhase()
     {
         Debug.Log($"EnemyBehavior {name}: 执行移动阶段 - 行为类型: {enemyData?.movementType}");
+        
+        // 在移动阶段开始时清理上一个攻击阶段的状态
+        if (attackBehavior != null && attackRange != null)
+        {
+            attackBehavior.CleanupAttack(transform, attackRange);
+            Debug.Log($"EnemyBehavior {name}: 移动阶段开始，清理攻击状态");
+        }
+        
         Debug.Log($"EnemyBehavior {name}: 移动前位置: {transform.position}");
         
         if (player != null && movementBehavior != null)
@@ -250,7 +243,14 @@ public class EnemyBehavior : MonoBehaviour
     /// </summary>
     private float GetCurrentMoveSpeed()
     {
-        if (enemyData == null) return 3f; // 默认速度
+        // 优先使用移动行为提供的速度（支持动态速度变化）
+        if (movementBehavior != null)
+        {
+            return movementBehavior.GetCurrentMoveSpeed();
+        }
+        
+        // 降级：如果移动行为未初始化，使用配置中的默认速度
+        if (enemyData == null) return 3f;
         
         switch (enemyData.movementType)
         {
@@ -259,7 +259,7 @@ public class EnemyBehavior : MonoBehaviour
             case MovementType.Flee:
                 return enemyData.fleeConfig.moveSpeed;
             default:
-                return 3f; // 默认速度
+                return 3f;
         }
     }
     
@@ -303,7 +303,11 @@ public class EnemyBehavior : MonoBehaviour
         {
             // 根据配置创建移动行为
             movementBehavior = BehaviorFactory.CreateMovementBehavior(enemyData.movementType);
-            Debug.Log($"EnemyBehavior {name}: 初始化行为系统 - 移动类型: {enemyData.movementType}");
+            Debug.Log($"EnemyBehavior {name}: 初始化移动行为 - 移动类型: {enemyData.movementType}");
+            
+            // 根据配置创建攻击行为
+            attackBehavior = BehaviorFactory.CreateAttackBehavior(enemyData.attackType);
+            Debug.Log($"EnemyBehavior {name}: 初始化攻击行为 - 攻击类型: {enemyData.attackType}");
         }
         else
         {
@@ -405,13 +409,21 @@ public class EnemyBehavior : MonoBehaviour
     }
     
     /// <summary>
-    /// 显示攻击范围并更新位置
+    /// 显示攻击范围并更新位置（使用攻击行为系统）
     /// </summary>
     public void ShowAttackRange()
     {
-        if (attackRange != null)
+        // 使用攻击行为系统执行预告
+        if (attackBehavior != null && attackRange != null)
         {
+            attackBehavior.ExecuteTelegraph(transform, player, enemyData, attackRange);
+            Debug.Log($"EnemyBehavior {name}: ShowAttackRange 调用攻击行为系统");
+        }
+        else if (attackRange != null)
+        {
+            // 降级：如果攻击行为未初始化，使用旧逻辑
             attackRange.ShowTelegraph();
+            Debug.LogWarning($"EnemyBehavior {name}: ShowAttackRange 使用旧逻辑（攻击行为未初始化）");
         }
     }
     

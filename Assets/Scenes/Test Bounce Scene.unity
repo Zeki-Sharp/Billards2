@@ -8102,7 +8102,7 @@ MonoBehaviour:
       count: 1
       useRandomPosition: 1
       customPosition: {x: 0, y: 0}
-  loopWaves: 1
+  loopWaves: 0
   currentWaveIndex: 0
   showDebugInfo: 1
   showSpawnRange: 1
@@ -9210,17 +9210,6 @@ MonoBehaviour:
   minSpeedMultiplier: 0.1
   maxSpeedMultiplier: 1
   enableDebugLog: 0
---- !u!114 &1448665083 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 8772439200271523911, guid: 2d86053af5e50c446a06f75cbdecb65b, type: 3}
-  m_PrefabInstance: {fileID: 5924173280866626688}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 6da43522623d4704e979466dc7650b65, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!1 &1494413362
 GameObject:
   m_ObjectHideFlags: 0
@@ -10580,34 +10569,6 @@ PrefabInstance:
     - target: {fileID: 3251294568684493535, guid: 2d86053af5e50c446a06f75cbdecb65b, type: 3}
       propertyPath: m_Name
       value: Player
-      objectReference: {fileID: 0}
-    - target: {fileID: 4109773013413894966, guid: 2d86053af5e50c446a06f75cbdecb65b, type: 3}
-      propertyPath: effects.Array.size
-      value: 4
-      objectReference: {fileID: 0}
-    - target: {fileID: 4109773013413894966, guid: 2d86053af5e50c446a06f75cbdecb65b, type: 3}
-      propertyPath: effects.Array.data[4].key
-      value: Hit Attack
-      objectReference: {fileID: 0}
-    - target: {fileID: 4109773013413894966, guid: 2d86053af5e50c446a06f75cbdecb65b, type: 3}
-      propertyPath: effects.Array.data[4].mmfPlayer
-      value: 
-      objectReference: {fileID: 1448665083}
-    - target: {fileID: 4109773013413894966, guid: 2d86053af5e50c446a06f75cbdecb65b, type: 3}
-      propertyPath: effects.Array.data[0].effectType
-      value: 2
-      objectReference: {fileID: 0}
-    - target: {fileID: 4109773013413894966, guid: 2d86053af5e50c446a06f75cbdecb65b, type: 3}
-      propertyPath: effects.Array.data[1].effectType
-      value: 4
-      objectReference: {fileID: 0}
-    - target: {fileID: 4109773013413894966, guid: 2d86053af5e50c446a06f75cbdecb65b, type: 3}
-      propertyPath: effects.Array.data[2].effectType
-      value: 5
-      objectReference: {fileID: 0}
-    - target: {fileID: 4109773013413894966, guid: 2d86053af5e50c446a06f75cbdecb65b, type: 3}
-      propertyPath: effects.Array.data[3].effectType
-      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 5182198335736264703, guid: 2d86053af5e50c446a06f75cbdecb65b, type: 3}
       propertyPath: m_LocalPosition.x

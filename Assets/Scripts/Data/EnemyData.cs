@@ -19,6 +19,10 @@ public class EnemyData : ScriptableObject
     
     [Header("攻击配置")]
     public float attackRange = 3f;  // 保留用于其他用途，如检测范围
+    public AttackType attackType = AttackType.Melee;  // 攻击类型
+    
+    [ConditionalField("attackType", false, false, AttackType.Ranged)]
+    public RangedAttackConfig rangedConfig = new RangedAttackConfig();
     
     [Header("AI配置")]
     public bool enableAI = true;

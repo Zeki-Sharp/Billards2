@@ -16,11 +16,18 @@ MonoBehaviour:
   enemyContainerPrefab: {fileID: 7420645124294310907, guid: 50bfb40ad89c21846ada038ab29a9551, type: 3}
   enemyIcon: {fileID: 0}
   ballData: {fileID: 11400000, guid: d1c30c129175ecf48a42f1070d15a627, type: 2}
-  maxHealth: 50
+  maxHealth: 40
   damage: 10
   attackCooldown: 1
   moveSpeed: 3
   attackRange: 3
+  attackType: 1
+  rangedConfig:
+    detectionRange: 8
+    projectionDistance: 0
+    cooldown: 2
+    useRandomOffset: 1
+    randomOffsetRange: 2
   enableAI: 1
   movementType: 1
   followConfig:
@@ -28,9 +35,13 @@ MonoBehaviour:
     moveDistance: 3
     minDistance: 1
   fleeConfig:
-    moveSpeed: 3
+    moveSpeed: 4
     moveDistance: 2
-    triggerDistance: 4
+    triggerDistance: 4.5
+    approachWhenFar: 1
+    approachDistance: 8
+    approachSpeed: 3
+    approachMoveDistance: 2
   spawnWeight: 1
   spawnCost: 1
   isBoss: 0

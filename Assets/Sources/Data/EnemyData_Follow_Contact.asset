@@ -16,7 +16,7 @@ MonoBehaviour:
   enemyContainerPrefab: {fileID: 7420645124294310907, guid: 3953b119ae556034889e4bc9a3e4948f, type: 3}
   enemyIcon: {fileID: 0}
   ballData: {fileID: 11400000, guid: d1c30c129175ecf48a42f1070d15a627, type: 2}
-  maxHealth: 50
+  maxHealth: 60
   damage: 10
   attackCooldown: 1
   moveSpeed: 3
@@ -25,7 +25,7 @@ MonoBehaviour:
   movementType: 0
   followConfig:
     moveSpeed: 3
-    moveDistance: 2
+    moveDistance: 3
     minDistance: 1.5
   fleeConfig:
     moveSpeed: 3

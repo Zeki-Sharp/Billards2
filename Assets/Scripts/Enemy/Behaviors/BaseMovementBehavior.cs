@@ -39,6 +39,14 @@ public abstract class BaseMovementBehavior : IMovementBehavior
     }
     
     /// <summary>
+    /// 获取当前移动速度
+    /// </summary>
+    public virtual float GetCurrentMoveSpeed()
+    {
+        return 3f; // 默认速度
+    }
+    
+    /// <summary>
     /// 计算移动目标位置
     /// </summary>
     /// <param name="enemyPosition">敌人当前位置</param>

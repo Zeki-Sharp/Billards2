@@ -7671,16 +7671,16 @@ MonoBehaviour:
   inputHandler: {fileID: 0}
   movementController: {fileID: 0}
   effects:
-  - key: Be Hit
+  - effectType: 2
     mmfPlayer: {fileID: 2097763790536435821}
     enableDebugLog: 0
-  - key: Launch
+  - effectType: 4
     mmfPlayer: {fileID: 6333896146490756538}
     enableDebugLog: 0
-  - key: Charge
+  - effectType: 5
     mmfPlayer: {fileID: 5680387213041842919}
     enableDebugLog: 0
-  - key: Hit Attack
+  - effectType: 1
     mmfPlayer: {fileID: 8772439200271523911}
     enableDebugLog: 0
   showDebugInfo: 1

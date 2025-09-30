@@ -97,7 +97,10 @@ public class Enemy : MonoBehaviour
                 spawnPreview.gameObject.SetActive(true);
             }
             
-            Debug.Log($"Enemy {name}: 首次出现，显示攻击预告");
+            // 执行攻击预告逻辑（包括远程攻击的投射）
+            enemyBehavior?.ExecuteTelegraphPhase();
+            
+            Debug.Log($"Enemy {name}: 首次出现，显示攻击预告并执行攻击行为");
         }
         else
         {

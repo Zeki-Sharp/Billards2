@@ -6,11 +6,16 @@ using UnityEngine;
 /// </summary>
 public class FollowPlayerBehavior : BaseMovementBehavior
 {
+    private EnemyData cachedEnemyData; // 缓存敌人数据用于获取速度
+    
     /// <summary>
     /// 执行跟随玩家移动
     /// </summary>
     public override Vector2 ExecuteMovement(Transform enemyTransform, Transform playerTransform, EnemyData enemyData)
     {
+        // 缓存敌人数据
+        cachedEnemyData = enemyData;
+        
         // 验证参数
         if (!ValidateMovementParams(enemyTransform, playerTransform, enemyData))
         {
@@ -58,5 +63,14 @@ public class FollowPlayerBehavior : BaseMovementBehavior
         Debug.Log($"FollowPlayerBehavior: 向玩家移动，方向: {direction}, 目标位置: {targetPosition}, 距离: {distanceToPlayer}");
         
         return targetPosition;
+    }
+    
+    /// <summary>
+    /// 获取当前移动速度
+    /// </summary>
+    public override float GetCurrentMoveSpeed()
+    {
+        if (cachedEnemyData == null) return 3f;
+        return cachedEnemyData.followConfig.moveSpeed;
     }
 }

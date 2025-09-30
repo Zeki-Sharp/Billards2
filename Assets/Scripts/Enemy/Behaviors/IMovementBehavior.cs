@@ -32,4 +32,10 @@ public interface IMovementBehavior
     /// </summary>
     /// <param name="moving">是否正在移动</param>
     void SetMoving(bool moving);
+    
+    /// <summary>
+    /// 获取当前移动速度
+    /// </summary>
+    /// <returns>当前移动速度</returns>
+    float GetCurrentMoveSpeed();
 }
