@@ -393,6 +393,24 @@ public class EnemyBehavior : MonoBehaviour
         isDead = true;
         Debug.Log($"EnemyBehavior {name}: 敌人死亡！");
         
+        // 立即清理攻击状态
+        if (attackBehavior != null && attackRange != null)
+        {
+            // 对于远程攻击，如果 AttackRange 已经解除父子关系，需要特殊处理
+            if (attackRange.transform.parent == null)
+            {
+                // AttackRange 是独立的（远程攻击投射状态），直接销毁
+                Debug.Log($"EnemyBehavior {name}: 死亡时检测到 AttackRange 独立存在，直接销毁");
+                Destroy(attackRange.gameObject);
+            }
+            else
+            {
+                // AttackRange 是子物体（近战攻击或已清理的远程攻击），正常清理
+                attackBehavior.CleanupAttack(transform, attackRange);
+                Debug.Log($"EnemyBehavior {name}: 死亡时清理攻击状态");
+            }
+        }
+        
         // 触发死亡特效
         Debug.Log($"EnemyBehavior {name}: 触发死亡特效事件");
         gameObject.PublishDeath("EnemyDeath", transform.position);

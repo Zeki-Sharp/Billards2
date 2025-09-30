@@ -87,20 +87,12 @@ public class RangedAttackBehavior : BaseAttackBehavior
     /// </summary>
     public override void CleanupAttack(Transform enemyTransform, AttackRange attackRange)
     {
-        if (attackRange == null)
+        if (attackRange == null || originalParent == null)
         {
             return;
         }
         
-        Debug.Log($"RangedAttackBehavior: 开始清理 - AttackRange位置: {attackRange.transform.position}，父物体: {(attackRange.transform.parent != null ? attackRange.transform.parent.name : "null")}");
-        
-        // 检查原始父物体是否还存在（敌人可能已经死亡被销毁）
-        if (originalParent == null)
-        {
-            Debug.LogWarning($"RangedAttackBehavior: 原始父物体已不存在（敌人可能已死亡），销毁 AttackRange");
-            Object.Destroy(attackRange.gameObject);
-            return;
-        }
+        Debug.Log($"RangedAttackBehavior: 开始清理 - AttackRange位置: {attackRange.transform.position}");
         
         // 恢复父子关系
         attackRange.transform.SetParent(originalParent);
