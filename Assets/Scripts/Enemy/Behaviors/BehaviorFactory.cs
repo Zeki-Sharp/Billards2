@@ -21,6 +21,9 @@ public static class BehaviorFactory
             case MovementType.Flee:
                 return new FleeBehavior();
                 
+            case MovementType.IntervalMovement:
+                return new IntervalMovementBehavior();
+                
             default:
                 Debug.LogError($"BehaviorFactory: 未知的移动类型: {movementType}，使用默认的跟随玩家行为");
                 return new FollowPlayerBehavior();
@@ -34,7 +37,9 @@ public static class BehaviorFactory
     /// <returns>是否有效</returns>
     public static bool IsValidMovementType(MovementType movementType)
     {
-        return movementType == MovementType.FollowPlayer || movementType == MovementType.Flee;
+        return movementType == MovementType.FollowPlayer || 
+               movementType == MovementType.Flee || 
+               movementType == MovementType.IntervalMovement;
     }
     
     /// <summary>
@@ -43,7 +48,7 @@ public static class BehaviorFactory
     /// <returns>支持的移动类型数组</returns>
     public static MovementType[] GetSupportedMovementTypes()
     {
-        return new MovementType[] { MovementType.FollowPlayer, MovementType.Flee };
+        return new MovementType[] { MovementType.FollowPlayer, MovementType.Flee, MovementType.IntervalMovement };
     }
     
     /// <summary>

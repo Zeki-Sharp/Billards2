@@ -39,6 +39,9 @@ public class EnemyData : ScriptableObject
     [ConditionalField("movementType", false, false, MovementType.Flee)]
     public FleeMovementConfig fleeConfig = new FleeMovementConfig();
     
+    [ConditionalField("movementType", false, false, MovementType.IntervalMovement)]
+    public IntervalMovementConfig intervalConfig = new IntervalMovementConfig();
+    
     [Header("生成配置")]
     public int spawnWeight = 1;
     public int spawnCost = 1;

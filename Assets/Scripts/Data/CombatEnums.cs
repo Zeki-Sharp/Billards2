@@ -16,5 +16,6 @@ public enum AttackType
 public enum MovementType
 {
     FollowPlayer,   // 追随玩家（现有实现）
-    Flee           // 逃跑（远离玩家）
+    Flee,          // 逃跑（远离玩家）
+    IntervalMovement // 间歇移动（交替静止和移动）
 }

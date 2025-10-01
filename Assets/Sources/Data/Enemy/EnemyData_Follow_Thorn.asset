@@ -36,7 +36,7 @@ MonoBehaviour:
     activeColor: {r: 1, g: 0.2, b: 0.2, a: 0.8}
     cooldownColor: {r: 0.3, g: 0.3, b: 0.3, a: 0.5}
   enableAI: 1
-  movementType: 0
+  movementType: 2
   followConfig:
     moveSpeed: 3
     moveDistance: 1.5
@@ -49,6 +49,15 @@ MonoBehaviour:
     approachDistance: 8
     approachSpeed: 3
     approachMoveDistance: 3
+  intervalConfig:
+    movementMode: 0
+    idleRounds: 1
+    moveRounds: 1
+    startWithIdle: 0
+    moveSpeed: 2
+    moveDistance: 2
+    minDistance: 1.5
+    triggerDistance: 3
   spawnWeight: 1
   spawnCost: 1
   isBoss: 0
