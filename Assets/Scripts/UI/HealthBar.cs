@@ -40,8 +40,6 @@ public class HealthBar : MonoBehaviour
             }
     }
     
-
-    
     
     public void UpdateHealth(float currentHealth, float maxHealth)
     {

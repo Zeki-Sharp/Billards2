@@ -514,7 +514,7 @@ Rigidbody2D:
   m_Interpolate: 0
   m_SleepingMode: 1
   m_CollisionDetection: 0
-  m_Constraints: 0
+  m_Constraints: 4
 --- !u!212 &4105723452249029165 stripped
 SpriteRenderer:
   m_CorrespondingSourceObject: {fileID: 2579572461276166802, guid: 92bb8c5569acb9348bf9d53ecaefe6fb, type: 3}
