@@ -7,7 +7,7 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: M_AimLine
+  m_Name: M_AimLine 1
   m_Shader: {fileID: -6465566751694194690, guid: 608b7e713c1b3254cbe5609c4e193549, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
@@ -49,9 +49,9 @@ Material:
     - _QueueControl: 0
     - _QueueOffset: 0
     - _UScale: 15
-    - _UVOffset: 22.59684
+    - _UVOffset: 51.490597
     m_Colors:
-    - _Tint: {r: 1, g: 1, b: 0, a: 1}
+    - _Tint: {r: 1, g: 0.6781428, b: 0, a: 0.78431374}
   m_BuildTextureStacks: []
   m_AllowLocking: 1
 --- !u!114 &1779867835729900092

@@ -10,6 +10,7 @@ public class RangedAttackBehavior : BaseAttackBehavior
     private Vector2 projectedPosition; // 保存投射位置
     private Vector3 originalLocalPosition; // 保存原始本地位置
     private Transform originalParent; // 保存原始父物体
+    private ParabolicIndicator parabolicIndicator; // 抛物线指示器
     
     /// <summary>
     /// 执行预告阶段
@@ -46,6 +47,12 @@ public class RangedAttackBehavior : BaseAttackBehavior
         
         // 显示攻击预告（这会激活 GameObject 并设置方向）
         attackRange.ShowTelegraph();
+        
+        // 显示抛物线指示器
+        if (enemyData.rangedConfig.showParabolicIndicator)
+        {
+            ShowParabolicIndicator(enemyTransform, attackRange.transform, enemyData.rangedConfig);
+        }
         
         Debug.Log($"RangedAttackBehavior: 显示远程攻击预告，投射位置: {projectedPosition}，AttackRange实际位置: {attackRange.transform.position}");
     }
@@ -94,6 +101,9 @@ public class RangedAttackBehavior : BaseAttackBehavior
         
         Debug.Log($"RangedAttackBehavior: 开始清理 - AttackRange位置: {attackRange.transform.position}");
         
+        // 隐藏并清理抛物线指示器
+        HideParabolicIndicator();
+        
         // 恢复父子关系
         attackRange.transform.SetParent(originalParent);
         
@@ -122,5 +132,75 @@ public class RangedAttackBehavior : BaseAttackBehavior
         Debug.Log($"RangedAttackBehavior: 计算投射位置 - 玩家: {playerPosition}, 投射: {basePosition}");
         
         return basePosition;
+    }
+    
+    /// <summary>
+    /// 显示抛物线指示器
+    /// </summary>
+    private void ShowParabolicIndicator(Transform enemyTransform, Transform attackRangeTransform, RangedAttackConfig config)
+    {
+        // 尝试从AttackRange获取抛物线指示器组件
+        if (parabolicIndicator == null)
+        {
+            parabolicIndicator = attackRangeTransform.GetComponent<ParabolicIndicator>();
+            
+            if (parabolicIndicator == null)
+            {
+                Debug.LogWarning($"RangedAttackBehavior: AttackRange上未找到ParabolicIndicator组件！请在AttackRange预制体上添加ParabolicIndicator组件");
+                return;
+            }
+            
+            Debug.Log($"RangedAttackBehavior: 从AttackRange获取到抛物线指示器组件");
+        }
+        
+        // 查找敌人的实际显示物体（Image 或 EnemyItem）
+        Transform actualEnemyTransform = FindActualEnemyTransform(enemyTransform);
+        
+        // 设置起点和终点（两者都跟随各自的Transform实时更新）
+        parabolicIndicator.SetPoints(actualEnemyTransform, attackRangeTransform);
+        
+        // 显示
+        parabolicIndicator.Show();
+        
+        Debug.Log($"RangedAttackBehavior: 显示抛物线指示器 - 起点:{actualEnemyTransform.name} at {actualEnemyTransform.position}, 终点:{attackRangeTransform.position}");
+    }
+    
+    /// <summary>
+    /// 查找敌人的实际显示Transform（优先Image，其次EnemyItem）
+    /// </summary>
+    private Transform FindActualEnemyTransform(Transform enemyRoot)
+    {
+        // 优先查找 Image
+        Transform image = enemyRoot.Find("EnemyItem/Image");
+        if (image != null)
+        {
+            Debug.Log($"RangedAttackBehavior: 找到敌人Image: {image.name}");
+            return image;
+        }
+        
+        // 其次查找 EnemyItem
+        Transform enemyItem = enemyRoot.Find("EnemyItem");
+        if (enemyItem != null)
+        {
+            Debug.Log($"RangedAttackBehavior: 找到EnemyItem: {enemyItem.name}");
+            return enemyItem;
+        }
+        
+        // 如果都没找到，返回根Transform
+        Debug.LogWarning($"RangedAttackBehavior: 未找到Image或EnemyItem，使用根Transform: {enemyRoot.name}");
+        return enemyRoot;
+    }
+    
+    /// <summary>
+    /// 隐藏抛物线指示器
+    /// </summary>
+    private void HideParabolicIndicator()
+    {
+        if (parabolicIndicator != null)
+        {
+            parabolicIndicator.Hide();
+            parabolicIndicator = null; // 清理引用，下次重新获取
+            Debug.Log($"RangedAttackBehavior: 隐藏并清理抛物线指示器引用");
+        }
     }
 }

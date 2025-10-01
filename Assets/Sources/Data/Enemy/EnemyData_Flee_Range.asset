@@ -27,7 +27,15 @@ MonoBehaviour:
     projectionDistance: 0
     cooldown: 2
     useRandomOffset: 1
-    randomOffsetRange: 2
+    randomOffsetRange: 3
+    showParabolicIndicator: 1
+  thornConfig:
+    activeRounds: 1
+    cooldownRounds: 0
+    damageInterval: 0.5
+    showCooldownState: 1
+    activeColor: {r: 1, g: 0.2, b: 0.2, a: 0.8}
+    cooldownColor: {r: 0.3, g: 0.3, b: 0.3, a: 0.5}
   enableAI: 1
   movementType: 1
   followConfig:
@@ -42,6 +50,15 @@ MonoBehaviour:
     approachDistance: 8
     approachSpeed: 3
     approachMoveDistance: 2
+  intervalConfig:
+    movementMode: 0
+    idleRounds: 2
+    moveRounds: 3
+    startWithIdle: 1
+    moveSpeed: 2
+    moveDistance: 3
+    minDistance: 1
+    triggerDistance: 3
   spawnWeight: 1
   spawnCost: 1
   isBoss: 0

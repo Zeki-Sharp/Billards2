@@ -22,6 +22,10 @@ public class RangedAttackConfig
     
     [Tooltip("随机偏移范围")]
     public float randomOffsetRange = 1f;
+    
+    [Header("抛物线指示器")]
+    [Tooltip("是否显示抛物线指示器（需要在AttackRange上添加ParabolicIndicator组件）")]
+    public bool showParabolicIndicator = true;
 }
 
 /// <summary>
