@@ -564,7 +564,6 @@ public class PlayerCore : MonoBehaviour
         healthBar = GetComponentInChildren<HealthBar>();
         if (healthBar != null)
         {
-            healthBar.SetTarget(transform);
             float maxHealth = playerData != null ? playerData.maxHealth : 100f;
             healthBar.UpdateHealth(currentHealth, maxHealth);
         }

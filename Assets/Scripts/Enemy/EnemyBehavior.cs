@@ -31,6 +31,9 @@ public class EnemyBehavior : MonoBehaviour
     private float currentHealth;
     private bool isDead = false;
     
+    [Header("UI组件")]
+    public HealthBar healthBar;  // 血条UI引用
+    
     [Header("陷阱系统")]
     private bool isTrapMode = false;   // 是否处于陷阱模式（玩家碰撞时触发陷阱伤害而非攻击敌人）
     
@@ -333,6 +336,18 @@ public class EnemyBehavior : MonoBehaviour
             currentHealth = enemyData.maxHealth;
             isDead = false;
             Debug.Log($"EnemyBehavior {name}: 初始化血量 {currentHealth}/{enemyData.maxHealth}");
+            
+            // 初始化血条UI
+            if (healthBar != null)
+            {
+                //healthBar.SetTarget(transform);
+                healthBar.UpdateHealth(currentHealth, enemyData.maxHealth);  // 初始化血量显示
+                Debug.Log($"EnemyBehavior {name}: 血条UI已初始化");
+            }
+            else
+            {
+                Debug.LogWarning($"EnemyBehavior {name}: HealthBar未设置！");
+            }
         }
         else
         {
@@ -383,6 +398,12 @@ public class EnemyBehavior : MonoBehaviour
         currentHealth = Mathf.Max(0, currentHealth);
         
         Debug.Log($"EnemyBehavior {name}: 受到 {damage} 点伤害，当前血量: {currentHealth}/{enemyData.maxHealth}");
+        
+        // 更新血条UI
+        if (healthBar != null)
+        {
+            healthBar.UpdateHealth(currentHealth, enemyData.maxHealth);
+        }
         
         // 检查是否死亡
         if (currentHealth <= 0)
