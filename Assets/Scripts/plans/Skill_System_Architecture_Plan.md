@@ -269,19 +269,77 @@ SkillDefinition (技能定义层)
 
 ## 实现阶段规划
 
+### 阶段0：原型验证（最小可行版本）
+**目标：验证整体架构可行性，每个模块只实现一个功能**
+
+#### 0.1 接口定义
+- 定义 `ITrigger` 接口
+- 定义 `ICondition` 接口
+- 定义 `IEffect` 接口
+
+#### 0.2 实现一个完整的技能链路
+**触发器层（只实现一个）：**
+- `CollisionTrigger` - 碰撞事件检测
+- 监听 `GameEventBus.OnAttack` 事件
+- 检测碰撞事件是否发生
+
+**条件层（只实现一个）：**
+- `CountCondition` - 计数条件
+- 检查碰撞次数是否达到阈值（如3次）
+- 支持条件重置
+
+**效果层（只实现一个）：**
+- `StatModifierEffect` - 数值调整效果
+- 修改玩家的某个属性（如攻击力+50%）
+- 通过 `GameEventBus.PublishEffectEvent` 触发表现
+
+#### 0.3 实现三层架构
+**SkillEventManager：**
+- 监听 `GameEventBus.OnAttack` 事件
+- 简单的事件过滤
+- 分发给 SkillSystem
+
+**SkillSystem：**
+- 简单的技能注册表（Dictionary）
+- 技能查找逻辑
+- 协调 Trigger + Condition + Effect 执行
+
+**SkillDefinition：**
+- 创建一个测试技能：碰撞3次后攻击力+50%
+- 配置：`CollisionTrigger` + `CountCondition(3)` + `StatModifierEffect(攻击力+50%)`
+
+#### 0.4 验证目标
+- 验证事件监听和分发机制
+- 验证 Trigger + Condition + Effect 组合模式
+- 验证技能执行流程
+- 验证与现有系统的集成
+- 确认架构没有明显缺陷
+
+#### 0.5 测试场景
+1. 玩家碰撞敌人1次 → 条件未满足 → 技能不触发
+2. 玩家碰撞敌人3次 → 条件满足 → 技能触发 → 攻击力+50%
+3. 验证表现效果是否通过 `GameEventBus` 触发
+4. 验证条件重置功能
+
+**预期产出：**
+- 一个可运行的最小技能系统
+- 验证三层架构的可行性
+- 发现并解决架构问题
+- 为后续开发提供参考
+
+---
+
 ### 阶段1：基础框架
-- 实现 `ITrigger` 和 `ICondition` 接口
-- 实现 `IEffect` 接口
-- 实现三层架构的各个组件：
-  - `SkillEventManager` (事件监听层)
-  - `SkillSystem` (技能管理核心)
-  - `SkillDefinition` (技能定义层)
-- 实现基础的触发器和条件判断器
-- 集成现有事件系统
+- 完善 `ITrigger`、`ICondition`、`IEffect` 接口
+- 实现更多触发器类型：`KillTrigger`、`ChargingTrigger`
+- 实现更多条件类型：`TimeWindowCondition`、`HealthCondition`
+- 实现更多效果类型：`StatusEffect`、`ResourceEffect`
+- 完善三层架构的功能
+- 集成更多事件系统
 
 ### 阶段2：核心功能
 - 实现文档中提到的具体技能组合
-- 实现技能配置系统
+- 实现技能配置系统（ScriptableObject）
 - 实现技能流派基础功能
 - 完善触发器和条件类型
 - 优化三层之间的协作机制
