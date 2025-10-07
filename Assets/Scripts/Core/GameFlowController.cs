@@ -18,14 +18,6 @@ public class GameFlowController : MonoBehaviour
 {
     public static GameFlowController Instance { get; private set; }
     
-    /// <summary>
-    /// 游戏流程状态枚举
-    /// </summary>
-    public enum GameFlowState
-    {
-        PlayerPhase,    // 玩家阶段（由PlayerPhaseController管理）
-        EnemyPhase      // 敌人阶段（由EnemyPhaseController管理）
-    }
     
     [Header("调试")]
     [SerializeField] private bool showDebugInfo = true;
@@ -95,7 +87,7 @@ public class GameFlowController : MonoBehaviour
         // 订阅PlayerPhaseController的完成事件
         if (playerPhaseController != null)
         {
-            playerPhaseController.OnPlayerPhaseComplete += OnPlayerPhaseComplete;
+            playerPhaseController.OnPlayerPhaseComplete += SwitchToEnemyPhase;
         }
         else
         {
@@ -105,7 +97,7 @@ public class GameFlowController : MonoBehaviour
         // 订阅EnemyPhaseController的完成事件
         if (enemyPhaseController != null)
         {
-            EnemyPhaseController.OnEnemyPhaseComplete += OnEnemyPhaseComplete;
+            EnemyPhaseController.OnEnemyPhaseComplete += SwitchToPlayerPhase;
         }
         else
         {
@@ -118,43 +110,18 @@ public class GameFlowController : MonoBehaviour
         // 取消订阅PlayerPhaseController的完成事件
         if (playerPhaseController != null)
         {
-            playerPhaseController.OnPlayerPhaseComplete -= OnPlayerPhaseComplete;
+            playerPhaseController.OnPlayerPhaseComplete -= SwitchToEnemyPhase;
         }
         
         // 取消订阅EnemyPhaseController的完成事件
         if (enemyPhaseController != null)
         {
-            EnemyPhaseController.OnEnemyPhaseComplete -= OnEnemyPhaseComplete;
+            EnemyPhaseController.OnEnemyPhaseComplete -= SwitchToPlayerPhase;
         }
     }
     
     #region 阶段切换
     
-    /// <summary>
-    /// 玩家阶段完成
-    /// </summary>
-    void OnPlayerPhaseComplete()
-    {
-        if (showDebugInfo)
-        {
-            Debug.Log("GameFlowController: 玩家阶段完成，切换到敌人阶段");
-        }
-        
-        SwitchToEnemyPhase();
-    }
-    
-    /// <summary>
-    /// 敌人阶段完成
-    /// </summary>
-    void OnEnemyPhaseComplete()
-    {
-        if (showDebugInfo)
-        {
-            Debug.Log("GameFlowController: 敌人阶段完成，切换到玩家阶段");
-        }
-        
-        SwitchToPlayerPhase();
-    }
     
     /// <summary>
     /// 切换到玩家阶段
@@ -163,11 +130,14 @@ public class GameFlowController : MonoBehaviour
     {
         if (currentState == GameFlowState.PlayerPhase) return;
         
+        // 先发布敌人阶段结束事件
+        GameEventBus.PublishGameFlowStateChanged(GameFlowState.EnemyPhaseEnd);
+        
         currentState = GameFlowState.PlayerPhase;
         
         if (showDebugInfo)
         {
-            Debug.Log("GameFlowController: 切换到玩家阶段");
+            Debug.Log("GameFlowController: 敌人阶段完成，切换到玩家阶段");
         }
         
         // 发布游戏流程状态变化事件
@@ -193,11 +163,14 @@ public class GameFlowController : MonoBehaviour
     {
         if (currentState == GameFlowState.EnemyPhase) return;
         
+        // 先发布玩家阶段结束事件
+        GameEventBus.PublishGameFlowStateChanged(GameFlowState.PlayerPhaseEnd);
+        
         currentState = GameFlowState.EnemyPhase;
         
         if (showDebugInfo)
         {
-            Debug.Log("GameFlowController: 切换到敌人阶段");
+            Debug.Log("GameFlowController: 玩家阶段完成，切换到敌人阶段");
         }
         
         // 发布游戏流程状态变化事件

@@ -25,6 +25,11 @@ public class TriggerConfig
     [Tooltip("攻击类型过滤（如果启用）")]
     public string attackType = "Hit";
     
+    [Header("击杀触发器参数")]
+    [ShowIf("triggerType", TriggerType.Kill)]
+    [Tooltip("目标标签")]
+    public string killTargetTag = "Enemy";
+    
     /// <summary>
     /// 创建触发器实例
     /// </summary>
@@ -37,6 +42,13 @@ public class TriggerConfig
                 // 传递配置参数给触发器实例
                 collisionTrigger.SetTargetTag(targetTag);
                 return collisionTrigger;
+                
+            case TriggerType.Kill:
+                var killTrigger = new KillTrigger();
+                // 传递配置参数给触发器实例
+                killTrigger.SetTargetTag(killTargetTag);
+                return killTrigger;
+                
             default:
                 Debug.LogError($"不支持的触发器类型: {triggerType}");
                 return null;
@@ -56,6 +68,10 @@ public class TriggerConfig
                     return $"碰撞触发器: 标签={targetTag}, 类型={attackType}";
                 }
                 return $"碰撞触发器: 标签={targetTag}";
+                
+            case TriggerType.Kill:
+                return $"击杀触发器: 标签={killTargetTag}";
+                
             default:
                 return $"触发器: {triggerType}";
         }

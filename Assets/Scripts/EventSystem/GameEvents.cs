@@ -60,3 +60,34 @@ public struct DeathData
     public float DeathTime;         // 死亡时间戳
 }
 
+/// <summary>
+/// 游戏流程状态变化数据
+/// </summary>
+public struct GameFlowStateChangedData
+{
+    public GameFlowState OldState;  // 旧状态
+    public GameFlowState NewState;  // 新状态
+    public float ChangeTime;        // 状态变化时间戳
+}
+
+/// <summary>
+/// 球停止数据
+/// </summary>
+public struct BallStoppedData
+{
+    public Vector3 Position;        // 停止位置
+    public float StopTime;          // 停止时间戳
+    public GameObject BallObject;   // 球对象
+}
+
+/// <summary>
+/// 游戏流程状态枚举
+/// </summary>
+public enum GameFlowState
+{
+    PlayerPhase,    // 玩家阶段
+    PlayerPhaseEnd, // 玩家阶段结束
+    EnemyPhase,     // 敌人阶段
+    EnemyPhaseEnd   // 敌人阶段结束
+}
+

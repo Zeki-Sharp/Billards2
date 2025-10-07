@@ -2,7 +2,8 @@ using UnityEngine;
 
 /// <summary>
 /// 计数条件 - 技能系统第一阶段最小验证
-/// 检查碰撞次数是否达到阈值（如3次），用于连击等计数场景
+/// 统计触发器触发次数，达到阈值时满足条件
+/// 通用计数器，不关心具体事件类型，由触发器负责事件过滤
 /// 支持条件重置
 /// </summary>
 public class CountCondition : ICondition
@@ -34,31 +35,23 @@ public class CountCondition : ICondition
     /// <summary>
     /// 检查条件是否满足
     /// </summary>
-    /// <param name="eventData">事件数据，期望是 AttackData</param>
+    /// <param name="eventData">事件数据（由触发器过滤，条件只负责计数）</param>
     /// <returns>条件是否满足</returns>
     public bool CheckCondition(object eventData)
     {
-        // 检查事件数据类型
-        if (eventData is AttackData attackData)
+        // 不管什么事件，只要被调用就说明触发器检测到了事件
+        // 直接计数即可
+        currentCount++;
+        Debug.Log($"[{ConditionName}] 触发计数: {currentCount}/{requiredCount}");
+        
+        bool conditionMet = currentCount >= requiredCount;
+        
+        if (conditionMet)
         {
-            // 检查是否为碰撞类型的攻击
-            if (attackData.AttackType == "Hit")
-            {
-                currentCount++;
-                Debug.Log($"[{ConditionName}] 碰撞计数: {currentCount}/{requiredCount}");
-                
-                bool conditionMet = currentCount >= requiredCount;
-                
-                if (conditionMet)
-                {
-                    Debug.Log($"[{ConditionName}] 条件满足！达到计数阈值 {requiredCount}");
-                }
-                
-                return conditionMet;
-            }
+            Debug.Log($"[{ConditionName}] 条件满足！达到计数阈值 {requiredCount}");
         }
         
-        return false;
+        return conditionMet;
     }
     
     /// <summary>

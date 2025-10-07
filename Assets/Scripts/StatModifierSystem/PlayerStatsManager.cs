@@ -284,10 +284,10 @@ public class PlayerStatsManager : MonoBehaviour
     /// <summary>
     /// 处理游戏流程状态变化事件
     /// </summary>
-    private void HandleGameFlowStateChanged(GameFlowController.GameFlowState gameFlowState)
+    private void HandleGameFlowStateChanged(GameFlowState gameFlowState)
     {
         // 当切换到敌人阶段时，移除所有标记为"玩家回合结束时移除"的修饰器
-        if (gameFlowState == GameFlowController.GameFlowState.EnemyPhase)
+        if (gameFlowState == GameFlowState.PlayerPhaseEnd)
         {
             var modifiersToRemove = activeModifiers
                 .Where(m => m.removalCondition == RemovalCondition.OnPlayerPhaseEnded)

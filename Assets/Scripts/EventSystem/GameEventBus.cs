@@ -85,7 +85,7 @@ public static class GameEventBus
     /// <summary>
     /// 游戏流程状态变化事件
     /// </summary>
-    public static event System.Action<GameFlowController.GameFlowState> OnGameFlowStateChanged;
+    public static event System.Action<GameFlowState> OnGameFlowStateChanged;
     
     /// <summary>
     /// 游戏状态变化事件
@@ -202,7 +202,7 @@ public static class GameEventBus
     /// <summary>
     /// 发布游戏流程状态变化事件
     /// </summary>
-    public static void PublishGameFlowStateChanged(GameFlowController.GameFlowState gameFlowState) => OnGameFlowStateChanged?.Invoke(gameFlowState);
+    public static void PublishGameFlowStateChanged(GameFlowState gameFlowState) => OnGameFlowStateChanged?.Invoke(gameFlowState);
     
     /// <summary>
     /// 发布游戏状态变化事件

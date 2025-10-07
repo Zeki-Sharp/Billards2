@@ -21,10 +21,6 @@ public class SkillEffectConfig
     public float modifierValue = 2f;
     
     [ShowIf("effectType", SkillEffectType.StatModifier)]
-    [Tooltip("移除条件")]
-    public RemovalCondition removalCondition = RemovalCondition.OnPlayerPhaseEnded;
-    
-    [ShowIf("effectType", SkillEffectType.StatModifier)]
     [Tooltip("修改器类型")]
     public StatModifierType modifierType = StatModifierType.PercentMult;
     
@@ -38,7 +34,6 @@ public class SkillEffectConfig
             case SkillEffectType.StatModifier:
                 var statModifierEffect = new StatModifierEffect();
                 statModifierEffect.SetModifier(targetStat, modifierValue);
-                statModifierEffect.SetRemovalCondition(removalCondition);
                 return statModifierEffect;
             default:
                 Debug.LogError($"不支持的效果类型: {effectType}");
@@ -54,7 +49,7 @@ public class SkillEffectConfig
         switch (effectType)
         {
             case SkillEffectType.StatModifier:
-                return $"属性修改: {targetStat} x{modifierValue} ({modifierType}), 移除条件: {removalCondition}";
+                return $"属性修改: {targetStat} x{modifierValue} ({modifierType})";
             default:
                 return $"效果: {effectType}";
         }

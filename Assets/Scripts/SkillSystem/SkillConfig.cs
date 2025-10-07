@@ -42,6 +42,12 @@ public class SkillConfig : ScriptableObject
     [Required]
     public SkillEffectConfig effectConfig = new SkillEffectConfig();
     
+    [BoxGroup("技能组件配置")]
+    [LabelText("移除条件配置")]
+    [Tooltip("移除条件配置")]
+    [Required]
+    public RemovalConditionConfig removalConditionConfig = new RemovalConditionConfig();
+    
     [BoxGroup("技能属性")]
     [LabelText("技能类型")]
     [Tooltip("技能类型")]
@@ -73,8 +79,9 @@ public class SkillConfig : ScriptableObject
         var trigger = triggerConfig?.CreateTrigger();
         var condition = conditionConfig?.CreateCondition();
         var effect = effectConfig?.CreateEffect();
+        var removalCondition = removalConditionConfig?.CreateRemovalCondition();
         
-        if (trigger == null || condition == null || effect == null)
+        if (trigger == null || condition == null || effect == null || removalCondition == null)
         {
             Debug.LogError($"技能 {skillName} 组件创建失败");
             return null;
@@ -84,8 +91,9 @@ public class SkillConfig : ScriptableObject
         trigger.Initialize();
         condition.Initialize();
         effect.Initialize();
+        removalCondition.Initialize();
         
-        return new SkillInstance(this, trigger, condition, effect);
+        return new SkillInstance(this, trigger, condition, effect, removalCondition);
     }
     
     /// <summary>
@@ -130,13 +138,15 @@ public class SkillInstance
     public ITrigger trigger;
     public ICondition condition;
     public IEffect effect;
+    public IRemovalCondition removalCondition;
     
-    public SkillInstance(SkillConfig config, ITrigger trigger, ICondition condition, IEffect effect)
+    public SkillInstance(SkillConfig config, ITrigger trigger, ICondition condition, IEffect effect, IRemovalCondition removalCondition)
     {
         this.config = config;
         this.trigger = trigger;
         this.condition = condition;
         this.effect = effect;
+        this.removalCondition = removalCondition;
     }
     
     /// <summary>
@@ -147,6 +157,7 @@ public class SkillInstance
         trigger?.Reset();
         condition?.Reset();
         effect?.Reset();
+        removalCondition?.Reset();
     }
     
     /// <summary>

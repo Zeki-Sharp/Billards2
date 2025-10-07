@@ -80,11 +80,12 @@ public class SkillManager : MonoBehaviour
     void SubscribeToEvents()
     {
         GameEventBus.OnAttack += HandleAttackEvent;
+        GameEventBus.OnDeath += HandleDeathEvent;
         GameEventBus.OnChargingStarted += OnNewShotStarted;
         
         if (enableDebugLog)
         {
-            Debug.Log("SkillManager: 已订阅攻击事件和发射开始事件");
+            Debug.Log("SkillManager: 已订阅攻击事件、死亡事件和发射开始事件");
         }
     }
     
@@ -94,6 +95,7 @@ public class SkillManager : MonoBehaviour
     void UnsubscribeFromEvents()
     {
         GameEventBus.OnAttack -= HandleAttackEvent;
+        GameEventBus.OnDeath -= HandleDeathEvent;
         GameEventBus.OnChargingStarted -= OnNewShotStarted;
         
         if (enableDebugLog)
@@ -120,6 +122,28 @@ public class SkillManager : MonoBehaviour
         foreach (var skillInstance in skillInstances.Values)
         {
             bool processed = skillInstance.ProcessEvent(attackData);
+            if (processed && enableDebugLog)
+            {
+                Debug.Log($"[SkillManager] 技能 {skillInstance.config.skillName} 被触发");
+            }
+        }
+    }
+    
+    /// <summary>
+    /// 处理死亡事件
+    /// </summary>
+    void HandleDeathEvent(DeathData deathData)
+    {
+        Debug.Log("SkillManager: 收到死亡事件");
+        if (enableDebugLog)
+        {
+            Debug.Log($"[SkillManager] 收到死亡事件: {deathData.DeathType} at {deathData.Position}");
+        }
+        
+        // 处理所有技能
+        foreach (var skillInstance in skillInstances.Values)
+        {
+            bool processed = skillInstance.ProcessEvent(deathData);
             if (processed && enableDebugLog)
             {
                 Debug.Log($"[SkillManager] 技能 {skillInstance.config.skillName} 被触发");

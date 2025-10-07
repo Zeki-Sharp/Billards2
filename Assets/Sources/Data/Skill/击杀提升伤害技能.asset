@@ -10,22 +10,23 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: efc89a18d420d744da9894a9f7094350, type: 3}
-  m_Name: "\u649E\u5899\u63D0\u5347\u4F24\u5BB3\u6280\u80FD"
+  m_Name: "\u51FB\u6740\u63D0\u5347\u4F24\u5BB3\u6280\u80FD"
   m_EditorClassIdentifier: 
-  skillName: "\u78B0\u649E\u8FDE\u51FB"
-  description: "\u78B0\u649E\u654C\u4EBA2\u6B21\u540E\uFF0C\u653B\u51FB\u529B\u63D0\u5347100%"
+  skillName: "\u6B7B\u4EA1\u63D0\u5347"
+  description: "\u6740\u6B7B\u654C\u4EBA\u540E\u4F24\u5BB3\u4E0A\u5347"
   skillIcon: {fileID: 0}
   triggerConfig:
-    triggerType: 0
+    triggerType: 1
     targetTag: Wall
     useAttackTypeFilter: 0
     attackType: Hit
+    killTargetTag: Enemy
   conditionConfig:
     hasConditions: 1
     logicType: 0
     conditions:
     - conditionType: 0
-      requiredCount: 2
+      requiredCount: 1
       timeWindow: 5
       healthThreshold: 0.3
       comparisonType: 0
@@ -33,8 +34,9 @@ MonoBehaviour:
     effectType: 0
     targetStat: Damage
     modifierValue: 2
-    removalCondition: 5
     modifierType: 2
+  removalConditionConfig:
+    conditionType: 0
   skillType: 0
   requiredLevel: 1
   isActive: 1
