@@ -366,8 +366,9 @@ public class PlayerCore : MonoBehaviour
             return;
         }
         
-        // 计算伤害和碰撞信息
-        float damage = playerData != null ? playerData.damage : 50f;
+        // 计算伤害和碰撞信息 - 从 PlayerStatsManager 获取最终伤害值
+        PlayerStatsManager statsManager = GetComponent<PlayerStatsManager>();
+        float damage = (statsManager != null) ? statsManager.GetFinalStat("Damage") : (playerData != null ? playerData.damage : 50f);
         Vector3 hitPosition = collision.contacts[0].point; // 使用实际碰撞点
         Vector3 hitDirection = (collision.transform.position - transform.position).normalized;
         
