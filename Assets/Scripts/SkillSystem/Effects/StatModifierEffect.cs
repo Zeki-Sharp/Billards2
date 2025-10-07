@@ -32,13 +32,13 @@ public class StatModifierEffect : IEffect
     /// 设置移除条件
     /// </summary>
     /// <param name="condition">移除条件</param>
-    public void SetRemovalCondition(RemovalCondition condition)
+    public void SetRemovalCondition(IRemovalCondition condition)
     {
         removalCondition = condition;
-        Debug.Log($"[{EffectName}] 设置移除条件: {condition}");
+        Debug.Log($"[{EffectName}] 设置移除条件: {condition?.ConditionName}");
     }
     
-    private RemovalCondition removalCondition = RemovalCondition.OnPlayerPhaseEnded; // 默认玩家回合结束时移除
+    private IRemovalCondition removalCondition; // 移除条件由配置决定
     
     /// <summary>
     /// 初始化效果
@@ -88,9 +88,11 @@ public class StatModifierEffect : IEffect
             targetStat,                                    // 目标属性
             StatModifierType.PercentAdd,                  // 百分比增加类型
             modifierValue - 1f,                           // 如果modifierValue是1.5，则Value是0.5 (50%增加)
-            removalCondition,                             // 移除条件
             this                                           // 来源
         );
+        
+        // 设置移除条件
+        appliedModifier.SetRemovalCondition(removalCondition);
         
         // 应用修饰器
         statsManager.ApplyModifier(appliedModifier);

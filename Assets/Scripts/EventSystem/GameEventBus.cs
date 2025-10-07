@@ -114,7 +114,7 @@ public static class GameEventBus
     /// <summary>
     /// 生命值变化事件
     /// </summary>
-    public static event System.Action<int> OnHealthChanged;
+    public static event System.Action<HealthStateData> OnHealthChanged;
     
     /// <summary>
     /// 波次变化事件
@@ -227,7 +227,7 @@ public static class GameEventBus
     /// <summary>
     /// 发布生命值变化事件
     /// </summary>
-    public static void PublishHealthChanged(int health) => OnHealthChanged?.Invoke(health);
+    public static void PublishHealthChanged(HealthStateData healthData) => OnHealthChanged?.Invoke(healthData);
     
     /// <summary>
     /// 发布波次变化事件

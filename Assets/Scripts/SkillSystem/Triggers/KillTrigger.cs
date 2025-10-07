@@ -26,7 +26,6 @@ public class KillTrigger : ITrigger
     /// </summary>
     public void Initialize()
     {
-        Debug.Log($"[{TriggerName}] 初始化完成，目标标签: {targetTag}");
     }
     
     /// <summary>
@@ -44,12 +43,7 @@ public class KillTrigger : ITrigger
             
             if (tagMatches)
             {
-                Debug.Log($"[{TriggerName}] 检测到击杀事件: {deathData.DeathType} at {deathData.Position}, 目标标签: {deathData.DeadObjectTag}");
                 return true;
-            }
-            else
-            {
-                Debug.Log($"[{TriggerName}] 击杀事件目标标签不匹配: 期望={targetTag}, 实际={deathData.DeadObjectTag}");
             }
         }
         else
@@ -66,6 +60,5 @@ public class KillTrigger : ITrigger
     public void Reset()
     {
         // 击杀触发器不需要特殊重置逻辑
-        Debug.Log($"[{TriggerName}] 状态重置");
     }
 }

@@ -15,13 +15,11 @@ public class GameManager : MonoBehaviour
     
     [Header("游戏数据")]
     [SerializeField] private int score = 0;
-    [SerializeField] private int playerHealth = 100;
     [SerializeField] private int currentWave = 1;
     [SerializeField] private int maxWaves = 10;
     
     [Header("胜负条件")]
     [SerializeField] private int winScore = 1000;
-    [SerializeField] private int maxHealth = 100;
     
     [Header("调试")]
     [SerializeField] private bool showDebugInfo = true;
@@ -78,12 +76,10 @@ public class GameManager : MonoBehaviour
         
         // 初始化游戏数据
         score = 0;
-        playerHealth = maxHealth;
         currentWave = 1;
         
         // 触发初始化事件
         GameEventBus.PublishScoreChanged(score);
-        GameEventBus.PublishHealthChanged(playerHealth);
         GameEventBus.PublishWaveChanged(currentWave);
         GameEventBus.PublishGameStateChanged(isGameActive);
         
@@ -108,8 +104,9 @@ public class GameManager : MonoBehaviour
     
     void CheckLoseCondition()
     {
-        // 检查失败条件：生命值归零
-        if (playerHealth <= 0)
+        // 检查失败条件：通过PlayerCore检查血量
+        PlayerCore playerCore = FindObjectOfType<PlayerCore>();
+        if (playerCore != null && playerCore.GetCurrentHealth() <= 0)
         {
             GameOver();
         }
@@ -164,29 +161,41 @@ public class GameManager : MonoBehaviour
         }
     }
     
+    /// <summary>
+    /// 受到伤害 - 委托给PlayerCore处理
+    /// </summary>
     public void TakeDamage(int damage)
     {
         if (isGameOver) return;
         
-        playerHealth = Mathf.Max(0, playerHealth - damage);
-        GameEventBus.PublishHealthChanged(playerHealth);
+        PlayerCore playerCore = FindObjectOfType<PlayerCore>();
+        if (playerCore != null)
+        {
+            playerCore.TakeDamage(damage);
+        }
         
         if (showDebugInfo)
         {
-            Debug.Log($"GameManager: 受到伤害 {damage}, 剩余生命: {playerHealth}");
+            Debug.Log($"GameManager: 委托PlayerCore处理伤害 {damage}");
         }
     }
     
+    /// <summary>
+    /// 恢复生命 - 委托给PlayerCore处理
+    /// </summary>
     public void Heal(int healAmount)
     {
         if (isGameOver) return;
         
-        playerHealth = Mathf.Min(maxHealth, playerHealth + healAmount);
-        GameEventBus.PublishHealthChanged(playerHealth);
+        PlayerCore playerCore = FindObjectOfType<PlayerCore>();
+        if (playerCore != null)
+        {
+            playerCore.Heal(healAmount);
+        }
         
         if (showDebugInfo)
         {
-            Debug.Log($"GameManager: 恢复生命 {healAmount}, 当前生命: {playerHealth}");
+            Debug.Log($"GameManager: 委托PlayerCore处理恢复 {healAmount}");
         }
     }
     
@@ -259,7 +268,6 @@ public class GameManager : MonoBehaviour
     public bool IsGamePaused => isGamePaused;
     public bool IsGameOver => isGameOver;
     public int Score => score;
-    public int PlayerHealth => playerHealth;
     public int CurrentWave => currentWave;
     public int MaxWaves => maxWaves;
     

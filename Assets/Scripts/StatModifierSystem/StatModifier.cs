@@ -19,7 +19,8 @@ public class StatModifier
     public bool isTemporary => duration > 0;  // 是否是临时效果
     
     [Header("移除条件")]
-    public RemovalCondition removalCondition;  // 移除条件类型
+    [System.NonSerialized]
+    public IRemovalCondition removalCondition; // 移除条件系统
     public string customCondition;             // 自定义条件描述
     
     /// <summary>
@@ -33,7 +34,7 @@ public class StatModifier
         this.source = source;
         this.duration = 0f;  // 永久
         this.timeRemaining = 0f;
-        this.removalCondition = RemovalCondition.Manual;
+        this.removalCondition = null; // 永不移除
         this.customCondition = "";
     }
     
@@ -48,14 +49,14 @@ public class StatModifier
         this.source = source;
         this.duration = duration;
         this.timeRemaining = duration;
-        this.removalCondition = RemovalCondition.TimeElapsed;
+        this.removalCondition = null; // 时间到期自动移除
         this.customCondition = "";
     }
     
     /// <summary>
     /// 构造函数 - 创建基于条件的修饰器
     /// </summary>
-    public StatModifier(string targetStat, StatModifierType type, float value, RemovalCondition condition, object source = null)
+    public StatModifier(string targetStat, StatModifierType type, float value, IRemovalCondition condition, object source = null)
     {
         this.targetStat = targetStat;
         this.type = type;
@@ -68,25 +69,40 @@ public class StatModifier
     }
     
     /// <summary>
+    /// 设置移除条件
+    /// </summary>
+    /// <param name="condition">移除条件</param>
+    public void SetRemovalCondition(IRemovalCondition condition)
+    {
+        removalCondition = condition;
+    }
+    
+    /// <summary>
+    /// 检查是否时间到期
+    /// </summary>
+    public bool IsTimeExpired()
+    {
+        return duration > 0 && timeRemaining <= 0f;
+    }
+    
+    /// <summary>
     /// 检查是否应该被移除
     /// </summary>
-    public bool ShouldBeRemoved()
+    public bool ShouldBeRemoved(object eventData = null)
     {
-        switch (removalCondition)
+        // 时间到期检查
+        if (duration > 0 && timeRemaining <= 0f)
         {
-            case RemovalCondition.TimeElapsed:
-                return timeRemaining <= 0f;
-            case RemovalCondition.OnBallStopped:
-            case RemovalCondition.OnNextAttack:
-            case RemovalCondition.OnNextCollisionEnd:
-            case RemovalCondition.OnPlayerPhaseEnded:
-                // 这些条件由外部事件触发，不在这里检查
-                return false;
-            case RemovalCondition.Manual:
-                return false;  // 手动移除
-            default:
-                return false;
+            return true;
         }
+        
+        // 基于条件的移除检查
+        if (removalCondition != null)
+        {
+            return removalCondition.ShouldRemove(eventData);
+        }
+        
+        return false;
     }
     
     /// <summary>
@@ -94,7 +110,7 @@ public class StatModifier
     /// </summary>
     public void UpdateTime(float deltaTime)
     {
-        if (isTemporary && removalCondition == RemovalCondition.TimeElapsed)
+        if (isTemporary)
         {
             timeRemaining -= deltaTime;
             timeRemaining = Mathf.Max(0f, timeRemaining);
@@ -120,15 +136,3 @@ public enum StatModifierType
     PercentMult     // 最终值 * Value
 }
 
-/// <summary>
-/// 移除条件枚举
-/// </summary>
-public enum RemovalCondition
-{
-    Manual,             // 手动移除
-    TimeElapsed,        // 时间到达
-    OnBallStopped,      // 球停止运动时
-    OnNextAttack,       // 下次攻击后
-    OnNextCollisionEnd, // 下次碰撞结束后
-    OnPlayerPhaseEnded  // 玩家回合结束时
-}

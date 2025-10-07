@@ -27,13 +27,18 @@ public class SkillEffectConfig
     /// <summary>
     /// 创建效果实例
     /// </summary>
-    public IEffect CreateEffect()
+    public IEffect CreateEffect(IRemovalCondition removalCondition = null)
     {
         switch (effectType)
         {
             case SkillEffectType.StatModifier:
                 var statModifierEffect = new StatModifierEffect();
                 statModifierEffect.SetModifier(targetStat, modifierValue);
+                // 设置移除条件
+                if (removalCondition != null)
+                {
+                    statModifierEffect.SetRemovalCondition(removalCondition);
+                }
                 return statModifierEffect;
             default:
                 Debug.LogError($"不支持的效果类型: {effectType}");

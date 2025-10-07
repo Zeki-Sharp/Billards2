@@ -29,7 +29,6 @@ public class CountCondition : ICondition
     public void Initialize()
     {
         currentCount = 0;
-        Debug.Log($"[{ConditionName}] 初始化完成，需要计数: {requiredCount}");
     }
     
     /// <summary>
@@ -42,8 +41,6 @@ public class CountCondition : ICondition
         // 不管什么事件，只要被调用就说明触发器检测到了事件
         // 直接计数即可
         currentCount++;
-        Debug.Log($"[{ConditionName}] 触发计数: {currentCount}/{requiredCount}");
-        
         bool conditionMet = currentCount >= requiredCount;
         
         if (conditionMet)
@@ -60,6 +57,5 @@ public class CountCondition : ICondition
     public void Reset()
     {
         currentCount = 0;
-        Debug.Log($"[{ConditionName}] 计数重置: {currentCount}/{requiredCount}");
     }
 }

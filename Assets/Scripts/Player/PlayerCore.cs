@@ -41,8 +41,7 @@ public class PlayerCore : MonoBehaviour
     private float lastAttackTime = 0f;
     private const float ATTACK_COOLDOWN = 0.1f; // 0.1秒冷却时间
     
-    // 事件
-    public System.Action<float> OnHealthChanged;
+    // 事件 - 血量变化事件已统一到 GameEventBus
     
     /// <summary>
     /// 检查指定的球是否是当前玩家的球
@@ -100,6 +99,13 @@ public class PlayerCore : MonoBehaviour
         float maxHealth = playerData != null ? playerData.maxHealth : 100f;
         currentHealth = maxHealth; // 初始化为满血
         InitializeHealthBar(currentHealth);
+        
+        // 发布初始血量事件，让技能系统能够检测到满血状态
+        GameEventBus.PublishHealthChanged(new HealthStateData
+        {
+            CurrentHealth = currentHealth,
+            MaxHealth = maxHealth
+        });
         
         // 确保球体在初始化后完全停止
         if (ballPhysics != null)
@@ -459,6 +465,53 @@ public class PlayerCore : MonoBehaviour
     }
     
     /// <summary>
+    /// 恢复生命值
+    /// </summary>
+    public void Heal(float healAmount)
+    {
+        if (playerData == null)
+        {
+            Debug.LogError("PlayerCore: playerData 为空，无法恢复生命！");
+            return;
+        }
+        
+        Debug.Log($"PlayerCore: 恢复生命值，当前血量: {currentHealth}, 恢复量: {healAmount}");
+        
+        // 执行恢复
+        ApplyHeal(healAmount);
+    }
+    
+    /// <summary>
+    /// 应用恢复（共用的恢复逻辑）
+    /// </summary>
+    private void ApplyHeal(float healAmount)
+    {
+        // 更新血量数据（使用实例变量）
+        float maxHealth = playerData.maxHealth;
+        currentHealth = Mathf.Min(maxHealth, currentHealth + healAmount);
+        
+        Debug.Log($"PlayerCore: 恢复完成，当前血量: {currentHealth}/{maxHealth}");
+        
+        // 更新血条
+        if (healthBar != null)
+        {
+            healthBar.UpdateHealth(currentHealth, maxHealth);
+            Debug.Log("PlayerCore: 血条已更新（恢复）");
+        }
+        else
+        {
+            Debug.LogWarning("PlayerCore: healthBar 为空，无法更新血条UI！");
+        }
+        
+        // 触发血量变化事件 - 统一使用 GameEventBus
+        GameEventBus.PublishHealthChanged(new HealthStateData
+        {
+            CurrentHealth = currentHealth,
+            MaxHealth = maxHealth
+        });
+    }
+    
+    /// <summary>
     /// 应用伤害（共用的扣血逻辑）
     /// </summary>
     private void ApplyDamage(float damage)
@@ -482,8 +535,12 @@ public class PlayerCore : MonoBehaviour
             Debug.LogWarning("PlayerCore: healthBar 为空，无法更新血条UI！");
         }
         
-        // 触发血量变化事件
-        OnHealthChanged?.Invoke(currentHealth / maxHealth);
+        // 触发血量变化事件 - 统一使用 GameEventBus
+        GameEventBus.PublishHealthChanged(new HealthStateData
+        {
+            CurrentHealth = currentHealth,
+            MaxHealth = maxHealth
+        });
         
         // 检查是否死亡
         if (currentHealth <= 0)
@@ -624,6 +681,7 @@ public class PlayerCore : MonoBehaviour
     }
     
     #endregion
+    
     
     #region 组件设置
     

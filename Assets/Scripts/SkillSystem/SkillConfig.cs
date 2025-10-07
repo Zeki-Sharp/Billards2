@@ -78,8 +78,8 @@ public class SkillConfig : ScriptableObject
         // 创建组件实例
         var trigger = triggerConfig?.CreateTrigger();
         var condition = conditionConfig?.CreateCondition();
-        var effect = effectConfig?.CreateEffect();
         var removalCondition = removalConditionConfig?.CreateRemovalCondition();
+        var effect = effectConfig?.CreateEffect(removalCondition);
         
         if (trigger == null || condition == null || effect == null || removalCondition == null)
         {
@@ -92,6 +92,12 @@ public class SkillConfig : ScriptableObject
         condition.Initialize();
         effect.Initialize();
         removalCondition.Initialize();
+        
+        // 如果是反向条件检查，设置原始条件
+        if (removalCondition is InverseConditionCheck inverseCheck)
+        {
+            inverseCheck.SetOriginalCondition(condition);
+        }
         
         return new SkillInstance(this, trigger, condition, effect, removalCondition);
     }
@@ -147,6 +153,12 @@ public class SkillInstance
         this.condition = condition;
         this.effect = effect;
         this.removalCondition = removalCondition;
+        
+        // 初始化所有组件
+        this.trigger?.Initialize();
+        this.condition?.Initialize();
+        this.effect?.Initialize();
+        this.removalCondition?.Initialize();
     }
     
     /// <summary>

@@ -709,11 +709,9 @@ MonoBehaviour:
   isGamePaused: 0
   isGameOver: 0
   score: 0
-  playerHealth: 100
   currentWave: 1
   maxWaves: 10
   winScore: 1000
-  maxHealth: 100
   showDebugInfo: 1
 --- !u!4 &444653467
 Transform:
@@ -8345,7 +8343,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   activeSkills:
-  - {fileID: 11400000, guid: 29de59d171003c841b05a4b0bee1b081, type: 2}
+  - {fileID: 11400000, guid: f3389976e8425cb41b9e1b27c8013e6e, type: 2}
   enableDebugLog: 1
 --- !u!4 &1357681023
 Transform:
@@ -9525,7 +9523,7 @@ MonoBehaviour:
   m_BlockingObjects: 0
   m_BlockingMask:
     serializedVersion: 2
-    m_Bits: 4294967295
+    m_Bits: 63
 --- !u!114 &1736499163
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -10193,11 +10191,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a3fe13b3f07d7c04a989429c7bd1c594, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
---- !u!1 &1838269008 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 3251294568684493535, guid: 2d86053af5e50c446a06f75cbdecb65b, type: 3}
-  m_PrefabInstance: {fileID: 5924173280866626688}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1 &1906982614
 GameObject:
   m_ObjectHideFlags: 0
@@ -10616,6 +10609,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 557047279362017122, guid: 2d86053af5e50c446a06f75cbdecb65b, type: 3}
+      propertyPath: m_BlockingMask.m_Bits
+      value: 63
+      objectReference: {fileID: 0}
     - target: {fileID: 3251294568684493535, guid: 2d86053af5e50c446a06f75cbdecb65b, type: 3}
       propertyPath: m_Name
       value: Player
@@ -10660,14 +10657,6 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 7844486164170001436, guid: 2d86053af5e50c446a06f75cbdecb65b, type: 3}
-      propertyPath: m_Enabled
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 7844486164170001436, guid: 2d86053af5e50c446a06f75cbdecb65b, type: 3}
-      propertyPath: useCyclingCharge
-      value: 1
-      objectReference: {fileID: 0}
     - target: {fileID: 8772439200271523911, guid: 2d86053af5e50c446a06f75cbdecb65b, type: 3}
       propertyPath: managedReferences[3244891126871883917].TargetFeedbacks
       value: 
@@ -10679,36 +10668,19 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents:
-    - targetCorrespondingSourceObject: {fileID: 3251294568684493535, guid: 2d86053af5e50c446a06f75cbdecb65b, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 6734338411020087303}
+    m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 2d86053af5e50c446a06f75cbdecb65b, type: 3}
 --- !u!114 &6734338411020087296 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 3655923765959461568, guid: 2d86053af5e50c446a06f75cbdecb65b, type: 3}
   m_PrefabInstance: {fileID: 5924173280866626688}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1838269008}
+  m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 96bb1e49ec5d79d4ea2302f5e0e9b548, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
---- !u!114 &6734338411020087303
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1838269008}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 8d445734808e3e3488b87acad09b41f7, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  playerData: {fileID: 11400000, guid: 9fa21c5d0e8b7b24d9ae0910aa7d5197, type: 2}
-  enableDebugLog: 1
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

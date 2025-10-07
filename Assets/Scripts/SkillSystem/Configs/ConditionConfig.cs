@@ -24,16 +24,29 @@ public class SingleConditionConfig
     [Tooltip("时间窗口长度（秒）")]
     public float timeWindow = 5f;
     
-    // 血量条件参数 - 只在 conditionType == Health 时显示
-    [Header("血量条件参数")]
-    [ShowIf("conditionType", ConditionType.Health)]
-    [Tooltip("血量阈值（百分比）")]
-    [Range(0f, 1f)]
-    public float healthThreshold = 0.3f;
-    
-    [ShowIf("conditionType", ConditionType.Health)]
+    // 值比较条件参数 - 只在 conditionType == ValueComparison 时显示
+    [Header("值比较条件参数")]
+    [ShowIf("conditionType", ConditionType.ValueComparison)]
     [Tooltip("比较类型")]
-    public HealthComparisonType comparisonType = HealthComparisonType.LessThan;
+    public ComparisonType comparisonType = ComparisonType.GreaterThanOrEqual;
+    
+    [ShowIf("conditionType", ConditionType.ValueComparison)]
+    [Tooltip("目标值")]
+    public float targetValue = 1.0f;
+    
+    [ShowIf("conditionType", ConditionType.ValueComparison)]
+    [ShowIf("comparisonType", ComparisonType.InRange)]
+    [Tooltip("最小值")]
+    public float minValue = 0f;
+    
+    [ShowIf("conditionType", ConditionType.ValueComparison)]
+    [ShowIf("comparisonType", ComparisonType.InRange)]
+    [Tooltip("最大值")]
+    public float maxValue = 1f;
+    
+    [ShowIf("conditionType", ConditionType.ValueComparison)]
+    [Tooltip("数据提取器类型")]
+    public DataExtractorType dataExtractorType = DataExtractorType.Health;
     
     /// <summary>
     /// 创建单个条件实例
@@ -46,17 +59,47 @@ public class SingleConditionConfig
                 var countCondition = new CountCondition();
                 countCondition.SetRequiredCount(requiredCount);
                 return countCondition;
+            case ConditionType.ValueComparison:
+                var valueComparisonCondition = new ValueComparisonCondition();
+                valueComparisonCondition.SetComparison(comparisonType, targetValue);
+                if (comparisonType == ComparisonType.InRange)
+                {
+                    valueComparisonCondition.SetRange(minValue, maxValue);
+                }
+                valueComparisonCondition.SetValueExtractor(GetDataExtractor(dataExtractorType));
+                return valueComparisonCondition;
             case ConditionType.TimeWindow:
                 // 暂时返回 null，后续实现
                 Debug.LogWarning("TimeWindow 条件暂未实现");
                 return null;
-            case ConditionType.Health:
-                // 暂时返回 null，后续实现
-                Debug.LogWarning("Health 条件暂未实现");
-                return null;
             default:
                 Debug.LogError($"不支持的条件类型: {conditionType}");
                 return null;
+        }
+    }
+    
+    /// <summary>
+    /// 根据类型获取数据提取器
+    /// </summary>
+    /// <param name="type">数据提取器类型</param>
+    /// <returns>数据提取函数</returns>
+    private System.Func<object, float> GetDataExtractor(DataExtractorType type)
+    {
+        switch (type)
+        {
+            case DataExtractorType.Health:
+                return DataExtractors.HealthExtractor;
+            case DataExtractorType.Attack:
+                return DataExtractors.AttackExtractor;
+            case DataExtractorType.Defense:
+                return DataExtractors.DefenseExtractor;
+            case DataExtractorType.Speed:
+                return DataExtractors.SpeedExtractor;
+            case DataExtractorType.Mana:
+                return DataExtractors.ManaExtractor;
+            default:
+                Debug.LogError($"不支持的数据提取器类型: {type}");
+                return (eventData) => 0f;
         }
     }
     
@@ -69,10 +112,17 @@ public class SingleConditionConfig
         {
             case ConditionType.Count:
                 return $"计数条件: 需要 {requiredCount} 次";
+            case ConditionType.ValueComparison:
+                if (comparisonType == ComparisonType.InRange)
+                {
+                    return $"值比较条件: {dataExtractorType} 在 {minValue}-{maxValue} 范围内";
+                }
+                else
+                {
+                    return $"值比较条件: {dataExtractorType} {comparisonType} {targetValue}";
+                }
             case ConditionType.TimeWindow:
                 return $"时间窗口条件: {timeWindow}秒内 {requiredCount} 次";
-            case ConditionType.Health:
-                return $"血量条件: {comparisonType} {healthThreshold:P0}";
             default:
                 return $"条件: {conditionType}";
         }
@@ -193,9 +243,9 @@ public enum ConditionLogicType
 /// </summary>
 public enum ConditionType
 {
-    Count,          // 计数条件
-    TimeWindow,     // 时间窗口条件（暂未实现）
-    Health,         // 血量条件（暂未实现）
-    Resource,       // 资源条件（暂未实现）
-    State           // 状态条件（暂未实现）
+    Count,              // 计数条件
+    ValueComparison,    // 值比较条件
+    TimeWindow,         // 时间窗口条件（暂未实现）
+    Resource,           // 资源条件（暂未实现）
+    State               // 状态条件（暂未实现）
 }

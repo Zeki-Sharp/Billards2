@@ -12,10 +12,8 @@ public class GameUIPanel : MonoBehaviour
     {
         // 查找玩家核心组件
         playerCore = FindFirstObjectByType<PlayerCore>();
-        if (playerCore != null)
-        {
-            playerCore.OnHealthChanged += UpdateHealthBar;
-        }
+        // 订阅统一的血量变化事件
+        GameEventBus.OnHealthChanged += UpdateHealthBar;
         
         // 延迟初始化UI，确保PlayerCore已经完成初始化
         StartCoroutine(InitializeUIAfterDelay());
@@ -27,25 +25,30 @@ public class GameUIPanel : MonoBehaviour
         yield return null;
         
         // 初始化UI
-        UpdateHealthBar(playerCore != null ? playerCore.GetHealthPercentage() : 1f);
+        if (playerCore != null)
+        {
+            UpdateHealthBar(new HealthStateData
+            {
+                CurrentHealth = playerCore.GetCurrentHealth(),
+                MaxHealth = playerCore.GetMaxHealth()
+            });
+        }
         
         Debug.Log($"GameUIPanel: UI初始化完成 - 血量: {playerCore?.GetHealthPercentage()}");
     }
     
     
-    void UpdateHealthBar(float healthPercentage)
+    void UpdateHealthBar(HealthStateData healthData)
     {
         if (playerHealthBar != null)
         {
-            playerHealthBar.fillAmount = healthPercentage;
+            playerHealthBar.fillAmount = healthData.HealthPercentage;
         }
     }
     
     void OnDestroy()
     {
-        if (playerCore != null)
-        {
-            playerCore.OnHealthChanged -= UpdateHealthBar;
-        }
+        // 取消订阅统一的血量变化事件
+        GameEventBus.OnHealthChanged -= UpdateHealthBar;
     }
 }

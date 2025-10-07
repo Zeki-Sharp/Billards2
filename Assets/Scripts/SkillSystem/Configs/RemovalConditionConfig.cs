@@ -21,8 +21,8 @@ public class RemovalConditionConfig
         {
             case RemovalConditionType.OnPlayerPhaseEnded:
                 return new OnPlayerPhaseEndedCondition();
-            case RemovalConditionType.OnBallStopped:
-                return new OnBallStoppedCondition();
+            case RemovalConditionType.InverseConditionCheck:
+                return new InverseConditionCheck();
             case RemovalConditionType.Duration:
                 return new DurationCondition();
             case RemovalConditionType.Never:
@@ -48,7 +48,7 @@ public class RemovalConditionConfig
 public enum RemovalConditionType
 {
     OnPlayerPhaseEnded,   // 玩家回合结束时移除
-    OnBallStopped,        // 球停止时移除
+    InverseConditionCheck, // 反向条件检查移除
     Duration,             // 持续时间移除（暂未实现）
     Never                 // 永不移除
 }

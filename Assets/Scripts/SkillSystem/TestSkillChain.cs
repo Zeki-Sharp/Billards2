@@ -39,7 +39,10 @@ public class TestSkillChain : MonoBehaviour
         // 创建效果
         statModifierEffect = new StatModifierEffect();
         ((StatModifierEffect)statModifierEffect).SetModifier("Damage", damageMultiplier);
-        ((StatModifierEffect)statModifierEffect).SetRemovalCondition(RemovalCondition.OnPlayerPhaseEnded);
+        // 创建移除条件：玩家回合结束时移除
+        var removalCondition = new OnPlayerPhaseEndedCondition();
+        removalCondition.Initialize();
+        ((StatModifierEffect)statModifierEffect).SetRemovalCondition(removalCondition);
         statModifierEffect.Initialize();
         
         Debug.Log($"[TestSkillChain] 技能链路初始化完成");

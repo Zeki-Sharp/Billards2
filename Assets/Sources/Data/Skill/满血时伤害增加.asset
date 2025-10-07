@@ -10,13 +10,13 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: efc89a18d420d744da9894a9f7094350, type: 3}
-  m_Name: "\u51FB\u6740\u63D0\u5347\u4F24\u5BB3\u6280\u80FD"
+  m_Name: "\u6EE1\u8840\u65F6\u4F24\u5BB3\u589E\u52A0"
   m_EditorClassIdentifier: 
-  skillName: "\u6B7B\u4EA1\u63D0\u5347"
+  skillName: "\u6EE1\u8840\u65F6\u4F24\u5BB3\u63D0\u5347"
   description: "\u6740\u6B7B\u654C\u4EBA\u540E\u4F24\u5BB3\u4E0A\u5347"
   skillIcon: {fileID: 0}
   triggerConfig:
-    triggerType: 1
+    triggerType: 2
     targetTag: Wall
     useAttackTypeFilter: 0
     attackType: Hit
@@ -26,11 +26,11 @@ MonoBehaviour:
     hasConditions: 1
     logicType: 0
     conditions:
-    - conditionType: 0
+    - conditionType: 1
       requiredCount: 1
       timeWindow: 5
       comparisonType: 0
-      targetValue: 1
+      targetValue: 0.3
       minValue: 0
       maxValue: 1
       dataExtractorType: 0
@@ -40,7 +40,7 @@ MonoBehaviour:
     modifierValue: 2
     modifierType: 2
   removalConditionConfig:
-    conditionType: 0
+    conditionType: 1
   skillType: 0
   requiredLevel: 1
   isActive: 1

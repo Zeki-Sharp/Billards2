@@ -36,6 +36,9 @@ public class PlayerStatsManager : MonoBehaviour
         // 订阅游戏流程状态变化事件
         GameEventBus.OnGameFlowStateChanged += HandleGameFlowStateChanged;
         
+        // 订阅血量变化事件，用于检查移除条件
+        GameEventBus.OnHealthChanged += HandleHealthChanged;
+        
         if (enableDebugLog)
         {
             Debug.Log("PlayerStatsManager: 初始化完成");
@@ -52,6 +55,7 @@ public class PlayerStatsManager : MonoBehaviour
         // 取消事件订阅
         GameEventBus.OnBallStopped -= HandleBallStopped;
         GameEventBus.OnGameFlowStateChanged -= HandleGameFlowStateChanged;
+        GameEventBus.OnHealthChanged -= HandleHealthChanged;
     }
     
     #endregion
@@ -133,7 +137,8 @@ public class PlayerStatsManager : MonoBehaviour
         {
             modifier.UpdateTime(Time.deltaTime);
             
-            if (modifier.ShouldBeRemoved())
+            // 只检查时间到期，不检查基于事件的移除条件
+            if (modifier.IsTimeExpired())
             {
                 modifiersToRemove.Add(modifier);
             }
@@ -144,6 +149,59 @@ public class PlayerStatsManager : MonoBehaviour
         {
             RemoveModifier(modifier);
         }
+    }
+    
+    /// <summary>
+    /// 检查事件相关的修饰器移除
+    /// </summary>
+    /// <param name="eventData">事件数据</param>
+    public void CheckEventBasedRemoval(object eventData)
+    {
+        var modifiersToRemove = new List<StatModifier>();
+        
+        foreach (var modifier in activeModifiers)
+        {
+            // 只对相关的事件类型进行移除检查
+            if (IsEventRelevantForModifier(eventData, modifier) && modifier.ShouldBeRemoved(eventData))
+            {
+                modifiersToRemove.Add(modifier);
+            }
+        }
+        
+        // 移除满足条件的修饰器
+        foreach (var modifier in modifiersToRemove)
+        {
+            RemoveModifier(modifier);
+        }
+    }
+    
+    /// <summary>
+    /// 检查事件是否与修饰器相关
+    /// </summary>
+    /// <param name="eventData">事件数据</param>
+    /// <param name="modifier">修饰器</param>
+    /// <returns>是否相关</returns>
+    private bool IsEventRelevantForModifier(object eventData, StatModifier modifier)
+    {
+        // 如果修饰器有移除条件，检查事件类型是否相关
+        if (modifier.removalCondition != null)
+        {
+            // 根据移除条件类型判断事件相关性
+            if (modifier.removalCondition is InverseConditionCheck)
+            {
+                // InverseConditionCheck 只对血量事件有效
+                return eventData is HealthStateData;
+            }
+            else if (modifier.removalCondition is OnPlayerPhaseEndedCondition)
+            {
+                // OnPlayerPhaseEndedCondition 只对游戏流程事件有效
+                return eventData is GameFlowStateChangedData;
+            }
+            // 其他移除条件类型...
+        }
+        
+        // 默认情况下，只对血量事件进行移除检查
+        return eventData is HealthStateData;
     }
     
     #endregion
@@ -265,20 +323,8 @@ public class PlayerStatsManager : MonoBehaviour
     /// </summary>
     private void HandleBallStopped(BallPhysics ballPhysics)
     {
-        // 移除所有标记为"球停止时移除"的修饰器
-        var modifiersToRemove = activeModifiers
-            .Where(m => m.removalCondition == RemovalCondition.OnBallStopped)
-            .ToList();
-        
-        foreach (var modifier in modifiersToRemove)
-        {
-            RemoveModifier(modifier);
-        }
-        
-        if (enableDebugLog && modifiersToRemove.Count > 0)
-        {
-            Debug.Log($"PlayerStatsManager: 球停止运动，移除 {modifiersToRemove.Count} 个修饰器");
-        }
+        // 检查基于事件的移除条件
+        CheckEventBasedRemoval(ballPhysics);
     }
     
     /// <summary>
@@ -286,23 +332,19 @@ public class PlayerStatsManager : MonoBehaviour
     /// </summary>
     private void HandleGameFlowStateChanged(GameFlowState gameFlowState)
     {
-        // 当切换到敌人阶段时，移除所有标记为"玩家回合结束时移除"的修饰器
-        if (gameFlowState == GameFlowState.PlayerPhaseEnd)
-        {
-            var modifiersToRemove = activeModifiers
-                .Where(m => m.removalCondition == RemovalCondition.OnPlayerPhaseEnded)
-                .ToList();
-            
-            foreach (var modifier in modifiersToRemove)
-            {
-                RemoveModifier(modifier);
-            }
-            
-            if (enableDebugLog && modifiersToRemove.Count > 0)
-            {
-                Debug.Log($"PlayerStatsManager: 玩家回合结束，移除 {modifiersToRemove.Count} 个修饰器");
-            }
-        }
+        // 创建游戏流程状态变化数据
+        var gameFlowData = new GameFlowStateChangedData { NewState = gameFlowState };
+        // 检查基于事件的移除条件
+        CheckEventBasedRemoval(gameFlowData);
+    }
+    
+    /// <summary>
+    /// 处理血量变化事件
+    /// </summary>
+    private void HandleHealthChanged(HealthStateData healthData)
+    {
+        // 检查基于血量变化的移除条件
+        CheckEventBasedRemoval(healthData);
     }
     
     /// <summary>

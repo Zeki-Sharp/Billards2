@@ -81,11 +81,12 @@ public class SkillManager : MonoBehaviour
     {
         GameEventBus.OnAttack += HandleAttackEvent;
         GameEventBus.OnDeath += HandleDeathEvent;
-        GameEventBus.OnChargingStarted += OnNewShotStarted;
+        //GameEventBus.OnChargingStarted += OnNewShotStarted;
+        GameEventBus.OnHealthChanged += HandleHealthChangedEvent;
         
         if (enableDebugLog)
         {
-            Debug.Log("SkillManager: 已订阅攻击事件、死亡事件和发射开始事件");
+            Debug.Log("SkillManager: 已订阅攻击事件、死亡事件、发射开始事件和生命值变化事件");
         }
     }
     
@@ -96,7 +97,8 @@ public class SkillManager : MonoBehaviour
     {
         GameEventBus.OnAttack -= HandleAttackEvent;
         GameEventBus.OnDeath -= HandleDeathEvent;
-        GameEventBus.OnChargingStarted -= OnNewShotStarted;
+        //；GameEventBus.OnChargingStarted -= OnNewShotStarted;
+        GameEventBus.OnHealthChanged -= HandleHealthChangedEvent;
         
         if (enableDebugLog)
         {
@@ -118,13 +120,16 @@ public class SkillManager : MonoBehaviour
             Debug.Log($"[SkillManager] 收到攻击事件: {attackData.AttackType} at {attackData.Position}");
         }
         
-        // 处理所有技能
+        // 只处理攻击相关的技能
         foreach (var skillInstance in skillInstances.Values)
         {
-            bool processed = skillInstance.ProcessEvent(attackData);
-            if (processed && enableDebugLog)
+            if (IsEventRelevantForSkill(attackData, skillInstance))
             {
-                Debug.Log($"[SkillManager] 技能 {skillInstance.config.skillName} 被触发");
+                bool processed = skillInstance.ProcessEvent(attackData);
+                if (processed && enableDebugLog)
+                {
+                    Debug.Log($"[SkillManager] 技能 {skillInstance.config.skillName} 被触发");
+                }
             }
         }
     }
@@ -134,43 +139,86 @@ public class SkillManager : MonoBehaviour
     /// </summary>
     void HandleDeathEvent(DeathData deathData)
     {
-        Debug.Log("SkillManager: 收到死亡事件");
-        if (enableDebugLog)
-        {
-            Debug.Log($"[SkillManager] 收到死亡事件: {deathData.DeathType} at {deathData.Position}");
-        }
-        
-        // 处理所有技能
+        // 只处理死亡相关的技能
         foreach (var skillInstance in skillInstances.Values)
         {
-            bool processed = skillInstance.ProcessEvent(deathData);
-            if (processed && enableDebugLog)
+            if (IsEventRelevantForSkill(deathData, skillInstance))
             {
-                Debug.Log($"[SkillManager] 技能 {skillInstance.config.skillName} 被触发");
+                bool processed = skillInstance.ProcessEvent(deathData);
+                if (processed && enableDebugLog)
+                {
+                    Debug.Log($"[SkillManager] 技能 {skillInstance.config.skillName} 被触发");
+                }
             }
         }
     }
     
     /// <summary>
-    /// 处理新发射开始事件 - 重置技能状态
+    /// 处理生命值变化事件
     /// </summary>
-    void OnNewShotStarted()
+    void HandleHealthChangedEvent(HealthStateData healthData)
     {
         if (enableDebugLog)
         {
-            Debug.Log("[SkillManager] 检测到新发射开始，重置技能状态");
+            Debug.Log($"[SkillManager] 收到生命值变化事件: {healthData.CurrentHealth}/{healthData.MaxHealth} ({healthData.HealthPercentage:P1})");
         }
         
-        // 重置所有技能状态
+        // 只处理血量相关的技能
         foreach (var skillInstance in skillInstances.Values)
         {
-            skillInstance.Reset();
+            if (IsEventRelevantForSkill(healthData, skillInstance))
+            {
+                bool processed = skillInstance.ProcessEvent(healthData);
+                if (processed && enableDebugLog)
+                {
+                    Debug.Log($"[SkillManager] 技能 {skillInstance.config.skillName} 被触发");
+                }
+            }
+        }
+    }
+    
+    
+    /// <summary>
+    /// 检查事件是否与技能相关
+    /// </summary>
+    /// <param name="eventData">事件数据</param>
+    /// <param name="skillInstance">技能实例</param>
+    /// <returns>是否相关</returns>
+    private bool IsEventRelevantForSkill(object eventData, SkillInstance skillInstance)
+    {
+        // 根据触发器的类型判断事件相关性
+        if (skillInstance.trigger is DataSourceTrigger dataSourceTrigger)
+        {
+            // DataSourceTrigger 根据配置的数据提取器类型判断
+            switch (skillInstance.config.triggerConfig.dataExtractorType)
+            {
+                case DataExtractorType.Health:
+                    return eventData is HealthStateData;
+                case DataExtractorType.Attack:
+                    return eventData is AttackData;
+                case DataExtractorType.Defense:
+                    return eventData is AttackData; // 防御通常与攻击事件相关
+                case DataExtractorType.Speed:
+                    return false; // 速度变化事件暂未实现
+                case DataExtractorType.Mana:
+                    return false; // 法力变化事件暂未实现
+                default:
+                    return false;
+            }
+        }
+        else if (skillInstance.trigger is CollisionTrigger)
+        {
+            // CollisionTrigger 只对攻击事件有效
+            return eventData is AttackData;
+        }
+        else if (skillInstance.trigger is KillTrigger)
+        {
+            // KillTrigger 只对死亡事件有效
+            return eventData is DeathData;
         }
         
-        if (enableDebugLog)
-        {
-            Debug.Log("[SkillManager] 技能状态重置完成，可以重新触发");
-        }
+        // 默认情况下，不处理任何事件
+        return false;
     }
     
     #endregion
