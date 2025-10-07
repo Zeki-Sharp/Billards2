@@ -16,9 +16,9 @@ MonoBehaviour:
   playerPrefab: {fileID: 3251294568684493535, guid: 2d86053af5e50c446a06f75cbdecb65b, type: 3}
   playerIcon: {fileID: 0}
   ballData: {fileID: 11400000, guid: 5753a6296cab86e45ba7c2b9bfd00e6e, type: 2}
-  maxHealth: 100
-  damage: 20
-  microMoveSpeed: 2
+  baseMaxHealth: 100
+  baseDamage: 20
+  baseMicroMoveSpeed: 5
   canLevelUp: 0
   startingLevel: 1
   maxLevel: 100

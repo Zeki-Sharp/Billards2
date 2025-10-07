@@ -42,8 +42,15 @@ public class PlayerCore : MonoBehaviour
     private const float ATTACK_COOLDOWN = 0.1f; // 0.1秒冷却时间
     
     // 事件
-    public System.Action OnBallStopped;
     public System.Action<float> OnHealthChanged;
+    
+    /// <summary>
+    /// 检查指定的球是否是当前玩家的球
+    /// </summary>
+    public bool IsMyBall(BallPhysics ball)
+    {
+        return ball == this.ballPhysics;
+    }
     
     void Start()
     {
@@ -540,14 +547,7 @@ public class PlayerCore : MonoBehaviour
             return;
         }
         
-        OnBallStopped?.Invoke();
-        
-        // 通知状态机
-        PlayerStateMachine stateMachine = GetComponent<PlayerStateMachine>();
-        if (stateMachine != null)
-        {
-            stateMachine.OnBallStopped();
-        }
+        // 状态机已直接订阅GameEventBus，无需触发额外事件
     }
     
     /// <summary>

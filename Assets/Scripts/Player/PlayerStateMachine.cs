@@ -56,6 +56,9 @@ public class PlayerStateMachine : MonoBehaviour
         GameEventBus.OnChargingStarted += OnChargingStarted;
         GameEventBus.OnChargingStopped += OnChargingStopped;
         
+        // 订阅物理事件
+        GameEventBus.OnBallStopped += OnBallStoppedHandler;
+        
         // 初始化状态
         currentState = initialState;
         EnterState(currentState);
@@ -71,6 +74,9 @@ public class PlayerStateMachine : MonoBehaviour
         // 取消订阅蓄力事件
         GameEventBus.OnChargingStarted -= OnChargingStarted;
         GameEventBus.OnChargingStopped -= OnChargingStopped;
+        
+        // 取消订阅物理事件
+        GameEventBus.OnBallStopped -= OnBallStoppedHandler;
     }
     
     void Update()
@@ -238,10 +244,16 @@ public class PlayerStateMachine : MonoBehaviour
     }
     
     /// <summary>
-    /// 球停止运动（由PlayerCore调用）
+    /// 球停止运动事件处理（直接订阅GameEventBus）
     /// </summary>
-    public void OnBallStopped()
+    private void OnBallStoppedHandler(BallPhysics ball)
     {
+        // 检查是否是自己的球
+        if (playerCore == null || !playerCore.IsMyBall(ball))
+        {
+            return;
+        }
+        
         if (currentState == PlayerState.Moving)
         {
             // 发布蓄力重置事件
