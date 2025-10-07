@@ -9,13 +9,24 @@ public class CollisionTrigger : ITrigger
 {
     public string TriggerName => "CollisionTrigger";
     
+    private string targetTag = "Enemy"; // 默认目标标签
+    
+    /// <summary>
+    /// 设置目标标签
+    /// </summary>
+    /// <param name="tag">目标标签</param>
+    public void SetTargetTag(string tag)
+    {
+        targetTag = tag;
+        Debug.Log($"[{TriggerName}] 设置目标标签: {targetTag}");
+    }
+    
     /// <summary>
     /// 初始化触发器
     /// </summary>
     public void Initialize()
     {
-        // 第一阶段最小验证：不需要特殊初始化
-        Debug.Log($"[{TriggerName}] 初始化完成");
+        Debug.Log($"[{TriggerName}] 初始化完成，目标标签: {targetTag}");
     }
     
     /// <summary>
@@ -33,10 +44,21 @@ public class CollisionTrigger : ITrigger
             
             if (isCollisionEvent)
             {
-                Debug.Log($"[{TriggerName}] 检测到碰撞事件: {attackData.AttackType} at {attackData.Position}");
+                // 检查目标标签是否匹配
+                bool tagMatches = string.IsNullOrEmpty(targetTag) || attackData.TargetTag == targetTag;
+                
+                if (tagMatches)
+                {
+                    Debug.Log($"[{TriggerName}] 检测到碰撞事件: {attackData.AttackType} at {attackData.Position}, 目标标签: {attackData.TargetTag}");
+                    return true;
+                }
+                else
+                {
+                    Debug.Log($"[{TriggerName}] 碰撞事件目标标签不匹配: 期望={targetTag}, 实际={attackData.TargetTag}");
+                }
             }
             
-            return isCollisionEvent;
+            return false;
         }
         
         return false;

@@ -17,8 +17,8 @@ MonoBehaviour:
   skillIcon: {fileID: 0}
   triggerConfig:
     triggerType: 0
-    targetTag: Enemy
-    useAttackTypeFilter: 1
+    targetTag: Wall
+    useAttackTypeFilter: 0
     attackType: Hit
   conditionConfig:
     conditionType: 0

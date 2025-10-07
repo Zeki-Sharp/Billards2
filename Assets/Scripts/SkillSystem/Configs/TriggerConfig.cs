@@ -34,7 +34,8 @@ public class TriggerConfig
         {
             case TriggerType.Collision:
                 var collisionTrigger = new CollisionTrigger();
-                // CollisionTrigger 目前不需要额外参数
+                // 传递配置参数给触发器实例
+                collisionTrigger.SetTargetTag(targetTag);
                 return collisionTrigger;
             default:
                 Debug.LogError($"不支持的触发器类型: {triggerType}");
