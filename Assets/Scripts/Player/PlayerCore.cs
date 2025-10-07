@@ -86,8 +86,8 @@ public class PlayerCore : MonoBehaviour
             Debug.LogError("PlayerCore: 请设置 PlayerData 资源！");
         }
         
-        // 订阅 BallPhysics 事件
-        ballPhysics.OnBallStopped += OnBallStoppedHandler;
+        // 订阅 GameEventBus 物理事件
+        GameEventBus.OnBallStopped += OnBallStoppedHandler;
         
         // 初始化血量（currentHealth = maxHealth）
         float maxHealth = playerData != null ? playerData.maxHealth : 100f;
@@ -99,6 +99,12 @@ public class PlayerCore : MonoBehaviour
         {
             ballPhysics.ResetBall();
         }
+    }
+    
+    void OnDestroy()
+    {
+        // 取消事件订阅
+        GameEventBus.OnBallStopped -= OnBallStoppedHandler;
     }
     
     #endregion
@@ -524,10 +530,16 @@ public class PlayerCore : MonoBehaviour
     #region 事件处理
     
     /// <summary>
-    /// 球停止运动事件处理
+    /// 球停止运动事件处理（通过GameEventBus）
     /// </summary>
     void OnBallStoppedHandler(BallPhysics ball)
     {
+        // 检查是否是自己的球
+        if (ball != this.ballPhysics)
+        {
+            return;
+        }
+        
         OnBallStopped?.Invoke();
         
         // 通知状态机

@@ -22,9 +22,7 @@ public class BallPhysics : MonoBehaviour
     // 反弹方向检测
     private Vector2 lastReflectionDirection = Vector2.zero;
     
-    // 事件
-    public System.Action<BallPhysics> OnBallStopped;
-    public System.Action<BallPhysics, BallPhysics> OnBallCollision;
+    // 事件（已移除组件级事件，统一使用GameEventBus）
     
     void Start()
     {
@@ -125,6 +123,8 @@ public class BallPhysics : MonoBehaviour
                 isMoving = true;
                 ballStartTime = Time.time;
                 Debug.Log($"BallPhysics: 球开始运动，记录时间 {ballStartTime:F2}");
+                // 发布到GameEventBus
+                GameEventBus.PublishBallStarted(this);
             }
         }
         else
@@ -142,14 +142,16 @@ public class BallPhysics : MonoBehaviour
             {
                 rb.linearVelocity = Vector2.zero;
                 rb.angularVelocity = 0f;
-                OnBallStopped?.Invoke(this);
+                // 发布到GameEventBus
+                GameEventBus.PublishBallStopped(this);
             }
             else if (currentSpeed <= 0.01f)
             {
                 // 速度极低时也认为已停止
                 rb.linearVelocity = Vector2.zero;
                 rb.angularVelocity = 0f;
-                OnBallStopped?.Invoke(this);
+                // 发布到GameEventBus
+                GameEventBus.PublishBallStopped(this);
             }
         }
         
@@ -229,7 +231,8 @@ public class BallPhysics : MonoBehaviour
         if (otherBall != null)
         {
             // 触发球体碰撞事件
-            OnBallCollision?.Invoke(this, otherBall);
+            // 发布到GameEventBus
+            GameEventBus.PublishBallCollision(this, otherBall);
         }
         
         // 处理墙面碰撞的角度修正

@@ -37,6 +37,25 @@ public static class GameEventBus
     
     #endregion
     
+    #region 物理事件
+    
+    /// <summary>
+    /// 球停止运动事件
+    /// </summary>
+    public static event System.Action<BallPhysics> OnBallStopped;
+    
+    /// <summary>
+    /// 球开始运动事件
+    /// </summary>
+    public static event System.Action<BallPhysics> OnBallStarted;
+    
+    /// <summary>
+    /// 球碰撞事件
+    /// </summary>
+    public static event System.Action<BallPhysics, BallPhysics> OnBallCollision;
+    
+    #endregion
+    
     #region 玩家状态事件
     
     /// <summary>
@@ -144,6 +163,21 @@ public static class GameEventBus
     /// 发布发射事件
     /// </summary>
     public static void PublishLaunch(Vector2 direction, float force) => OnLaunch?.Invoke(direction, force);
+    
+    /// <summary>
+    /// 发布球停止运动事件
+    /// </summary>
+    public static void PublishBallStopped(BallPhysics ballPhysics) => OnBallStopped?.Invoke(ballPhysics);
+    
+    /// <summary>
+    /// 发布球开始运动事件
+    /// </summary>
+    public static void PublishBallStarted(BallPhysics ballPhysics) => OnBallStarted?.Invoke(ballPhysics);
+    
+    /// <summary>
+    /// 发布球碰撞事件
+    /// </summary>
+    public static void PublishBallCollision(BallPhysics ball1, BallPhysics ball2) => OnBallCollision?.Invoke(ball1, ball2);
     
     /// <summary>
     /// 发布玩家状态变化事件

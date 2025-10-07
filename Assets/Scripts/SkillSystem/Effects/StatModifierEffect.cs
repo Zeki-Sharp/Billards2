@@ -2,18 +2,19 @@ using UnityEngine;
 
 /// <summary>
 /// 数值调整效果 - 技能系统第一阶段最小验证
-/// 修改玩家的某个属性（如攻击力+50%）
-/// 通过 GameEventBus.PublishEffectEvent 触发表现
+/// 使用修饰器系统修改玩家的某个属性（如攻击力+50%）
+/// 支持临时效果和基于条件的移除
 /// </summary>
 public class StatModifierEffect : IEffect
 {
     public string EffectName => "StatModifierEffect";
     
-    private string targetStat = "damage"; // 默认修改攻击力
+    private string targetStat = "Damage"; // 默认修改攻击力（使用新命名）
     private float modifierValue = 1.5f;   // 默认+50%
-    private float originalValue = 0f;     // 原始值
     private bool isApplied = false;       // 是否已应用
     private PlayerCore targetPlayer;      // 目标玩家
+    private PlayerStatsManager statsManager; // 属性管理器
+    private StatModifier appliedModifier; // 应用的修饰器
     
     /// <summary>
     /// 设置修改参数
@@ -28,15 +29,35 @@ public class StatModifierEffect : IEffect
     }
     
     /// <summary>
+    /// 设置移除条件
+    /// </summary>
+    /// <param name="condition">移除条件</param>
+    public void SetRemovalCondition(RemovalCondition condition)
+    {
+        removalCondition = condition;
+        Debug.Log($"[{EffectName}] 设置移除条件: {condition}");
+    }
+    
+    private RemovalCondition removalCondition = RemovalCondition.OnBallStopped; // 默认球停止时移除
+    
+    /// <summary>
     /// 初始化效果
     /// </summary>
     public void Initialize()
     {
         // 查找目标玩家
-        targetPlayer = Object.FindObjectByType<PlayerCore>();
+        targetPlayer = Object.FindObjectOfType<PlayerCore>();
         if (targetPlayer == null)
         {
             Debug.LogError($"[{EffectName}] 未找到PlayerCore，无法应用效果");
+            return;
+        }
+        
+        // 查找属性管理器
+        statsManager = targetPlayer.GetComponent<PlayerStatsManager>();
+        if (statsManager == null)
+        {
+            Debug.LogError($"[{EffectName}] 未找到PlayerStatsManager，无法应用效果");
             return;
         }
         
@@ -50,9 +71,9 @@ public class StatModifierEffect : IEffect
     /// <returns>效果是否执行成功</returns>
     public bool ExecuteEffect(object eventData)
     {
-        if (targetPlayer == null)
+        if (targetPlayer == null || statsManager == null)
         {
-            Debug.LogError($"[{EffectName}] 目标玩家为空，无法执行效果");
+            Debug.LogError($"[{EffectName}] 目标玩家或属性管理器为空，无法执行效果");
             return false;
         }
         
@@ -62,43 +83,27 @@ public class StatModifierEffect : IEffect
             return true;
         }
         
-        // 获取玩家数据
-        var playerData = targetPlayer.playerData;
-        if (playerData == null)
-        {
-            Debug.LogError($"[{EffectName}] 玩家数据为空，无法执行效果");
-            return false;
-        }
+        // 创建修饰器
+        appliedModifier = new StatModifier(
+            targetStat,                                    // 目标属性
+            StatModifierType.PercentAdd,                  // 百分比增加类型
+            modifierValue - 1f,                           // 如果modifierValue是1.5，则Value是0.5 (50%增加)
+            removalCondition,                             // 移除条件
+            this                                           // 来源
+        );
         
-        // 根据属性名修改对应数值
-        switch (targetStat.ToLower())
-        {
-            case "damage":
-                originalValue = playerData.damage;
-                playerData.damage *= modifierValue;
-                Debug.Log($"[{EffectName}] 攻击力修改: {originalValue} -> {playerData.damage} (x{modifierValue})");
-                break;
-                
-            case "maxhealth":
-                originalValue = playerData.maxHealth;
-                playerData.maxHealth *= modifierValue;
-                Debug.Log($"[{EffectName}] 最大血量修改: {originalValue} -> {playerData.maxHealth} (x{modifierValue})");
-                break;
-                
-            case "micromovespeed":
-                originalValue = playerData.microMoveSpeed;
-                playerData.microMoveSpeed *= modifierValue;
-                Debug.Log($"[{EffectName}] 微调移动速度修改: {originalValue} -> {playerData.microMoveSpeed} (x{modifierValue})");
-                break;
-                
-            default:
-                Debug.LogWarning($"[{EffectName}] 不支持的属性: {targetStat}");
-                return false;
-        }
+        // 应用修饰器
+        statsManager.ApplyModifier(appliedModifier);
+        
+        // 获取修改前后的值用于日志
+        float finalValue = statsManager.GetFinalStat(targetStat);
+        float baseValue = statsManager.GetBaseStat(targetStat);
+        
+        Debug.Log($"[{EffectName}] 属性修改成功: {targetStat} {baseValue} -> {finalValue} (x{modifierValue})");
         
         isApplied = true;
         
-        // 触发表现效果（通过现有事件系统）
+        // 触发表现效果
         TriggerVisualEffect();
         
         return true;
@@ -130,27 +135,15 @@ public class StatModifierEffect : IEffect
     /// </summary>
     public void Reset()
     {
-        // 恢复原始值
-        if (isApplied && targetPlayer != null && targetPlayer.playerData != null)
+        // 移除应用的修饰器
+        if (isApplied && appliedModifier != null && statsManager != null)
         {
-            switch (targetStat.ToLower())
-            {
-                case "damage":
-                    targetPlayer.playerData.damage = originalValue;
-                    break;
-                case "maxhealth":
-                    targetPlayer.playerData.maxHealth = originalValue;
-                    break;
-                case "micromovespeed":
-                    targetPlayer.playerData.microMoveSpeed = originalValue;
-                    break;
-            }
-            
-            Debug.Log($"[{EffectName}] 恢复原始值: {targetStat} = {originalValue}");
+            statsManager.RemoveModifier(appliedModifier);
+            Debug.Log($"[{EffectName}] 移除修饰器: {appliedModifier.GetDebugInfo()}");
         }
         
         isApplied = false;
-        originalValue = 0f;
+        appliedModifier = null;
         Debug.Log($"[{EffectName}] 效果重置完成");
     }
 }

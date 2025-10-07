@@ -38,7 +38,8 @@ public class TestSkillChain : MonoBehaviour
         
         // 创建效果
         statModifierEffect = new StatModifierEffect();
-        ((StatModifierEffect)statModifierEffect).SetModifier("damage", damageMultiplier);
+        ((StatModifierEffect)statModifierEffect).SetModifier("Damage", damageMultiplier);
+        ((StatModifierEffect)statModifierEffect).SetRemovalCondition(RemovalCondition.OnBallStopped);
         statModifierEffect.Initialize();
         
         Debug.Log($"[TestSkillChain] 技能链路初始化完成");
