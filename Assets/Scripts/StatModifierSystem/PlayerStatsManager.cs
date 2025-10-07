@@ -33,6 +33,9 @@ public class PlayerStatsManager : MonoBehaviour
         // 订阅球停止运动事件（通过GameEventBus）
         GameEventBus.OnBallStopped += HandleBallStopped;
         
+        // 订阅游戏流程状态变化事件
+        GameEventBus.OnGameFlowStateChanged += HandleGameFlowStateChanged;
+        
         if (enableDebugLog)
         {
             Debug.Log("PlayerStatsManager: 初始化完成");
@@ -48,6 +51,7 @@ public class PlayerStatsManager : MonoBehaviour
     {
         // 取消事件订阅
         GameEventBus.OnBallStopped -= HandleBallStopped;
+        GameEventBus.OnGameFlowStateChanged -= HandleGameFlowStateChanged;
     }
     
     #endregion
@@ -274,6 +278,30 @@ public class PlayerStatsManager : MonoBehaviour
         if (enableDebugLog && modifiersToRemove.Count > 0)
         {
             Debug.Log($"PlayerStatsManager: 球停止运动，移除 {modifiersToRemove.Count} 个修饰器");
+        }
+    }
+    
+    /// <summary>
+    /// 处理游戏流程状态变化事件
+    /// </summary>
+    private void HandleGameFlowStateChanged(GameFlowController.GameFlowState gameFlowState)
+    {
+        // 当切换到敌人阶段时，移除所有标记为"玩家回合结束时移除"的修饰器
+        if (gameFlowState == GameFlowController.GameFlowState.EnemyPhase)
+        {
+            var modifiersToRemove = activeModifiers
+                .Where(m => m.removalCondition == RemovalCondition.OnPlayerPhaseEnded)
+                .ToList();
+            
+            foreach (var modifier in modifiersToRemove)
+            {
+                RemoveModifier(modifier);
+            }
+            
+            if (enableDebugLog && modifiersToRemove.Count > 0)
+            {
+                Debug.Log($"PlayerStatsManager: 玩家回合结束，移除 {modifiersToRemove.Count} 个修饰器");
+            }
         }
     }
     

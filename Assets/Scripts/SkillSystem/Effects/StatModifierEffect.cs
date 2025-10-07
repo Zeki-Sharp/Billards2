@@ -38,7 +38,7 @@ public class StatModifierEffect : IEffect
         Debug.Log($"[{EffectName}] 设置移除条件: {condition}");
     }
     
-    private RemovalCondition removalCondition = RemovalCondition.OnBallStopped; // 默认球停止时移除
+    private RemovalCondition removalCondition = RemovalCondition.OnPlayerPhaseEnded; // 默认玩家回合结束时移除
     
     /// <summary>
     /// 初始化效果

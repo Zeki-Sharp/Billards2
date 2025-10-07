@@ -79,6 +79,7 @@ public class StatModifier
             case RemovalCondition.OnBallStopped:
             case RemovalCondition.OnNextAttack:
             case RemovalCondition.OnNextCollisionEnd:
+            case RemovalCondition.OnPlayerPhaseEnded:
                 // 这些条件由外部事件触发，不在这里检查
                 return false;
             case RemovalCondition.Manual:
@@ -128,5 +129,6 @@ public enum RemovalCondition
     TimeElapsed,        // 时间到达
     OnBallStopped,      // 球停止运动时
     OnNextAttack,       // 下次攻击后
-    OnNextCollisionEnd  // 下次碰撞结束后
+    OnNextCollisionEnd, // 下次碰撞结束后
+    OnPlayerPhaseEnded  // 玩家回合结束时
 }

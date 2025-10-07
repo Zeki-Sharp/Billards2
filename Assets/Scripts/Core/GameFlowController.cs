@@ -170,6 +170,9 @@ public class GameFlowController : MonoBehaviour
             Debug.Log("GameFlowController: 切换到玩家阶段");
         }
         
+        // 发布游戏流程状态变化事件
+        GameEventBus.PublishGameFlowStateChanged(GameFlowState.PlayerPhase);
+        
         // 启动玩家阶段
         if (playerPhaseController != null)
         {
@@ -196,6 +199,9 @@ public class GameFlowController : MonoBehaviour
         {
             Debug.Log("GameFlowController: 切换到敌人阶段");
         }
+        
+        // 发布游戏流程状态变化事件
+        GameEventBus.PublishGameFlowStateChanged(GameFlowState.EnemyPhase);
         
         // 启动敌人阶段
         if (enemyPhaseController != null)

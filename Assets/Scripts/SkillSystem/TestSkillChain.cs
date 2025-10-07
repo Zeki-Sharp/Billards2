@@ -13,7 +13,7 @@ public class TestSkillChain : MonoBehaviour
     private IEffect statModifierEffect;
     
     [Header("测试参数")]
-    public int requiredCollisions = 3;
+    public int requiredCollisions = 2; // 修改为2次碰撞
     public float damageMultiplier = 1.5f; // +50%
     
     void Start()
@@ -39,7 +39,7 @@ public class TestSkillChain : MonoBehaviour
         // 创建效果
         statModifierEffect = new StatModifierEffect();
         ((StatModifierEffect)statModifierEffect).SetModifier("Damage", damageMultiplier);
-        ((StatModifierEffect)statModifierEffect).SetRemovalCondition(RemovalCondition.OnBallStopped);
+        ((StatModifierEffect)statModifierEffect).SetRemovalCondition(RemovalCondition.OnPlayerPhaseEnded);
         statModifierEffect.Initialize();
         
         Debug.Log($"[TestSkillChain] 技能链路初始化完成");
@@ -54,7 +54,8 @@ public class TestSkillChain : MonoBehaviour
     void SubscribeToEvents()
     {
         GameEventBus.OnAttack += HandleAttackEvent;
-        Debug.Log("[TestSkillChain] 已订阅攻击事件");
+        GameEventBus.OnChargingStarted += OnNewShotStarted;
+        Debug.Log("[TestSkillChain] 已订阅攻击事件和发射开始事件");
     }
     
     /// <summary>
@@ -97,6 +98,21 @@ public class TestSkillChain : MonoBehaviour
     }
     
     /// <summary>
+    /// 处理新发射开始事件 - 重置技能状态
+    /// </summary>
+    void OnNewShotStarted()
+    {
+        Debug.Log("[TestSkillChain] 检测到新发射开始，重置技能状态");
+        
+        // 重置所有技能组件状态
+        collisionTrigger?.Reset();
+        countCondition?.Reset();
+        statModifierEffect?.Reset();
+        
+        Debug.Log("[TestSkillChain] 技能状态重置完成，可以重新触发");
+    }
+    
+    /// <summary>
     /// 重置技能链路（用于测试）
     /// </summary>
     [ContextMenu("重置技能链路")]
@@ -113,6 +129,7 @@ public class TestSkillChain : MonoBehaviour
     {
         // 取消订阅
         GameEventBus.OnAttack -= HandleAttackEvent;
+        GameEventBus.OnChargingStarted -= OnNewShotStarted;
         Debug.Log("[TestSkillChain] 已取消事件订阅");
     }
 }
