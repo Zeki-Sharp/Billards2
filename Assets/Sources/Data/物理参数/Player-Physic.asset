@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Player-Physic
   m_EditorClassIdentifier: 
   mass: 0.5
-  radius: 0.5
+  radius: 0.35
   bounceDamping: 1
   friction: 0
   stopThreshold: 1
@@ -92,14 +92,10 @@ MonoBehaviour:
   minBounciness: 0.3
   maxBounciness: 1
   minDamping: 0.3
-  maxDamping: 1.4
+  maxDamping: 1
   enableTimeDamping: 1
   timeDampingRate: 0.8
   maxTimeDamping: 2.4
   timeDampingStartTime: 1
-  microMoveForce: 1
-  microMoveMaxSpeed: 1
-  microMoveDamping: 0.8
-  microMoveCooldown: 0.01
   updateThreshold: 0.05
   updateInterval: 0.02

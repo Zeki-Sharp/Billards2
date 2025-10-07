@@ -28,6 +28,7 @@ MonoBehaviour:
     cooldown: 2
     useRandomOffset: 1
     randomOffsetRange: 1
+    showParabolicIndicator: 1
   thornConfig:
     activeRounds: 1
     cooldownRounds: 1

@@ -1,4 +1,5 @@
 using UnityEngine;
+using Sirenix.OdinInspector;
 
 /// <summary>
 /// 技能配置 ScriptableObject - 用于在 Inspector 中配置技能
@@ -7,34 +8,53 @@ using UnityEngine;
 [CreateAssetMenu(fileName = "SkillConfig", menuName = "Game/Skill Config")]
 public class SkillConfig : ScriptableObject
 {
-    [Header("技能基本信息")]
+    [BoxGroup("技能基本信息")]
+    [LabelText("技能名称")]
     [Tooltip("技能名称")]
     public string skillName = "碰撞连击";
     
+    [BoxGroup("技能基本信息")]
+    [LabelText("技能描述")]
     [Tooltip("技能描述")]
     [TextArea(3, 5)]
     public string description = "碰撞敌人2次后，攻击力提升100%";
     
+    [BoxGroup("技能基本信息")]
+    [LabelText("技能图标")]
     [Tooltip("技能图标")]
     public Sprite skillIcon;
     
-    [Header("技能组件配置")]
+    [BoxGroup("技能组件配置")]
+    [LabelText("触发器配置")]
     [Tooltip("触发器配置")]
+    [Required]
     public TriggerConfig triggerConfig = new TriggerConfig();
     
+    [BoxGroup("技能组件配置")]
+    [LabelText("条件配置")]
     [Tooltip("条件配置")]
+    [Required]
     public ConditionConfig conditionConfig = new ConditionConfig();
     
+    [BoxGroup("技能组件配置")]
+    [LabelText("效果配置")]
     [Tooltip("效果配置")]
+    [Required]
     public SkillEffectConfig effectConfig = new SkillEffectConfig();
     
-    [Header("技能属性")]
+    [BoxGroup("技能属性")]
+    [LabelText("技能类型")]
     [Tooltip("技能类型")]
     public SkillType skillType = SkillType.Passive;
     
+    [BoxGroup("技能属性")]
+    [LabelText("所需等级")]
     [Tooltip("所需等级")]
+    [MinValue(1)]
     public int requiredLevel = 1;
     
+    [BoxGroup("技能属性")]
+    [LabelText("是否激活")]
     [Tooltip("是否激活")]
     public bool isActive = true;
     

@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Enemy-Physic
   m_EditorClassIdentifier: 
   mass: 3
-  radius: 0.5
+  radius: 0.52492464
   bounceDamping: 0.5
   friction: 0.3
   stopThreshold: 1
@@ -82,8 +82,8 @@ MonoBehaviour:
     m_RotationOrder: 4
   minBounciness: 0.3
   maxBounciness: 0.5
-  minDamping: 2
-  maxDamping: 2
+  minDamping: 0.8
+  maxDamping: 0.8
   enableTimeDamping: 1
   timeDampingRate: 0.2
   maxTimeDamping: 1.5
