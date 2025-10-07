@@ -272,77 +272,236 @@ SkillDefinition (技能定义层)
 ### 阶段0：原型验证（最小可行版本）
 **目标：验证整体架构可行性，每个模块只实现一个功能**
 
-#### 0.1 接口定义
-- 定义 `ITrigger` 接口
-- 定义 `ICondition` 接口
-- 定义 `IEffect` 接口
+#### 0.1 接口定义 ✅ **已完成**
+- ✅ 定义 `ITrigger` 接口
+- ✅ 定义 `ICondition` 接口
+- ✅ 定义 `IEffect` 接口
 
-#### 0.2 实现一个完整的技能链路
-**触发器层（只实现一个）：**
-- `CollisionTrigger` - 碰撞事件检测
-- 监听 `GameEventBus.OnAttack` 事件
-- 检测碰撞事件是否发生
+#### 0.2 实现一个完整的技能链路 ✅ **已完成**
+**触发器层：**
+- ✅ `CollisionTrigger` - 碰撞事件检测
+- ✅ 监听 `GameEventBus.OnAttack` 事件
+- ✅ 检测碰撞事件是否发生
 
-**条件层（只实现一个）：**
-- `CountCondition` - 计数条件
-- 检查碰撞次数是否达到阈值（如3次）
-- 支持条件重置
+**条件层：**
+- ✅ `CountCondition` - 计数条件
+- ✅ 检查碰撞次数是否达到阈值（修改为2次）
+- ✅ 支持条件重置
 
-**效果层（只实现一个）：**
-- `StatModifierEffect` - 数值调整效果
-- 修改玩家的某个属性（如攻击力+50%）
-- 通过 `GameEventBus.PublishEffectEvent` 触发表现
+**效果层：**
+- ✅ `StatModifierEffect` - 数值调整效果
+- ✅ 修改玩家的某个属性（攻击力+100%）
+- ✅ 集成 `PlayerStatsManager` 属性修饰器系统
 
-#### 0.3 实现三层架构
-**SkillEventManager：**
-- 监听 `GameEventBus.OnAttack` 事件
-- 简单的事件过滤
-- 分发给 SkillSystem
+#### 0.3 实现三层架构 ⚠️ **部分完成**
+**当前实现方式（简化版）：**
+- ✅ `TestSkillChain` - 直接管理技能链路（替代三层架构）
+- ✅ 监听 `GameEventBus.OnAttack` 事件
+- ✅ 协调 Trigger + Condition + Effect 执行
 
-**SkillSystem：**
-- 简单的技能注册表（Dictionary）
-- 技能查找逻辑
-- 协调 Trigger + Condition + Effect 执行
+**原计划的三层架构：**
+- ❌ `SkillEventManager` - 暂未实现（使用 `TestSkillChain` 替代）
+- ❌ `SkillSystem` - 暂未实现（使用 `TestSkillChain` 替代）
+- ✅ `SkillDefinition` - 通过 `TestSkillChain` 实现
 
-**SkillDefinition：**
-- 创建一个测试技能：碰撞3次后攻击力+50%
-- 配置：`CollisionTrigger` + `CountCondition(3)` + `StatModifierEffect(攻击力+50%)`
+#### 0.4 验证目标 ✅ **已完成**
+- ✅ 验证事件监听和分发机制
+- ✅ 验证 Trigger + Condition + Effect 组合模式
+- ✅ 验证技能执行流程
+- ✅ 验证与现有系统的集成
+- ✅ 确认架构没有明显缺陷
 
-#### 0.4 验证目标
-- 验证事件监听和分发机制
-- 验证 Trigger + Condition + Effect 组合模式
-- 验证技能执行流程
-- 验证与现有系统的集成
-- 确认架构没有明显缺陷
+#### 0.5 测试场景 ✅ **已验证**
+1. ✅ 玩家碰撞敌人1次 → 条件未满足 → 技能不触发
+2. ✅ 玩家碰撞敌人2次 → 条件满足 → 技能触发 → 攻击力+100%
+3. ✅ 验证技能效果在回合结束时正确移除
+4. ✅ 验证每次发射可重复触发技能
 
-#### 0.5 测试场景
-1. 玩家碰撞敌人1次 → 条件未满足 → 技能不触发
-2. 玩家碰撞敌人3次 → 条件满足 → 技能触发 → 攻击力+50%
-3. 验证表现效果是否通过 `GameEventBus` 触发
-4. 验证条件重置功能
+#### 0.6 发现并解决的问题 ⚠️ **重要发现**
+**架构问题：**
+1. ✅ **事件时机问题**：`OnBallStopped` 在球初始静止时误触发
+   - **解决方案**：使用 `OnPlayerPhaseEnded` 替代，在玩家回合结束时移除效果
+   
+2. ✅ **属性引用问题**：`PlayerCore` 直接从 `PlayerData` 获取属性值
+   - **解决方案**：修改为从 `PlayerStatsManager.GetFinalStat()` 获取最终计算值
+   
+3. ✅ **技能重置问题**：技能效果无法重复触发
+   - **解决方案**：监听 `OnChargingStarted` 事件，每次发射时重置技能状态
+
+**系统集成问题：**
+4. ✅ **StatModifier系统集成**：成功集成属性修饰器系统
+5. ✅ **GameEventBus事件扩展**：添加 `OnGameFlowStateChanged` 事件支持
 
 **预期产出：**
-- 一个可运行的最小技能系统
-- 验证三层架构的可行性
-- 发现并解决架构问题
-- 为后续开发提供参考
+- ✅ 一个可运行的最小技能系统
+- ✅ 验证 Trigger + Condition + Effect 组合模式可行性
+- ✅ 发现并解决关键架构问题
+- ✅ 为后续开发提供参考和改进方向
 
 ---
 
-### 阶段1：基础框架
-- 完善 `ITrigger`、`ICondition`、`IEffect` 接口
-- 实现更多触发器类型：`KillTrigger`、`ChargingTrigger`
-- 实现更多条件类型：`TimeWindowCondition`、`HealthCondition`
-- 实现更多效果类型：`StatusEffect`、`ResourceEffect`
-- 完善三层架构的功能
-- 集成更多事件系统
+## 架构改进建议
 
-### 阶段2：核心功能
-- 实现文档中提到的具体技能组合
-- 实现技能配置系统（ScriptableObject）
-- 实现技能流派基础功能
-- 完善触发器和条件类型
-- 优化三层之间的协作机制
+### 基于阶段0实施的经验教训
+
+#### 1. **属性系统集成**
+**发现**：现有系统直接从 `PlayerData` 获取属性值，忽略了修饰器系统
+**建议**：所有属性引用都应该通过 `PlayerStatsManager.GetFinalStat()` 获取最终计算值
+**影响范围**：`PlayerCore`、`EnemyBehavior`、所有涉及属性计算的系统
+
+#### 2. **事件时机设计**
+**发现**：某些事件（如 `OnBallStopped`）可能在系统初始化时误触发
+**建议**：事件设计需要考虑系统初始化状态，避免误触发
+**解决方案**：使用语义更明确的事件（如 `OnPlayerPhaseEnded`）
+
+#### 3. **技能生命周期管理**
+**发现**：技能效果需要明确的生命周期管理策略
+**建议**：为技能效果定义清晰的触发、持续、移除条件
+**实现**：通过 `RemovalCondition` 枚举支持多种移除策略
+
+#### 4. **三层架构简化**
+**发现**：当前使用 `TestSkillChain` 直接管理技能链路更简单有效
+**建议**：采用 ScriptableObject + 管理器组件模式，替代完整三层架构
+**权衡**：简化版本更易维护，与现有架构一致，扩展性足够
+
+#### 5. **系统集成策略**
+**发现**：新系统需要与现有系统深度集成
+**建议**：优先考虑与现有架构的兼容性，避免破坏性修改
+**原则**：渐进式集成，保持向后兼容
+
+---
+
+## 推荐架构方案
+
+### ScriptableObject + 管理器组件模式
+
+基于对现有架构的分析，推荐采用以下方案替代完整的三层架构：
+
+#### 架构优势
+1. **与现有模式一致**：
+   - 遵循 `PlayerData`、`EnemyData` 的 ScriptableObject 配置模式
+   - 使用 `PlayerStatsManager` 风格的管理器组件
+   - 保持事件驱动架构
+
+2. **简化但有效**：
+   - 避免过度设计，减少维护成本
+   - 易于理解和扩展
+   - 支持 Inspector 可视化配置
+
+3. **渐进式集成**：
+   - 可以逐步替换 `TestSkillChain`
+   - 保持向后兼容
+   - 降低迁移风险
+
+#### 核心组件设计
+
+```csharp
+// 1. 技能配置 ScriptableObject
+[CreateAssetMenu(fileName = "SkillConfig", menuName = "Game/Skill Config")]
+public class SkillConfig : ScriptableObject
+{
+    [Header("技能基本信息")]
+    public string skillName;
+    public string description;
+    public Sprite skillIcon;
+    
+    [Header("技能组件配置")]
+    public TriggerConfig triggerConfig;
+    public ConditionConfig conditionConfig;
+    public EffectConfig effectConfig;
+    
+    [Header("技能属性")]
+    public SkillType skillType;
+    public int requiredLevel = 1;
+    public bool isActive = true;
+}
+
+// 2. 技能管理器组件
+public class SkillManager : MonoBehaviour
+{
+    [Header("技能配置")]
+    public List<SkillConfig> activeSkills = new List<SkillConfig>();
+    
+    private Dictionary<string, ISkill> instantiatedSkills = new Dictionary<string, ISkill>();
+    
+    // 管理技能生命周期
+    // 监听 GameEventBus 事件
+    // 协调技能执行
+}
+```
+
+#### 与现有系统的集成点
+1. **属性系统**：通过 `PlayerStatsManager` 管理技能效果
+2. **事件系统**：通过 `GameEventBus` 监听和发布事件
+3. **配置系统**：通过 ScriptableObject 支持可视化配置
+4. **生命周期**：通过 MonoBehaviour 组件管理运行时状态
+
+---
+
+### 阶段1：基础框架（ScriptableObject + 管理器组件模式）
+**目标：替换 TestSkillChain，建立可扩展的技能配置系统**
+
+#### 1.1 技能配置系统
+- 创建 `SkillConfig` ScriptableObject
+  - 技能基本信息（名称、描述、图标）
+  - 触发器配置（TriggerConfig）
+  - 条件配置（ConditionConfig）
+  - 效果配置（EffectConfig）
+  - 技能属性（类型、等级、激活状态）
+
+#### 1.2 技能管理器组件
+- 创建 `SkillManager` MonoBehaviour 组件
+  - 管理多个技能配置
+  - 监听 GameEventBus 事件
+  - 协调技能执行
+  - 处理技能生命周期
+
+#### 1.3 配置数据结构
+- `TriggerConfig` - 触发器配置（类型、参数）
+- `ConditionConfig` - 条件配置（类型、阈值）
+- `EffectConfig` - 效果配置（类型、参数）
+- 支持 Inspector 中的可视化配置
+
+#### 1.4 接口完善
+- 完善 `ITrigger`、`ICondition`、`IEffect` 接口
+- 添加配置化支持
+- 支持序列化和反序列化
+
+#### 1.5 集成测试
+- 将现有 TestSkillChain 逻辑迁移到新系统
+- 验证多技能配置支持
+- 确保与现有系统兼容性
+
+### 阶段2：核心功能扩展
+**目标：扩展技能类型，实现技能流派系统**
+
+#### 2.1 触发器类型扩展
+- `KillTrigger` - 击杀事件检测
+- `ChargingTrigger` - 蓄力事件检测
+- `HealthChangeTrigger` - 血量变化事件检测
+- `TimeTrigger` - 时间事件检测
+
+#### 2.2 条件类型扩展
+- `TimeWindowCondition` - 时间窗口条件（X秒内Y次）
+- `HealthCondition` - 血量条件（血量低于X%）
+- `ResourceCondition` - 资源条件（资源大于X）
+- `StateCondition` - 状态条件（处于某种状态）
+
+#### 2.3 效果类型扩展
+- `StatusEffect` - 状态效果（无敌、加速、减速等）
+- `ResourceEffect` - 资源效果（生命恢复、能量恢复）
+- `SpawnEffect` - 生成效果（生成道具、辅助单位）
+
+#### 2.4 技能流派实现
+- 击飞流派：碰撞 + 击飞距离增加
+- 连击流派：连击计数 + 伤害递增
+- 撞墙流派：撞墙 + 伤害加成
+- 资源流派：击杀 + 资源生成
+
+#### 2.5 性能优化
+- 技能条件检查优化
+- 效果执行批处理
+- 内存池管理
 
 ### 阶段3：高级功能
 - 实现技能树系统
