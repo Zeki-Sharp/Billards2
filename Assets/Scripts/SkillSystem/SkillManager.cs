@@ -83,10 +83,11 @@ public class SkillManager : MonoBehaviour
         GameEventBus.OnDeath += HandleDeathEvent;
         //GameEventBus.OnChargingStarted += OnNewShotStarted;
         GameEventBus.OnHealthChanged += HandleHealthChangedEvent;
+        GameEventBus.OnGameFlowStateChanged += HandleGameFlowStateChanged;
         
         if (enableDebugLog)
         {
-            Debug.Log("SkillManager: 已订阅攻击事件、死亡事件、发射开始事件和生命值变化事件");
+            Debug.Log("SkillManager: 已订阅攻击事件、死亡事件、发射开始事件、生命值变化事件和游戏流程状态变化事件");
         }
     }
     
@@ -99,6 +100,7 @@ public class SkillManager : MonoBehaviour
         GameEventBus.OnDeath -= HandleDeathEvent;
         //；GameEventBus.OnChargingStarted -= OnNewShotStarted;
         GameEventBus.OnHealthChanged -= HandleHealthChangedEvent;
+        GameEventBus.OnGameFlowStateChanged -= HandleGameFlowStateChanged;
         
         if (enableDebugLog)
         {
@@ -177,6 +179,22 @@ public class SkillManager : MonoBehaviour
         }
     }
     
+    /// <summary>
+    /// 处理游戏流程状态变化事件
+    /// </summary>
+    void HandleGameFlowStateChanged(GameFlowState newState)
+    {
+        if (enableDebugLog)
+        {
+            Debug.Log($"[SkillManager] 游戏流程状态变化: {newState}");
+        }
+        
+        // 通知所有技能实例处理回合结束事件
+        foreach (var skillInstance in skillInstances.Values)
+        {
+            skillInstance.HandlePhaseEndEvent(newState);
+        }
+    }
     
     /// <summary>
     /// 检查事件是否与技能相关

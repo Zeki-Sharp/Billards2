@@ -107,6 +107,15 @@ public class ValueComparisonCondition : ICondition
     {
         // 值比较条件不需要重置
     }
+    
+    /// <summary>
+    /// 回合结束时重置条件状态
+    /// </summary>
+    public void ResetOnPhaseEnd()
+    {
+        // 值比较条件不需要重置，因为它是基于当前值的即时比较
+        Debug.Log($"[{ConditionName}] 回合结束重置状态 - 无需操作（值比较条件）");
+    }
 }
 
 /// <summary>

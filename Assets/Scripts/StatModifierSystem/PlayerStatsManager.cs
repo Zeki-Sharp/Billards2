@@ -184,24 +184,34 @@ public class PlayerStatsManager : MonoBehaviour
     private bool IsEventRelevantForModifier(object eventData, StatModifier modifier)
     {
         // 如果修饰器有移除条件，检查事件类型是否相关
-        if (modifier.removalCondition != null)
+        if (modifier.effectRemovalCondition != null)
         {
             // 根据移除条件类型判断事件相关性
-            if (modifier.removalCondition is InverseConditionCheck)
+            if (modifier.effectRemovalCondition is DurationEffectRemovalCondition)
             {
-                // InverseConditionCheck 只对血量事件有效
-                return eventData is HealthStateData;
+                // DurationEffectRemovalCondition 对所有事件都相关（用于时间检查）
+                return true;
             }
-            else if (modifier.removalCondition is OnPlayerPhaseEndedCondition)
+            else if (modifier.effectRemovalCondition is OnPhaseEndedEffectRemovalCondition)
             {
-                // OnPlayerPhaseEndedCondition 只对游戏流程事件有效
+                // OnPhaseEndedEffectRemovalCondition 只对游戏流程事件有效
                 return eventData is GameFlowStateChangedData;
+            }
+            else if (modifier.effectRemovalCondition is OnConditionMetEffectRemovalCondition)
+            {
+                // OnConditionMetEffectRemovalCondition 对所有事件都相关
+                return true;
+            }
+            else if (modifier.effectRemovalCondition is InverseConditionCheckEffectRemovalCondition)
+            {
+                // InverseConditionCheckEffectRemovalCondition 对所有事件都相关（用于反向检查）
+                return true;
             }
             // 其他移除条件类型...
         }
         
-        // 默认情况下，只对血量事件进行移除检查
-        return eventData is HealthStateData;
+        // 默认情况下，对所有事件进行移除检查
+        return true;
     }
     
     #endregion

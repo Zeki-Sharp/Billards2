@@ -20,6 +20,8 @@ MonoBehaviour:
     targetTag: Wall
     useAttackTypeFilter: 0
     attackType: Hit
+    killTargetTag: Enemy
+    dataExtractorType: 0
   conditionConfig:
     hasConditions: 1
     logicType: 0
@@ -27,14 +29,28 @@ MonoBehaviour:
     - conditionType: 0
       requiredCount: 2
       timeWindow: 5
-      healthThreshold: 0.3
       comparisonType: 0
+      targetValue: 1
+      minValue: 0
+      maxValue: 1
+      dataExtractorType: 0
   effectConfig:
     effectType: 0
     targetStat: Damage
     modifierValue: 2
-    removalCondition: 5
     modifierType: 2
+    healAmount: 20
+  resetConditionConfig:
+    hasResetConditions: 1
+    logicType: 1
+    resetConditions:
+    - resetType: 1
+      _placeholder: 1
+      resetOnPhaseEnd: 1
+  effectRemovalConfig:
+    removalType: 1
+    duration: 30
+    removeOnPhaseEnd: 1
   skillType: 0
   requiredLevel: 1
   isActive: 1

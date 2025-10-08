@@ -20,7 +20,7 @@ public class StatModifier
     
     [Header("移除条件")]
     [System.NonSerialized]
-    public IRemovalCondition removalCondition; // 移除条件系统
+    public IEffectRemovalCondition effectRemovalCondition; // 新的效果移除条件系统
     public string customCondition;             // 自定义条件描述
     
     /// <summary>
@@ -34,7 +34,7 @@ public class StatModifier
         this.source = source;
         this.duration = 0f;  // 永久
         this.timeRemaining = 0f;
-        this.removalCondition = null; // 永不移除
+        this.effectRemovalCondition = null; // 永不移除
         this.customCondition = "";
     }
     
@@ -49,14 +49,14 @@ public class StatModifier
         this.source = source;
         this.duration = duration;
         this.timeRemaining = duration;
-        this.removalCondition = null; // 时间到期自动移除
+        this.effectRemovalCondition = null; // 时间到期自动移除
         this.customCondition = "";
     }
     
     /// <summary>
     /// 构造函数 - 创建基于条件的修饰器
     /// </summary>
-    public StatModifier(string targetStat, StatModifierType type, float value, IRemovalCondition condition, object source = null)
+    public StatModifier(string targetStat, StatModifierType type, float value, IEffectRemovalCondition condition, object source = null)
     {
         this.targetStat = targetStat;
         this.type = type;
@@ -64,17 +64,18 @@ public class StatModifier
         this.source = source;
         this.duration = 0f;  // 永久，等待条件触发
         this.timeRemaining = 0f;
-        this.removalCondition = condition;
+        this.effectRemovalCondition = condition;
         this.customCondition = "";
     }
     
     /// <summary>
-    /// 设置移除条件
+    /// 设置效果移除条件
     /// </summary>
-    /// <param name="condition">移除条件</param>
-    public void SetRemovalCondition(IRemovalCondition condition)
+    /// <param name="condition">效果移除条件</param>
+    public void SetEffectRemovalCondition(IEffectRemovalCondition condition)
     {
-        removalCondition = condition;
+        effectRemovalCondition = condition;
+        Debug.Log($"[StatModifier] 设置效果移除条件: {condition?.ConditionName}");
     }
     
     /// <summary>
@@ -97,9 +98,9 @@ public class StatModifier
         }
         
         // 基于条件的移除检查
-        if (removalCondition != null)
+        if (effectRemovalCondition != null)
         {
-            return removalCondition.ShouldRemove(eventData);
+            return effectRemovalCondition.ShouldRemoveEffect(eventData);
         }
         
         return false;
@@ -122,7 +123,7 @@ public class StatModifier
     /// </summary>
     public string GetDebugInfo()
     {
-        return $"[{targetStat}] {type} {value} (来源: {source?.GetType().Name ?? "Unknown"}, 条件: {removalCondition})";
+        return $"[{targetStat}] {type} {value} (来源: {source?.GetType().Name ?? "Unknown"}, 条件: {effectRemovalCondition})";
     }
 }
 

@@ -24,22 +24,35 @@ public class SkillEffectConfig
     [Tooltip("修改器类型")]
     public StatModifierType modifierType = StatModifierType.PercentMult;
     
+    [Header("治疗效果参数")]
+    [ShowIf("effectType", SkillEffectType.Heal)]
+    [Tooltip("治疗量（恢复的生命值）")]
+    [MinValue(0)]
+    public float healAmount = 20f;
+    
     /// <summary>
     /// 创建效果实例
     /// </summary>
-    public IEffect CreateEffect(IRemovalCondition removalCondition = null)
+    public IEffect CreateEffect(IEffectRemovalCondition effectRemovalCondition = null)
     {
         switch (effectType)
         {
             case SkillEffectType.StatModifier:
                 var statModifierEffect = new StatModifierEffect();
                 statModifierEffect.SetModifier(targetStat, modifierValue);
-                // 设置移除条件
-                if (removalCondition != null)
+                // 设置新的效果移除条件
+                if (effectRemovalCondition != null)
                 {
-                    statModifierEffect.SetRemovalCondition(removalCondition);
+                    statModifierEffect.SetEffectRemovalCondition(effectRemovalCondition);
                 }
                 return statModifierEffect;
+                
+            case SkillEffectType.Heal:
+                var healEffect = new HealEffect();
+                healEffect.SetHealAmount(healAmount);
+                // 治疗是瞬时效果，不需要移除条件
+                return healEffect;
+                
             default:
                 Debug.LogError($"不支持的效果类型: {effectType}");
                 return null;
@@ -55,6 +68,8 @@ public class SkillEffectConfig
         {
             case SkillEffectType.StatModifier:
                 return $"属性修改: {targetStat} x{modifierValue} ({modifierType})";
+            case SkillEffectType.Heal:
+                return $"治疗: +{healAmount} HP";
             default:
                 return $"效果: {effectType}";
         }
@@ -67,6 +82,7 @@ public class SkillEffectConfig
 public enum SkillEffectType
 {
     StatModifier,   // 属性修改效果
+    Heal,           // 治疗效果（恢复当前生命值）
     Status,         // 状态效果（暂未实现）
     Resource,       // 资源效果（暂未实现）
     Spawn,          // 生成效果（暂未实现）

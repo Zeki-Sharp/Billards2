@@ -29,16 +29,16 @@ public class StatModifierEffect : IEffect
     }
     
     /// <summary>
-    /// 设置移除条件
+    /// 设置效果移除条件（新接口）
     /// </summary>
-    /// <param name="condition">移除条件</param>
-    public void SetRemovalCondition(IRemovalCondition condition)
+    /// <param name="condition">效果移除条件</param>
+    public void SetEffectRemovalCondition(IEffectRemovalCondition condition)
     {
-        removalCondition = condition;
-        Debug.Log($"[{EffectName}] 设置移除条件: {condition?.ConditionName}");
+        effectRemovalCondition = condition;
+        Debug.Log($"[{EffectName}] 设置效果移除条件: {condition?.ConditionName}");
     }
     
-    private IRemovalCondition removalCondition; // 移除条件由配置决定
+    private IEffectRemovalCondition effectRemovalCondition; // 新的效果移除条件
     
     /// <summary>
     /// 初始化效果
@@ -91,8 +91,11 @@ public class StatModifierEffect : IEffect
             this                                           // 来源
         );
         
-        // 设置移除条件
-        appliedModifier.SetRemovalCondition(removalCondition);
+        // 设置移除条件（使用新接口）
+        if (effectRemovalCondition != null)
+        {
+            appliedModifier.SetEffectRemovalCondition(effectRemovalCondition);
+        }
         
         // 应用修饰器
         statsManager.ApplyModifier(appliedModifier);

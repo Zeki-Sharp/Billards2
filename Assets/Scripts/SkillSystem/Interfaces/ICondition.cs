@@ -28,4 +28,10 @@ public interface ICondition
     /// 重置条件状态
     /// </summary>
     void Reset();
+    
+    /// <summary>
+    /// 回合结束时重置条件状态（可选实现）
+    /// 如果不支持回合重置，可以留空或调用Reset()
+    /// </summary>
+    void ResetOnPhaseEnd();
 }

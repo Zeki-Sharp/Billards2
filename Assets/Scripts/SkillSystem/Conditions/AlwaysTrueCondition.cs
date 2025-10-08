@@ -35,4 +35,13 @@ public class AlwaysTrueCondition : ICondition
         // 无条件状态，无需重置
         Debug.Log($"[{ConditionName}] 重置状态 - 无需操作");
     }
+    
+    /// <summary>
+    /// 回合结束时重置条件状态
+    /// </summary>
+    public void ResetOnPhaseEnd()
+    {
+        // 无条件状态，无需重置
+        Debug.Log($"[{ConditionName}] 回合结束重置状态 - 无需操作");
+    }
 }

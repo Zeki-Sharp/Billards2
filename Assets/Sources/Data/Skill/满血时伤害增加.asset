@@ -30,7 +30,7 @@ MonoBehaviour:
       requiredCount: 1
       timeWindow: 5
       comparisonType: 0
-      targetValue: 0.3
+      targetValue: 0.99
       minValue: 0
       maxValue: 1
       dataExtractorType: 0
@@ -39,8 +39,18 @@ MonoBehaviour:
     targetStat: Damage
     modifierValue: 2
     modifierType: 2
-  removalConditionConfig:
-    conditionType: 1
+    healAmount: 20
+  resetConditionConfig:
+    hasResetConditions: 1
+    logicType: 1
+    resetConditions:
+    - resetType: 0
+      _placeholder: 1
+      resetOnPhaseEnd: 1
+  effectRemovalConfig:
+    removalType: 3
+    duration: 30
+    removeOnPhaseEnd: 1
   skillType: 0
   requiredLevel: 1
   isActive: 1

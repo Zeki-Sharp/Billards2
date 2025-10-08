@@ -90,4 +90,16 @@ public class CompositeCondition : ICondition
         }
         Debug.Log($"[{ConditionName}] 重置所有 {conditions.Count} 个条件");
     }
+    
+    /// <summary>
+    /// 回合结束时重置条件状态
+    /// </summary>
+    public void ResetOnPhaseEnd()
+    {
+        foreach (var condition in conditions)
+        {
+            condition?.ResetOnPhaseEnd();
+        }
+        Debug.Log($"[{ConditionName}] 回合结束重置所有 {conditions.Count} 个条件");
+    }
 }
