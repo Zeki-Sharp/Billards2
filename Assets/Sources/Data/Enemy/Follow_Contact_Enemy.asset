@@ -10,18 +10,18 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 680835e44d1251848acb0e09b9c418ff, type: 3}
-  m_Name: EnemyData_Follow_Thorn
+  m_Name: Follow_Contact_Enemy
   m_EditorClassIdentifier: 
-  enemyName: 
-  enemyContainerPrefab: {fileID: 7420645124294310907, guid: a2eee87d86847b34284a88c1430f39ea, type: 3}
+  enemyName: Follow_Contact_Enemy
+  enemyContainerPrefab: {fileID: 7420645124294310907, guid: 3953b119ae556034889e4bc9a3e4948f, type: 3}
   enemyIcon: {fileID: 0}
   ballData: {fileID: 11400000, guid: d1c30c129175ecf48a42f1070d15a627, type: 2}
-  maxHealth: 40
+  maxHealth: 60
   damage: 10
   attackCooldown: 1
   moveSpeed: 3
   attackRange: 3
-  attackType: 2
+  attackType: 0
   rangedConfig:
     detectionRange: 8
     projectionDistance: 2
@@ -31,16 +31,16 @@ MonoBehaviour:
     showParabolicIndicator: 1
   thornConfig:
     activeRounds: 1
-    cooldownRounds: 1
+    cooldownRounds: 0
     damageInterval: 0.5
     showCooldownState: 1
     activeColor: {r: 1, g: 0.2, b: 0.2, a: 0.8}
     cooldownColor: {r: 0.3, g: 0.3, b: 0.3, a: 0.5}
   enableAI: 1
-  movementType: 2
+  movementType: 0
   followConfig:
     moveSpeed: 3
-    moveDistance: 1.5
+    moveDistance: 3
     minDistance: 1.5
   fleeConfig:
     moveSpeed: 3
@@ -52,12 +52,12 @@ MonoBehaviour:
     approachMoveDistance: 3
   intervalConfig:
     movementMode: 0
-    idleRounds: 1
-    moveRounds: 1
-    startWithIdle: 0
+    idleRounds: 2
+    moveRounds: 3
+    startWithIdle: 1
     moveSpeed: 2
-    moveDistance: 2
-    minDistance: 1.5
+    moveDistance: 3
+    minDistance: 1
     triggerDistance: 3
   spawnWeight: 1
   spawnCost: 1

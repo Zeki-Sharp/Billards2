@@ -11,8 +11,15 @@
 2. **生成决策** - 被EnemyController调用，决定生成时机
 3. **生成执行** - 计算位置、实例化预制体、注册到Controller
 
+### 初始敌人配置问题
+当前初始敌人配置存在时机混乱：
+- **初始敌人**：在`Start()`中生成（游戏初始化）
+- **波次敌人**：在`ExecuteTelegraphPhase()`中生成（回合开始）
+- **配置分散**：初始敌人配置在EnemySpawner，波次配置在LevelConfig
+
 ### 问题表现
 - ❌ WaveConfig与Spawner强耦合，无法独立管理关卡配置
+- ❌ 初始敌人和波次敌人生成时机不一致，逻辑混乱
 - ❌ 生成触发方式单一（只支持主动调用），无法支持事件驱动
 - ❌ 位置计算、实例化等逻辑无法被其他生成器复用
 - ❌ 难以为道具系统实现不同的触发方式（死亡掉落、定时刷新等）
@@ -112,13 +119,15 @@
 
 **核心功能：**
 - 获取当前波次的敌人配置
+- **统一管理初始敌人和波次敌人配置**
 - 推进到下一波次
 - 计算波次生成数量
 - 重置波次索引
 
 **ScriptableObject配置：**
-- `LevelConfig.asset` - 存储整个关卡的波次序列
+- `LevelConfig.asset` - 存储整个关卡的波次序列和初始敌人配置
 - 支持多关卡配置复用
+- **包含初始敌人配置，统一管理所有敌人生成数据**
 
 #### DropTableProvider (掉落表提供者)
 **作用：** 管理敌人掉落配置
@@ -423,18 +432,21 @@ Assets/Sources/Data/Spawn/
 ---
 
 ### 阶段1：提取配置层（1天）
-**目标：** 将波次配置从EnemySpawner中分离
+**目标：** 将波次配置和初始敌人配置从EnemySpawner中分离，统一到配置层
 
 **任务清单：**
-- [ ] 创建`WaveConfigProvider.cs`
-- [ ] 将`WaveConfig`相关逻辑移入Provider
-- [ ] 创建`LevelConfig` ScriptableObject
+- [x] 创建`WaveConfigProvider.cs`
+- [x] 创建`LevelConfig` ScriptableObject
+- [x] 更新`WaveConfig.cs`增加验证方法
+- [ ] **将初始敌人配置移到LevelConfig**
+- [ ] **更新WaveConfigProvider支持初始敌人查询**
 - [ ] 在Unity中创建测试关卡配置
 - [ ] 编写配置层单元测试
 
 **验收标准：**
-- `WaveConfigProvider`可独立查询波次数据
-- 可以在Inspector中配置关卡波次
+- `WaveConfigProvider`可独立查询波次数据和初始敌人数据
+- 可以在Inspector中配置关卡波次和初始敌人
+- 初始敌人和波次敌人配置统一管理
 - 单元测试通过
 
 **风险点：**

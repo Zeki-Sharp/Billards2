@@ -102,7 +102,7 @@ public class EnemySpawner : MonoBehaviour
         
         if (showDebugInfo)
         {
-            Debug.Log($"EnemySpawner: 当前波次 {currentWave.waveName} 要生成 {totalCount} 个敌人");
+            Debug.Log($"EnemySpawner: 当前波次要生成 {totalCount} 个敌人");
         }
         
         return totalCount;
@@ -153,7 +153,7 @@ public class EnemySpawner : MonoBehaviour
         
         if (showDebugInfo)
         {
-            Debug.Log($"EnemySpawner: 开始生成波次 {currentWave.waveName} 的敌人");
+            Debug.Log($"EnemySpawner: 开始生成当前波次的敌人");
         }
         
         // 使用通用方法生成敌人
@@ -189,7 +189,7 @@ public class EnemySpawner : MonoBehaviour
         }
         
         // 计算生成位置
-        Vector3 spawnPosition = CalculateSpawnPosition(enemySpawn);
+        Vector3 spawnPosition = CalculateSpawnPosition();
         
         // 实例化敌人
         GameObject enemyInstance = Instantiate(enemySpawn.enemyData.enemyContainerPrefab, spawnPosition, Quaternion.identity, enemyParent);
@@ -220,13 +220,8 @@ public class EnemySpawner : MonoBehaviour
     /// <summary>
     /// 计算生成位置
     /// </summary>
-    Vector3 CalculateSpawnPosition(EnemySpawn enemySpawn)
+    Vector3 CalculateSpawnPosition()
     {
-        if (!enemySpawn.useRandomPosition)
-        {
-            return enemySpawn.customPosition;
-        }
-        
         Vector3 position;
         
         if (useCircularRange)
