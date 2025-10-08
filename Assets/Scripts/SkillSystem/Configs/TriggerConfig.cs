@@ -22,8 +22,7 @@ public class TriggerConfig
     [Tooltip("是否只检测特定类型的碰撞")]
     public bool useAttackTypeFilter = true;
     
-    [ShowIf("triggerType", TriggerType.Collision)]
-    [ShowIf("useAttackTypeFilter")]
+    [ShowIf("@triggerType == TriggerType.Collision && useAttackTypeFilter")]
     [LabelText("攻击类型")]
     [Tooltip("攻击类型过滤（如果启用）")]
     public string attackType = "Hit";

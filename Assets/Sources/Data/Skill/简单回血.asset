@@ -1,0 +1,42 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: efc89a18d420d744da9894a9f7094350, type: 3}
+  m_Name: "\u7B80\u5355\u56DE\u8840"
+  m_EditorClassIdentifier: 
+  skillName: "\u7B80\u7B54\u56DE\u8840"
+  description: "\u4E00\u6B21\u6027\u56DE\u590D10\u70B9\u751F\u547D\u503C"
+  triggerConfig:
+    triggerType: 3
+    targetTag: Enemy
+    useAttackTypeFilter: 1
+    attackType: 
+    killTargetTag: Enemy
+    dataExtractorType: 0
+  conditionConfig:
+    logicType: 0
+    conditions: []
+  effectConfig:
+    effectType: 1
+    targetStat: Damage
+    modifierValue: 2
+    modifierType: 2
+    healAmount: 10
+  resetConditionConfig:
+    logicType: 1
+    resetConditions:
+    - resetType: 0
+  effectRemovalConfig:
+    removalType: 0
+    duration: 30
+  skillType: 0
+  requiredLevel: 1
+  isActive: 1

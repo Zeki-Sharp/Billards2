@@ -34,6 +34,8 @@ public class SkillConfig : ScriptableObject
     [BoxGroup("条件配置")]
     [LabelText("条件配置")]
     [Tooltip("触发条件（如：生命值满血、击杀数量等）")]
+    [ShowIf("@triggerConfig.triggerType != TriggerType.AlwaysTrue")]
+    [InfoBox("AlwaysTrue触发器不需要条件配置，会始终触发", InfoMessageType.Info, "@triggerConfig.triggerType == TriggerType.AlwaysTrue")]
     [Required]
     public ConditionConfig conditionConfig = new ConditionConfig();
     
