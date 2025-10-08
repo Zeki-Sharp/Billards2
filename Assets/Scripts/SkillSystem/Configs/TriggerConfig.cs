@@ -48,6 +48,7 @@ public class TriggerConfig
                 var collisionTrigger = new CollisionTrigger();
                 // 传递配置参数给触发器实例
                 collisionTrigger.SetTargetTag(targetTag);
+                collisionTrigger.SetAttackTypeFilter(useAttackTypeFilter, attackType);
                 return collisionTrigger;
                 
             case TriggerType.Kill:

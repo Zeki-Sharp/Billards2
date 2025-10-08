@@ -28,14 +28,28 @@ public class OnPhaseEndedEffectRemovalCondition : IEffectRemovalCondition
     /// <returns>是否应该移除效果</returns>
     public bool ShouldRemoveEffect(object eventData)
     {
-        // TODO: 检查事件类型是否为回合结束事件
-        // if (eventData is PlayerPhaseEndedEvent)
-        // {
-        //     Debug.Log($"[{ConditionName}] 回合结束事件触发，应该移除效果");
-        //     return true;
-        // }
+        // 检查事件类型是否为回合结束事件
+        if (eventData is GameFlowStateChangedData stateData)
+        {
+            bool shouldRemove = stateData.NewState == GameFlowState.PlayerPhaseEnd;
+            if (shouldRemove)
+            {
+                Debug.Log($"[{ConditionName}] 检测到玩家回合结束事件，应该移除效果");
+            }
+            return shouldRemove;
+        }
         
-        // 临时实现：总是返回false
+        // 检查是否为GameFlowState枚举类型
+        if (eventData is GameFlowState gameFlowState)
+        {
+            bool shouldRemove = gameFlowState == GameFlowState.PlayerPhaseEnd;
+            if (shouldRemove)
+            {
+                Debug.Log($"[{ConditionName}] 检测到玩家回合结束状态，应该移除效果");
+            }
+            return shouldRemove;
+        }
+        
         return false;
     }
 
