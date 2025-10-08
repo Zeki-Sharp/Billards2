@@ -28,6 +28,7 @@ public class EnemyController : MonoBehaviour
     
     [Header("生成器引用")]
     private EnemySpawner enemySpawner;
+    private Game.SpawnSystem.Triggers.WaveSpawnTrigger waveSpawnTrigger;
     
     [Header("阶段执行")]
     private EnemyPhase currentExecutingPhase = EnemyPhase.None;
@@ -68,6 +69,13 @@ public class EnemyController : MonoBehaviour
         if (enemySpawner == null)
         {
             Debug.LogWarning("EnemyController: 未找到 EnemySpawner");
+        }
+        
+        // 查找 WaveSpawnTrigger
+        waveSpawnTrigger = FindFirstObjectByType<Game.SpawnSystem.Triggers.WaveSpawnTrigger>();
+        if (waveSpawnTrigger == null)
+        {
+            Debug.LogError("EnemyController: 未找到 WaveSpawnTrigger！");
         }
         
         if (showDebugInfo)
@@ -250,8 +258,16 @@ public class EnemyController : MonoBehaviour
         }
         
         // 1. 生成新敌人（如果需要）并加入预告列表
-        if (enemySpawner != null)
+        if (waveSpawnTrigger != null)
         {
+            // 使用新的WaveSpawnTrigger进行敌人生成
+            // 只生成波次敌人，初始敌人已经在Start中生成
+            waveSpawnTrigger.GenerateCurrentWave();
+        }
+        else if (enemySpawner != null)
+        {
+            // 回退到旧的生成方式（临时兼容）
+            Debug.LogWarning("EnemyController: 使用旧的敌人生成方式，建议配置WaveSpawnTrigger");
             enemySpawner.GenerateEnemies();
         }
         

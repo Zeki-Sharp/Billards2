@@ -38,8 +38,6 @@ public class Enemy : MonoBehaviour
     
     void Start()
     {
-        Debug.Log($"Enemy {name}: Start 方法被调用");
-        
         // 获取行为组件
         enemyBehavior = GetComponentInChildren<EnemyBehavior>();
         if (enemyBehavior == null)
@@ -48,7 +46,6 @@ public class Enemy : MonoBehaviour
         }
         else
         {
-            Debug.Log($"Enemy {name}: 成功找到 EnemyBehavior 组件");
             // 设置攻击范围引用
             if (attackArea != null)
             {

@@ -69,17 +69,12 @@ public abstract class BaseSpawner<T> : MonoBehaviour
             return;
         }
         
-        // 实例化对象
-        GameObject spawnedObject = InstantiateObject(data);
+        // 实例化对象 - 直接指定位置和父对象（像旧系统一样）
+        GameObject spawnedObject = InstantiateObject(data, spawnPosition, spawnParent);
         if (spawnedObject != null)
         {
-            spawnedObject.transform.position = spawnPosition;
             OnPostSpawn(spawnedObject, data);
             
-            if (enableDebugLog)
-            {
-                Debug.Log($"[{GetType().Name}] 生成对象: {data} 在位置: {spawnPosition}");
-            }
         }
     }
     
@@ -114,7 +109,10 @@ public abstract class BaseSpawner<T> : MonoBehaviour
     /// <returns>生成位置</returns>
     protected virtual Vector3 CalculateSpawnPosition()
     {
-        return rangeConfig.GetRandomPosition();
+        Vector3 spawnPosition = rangeConfig.GetRandomPosition();
+        
+        
+        return spawnPosition;
     }
     
     /// <summary>
@@ -132,8 +130,10 @@ public abstract class BaseSpawner<T> : MonoBehaviour
     /// 实例化对象（抽象方法，子类实现）
     /// </summary>
     /// <param name="data">生成数据</param>
+    /// <param name="position">生成位置</param>
+    /// <param name="parent">父对象</param>
     /// <returns>实例化的GameObject</returns>
-    protected abstract GameObject InstantiateObject(T data);
+    protected abstract GameObject InstantiateObject(T data, Vector3 position, Transform parent);
     
     /// <summary>
     /// 生成后处理（可选重写）

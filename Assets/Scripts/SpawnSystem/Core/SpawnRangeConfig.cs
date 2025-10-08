@@ -37,20 +37,34 @@ public class SpawnRangeConfig
     public float offsetRange = 0.5f;
     
     /// <summary>
-    /// 获取随机生成位置
+    /// 获取随机生成位置（绝对世界坐标）
     /// </summary>
+    /// <param name="origin">原点位置（已废弃，保持兼容性）</param>
     /// <returns>随机位置</returns>
-    public Vector3 GetRandomPosition()
+    public Vector3 GetRandomPosition(Vector3 origin = default)
     {
-        Vector3 basePosition = Vector3.zero;
+        Vector3 basePosition;
         
         switch (rangeType)
         {
             case SpawnRangeType.Rectangle:
-                basePosition = GetRandomRectanglePosition();
+                basePosition = new Vector3(
+                    Random.Range(minX, maxX),
+                    Random.Range(minY, maxY),
+                    0f
+                );
                 break;
             case SpawnRangeType.Circle:
-                basePosition = GetRandomCirclePosition();
+                float angle = Random.Range(0f, 360f) * Mathf.Deg2Rad;
+                float distance = Random.Range(0f, radius);
+                basePosition = new Vector3(
+                    Mathf.Cos(angle) * distance,
+                    Mathf.Sin(angle) * distance,
+                    0f
+                );
+                break;
+            default:
+                basePosition = Vector3.zero;
                 break;
         }
         
@@ -98,11 +112,12 @@ public class SpawnRangeConfig
     }
     
     /// <summary>
-    /// 验证位置是否在范围内
+    /// 验证位置是否在范围内（绝对世界坐标）
     /// </summary>
     /// <param name="position">位置</param>
+    /// <param name="origin">原点位置（已废弃，保持兼容性）</param>
     /// <returns>是否有效</returns>
-    public bool IsPositionValid(Vector3 position)
+    public bool IsPositionValid(Vector3 position, Vector3 origin = default)
     {
         switch (rangeType)
         {
@@ -110,7 +125,7 @@ public class SpawnRangeConfig
                 return position.x >= minX && position.x <= maxX && 
                        position.y >= minY && position.y <= maxY;
             case SpawnRangeType.Circle:
-                float distance = Vector3.Distance(Vector3.zero, position);
+                float distance = position.magnitude;
                 return distance <= radius;
             default:
                 return true;

@@ -8049,60 +8049,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fe803f38571597d4d9f7517dab3e277a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  spawnParent: {fileID: 0}
+  rangeConfig:
+    rangeType: 0
+    minX: -9
+    maxX: 9
+    minY: -5
+    maxY: 5
+    radius: 8
+    enablePositionOffset: 1
+    offsetRange: 0.5
+  enableDebugLog: 1
   enemyParent: {fileID: 1579586301}
-  minX: -8
-  maxX: 8
-  minY: -4
-  maxY: 4
-  useCircularRange: 0
-  circularRadius: 8
-  initialEnemies:
-  - enemyData: {fileID: 11400000, guid: ce82a34099b9d1f4899931eb09ed10ce, type: 2}
-    count: 2
-    useRandomPosition: 1
-    customPosition: {x: 0, y: 0}
-  - enemyData: {fileID: 11400000, guid: 8d46072aeaab4c44fab958850bbe7872, type: 2}
-    count: 2
-    useRandomPosition: 1
-    customPosition: {x: 0, y: 0}
-  - enemyData: {fileID: 11400000, guid: 2b3490ac9962fd84fbac65c5de60aa85, type: 2}
-    count: 0
-    useRandomPosition: 1
-    customPosition: {x: 0, y: 0}
-  generateInitialEnemies: 1
-  waveConfigs:
-  - waveName: 
-    enemySpawns:
-    - enemyData: {fileID: 11400000, guid: 2b3490ac9962fd84fbac65c5de60aa85, type: 2}
-      count: 2
-      useRandomPosition: 1
-      customPosition: {x: 0, y: 0}
-  - waveName: 
-    enemySpawns:
-    - enemyData: {fileID: 11400000, guid: ce82a34099b9d1f4899931eb09ed10ce, type: 2}
-      count: 1
-      useRandomPosition: 1
-      customPosition: {x: 0, y: 0}
-    - enemyData: {fileID: 11400000, guid: 2b3490ac9962fd84fbac65c5de60aa85, type: 2}
-      count: 2
-      useRandomPosition: 1
-      customPosition: {x: 0, y: 0}
-  - waveName: 
-    enemySpawns: []
-  - waveName: 
-    enemySpawns:
-    - enemyData: {fileID: 11400000, guid: 8d46072aeaab4c44fab958850bbe7872, type: 2}
-      count: 2
-      useRandomPosition: 1
-      customPosition: {x: 0, y: 0}
-    - enemyData: {fileID: 11400000, guid: ce82a34099b9d1f4899931eb09ed10ce, type: 2}
-      count: 1
-      useRandomPosition: 1
-      customPosition: {x: 0, y: 0}
-  loopWaves: 0
-  currentWaveIndex: 0
   showDebugInfo: 1
-  showSpawnRange: 1
 --- !u!4 &931985108
 Transform:
   m_ObjectHideFlags: 0
@@ -8112,7 +8071,7 @@ Transform:
   m_GameObject: {fileID: 931985106}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -6.1451464, y: 1.0495347, z: -0.029079506}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -9287,6 +9246,53 @@ Transform:
   - {fileID: 1983208820}
   m_Father: {fileID: 627852898}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1568426787
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1568426789}
+  - component: {fileID: 1568426788}
+  m_Layer: 0
+  m_Name: WaveConfigProvider
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1568426788
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1568426787}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3c4333f109bb5af459406e60f828e8f6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  levelConfig: {fileID: 11400000, guid: ba504b0d527f12a4a8e42a143cc0222f, type: 2}
+  currentWaveIndex: 0
+  showDebugInfo: 1
+--- !u!4 &1568426789
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1568426787}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 1.6697116, y: -1.004315, z: 0.05010721}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1579586300
 GameObject:
   m_ObjectHideFlags: 0
@@ -9312,7 +9318,7 @@ Transform:
   m_GameObject: {fileID: 1579586300}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 6.5168805, y: 4.979571, z: -0.07274454}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -10300,6 +10306,55 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1956087176}
   m_CullTransparentMesh: 1
+--- !u!1 &1981942884
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1981942886}
+  - component: {fileID: 1981942885}
+  m_Layer: 0
+  m_Name: WaveSpanwerTrigger
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1981942885
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1981942884}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 22a4f321b1c0e42419b22ef268a0d978, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  configProvider: {fileID: 1568426788}
+  enemySpawner: {fileID: 931985107}
+  generateInitialEnemies: 1
+  generateWaveEnemies: 1
+  showDebugInfo: 1
+--- !u!4 &1981942886
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1981942884}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 1.6697116, y: -1.004315, z: 0.05010721}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1983208819
 GameObject:
   m_ObjectHideFlags: 0
@@ -10695,3 +10750,5 @@ SceneRoots:
   - {fileID: 1579586301}
   - {fileID: 2088273612}
   - {fileID: 1357681023}
+  - {fileID: 1981942886}
+  - {fileID: 1568426789}

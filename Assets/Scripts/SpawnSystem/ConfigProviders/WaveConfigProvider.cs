@@ -10,12 +10,8 @@ public class WaveConfigProvider : MonoBehaviour, SpawnConfigProvider<EnemySpawn>
     [Header("关卡配置")]
     [SerializeField] private LevelConfig levelConfig;
     
-    [Header("初始敌人配置")]
-    [SerializeField] private List<EnemySpawn> initialEnemies = new List<EnemySpawn>();
-    [SerializeField] private bool generateInitialEnemies = true;
     
-    [Header("波次管理")]
-    [SerializeField] private bool loopWaves = true;
+    [Header("波次状态")]
     [SerializeField] private int currentWaveIndex = 0;
     
     [Header("调试")]
@@ -113,7 +109,7 @@ public class WaveConfigProvider : MonoBehaviour, SpawnConfigProvider<EnemySpawn>
         
         if (currentWaveIndex >= waveConfigs.Count)
         {
-            if (loopWaves)
+            if (levelConfig != null && levelConfig.loopWaves)
             {
                 currentWaveIndex = 0;
             }
@@ -133,7 +129,7 @@ public class WaveConfigProvider : MonoBehaviour, SpawnConfigProvider<EnemySpawn>
     {
         currentWaveIndex++;
         
-        if (currentWaveIndex >= waveConfigs.Count && loopWaves)
+        if (currentWaveIndex >= waveConfigs.Count && levelConfig != null && levelConfig.loopWaves)
         {
             currentWaveIndex = 0;
             if (showDebugInfo)
@@ -148,14 +144,6 @@ public class WaveConfigProvider : MonoBehaviour, SpawnConfigProvider<EnemySpawn>
         }
     }
     
-    /// <summary>
-    /// 获取初始敌人配置
-    /// </summary>
-    /// <returns>初始敌人配置列表</returns>
-    public List<EnemySpawn> GetInitialEnemies()
-    {
-        return initialEnemies;
-    }
     
     /// <summary>
     /// 获取初始敌人生成配置列表
@@ -225,17 +213,4 @@ public class WaveConfigProvider : MonoBehaviour, SpawnConfigProvider<EnemySpawn>
         }
     }
     
-    /// <summary>
-    /// 设置是否循环波次
-    /// </summary>
-    /// <param name="loop">是否循环</param>
-    public void SetLoopWaves(bool loop)
-    {
-        loopWaves = loop;
-        
-        if (showDebugInfo)
-        {
-            Debug.Log($"[WaveConfigProvider] 设置波次循环: {loop}");
-        }
-    }
 }
