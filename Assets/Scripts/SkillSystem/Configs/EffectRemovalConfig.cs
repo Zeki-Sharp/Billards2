@@ -18,10 +18,6 @@ public class EffectRemovalConfig
     [MinValue(0.1f)]
     public float duration = 30f;
     
-    [ShowIf("removalType", EffectRemovalType.OnPlayerPhaseEnded)]
-    [LabelText("回合结束时移除")]
-    [Tooltip("回合结束时移除效果")]
-    public bool removeOnPhaseEnd = true;
     
     [ShowIf("removalType", EffectRemovalType.OnConditionMet)]
     [LabelText("移除条件")]

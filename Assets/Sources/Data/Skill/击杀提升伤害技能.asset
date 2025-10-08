@@ -14,7 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   skillName: "\u6B7B\u4EA1\u63D0\u5347"
   description: "\u6740\u6B7B\u654C\u4EBA\u540E\u4F24\u5BB3\u4E0A\u5347"
-  skillIcon: {fileID: 0}
   triggerConfig:
     triggerType: 1
     targetTag: Wall
@@ -23,7 +22,6 @@ MonoBehaviour:
     killTargetTag: Enemy
     dataExtractorType: 0
   conditionConfig:
-    hasConditions: 1
     logicType: 0
     conditions:
     - conditionType: 0
@@ -41,16 +39,12 @@ MonoBehaviour:
     modifierType: 2
     healAmount: 20
   resetConditionConfig:
-    hasResetConditions: 1
     logicType: 1
     resetConditions:
     - resetType: 1
-      _placeholder: 1
-      resetOnPhaseEnd: 1
   effectRemovalConfig:
     removalType: 1
     duration: 30
-    removeOnPhaseEnd: 1
   skillType: 0
   requiredLevel: 1
   isActive: 1

@@ -141,18 +141,12 @@ public class SingleConditionConfig
 [System.Serializable]
 public class ConditionConfig
 {
-    [LabelText("是否有条件")]
-    [Tooltip("如果为false，触发即执行；如果为true，需要满足条件")]
-    public bool hasConditions = true;
-    
-    [ShowIf("hasConditions")]
     [LabelText("条件逻辑")]
-    [Tooltip("多个条件之间的逻辑关系")]
+    [Tooltip("多个条件之间的逻辑关系（列表为空时表示无条件，触发即执行）")]
     public ConditionLogicType logicType = ConditionLogicType.And;
     
-    [ShowIf("hasConditions")]
     [LabelText("条件列表")]
-    [Tooltip("多个条件的列表")]
+    [Tooltip("条件列表（列表为空时表示无条件，触发即执行）")]
     [ListDrawerSettings(ShowIndexLabels = true, ListElementLabelName = "conditionType")]
     public List<SingleConditionConfig> conditions = new List<SingleConditionConfig> { new SingleConditionConfig() };
     
@@ -161,8 +155,8 @@ public class ConditionConfig
     /// </summary>
     public ICondition CreateCondition()
     {
-        // 如果没有条件，返回一个总是返回true的条件
-        if (!hasConditions)
+        // 如果列表为空，返回一个总是返回true的条件（无条件，触发即执行）
+        if (conditions.Count == 0)
         {
             return new AlwaysTrueCondition();
         }
@@ -200,14 +194,9 @@ public class ConditionConfig
     /// </summary>
     public string GetDebugInfo()
     {
-        if (!hasConditions)
-        {
-            return "无条件（触发即执行）";
-        }
-        
         if (conditions.Count == 0)
         {
-            return "条件列表为空";
+            return "无条件（触发即执行）";
         }
         
         if (conditions.Count == 1)

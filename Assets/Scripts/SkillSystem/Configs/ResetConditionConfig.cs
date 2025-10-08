@@ -13,31 +13,7 @@ public class SingleResetConditionConfig
     [Tooltip("选择重置条件类型")]
     public ResetConditionType resetType = ResetConditionType.Immediate;
     
-    // 立即重置参数 - 只在 resetType == Immediate 时显示
-    [ShowIf("resetType", ResetConditionType.Immediate)]
-    [LabelText("立即重置")]
-    [Tooltip("立即重置，技能执行后马上可以再次触发")]
-    [InfoBox("立即重置：技能执行后立即重置条件，允许同一回合内再次触发")]
-    public bool _placeholder = true; // 占位符，保持UI结构
     
-    // 回合结束重置参数 - 只在 resetType == OnPlayerPhaseEnded 时显示
-    [ShowIf("resetType", ResetConditionType.OnPlayerPhaseEnded)]
-    [LabelText("回合结束时重置")]
-    [Tooltip("回合结束时重置")]
-    public bool resetOnPhaseEnd = true;
-    
-    // 条件满足重置参数 - 已被移除，暂时只需要三种基本类型
-    // [Header("条件满足重置参数")]
-    // [ShowIf("resetType", ResetConditionType.OnConditionMet)]
-    // [Tooltip("满足条件时重置")]
-    // public ICondition resetCondition;
-    
-    // 延迟重置参数 - 已被移除，暂时只需要三种基本类型
-    // [Header("延迟重置参数")]
-    // [ShowIf("resetType", ResetConditionType.AfterDelay)]
-    // [Tooltip("延迟时间（秒）")]
-    // [MinValue(0.1f)]
-    // public float delayTime = 1f;
     
     /// <summary>
     /// 创建单个重置条件实例
@@ -84,18 +60,12 @@ public class SingleResetConditionConfig
 [System.Serializable]
 public class ResetConditionConfig
 {
-    [LabelText("是否有重置条件")]
-    [Tooltip("如果为false，使用默认重置逻辑；如果为true，需要满足重置条件")]
-    public bool hasResetConditions = true;
-    
-    [ShowIf("hasResetConditions")]
     [LabelText("重置逻辑")]
-    [Tooltip("多个重置条件之间的逻辑关系")]
+    [Tooltip("多个重置条件之间的逻辑关系（列表为空时使用默认重置逻辑）")]
     public ResetLogicType logicType = ResetLogicType.Or;
     
-    [ShowIf("hasResetConditions")]
     [LabelText("重置条件列表")]
-    [Tooltip("多个重置条件的列表")]
+    [Tooltip("重置条件列表（列表为空时使用默认重置逻辑）")]
     [ListDrawerSettings(ShowIndexLabels = true, ListElementLabelName = "resetType")]
     public List<SingleResetConditionConfig> resetConditions = new List<SingleResetConditionConfig> { new SingleResetConditionConfig() };
     
@@ -104,8 +74,8 @@ public class ResetConditionConfig
     /// </summary>
     public IResetCondition CreateResetCondition()
     {
-        // 如果没有重置条件，返回一个总是返回true的重置条件（默认立即重置）
-        if (!hasResetConditions)
+        // 如果列表为空，返回默认的重置条件（立即重置）
+        if (resetConditions.Count == 0)
         {
             return new ImmediateResetCondition();
         }
@@ -143,7 +113,7 @@ public class ResetConditionConfig
     /// </summary>
     public string GetDebugInfo()
     {
-        if (!hasResetConditions)
+        if (resetConditions.Count == 0)
         {
             return "默认重置逻辑";
         }

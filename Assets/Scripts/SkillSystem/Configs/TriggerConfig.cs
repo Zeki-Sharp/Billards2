@@ -63,6 +63,11 @@ public class TriggerConfig
                 dataSourceTrigger.SetDataExtractorType(dataExtractorType);
                 return dataSourceTrigger;
                 
+            case TriggerType.AlwaysTrue:
+                var alwaysTrueTrigger = new AlwaysTrueTrigger();
+                // 始终为真的触发器不需要额外配置
+                return alwaysTrueTrigger;
+                
             default:
                 Debug.LogError($"不支持的触发器类型: {triggerType}");
                 return null;
@@ -111,6 +116,9 @@ public class TriggerConfig
             case TriggerType.Kill:
                 return $"击杀触发器: 标签={killTargetTag}";
                 
+            case TriggerType.AlwaysTrue:
+                return $"始终为真触发器: 用于标记型技能";
+                
             default:
                 return $"触发器: {triggerType}";
         }
@@ -124,7 +132,8 @@ public enum TriggerType
 {
     Collision,  // 碰撞触发器
     Kill,       // 击杀触发器
-    DataSource  // 数据源触发器
+    DataSource, // 数据源触发器
+    AlwaysTrue  // 始终为真触发器
 }
 
 /// <summary>
