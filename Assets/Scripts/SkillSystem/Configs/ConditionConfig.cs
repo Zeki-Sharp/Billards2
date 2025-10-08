@@ -9,42 +9,47 @@ using System.Linq;
 [System.Serializable]
 public class SingleConditionConfig
 {
-    [Header("条件类型")]
+    [LabelText("条件类型")]
+    [Tooltip("选择条件的判断类型")]
     public ConditionType conditionType = ConditionType.Count;
     
     // 计数条件参数 - 只在 conditionType == Count 时显示
-    [Header("计数条件参数")]
     [ShowIf("conditionType", ConditionType.Count)]
+    [LabelText("需要达到的计数")]
     [Tooltip("需要达到的计数")]
     public int requiredCount = 2;
     
     // 时间窗口条件参数 - 只在 conditionType == TimeWindow 时显示
-    [Header("时间窗口条件参数")]
     [ShowIf("conditionType", ConditionType.TimeWindow)]
+    [LabelText("时间窗口长度")]
     [Tooltip("时间窗口长度（秒）")]
     public float timeWindow = 5f;
     
     // 值比较条件参数 - 只在 conditionType == ValueComparison 时显示
-    [Header("值比较条件参数")]
     [ShowIf("conditionType", ConditionType.ValueComparison)]
+    [LabelText("比较类型")]
     [Tooltip("比较类型")]
     public ComparisonType comparisonType = ComparisonType.GreaterThanOrEqual;
     
     [ShowIf("conditionType", ConditionType.ValueComparison)]
+    [LabelText("目标值")]
     [Tooltip("目标值")]
     public float targetValue = 1.0f;
     
     [ShowIf("conditionType", ConditionType.ValueComparison)]
     [ShowIf("comparisonType", ComparisonType.InRange)]
+    [LabelText("最小值")]
     [Tooltip("最小值")]
     public float minValue = 0f;
     
     [ShowIf("conditionType", ConditionType.ValueComparison)]
     [ShowIf("comparisonType", ComparisonType.InRange)]
+    [LabelText("最大值")]
     [Tooltip("最大值")]
     public float maxValue = 1f;
     
     [ShowIf("conditionType", ConditionType.ValueComparison)]
+    [LabelText("数据提取器类型")]
     [Tooltip("数据提取器类型")]
     public DataExtractorType dataExtractorType = DataExtractorType.Health;
     
@@ -136,18 +141,15 @@ public class SingleConditionConfig
 [System.Serializable]
 public class ConditionConfig
 {
-    [BoxGroup("条件设置")]
     [LabelText("是否有条件")]
     [Tooltip("如果为false，触发即执行；如果为true，需要满足条件")]
     public bool hasConditions = true;
     
-    [BoxGroup("条件设置")]
     [ShowIf("hasConditions")]
     [LabelText("条件逻辑")]
     [Tooltip("多个条件之间的逻辑关系")]
     public ConditionLogicType logicType = ConditionLogicType.And;
     
-    [BoxGroup("条件设置")]
     [ShowIf("hasConditions")]
     [LabelText("条件列表")]
     [Tooltip("多个条件的列表")]

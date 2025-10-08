@@ -8,31 +8,34 @@ using Sirenix.OdinInspector;
 [System.Serializable]
 public class TriggerConfig
 {
-    [Header("触发器类型")]
+    [LabelText("触发器类型")]
+    [Tooltip("选择触发技能的事件类型")]
     public TriggerType triggerType = TriggerType.Collision;
     
-    [Header("碰撞触发器参数")]
     [ShowIf("triggerType", TriggerType.Collision)]
-    [Tooltip("目标标签")]
+    [LabelText("碰撞目标标签")]
+    [Tooltip("检测与哪个标签的物体碰撞")]
     public string targetTag = "Enemy";
     
     [ShowIf("triggerType", TriggerType.Collision)]
+    [LabelText("使用攻击类型过滤")]
     [Tooltip("是否只检测特定类型的碰撞")]
     public bool useAttackTypeFilter = true;
     
     [ShowIf("triggerType", TriggerType.Collision)]
     [ShowIf("useAttackTypeFilter")]
+    [LabelText("攻击类型")]
     [Tooltip("攻击类型过滤（如果启用）")]
     public string attackType = "Hit";
     
-    [Header("击杀触发器参数")]
     [ShowIf("triggerType", TriggerType.Kill)]
-    [Tooltip("目标标签")]
+    [LabelText("击杀目标标签")]
+    [Tooltip("检测击杀哪个标签的物体")]
     public string killTargetTag = "Enemy";
     
-    [Header("数据源触发器参数")]
     [ShowIf("triggerType", TriggerType.DataSource)]
-    [Tooltip("数据提取器类型")]
+    [LabelText("数据提取器类型")]
+    [Tooltip("从事件数据中提取什么类型的数据")]
     public DataExtractorType dataExtractorType = DataExtractorType.Health;
     
     /// <summary>

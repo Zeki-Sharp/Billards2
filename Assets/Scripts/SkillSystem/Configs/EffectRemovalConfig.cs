@@ -8,24 +8,28 @@ using Sirenix.OdinInspector;
 [System.Serializable]
 public class EffectRemovalConfig
 {
-    [Header("效果移除类型")]
+    [LabelText("效果移除类型")]
     [Tooltip("持续效果何时移除的条件")]
     public EffectRemovalType removalType = EffectRemovalType.Duration;
     
     [ShowIf("removalType", EffectRemovalType.Duration)]
+    [LabelText("持续时间")]
     [Tooltip("持续时间（秒）")]
     [MinValue(0.1f)]
     public float duration = 30f;
     
     [ShowIf("removalType", EffectRemovalType.OnPlayerPhaseEnded)]
+    [LabelText("回合结束时移除")]
     [Tooltip("回合结束时移除效果")]
     public bool removeOnPhaseEnd = true;
     
     [ShowIf("removalType", EffectRemovalType.OnConditionMet)]
+    [LabelText("移除条件")]
     [Tooltip("满足条件时移除效果")]
     public ICondition removalCondition;
     
     [ShowIf("removalType", EffectRemovalType.InverseConditionCheck)]
+    [LabelText("反向条件")]
     [Tooltip("反向条件检查 - 当条件不满足时移除效果")]
     public ICondition inverseCondition;
     

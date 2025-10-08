@@ -9,19 +9,20 @@ using System.Linq;
 [System.Serializable]
 public class SingleResetConditionConfig
 {
-    [Header("重置条件类型")]
+    [LabelText("重置条件类型")]
+    [Tooltip("选择重置条件类型")]
     public ResetConditionType resetType = ResetConditionType.Immediate;
     
     // 立即重置参数 - 只在 resetType == Immediate 时显示
-    [Header("立即重置参数")]
     [ShowIf("resetType", ResetConditionType.Immediate)]
+    [LabelText("立即重置")]
     [Tooltip("立即重置，技能执行后马上可以再次触发")]
     [InfoBox("立即重置：技能执行后立即重置条件，允许同一回合内再次触发")]
     public bool _placeholder = true; // 占位符，保持UI结构
     
     // 回合结束重置参数 - 只在 resetType == OnPlayerPhaseEnded 时显示
-    [Header("回合结束重置参数")]
     [ShowIf("resetType", ResetConditionType.OnPlayerPhaseEnded)]
+    [LabelText("回合结束时重置")]
     [Tooltip("回合结束时重置")]
     public bool resetOnPhaseEnd = true;
     
@@ -83,18 +84,15 @@ public class SingleResetConditionConfig
 [System.Serializable]
 public class ResetConditionConfig
 {
-    [BoxGroup("重置条件设置")]
     [LabelText("是否有重置条件")]
     [Tooltip("如果为false，使用默认重置逻辑；如果为true，需要满足重置条件")]
     public bool hasResetConditions = true;
     
-    [BoxGroup("重置条件设置")]
     [ShowIf("hasResetConditions")]
     [LabelText("重置逻辑")]
     [Tooltip("多个重置条件之间的逻辑关系")]
     public ResetLogicType logicType = ResetLogicType.Or;
     
-    [BoxGroup("重置条件设置")]
     [ShowIf("hasResetConditions")]
     [LabelText("重置条件列表")]
     [Tooltip("多个重置条件的列表")]

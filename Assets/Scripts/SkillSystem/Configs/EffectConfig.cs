@@ -8,24 +8,27 @@ using Sirenix.OdinInspector;
 [System.Serializable]
 public class SkillEffectConfig
 {
-    [Header("效果类型")]
+    [LabelText("效果类型")]
+    [Tooltip("选择技能产生的效果类型")]
     public SkillEffectType effectType = SkillEffectType.StatModifier;
     
-    [Header("属性修改效果参数")]
     [ShowIf("effectType", SkillEffectType.StatModifier)]
+    [LabelText("目标属性名称")]
     [Tooltip("目标属性名称")]
     public string targetStat = "Damage";
     
     [ShowIf("effectType", SkillEffectType.StatModifier)]
+    [LabelText("修改倍数")]
     [Tooltip("修改倍数（2.0 = +100%）")]
     public float modifierValue = 2f;
     
     [ShowIf("effectType", SkillEffectType.StatModifier)]
+    [LabelText("修改器类型")]
     [Tooltip("修改器类型")]
     public StatModifierType modifierType = StatModifierType.PercentMult;
     
-    [Header("治疗效果参数")]
     [ShowIf("effectType", SkillEffectType.Heal)]
+    [LabelText("治疗量")]
     [Tooltip("治疗量（恢复的生命值）")]
     [MinValue(0)]
     public float healAmount = 20f;

@@ -19,39 +19,41 @@ public class SkillConfig : ScriptableObject
     [TextArea(3, 5)]
     public string description = "碰撞敌人2次后，攻击力提升100%";
     
-    [BoxGroup("技能基本信息")]
-    [LabelText("技能图标")]
-    [Tooltip("技能图标")]
-    public Sprite skillIcon;
+    // 技能图标暂时移除，简化配置界面
+    // [BoxGroup("技能基本信息")]
+    // [LabelText("技能图标")]
+    // [Tooltip("技能图标")]
+    // public Sprite skillIcon;
     
-    [BoxGroup("技能组件配置")]
+    [BoxGroup("触发器配置")]
     [LabelText("触发器配置")]
-    [Tooltip("触发器配置")]
+    [Tooltip("什么时候触发技能（如：击杀敌人、碰撞墙壁等）")]
     [Required]
     public TriggerConfig triggerConfig = new TriggerConfig();
     
-    [BoxGroup("技能组件配置")]
+    [BoxGroup("条件配置")]
     [LabelText("条件配置")]
-    [Tooltip("条件配置")]
+    [Tooltip("触发条件（如：生命值满血、击杀数量等）")]
     [Required]
     public ConditionConfig conditionConfig = new ConditionConfig();
     
-    [BoxGroup("技能组件配置")]
+    [BoxGroup("效果配置")]
     [LabelText("效果配置")]
-    [Tooltip("效果配置")]
+    [Tooltip("产生什么效果（如：伤害提升、恢复生命值等）")]
     [Required]
     public SkillEffectConfig effectConfig = new SkillEffectConfig();
     
-    [BoxGroup("技能组件配置")]
+    [BoxGroup("重置条件配置")]
     [LabelText("重置条件配置")]
-    [Tooltip("技能何时可以再次触发的条件（所有技能都需要）")]
+    [Tooltip("什么时候可以再次触发技能（所有技能都需要）")]
     [Required]
     public ResetConditionConfig resetConditionConfig = new ResetConditionConfig();
     
-    [BoxGroup("技能组件配置")]
+    [BoxGroup("效果移除配置")]
     [LabelText("效果移除配置")]
-    [Tooltip("持续效果何时移除的条件（仅持续效果需要）")]
+    [Tooltip("持续效果何时移除（仅持续效果需要配置）")]
     [ShowIf("@effectConfig.effectType == SkillEffectType.StatModifier")]
+    [InfoBox("只有持续效果（属性修改）才需要配置移除条件", InfoMessageType.Info, "@effectConfig.effectType == SkillEffectType.StatModifier")]
     public EffectRemovalConfig effectRemovalConfig = new EffectRemovalConfig();
     
     [BoxGroup("技能属性")]
