@@ -104,6 +104,20 @@ public static class GameEventBus
     
     #endregion
     
+    #region 技能系统事件
+    
+    /// <summary>
+    /// 技能激活事件
+    /// </summary>
+    public static event System.Action<string> OnSkillActivated;
+    
+    /// <summary>
+    /// 技能失效事件
+    /// </summary>
+    public static event System.Action<string> OnSkillDeactivated;
+    
+    #endregion
+    
     #region 游戏数据事件
     
     /// <summary>
@@ -163,6 +177,16 @@ public static class GameEventBus
     /// 发布发射事件
     /// </summary>
     public static void PublishLaunch(Vector2 direction, float force) => OnLaunch?.Invoke(direction, force);
+    
+    /// <summary>
+    /// 发布技能激活事件
+    /// </summary>
+    public static void PublishSkillActivated(string skillName) => OnSkillActivated?.Invoke(skillName);
+    
+    /// <summary>
+    /// 发布技能失效事件
+    /// </summary>
+    public static void PublishSkillDeactivated(string skillName) => OnSkillDeactivated?.Invoke(skillName);
     
     /// <summary>
     /// 发布球停止运动事件

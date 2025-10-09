@@ -33,6 +33,11 @@ public class DeathDropTrigger : SpawnTrigger<ItemConfig>
     public bool enableDebugLog = true;
     
     /// <summary>
+    /// 技能状态管理器引用
+    /// </summary>
+    private SkillStateManager skillStateManager;
+    
+    /// <summary>
     /// 初始化触发器
     /// </summary>
     protected override void Initialize()
@@ -56,6 +61,13 @@ public class DeathDropTrigger : SpawnTrigger<ItemConfig>
         // 配置ItemSpawner的掉落设置
         itemSpawner.enableDropPositionOffset = enableDropPositionOffset;
         itemSpawner.dropOffsetRange = dropOffsetRange;
+        
+        // 查找技能状态管理器
+        skillStateManager = FindObjectOfType<SkillStateManager>();
+        if (skillStateManager == null)
+        {
+            Debug.LogWarning("[DeathDropTrigger] 未找到SkillStateManager，条件掉落功能将不可用");
+        }
         
         if (enableDebugLog)
         {
@@ -131,8 +143,9 @@ public class DeathDropTrigger : SpawnTrigger<ItemConfig>
             return;
         }
         
-        // 4. 执行概率抽取
-        var itemsToDrop = dropTableProvider.GetItemsToDrop(dropTable);
+        // 4. 执行概率抽取（考虑技能条件）
+        HashSet<string> activeSkills = skillStateManager?.GetActiveSkills();
+        var itemsToDrop = dropTableProvider.GetItemsToDrop(dropTable, activeSkills);
         if (itemsToDrop.Count == 0)
         {
             if (enableDebugLog)

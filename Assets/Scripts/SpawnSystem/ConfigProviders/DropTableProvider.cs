@@ -3,6 +3,15 @@ using UnityEngine;
 using Sirenix.OdinInspector;
 
 /// <summary>
+/// 掉落条件类型
+/// </summary>
+public enum DropConditionType
+{
+    Always,         // 总是掉落
+    SkillRequired   // 需要特定技能
+}
+
+/// <summary>
 /// 掉落表配置提供者 - 管理敌人类型与掉落表的映射关系
 /// 配置层：负责掉落配置的管理和查询
 /// </summary>
@@ -60,8 +69,9 @@ public class DropTableProvider : ScriptableObject, SpawnConfigProvider<ItemConfi
     /// 获取指定敌人类型的掉落物品列表
     /// </summary>
     /// <param name="enemyType">敌人类型</param>
+    /// <param name="activeSkills">当前激活的技能名称集合（可选）</param>
     /// <returns>掉落物品列表</returns>
-    public List<ItemConfig> GetItemsToDrop(EnemyType enemyType)
+    public List<ItemConfig> GetItemsToDrop(EnemyType enemyType, HashSet<string> activeSkills = null)
     {
         var dropTable = GetDropTable(enemyType);
         if (dropTable == null)
@@ -69,15 +79,16 @@ public class DropTableProvider : ScriptableObject, SpawnConfigProvider<ItemConfi
             return new List<ItemConfig>();
         }
         
-        return GetItemsToDrop(dropTable);
+        return GetItemsToDrop(dropTable, activeSkills);
     }
     
     /// <summary>
     /// 根据掉落表获取掉落物品列表
     /// </summary>
     /// <param name="dropTable">掉落表配置</param>
+    /// <param name="activeSkills">当前激活的技能名称集合（可选）</param>
     /// <returns>掉落物品列表</returns>
-    public List<ItemConfig> GetItemsToDrop(DropTableConfig dropTable)
+    public List<ItemConfig> GetItemsToDrop(DropTableConfig dropTable, HashSet<string> activeSkills = null)
     {
         if (dropTable == null)
         {
@@ -108,6 +119,16 @@ public class DropTableProvider : ScriptableObject, SpawnConfigProvider<ItemConfi
                 continue;
             }
             
+            // 检查掉落条件
+            if (!entry.CheckDropCondition(activeSkills))
+            {
+                if (enableDebugLog)
+                {
+                    Debug.Log($"[DropTableProvider] 掉落条件不满足，跳过: {entry.itemConfig.itemName} (需要技能: {entry.requiredSkillName})");
+                }
+                continue;
+            }
+            
             // 应用全局掉落率倍数
             float finalDropChance = entry.dropChance * globalDropRateMultiplier;
             
@@ -117,7 +138,9 @@ public class DropTableProvider : ScriptableObject, SpawnConfigProvider<ItemConfi
                 
                 if (enableDebugLog)
                 {
-                    Debug.Log($"[DropTableProvider] 掉落道具: {entry.itemConfig.itemName} (概率: {finalDropChance:P1})");
+                    string conditionInfo = entry.conditionType == DropConditionType.SkillRequired ? 
+                        $" (技能条件: {entry.requiredSkillName})" : "";
+                    Debug.Log($"[DropTableProvider] 掉落道具: {entry.itemConfig.itemName} (概率: {finalDropChance:P1}){conditionInfo}");
                 }
             }
         }
@@ -326,6 +349,39 @@ public class ItemDropEntry
     [MinValue(1)]
     public int weight = 1;
     
+    [Header("掉落条件")]
+    [LabelText("掉落条件类型")]
+    [Tooltip("掉落此道具的条件类型")]
+    public DropConditionType conditionType = DropConditionType.Always;
+    
+    [LabelText("需要技能名称")]
+    [Tooltip("当条件类型为SkillRequired时，需要激活的技能名称")]
+    [ShowIf("conditionType", DropConditionType.SkillRequired)]
+    public string requiredSkillName = "";
+    
+    /// <summary>
+    /// 检查掉落条件是否满足
+    /// </summary>
+    /// <param name="activeSkills">当前激活的技能名称集合</param>
+    /// <returns>是否满足掉落条件</returns>
+    public bool CheckDropCondition(HashSet<string> activeSkills)
+    {
+        switch (conditionType)
+        {
+            case DropConditionType.Always:
+                Debug.Log($"[ItemDropEntry] 检查掉落条件 - 类型: Always, 道具: {itemConfig?.itemName}, 结果: true");
+                return true;
+            case DropConditionType.SkillRequired:
+                bool hasSkill = !string.IsNullOrEmpty(requiredSkillName) && 
+                               activeSkills != null && 
+                               activeSkills.Contains(requiredSkillName);
+                Debug.Log($"[ItemDropEntry] 检查掉落条件 - 类型: SkillRequired, 道具: {itemConfig?.itemName}, 需要技能: {requiredSkillName}, 激活技能数: {activeSkills?.Count ?? 0}, 结果: {hasSkill}");
+                return hasSkill;
+            default:
+                return true;
+        }
+    }
+    
     /// <summary>
     /// 获取调试信息
     /// </summary>
@@ -333,6 +389,8 @@ public class ItemDropEntry
     public string GetDebugInfo()
     {
         string itemName = itemConfig != null ? itemConfig.itemName : "空";
-        return $"{itemName}: {dropChance:P0} (权重: {weight})";
+        string conditionInfo = conditionType == DropConditionType.SkillRequired ? 
+            $" (需要技能: {requiredSkillName})" : "";
+        return $"{itemName}: {dropChance:P0} (权重: {weight}){conditionInfo}";
     }
 }

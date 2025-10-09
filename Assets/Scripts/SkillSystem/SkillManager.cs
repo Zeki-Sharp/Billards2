@@ -15,6 +15,11 @@ public class SkillManager : MonoBehaviour
     [Tooltip("是否显示调试日志")]
     public bool enableDebugLog = true;
     
+    /// <summary>
+    /// 技能状态管理器引用
+    /// </summary>
+    private SkillStateManager skillStateManager;
+    
     // 技能实例管理
     private Dictionary<string, SkillInstance> skillInstances = new Dictionary<string, SkillInstance>();
     
@@ -22,6 +27,13 @@ public class SkillManager : MonoBehaviour
     
     void Start()
     {
+        // 查找技能状态管理器
+        skillStateManager = FindObjectOfType<SkillStateManager>();
+        if (skillStateManager == null)
+        {
+            Debug.LogWarning("[SkillManager] 未找到SkillStateManager，技能状态跟踪功能将不可用");
+        }
+        
         InitializeSkills();
         SubscribeToEvents();
     }
@@ -60,6 +72,9 @@ public class SkillManager : MonoBehaviour
             if (skillInstance != null)
             {
                 skillInstances[skillConfig.skillName] = skillInstance;
+                
+                // 通知技能状态管理器技能已激活
+                skillStateManager?.AddActiveSkill(skillConfig.skillName);
                 
                 if (enableDebugLog)
                 {
@@ -270,6 +285,9 @@ public class SkillManager : MonoBehaviour
         {
             skillInstances[skillConfig.skillName] = skillInstance;
             
+            // 通知技能状态管理器技能已激活
+            skillStateManager?.AddActiveSkill(skillConfig.skillName);
+            
             if (enableDebugLog)
             {
                 Debug.Log($"SkillManager: 添加技能 - {skillConfig.skillName}");
@@ -286,6 +304,9 @@ public class SkillManager : MonoBehaviour
         {
             skillInstances.Remove(skillName);
             activeSkills.RemoveAll(config => config.skillName == skillName);
+            
+            // 通知技能状态管理器技能已失效
+            skillStateManager?.RemoveActiveSkill(skillName);
             
             if (enableDebugLog)
             {
