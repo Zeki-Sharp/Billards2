@@ -56,26 +56,54 @@ public abstract class BaseSpawner<T> : MonoBehaviour
             return;
         }
         
-        // 计算生成位置
-        Vector3 spawnPosition = position ?? CalculateSpawnPosition();
+        // 支持重试机制
+        int maxRetries = 5;
+        bool useSpecifiedPosition = position.HasValue;
+        Vector3 specifiedPosition = position ?? Vector3.zero;
         
-        // 验证位置
-        if (!ValidateSpawnPosition(spawnPosition))
+        for (int i = 0; i < maxRetries; i++)
         {
+            Vector3 spawnPosition;
+            
+            if (useSpecifiedPosition && i == 0)
+            {
+                // 第一次尝试使用指定的位置
+                spawnPosition = specifiedPosition;
+            }
+            else
+            {
+                // 后续重试使用自动计算的位置
+                spawnPosition = CalculateSpawnPosition();
+            }
+            
+            // 验证位置
+            if (ValidateSpawnPosition(spawnPosition))
+            {
+                // 位置有效，执行生成
+                GameObject spawnedObject = InstantiateObject(data, spawnPosition, spawnParent);
+                if (spawnedObject != null)
+                {
+                    OnPostSpawn(spawnedObject, data);
+                    return; // 成功生成，退出
+                }
+            }
+            
+            // 位置无效或生成失败，记录并重试
             if (enableDebugLog)
             {
-                Debug.LogWarning($"[{GetType().Name}] 生成位置无效: {spawnPosition}");
+                if (useSpecifiedPosition && i == 0)
+                {
+                    Debug.LogWarning($"[{GetType().Name}] 指定位置无效，重试 {i + 1}/{maxRetries}: {spawnPosition}");
+                }
+                else
+                {
+                    Debug.LogWarning($"[{GetType().Name}] 生成位置无效，重试 {i + 1}/{maxRetries}: {spawnPosition}");
+                }
             }
-            return;
         }
         
-        // 实例化对象 - 直接指定位置和父对象（像旧系统一样）
-        GameObject spawnedObject = InstantiateObject(data, spawnPosition, spawnParent);
-        if (spawnedObject != null)
-        {
-            OnPostSpawn(spawnedObject, data);
-            
-        }
+        // 所有重试都失败
+        Debug.LogError($"[{GetType().Name}] 生成失败，已重试 {maxRetries} 次");
     }
     
     /// <summary>

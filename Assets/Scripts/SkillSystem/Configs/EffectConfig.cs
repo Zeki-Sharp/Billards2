@@ -56,6 +56,11 @@ public class SkillEffectConfig
                 // 治疗是瞬时效果，不需要移除条件
                 return healEffect;
                 
+            case SkillEffectType.Spawn:
+                var spawnEffect = new SpawnEffect();
+                // Spawn效果是空占位符，不需要移除条件
+                return spawnEffect;
+                
             default:
                 Debug.LogError($"不支持的效果类型: {effectType}");
                 return null;
@@ -73,6 +78,8 @@ public class SkillEffectConfig
                 return $"属性修改: {targetStat} x{modifierValue} ({modifierType})";
             case SkillEffectType.Heal:
                 return $"治疗: +{healAmount} HP";
+            case SkillEffectType.Spawn:
+                return $"生成效果: 空占位符（功能由掉落系统处理）";
             default:
                 return $"效果: {effectType}";
         }

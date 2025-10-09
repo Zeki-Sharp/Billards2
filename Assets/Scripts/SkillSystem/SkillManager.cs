@@ -23,6 +23,11 @@ public class SkillManager : MonoBehaviour
     // 技能实例管理
     private Dictionary<string, SkillInstance> skillInstances = new Dictionary<string, SkillInstance>();
     
+    /// <summary>
+    /// Spawn类型技能名称列表（用于掉落系统）
+    /// </summary>
+    private HashSet<string> spawnSkillNames = new HashSet<string>();
+    
     #region Unity生命周期
     
     void Start()
@@ -72,6 +77,16 @@ public class SkillManager : MonoBehaviour
             if (skillInstance != null)
             {
                 skillInstances[skillConfig.skillName] = skillInstance;
+                
+                // 检查是否为Spawn类型技能
+                if (skillConfig.effectConfig?.effectType == SkillEffectType.Spawn)
+                {
+                    spawnSkillNames.Add(skillConfig.skillName);
+                    if (enableDebugLog)
+                    {
+                        Debug.Log($"SkillManager: 注册Spawn技能 - {skillConfig.skillName}");
+                    }
+                }
                 
                 // 通知技能状态管理器技能已激活
                 skillStateManager?.AddActiveSkill(skillConfig.skillName);
@@ -339,6 +354,22 @@ public class SkillManager : MonoBehaviour
     public List<string> GetAllSkillNames()
     {
         return new List<string>(skillInstances.Keys);
+    }
+    
+    /// <summary>
+    /// 获取所有Spawn类型技能名称（用于掉落系统）
+    /// </summary>
+    public HashSet<string> GetSpawnSkillNames()
+    {
+        return new HashSet<string>(spawnSkillNames);
+    }
+    
+    /// <summary>
+    /// 检查指定技能是否为Spawn类型
+    /// </summary>
+    public bool IsSpawnSkill(string skillName)
+    {
+        return spawnSkillNames.Contains(skillName);
     }
     
     #endregion

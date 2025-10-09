@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using Sirenix.OdinInspector;
+using System.Linq;
 
 /// <summary>
 /// 掉落条件类型
@@ -357,7 +358,23 @@ public class ItemDropEntry
     [LabelText("需要技能名称")]
     [Tooltip("当条件类型为SkillRequired时，需要激活的技能名称")]
     [ShowIf("conditionType", DropConditionType.SkillRequired)]
+    [ValueDropdown("GetSpawnSkillNames")]
     public string requiredSkillName = "";
+    
+    /// <summary>
+    /// 获取所有可用的Spawn技能名称（用于下拉选择）
+    /// </summary>
+    private IEnumerable<ValueDropdownItem<string>> GetSpawnSkillNames()
+    {
+        var skillManager = Object.FindObjectOfType<SkillManager>();
+        if (skillManager == null)
+        {
+            return new List<ValueDropdownItem<string>>();
+        }
+        
+        var spawnSkills = skillManager.GetSpawnSkillNames();
+        return spawnSkills.Select(skillName => new ValueDropdownItem<string>(skillName, skillName));
+    }
     
     /// <summary>
     /// 检查掉落条件是否满足

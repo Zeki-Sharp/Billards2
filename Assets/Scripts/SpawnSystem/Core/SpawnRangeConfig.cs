@@ -119,14 +119,17 @@ public class SpawnRangeConfig
     /// <returns>是否有效</returns>
     public bool IsPositionValid(Vector3 position, Vector3 origin = default)
     {
+        // 添加容错范围，避免边界精度问题
+        float tolerance = 0.1f;
+        
         switch (rangeType)
         {
             case SpawnRangeType.Rectangle:
-                return position.x >= minX && position.x <= maxX && 
-                       position.y >= minY && position.y <= maxY;
+                return position.x >= (minX - tolerance) && position.x <= (maxX + tolerance) && 
+                       position.y >= (minY - tolerance) && position.y <= (maxY + tolerance);
             case SpawnRangeType.Circle:
                 float distance = position.magnitude;
-                return distance <= radius;
+                return distance <= (radius + tolerance);
             default:
                 return true;
         }

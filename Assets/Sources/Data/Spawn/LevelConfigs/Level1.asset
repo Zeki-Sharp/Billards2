@@ -36,4 +36,4 @@ MonoBehaviour:
       count: 1
     - enemyData: {fileID: 11400000, guid: 8d46072aeaab4c44fab958850bbe7872, type: 2}
       count: 2
-  loopWaves: 1
+  loopWaves: 0

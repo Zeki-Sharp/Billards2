@@ -111,23 +111,39 @@ public class ItemSpawner : BaseSpawner<ItemConfig>
             return;
         }
         
+        if (enableDebugLog)
+        {
+            Debug.Log($"[ItemSpawner] 开始批量生成 {itemConfigs.Length} 个道具，基础位置: {basePosition}");
+        }
+        
         Vector3[] positions = CalculateDropPositions(basePosition, itemConfigs.Length);
         
         for (int i = 0; i < itemConfigs.Length; i++)
         {
             if (itemConfigs[i] != null)
             {
-                Spawn(itemConfigs[i], positions[i]);
                 if (enableDebugLog)
                 {
-                    Debug.Log($"[ItemSpawner] 生成道具: {itemConfigs[i].itemName} at {positions[i]}");
+                    Debug.Log($"[ItemSpawner] 准备生成道具 {i}: {itemConfigs[i].itemName} at {positions[i]}");
                 }
+                
+                // 使用基类的Spawn方法，它会自动处理位置验证和重试
+                Spawn(itemConfigs[i], positions[i]);
+                
+                if (enableDebugLog)
+                {
+                    Debug.Log($"[ItemSpawner] ✅ 道具生成请求完成: {itemConfigs[i].itemName}");
+                }
+            }
+            else
+            {
+                Debug.LogError($"[ItemSpawner] ❌ 道具配置为空: 索引 {i}");
             }
         }
         
         if (enableDebugLog)
         {
-            Debug.Log($"[ItemSpawner] 批量生成 {itemConfigs.Length} 个道具");
+            Debug.Log($"[ItemSpawner] 批量生成完成，共处理 {itemConfigs.Length} 个道具");
         }
     }
     
@@ -268,4 +284,5 @@ public enum DropOffsetMode
     Rectangle,   // 矩形范围
     Ring         // 环形范围
 }
+
 
