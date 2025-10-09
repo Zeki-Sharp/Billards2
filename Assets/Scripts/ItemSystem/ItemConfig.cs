@@ -36,12 +36,6 @@ public class ItemConfig : ScriptableObject
     public bool isInstantEffect = true;
     
     [BoxGroup("掉落配置")]
-    [LabelText("掉落概率")]
-    [Tooltip("敌人死亡时掉落此道具的概率（0-1）")]
-    [Range(0f, 1f)]
-    public float dropChance = 0.3f;
-    
-    [BoxGroup("掉落配置")]
     [LabelText("道具预制体")]
     [Tooltip("场景中显示的道具预制体")]
     public GameObject itemPrefab;
@@ -113,7 +107,7 @@ public class ItemConfig : ScriptableObject
     public string GetDebugInfo()
     {
         string skillInfo = itemSkill != null ? itemSkill.skillName : "无技能";
-        return $"道具: {itemName} | 类型: {itemType} | 技能: {skillInfo} | 掉落率: {dropChance:P0}";
+        return $"道具: {itemName} | 类型: {itemType} | 技能: {skillInfo}";
     }
 }
 

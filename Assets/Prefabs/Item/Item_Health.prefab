@@ -12,9 +12,9 @@ GameObject:
   - component: {fileID: 6847107667792004266}
   - component: {fileID: 2929356743793340663}
   - component: {fileID: 528563128139378313}
-  m_Layer: 0
+  m_Layer: 2
   m_Name: Item_Health
-  m_TagString: Untagged
+  m_TagString: Range
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0

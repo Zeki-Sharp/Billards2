@@ -15,12 +15,16 @@ public class ItemPickup : MonoBehaviour
     [Tooltip("是否显示调试日志")]
     public bool enableDebugLog = true;
     
-    private bool isPickedUp = false; // 防止重复拾取
+    private bool isPickedUp = false; // 防止重复拾取（仅限当前实例）
+    private string instanceId; // 实例唯一标识
     
     #region Unity生命周期
     
     void Start()
     {
+        // 生成实例唯一ID
+        instanceId = System.Guid.NewGuid().ToString();
+        
         // 验证配置
         if (itemConfig == null)
         {
@@ -44,7 +48,7 @@ public class ItemPickup : MonoBehaviour
         
         if (enableDebugLog)
         {
-            Debug.Log($"[ItemPickup] 道具初始化成功: {itemConfig.itemName}");
+            Debug.Log($"[ItemPickup] 道具初始化成功: {itemConfig.itemName} (实例ID: {instanceId})");
         }
     }
     
@@ -79,7 +83,7 @@ public class ItemPickup : MonoBehaviour
         
         if (enableDebugLog)
         {
-            Debug.Log($"[ItemPickup] 🎁 玩家拾取道具: {itemConfig.itemName}");
+            Debug.Log($"[ItemPickup] 🎁 玩家拾取道具: {itemConfig.itemName} (实例ID: {instanceId})");
         }
         
         // 1. 应用道具效果

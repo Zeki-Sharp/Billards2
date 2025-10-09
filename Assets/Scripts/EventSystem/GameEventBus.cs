@@ -327,6 +327,19 @@ public static class GameEventBus
     /// <param name="deadObject">死亡对象</param>
     public static void PublishSimpleDeath(string deathType, Vector3 position, GameObject deadObject)
     {
+        // 获取敌人类型
+        EnemyType enemyType = EnemyType.Normal; // 默认为普通敌人
+        if (deadObject != null)
+        {
+            var enemyBehavior = deadObject.GetComponent<EnemyBehavior>();
+            if (enemyBehavior != null)
+            {
+                // TODO: 从EnemyBehavior获取敌人类型
+                // 目前默认使用Normal
+                enemyType = EnemyType.Normal;
+            }
+        }
+        
         var deathData = new DeathData
         {
             DeathType = deathType,
@@ -334,7 +347,10 @@ public static class GameEventBus
             Direction = Vector3.zero,
             DeadObject = deadObject,
             DeadObjectTag = deadObject?.tag ?? "",
-            DeathTime = Time.time
+            DeathTime = Time.time,
+            // 新增字段
+            target = deadObject,
+            enemyType = enemyType
         };
         PublishDeath(deathData);
     }

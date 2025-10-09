@@ -7,6 +7,17 @@ using UnityEngine;
 /// </summary>
 
 /// <summary>
+/// 敌人类型枚举
+/// </summary>
+public enum EnemyType
+{
+    Normal,     // 普通敌人
+    Elite,      // 精英敌人
+    Boss,       // Boss敌人
+    Special     // 特殊敌人
+}
+
+/// <summary>
 /// 特效事件定义（简化版）
 /// 用于非攻击相关的特效，如环境特效、UI特效等
 /// 攻击相关特效通过 AttackData 处理
@@ -58,6 +69,10 @@ public struct DeathData
     public GameObject DeadObject;   // 死亡对象
     public string DeadObjectTag;    // 死亡对象标签
     public float DeathTime;         // 死亡时间戳
+    
+    // 新增字段，用于道具掉落系统
+    public GameObject target;       // 死亡目标（与DeadObject相同，保持兼容性）
+    public EnemyType enemyType;     // 敌人类型
 }
 
 /// <summary>
