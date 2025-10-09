@@ -294,8 +294,9 @@ public class SkillInstance
             bool shouldReset = resetCondition.ShouldReset(eventData);
             if (shouldReset)
             {
-                condition.Reset();
-                Debug.Log($"[SkillInstance] 🔄 回合结束，重置触发条件 - {config.skillName}");
+                condition.Reset();  // 重置触发条件
+                effect.Reset();     // 重置效果状态
+                Debug.Log($"[SkillInstance] 🔄 回合结束，重置触发条件和效果 - {config.skillName}");
             }
         }
     }

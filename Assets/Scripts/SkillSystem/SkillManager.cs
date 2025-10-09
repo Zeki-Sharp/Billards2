@@ -71,6 +71,10 @@ public class SkillManager : MonoBehaviour
         if (enableDebugLog)
         {
             Debug.Log($"SkillManager: 初始化完成，共加载 {skillInstances.Count} 个技能");
+            foreach (var skillName in skillInstances.Keys)
+            {
+                Debug.Log($"SkillManager: 已加载技能 - {skillName}");
+            }
         }
     }
     
