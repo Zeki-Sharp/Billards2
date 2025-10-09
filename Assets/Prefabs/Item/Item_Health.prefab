@@ -14,7 +14,7 @@ GameObject:
   - component: {fileID: 528563128139378313}
   m_Layer: 2
   m_Name: Item_Health
-  m_TagString: Range
+  m_TagString: Item
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
