@@ -10,8 +10,6 @@ public class CollisionTrigger : ITrigger
     public string TriggerName => "CollisionTrigger";
     
     private string targetTag = "Enemy"; // 默认目标标签
-    private bool useAttackTypeFilter = true; // 是否使用攻击类型过滤
-    private string attackType = "Hit"; // 攻击类型过滤
     
     /// <summary>
     /// 设置目标标签
@@ -21,18 +19,6 @@ public class CollisionTrigger : ITrigger
     {
         targetTag = tag;
         Debug.Log($"[{TriggerName}] 设置目标标签: {targetTag}");
-    }
-    
-    /// <summary>
-    /// 设置攻击类型过滤
-    /// </summary>
-    /// <param name="useFilter">是否使用攻击类型过滤</param>
-    /// <param name="attackType">攻击类型</param>
-    public void SetAttackTypeFilter(bool useFilter, string attackType)
-    {
-        useAttackTypeFilter = useFilter;
-        this.attackType = attackType;
-        Debug.Log($"[{TriggerName}] 设置攻击类型过滤: {useFilter}, 类型: {attackType}");
     }
     
     /// <summary>
@@ -53,31 +39,17 @@ public class CollisionTrigger : ITrigger
         // 检查事件数据类型
         if (eventData is AttackData attackData)
         {
-            // 检查攻击类型过滤（如果启用）
-            bool attackTypeMatches = true;
-            if (useAttackTypeFilter)
-            {
-                attackTypeMatches = attackData.AttackType == attackType;
-            }
+            // 检查目标标签是否匹配
+            bool tagMatches = string.IsNullOrEmpty(targetTag) || attackData.TargetTag == targetTag;
             
-            if (attackTypeMatches)
+            if (tagMatches)
             {
-                // 检查目标标签是否匹配
-                bool tagMatches = string.IsNullOrEmpty(targetTag) || attackData.TargetTag == targetTag;
-                
-                if (tagMatches)
-                {
-                    Debug.Log($"[{TriggerName}] 检测到碰撞事件: {attackData.AttackType} at {attackData.Position}, 目标标签: {attackData.TargetTag}");
-                    return true;
-                }
-                else
-                {
-                    Debug.Log($"[{TriggerName}] 碰撞事件目标标签不匹配: 期望={targetTag}, 实际={attackData.TargetTag}");
-                }
+                Debug.Log($"[{TriggerName}] 检测到碰撞事件: {attackData.AttackType} at {attackData.Position}, 目标标签: {attackData.TargetTag}");
+                return true;
             }
             else
             {
-                Debug.Log($"[{TriggerName}] 攻击类型不匹配: 期望={attackType}, 实际={attackData.AttackType}");
+                Debug.Log($"[{TriggerName}] 碰撞事件目标标签不匹配: 期望={targetTag}, 实际={attackData.TargetTag}");
             }
             
             return false;

@@ -17,16 +17,6 @@ public class TriggerConfig
     [Tooltip("检测与哪个标签的物体碰撞")]
     public string targetTag = "Enemy";
     
-    [ShowIf("triggerType", TriggerType.Collision)]
-    [LabelText("使用攻击类型过滤")]
-    [Tooltip("是否只检测特定类型的碰撞")]
-    public bool useAttackTypeFilter = true;
-    
-    [ShowIf("@triggerType == TriggerType.Collision && useAttackTypeFilter")]
-    [LabelText("攻击类型")]
-    [Tooltip("攻击类型过滤（如果启用）")]
-    public string attackType = "Hit";
-    
     [ShowIf("triggerType", TriggerType.Kill)]
     [LabelText("击杀目标标签")]
     [Tooltip("检测击杀哪个标签的物体")]
@@ -48,7 +38,6 @@ public class TriggerConfig
                 var collisionTrigger = new CollisionTrigger();
                 // 传递配置参数给触发器实例
                 collisionTrigger.SetTargetTag(targetTag);
-                collisionTrigger.SetAttackTypeFilter(useAttackTypeFilter, attackType);
                 return collisionTrigger;
                 
             case TriggerType.Kill:
@@ -107,10 +96,6 @@ public class TriggerConfig
         switch (triggerType)
         {
             case TriggerType.Collision:
-                if (useAttackTypeFilter)
-                {
-                    return $"碰撞触发器: 标签={targetTag}, 类型={attackType}";
-                }
                 return $"碰撞触发器: 标签={targetTag}";
                 
             case TriggerType.Kill:
