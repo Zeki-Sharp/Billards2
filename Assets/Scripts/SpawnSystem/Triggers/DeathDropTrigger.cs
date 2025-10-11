@@ -63,7 +63,7 @@ public class DeathDropTrigger : SpawnTrigger<ItemConfig>
         itemSpawner.dropOffsetRange = dropOffsetRange;
         
         // 查找技能状态管理器
-        skillStateManager = FindObjectOfType<SkillStateManager>();
+        skillStateManager = FindFirstObjectByType<SkillStateManager>();
         if (skillStateManager == null)
         {
             Debug.LogWarning("[DeathDropTrigger] 未找到SkillStateManager，条件掉落功能将不可用");

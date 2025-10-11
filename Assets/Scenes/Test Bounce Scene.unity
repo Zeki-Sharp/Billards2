@@ -176,7 +176,7 @@ MonoBehaviour:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
-  showDebugInfo: 1
+  showDebugInfo: 0
 --- !u!4 &12911529
 Transform:
   m_ObjectHideFlags: 0
@@ -241,7 +241,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   systemInfo: "\u6B64\u7CFB\u7EDF\u4F7F\u7528\u6CE8\u518C\u673A\u5236 + GameEventBus
     + \u76F4\u63A5\u5F15\u7528 \u67B6\u6784\n\u5168\u5C40\u7279\u6548\uFF1A\u955C\u5934\u6447\u6643\u3001\u5168\u5C40\u97F3\u6548\u7B49\uFF08\u5728EffectManager\u4E0A\uFF09\n\u5BF9\u8C61\u7279\u6548\uFF1A\u7C92\u5B50\u7279\u6548\u3001\u5BF9\u8C61\u52A8\u753B\u7B49\uFF08\u5728\u76EE\u6807\u5BF9\u8C61\u4E0A\uFF09\n\u914D\u7F6E\u65B9\u5F0F\uFF1A\u5728Inspector\u4E2D\u76F4\u63A5\u62D6\u62FDMMF_Player\u7EC4\u4EF6"
-  enableDebugLog: 1
+  enableDebugLog: 0
   globalEffects:
   - effectType: 0
     mmfPlayer: {fileID: 842057709}
@@ -743,7 +743,7 @@ MonoBehaviour:
   currentWave: 1
   maxWaves: 10
   winScore: 1000
-  showDebugInfo: 1
+  showDebugInfo: 0
 --- !u!4 &444653467
 Transform:
   m_ObjectHideFlags: 0
@@ -8080,7 +8080,7 @@ MonoBehaviour:
   telegraphingEnemies: []
   activeEnemies: []
   phaseInterval: 1
-  showDebugInfo: 1
+  showDebugInfo: 0
 --- !u!4 &889532727
 Transform:
   m_ObjectHideFlags: 0
@@ -8135,9 +8135,9 @@ MonoBehaviour:
     radius: 8
     enablePositionOffset: 1
     offsetRange: 0.5
-  enableDebugLog: 1
+  enableDebugLog: 0
   enemyParent: {fileID: 1579586301}
-  showDebugInfo: 1
+  showDebugInfo: 0
 --- !u!4 &931985108
 Transform:
   m_ObjectHideFlags: 0
@@ -8261,7 +8261,7 @@ MonoBehaviour:
     radius: 8
     enablePositionOffset: 1
     offsetRange: 0.5
-  enableDebugLog: 1
+  enableDebugLog: 0
   itemParent: {fileID: 369649107}
   enableDropPositionOffset: 1
   dropOffsetRange: 0.5
@@ -8394,7 +8394,7 @@ MonoBehaviour:
   referenceResolution: {x: 1920, y: 1080}
   poolSize: 30
   autoExpandPool: 1
-  enableDebugLog: 1
+  enableDebugLog: 0
 --- !u!4 &1354289661
 Transform:
   m_ObjectHideFlags: 0
@@ -8443,7 +8443,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 20ef6b51707253b4bbf5e4ff06cc86a6, type: 2}
   - {fileID: 11400000, guid: 7398b80240c9a7e4bbb2f37d3adac042, type: 2}
   - {fileID: 11400000, guid: 0dc5258c6893dc240a6eb62403a50d99, type: 2}
-  enableDebugLog: 1
+  enableDebugLog: 0
 --- !u!4 &1357681023
 Transform:
   m_ObjectHideFlags: 0
@@ -8511,7 +8511,7 @@ MonoBehaviour:
   targetCamera: {fileID: 859979524}
   reflectionCalculator: {fileID: 1360613287}
   aimLineRenderer: {fileID: 1360613289}
-  showDebugInfo: 1
+  showDebugInfo: 0
 --- !u!114 &1360613287
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -8631,7 +8631,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 23456789012345678901234567890123, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  showDebugInfo: 1
+  showDebugInfo: 0
 --- !u!1 &1370478849
 GameObject:
   m_ObjectHideFlags: 0
@@ -9821,7 +9821,6 @@ Transform:
   m_Children:
   - {fileID: 444653467}
   - {fileID: 1361499548}
-  - {fileID: 2134845609}
   - {fileID: 38867660}
   - {fileID: 1360613285}
   - {fileID: 1354289661}
@@ -10348,7 +10347,7 @@ MonoBehaviour:
   - effectType: 2
     mmfPlayer: {fileID: 1398340947}
     enableDebugLog: 0
-  enableDebugLog: 1
+  enableDebugLog: 0
 --- !u!1 &1815985308
 GameObject:
   m_ObjectHideFlags: 0
@@ -10808,50 +10807,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &2134845608
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 2134845609}
-  - component: {fileID: 2134845610}
-  m_Layer: 0
-  m_Name: GameInitializer
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &2134845609
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2134845608}
-  serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0.4747219, y: 0.21998072, z: 0.08004183}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 1787785598}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &2134845610
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2134845608}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 78901234567890123456789012345678, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!1001 &5924173280866626688
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -10864,9 +10819,17 @@ PrefabInstance:
       propertyPath: m_BlockingMask.m_Bits
       value: 63
       objectReference: {fileID: 0}
+    - target: {fileID: 1984854761051162356, guid: 2d86053af5e50c446a06f75cbdecb65b, type: 3}
+      propertyPath: enableDebugLog
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 3251294568684493535, guid: 2d86053af5e50c446a06f75cbdecb65b, type: 3}
       propertyPath: m_Name
       value: Player
+      objectReference: {fileID: 0}
+    - target: {fileID: 4109773013413894966, guid: 2d86053af5e50c446a06f75cbdecb65b, type: 3}
+      propertyPath: showDebugInfo
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 5182198335736264703, guid: 2d86053af5e50c446a06f75cbdecb65b, type: 3}
       propertyPath: m_LocalPosition.x
@@ -10906,6 +10869,10 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5182198335736264703, guid: 2d86053af5e50c446a06f75cbdecb65b, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7844486164170001436, guid: 2d86053af5e50c446a06f75cbdecb65b, type: 3}
+      propertyPath: showDebugInfo
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 8772439200271523911, guid: 2d86053af5e50c446a06f75cbdecb65b, type: 3}
