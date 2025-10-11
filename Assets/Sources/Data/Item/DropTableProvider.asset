@@ -21,6 +21,11 @@ MonoBehaviour:
       weight: 1
       conditionType: 1
       requiredSkillName: "\u51FB\u6740\u6389\u843D\u56DE\u8840"
+    - itemConfig: {fileID: 11400000, guid: e9acd9472305cd84599525d60bf6a7f7, type: 2}
+      dropChance: 1
+      weight: 1
+      conditionType: 0
+      requiredSkillName: 
   globalDropRateMultiplier: 1
   maxDropCount: 100
   enableDebugLog: 1
