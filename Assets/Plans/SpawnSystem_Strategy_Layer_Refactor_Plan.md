@@ -107,24 +107,31 @@ Wave2: [敌人C, 敌人C, 敌人C, 敌人C, 敌人C]
 → 每次生成: [治疗药水, 治疗药水]
 ```
 
-### 3. 概率生成策略（ProbabilisticSpawnStrategy）
+### 3. 条件掉落策略（ConditionalDropStrategy）
 
 **适用场景：** 击杀掉落
 
 **核心思路：**
-- 配置概率表（每个道具有独立概率）
-- 每次调用时执行概率判定
-- 支持条件判定（如技能影响）
-- 适合随机性、不确定的生成
+- 配置掉落表（支持条件判定）
+- 检查技能条件（如需要特定技能才能掉落）
+- 可选概率判定（可配置为100%必掉）
+- 适合基于条件的掉落生成
 
 **配置示例：**
 ```
 掉落表:
-- 小血瓶: 30%
-- 大血瓶: 10%
-- 伤害增益: 15%
-→ 每次掉落: 随机抽取（可能0-3个）
+- 小血瓶: 
+    conditionType: Always
+    dropChance: 1.0 (100%必掉)
+- 特殊材料: 
+    conditionType: SkillRequired
+    requiredSkillName: "采集技能"
+    dropChance: 1.0 (有技能时100%掉落)
 ```
+
+**注意：** 
+- 支持概率配置（`dropChance: 0-1`），但也可以配置为100%必掉
+- 重点在于"条件判定"而非"概率"
 
 ---
 
@@ -201,7 +208,9 @@ ItemSpawner（实例化道具）
   ↓
 DeathDropTrigger（检查是否应该掉落）
   ↓
-ProbabilisticSpawnStrategy（概率抽取掉落道具）
+ConditionalDropStrategy（条件判定 + 掉落道具）
+  ├─ 检查技能条件（是否有需要的技能）
+  └─ 可选概率判定（可配置为100%）
   ↓
 RelativeSpaceRangeConfig（计算相对死亡位置的偏移）
   ↓
@@ -236,31 +245,6 @@ ItemSpawner（实例化道具）
 
 ---
 
-## 实施方向
-
-### 第一步：定义生成方式接口
-- 创建 `ISpawnStrategy<T>` 接口
-- 定义 `GetSpawnList()` 方法
-
-### 第二步：实现三种策略
-- `ListSpawnStrategy`（复用现有的列表配置）
-- `FixedSpawnStrategy`（新增，支持技能道具）
-- `ProbabilisticSpawnStrategy`（重构现有的掉落逻辑）
-
-### 第三步：调整范围配置
-- `SpawnRangeConfig.GetRandomPosition()` → `GetRandomLocalOffset()`
-- `BaseSpawner.CalculateSpawnPosition()` 支持传入origin参数
-- 区分世界坐标和相对坐标使用场景
-
-### 第四步：重构现有Trigger
-- `WaveSpawnTrigger` 使用 `ListSpawnStrategy`
-- `DeathDropTrigger` 使用 `ProbabilisticSpawnStrategy`
-
-### 第五步：实现技能道具生成
-- 创建 `SkillItemSpawnTrigger`
-- 使用 `FixedSpawnStrategy`
-- 集成技能系统的激活检查
-
 ---
 
 ## 配置示例对比
@@ -291,7 +275,7 @@ ConfigProvider（纯数据）:
 SpawnStrategy（生成逻辑）:
 - ListSpawnStrategy: 返回预设列表
 - FixedSpawnStrategy: 生成固定数量
-- ProbabilisticSpawnStrategy: 概率抽取
+- ConditionalDropStrategy: 条件判定 + 可选概率
 
 Trigger（触发时机）:
 - WaveSpawnTrigger: 回合开始
@@ -338,4 +322,405 @@ Trigger → SpawnStrategy（生成逻辑） → RangeConfig（位置） → Spaw
 4. **文档先行**：先完善接口文档，团队理解一致后再实施
 
 通过这次重构，生成系统将达到真正的"高内聚、低耦合"，为后续功能开发提供坚实基础。
+
+---
+
+## 重要问题澄清
+
+### 问题1：Trigger概念区分
+
+**现状分析：**
+- **技能系统的 `ITrigger`**：
+  - 职责：轻量级事件**过滤器**
+  - 模式：被动式（被SkillManager调用）
+  - 特点：只检查事件，不执行动作
+  - 示例：`KillTrigger.CheckEvent(deathData)` → 返回true/false
+
+- **生成系统的 `SpawnTrigger`**：
+  - 职责：重量级事件**监听器 + 决策器**
+  - 模式：主动式（自己订阅GameEventBus）
+  - 特点：监听、决策、调用生成器
+  - 示例：`DeathDropTrigger` 订阅死亡事件 → 查询配置 → 调用Spawner
+
+**结论：** ✅ **两者概念完全不同，不存在混淆**
+- `ITrigger` = 事件过滤器（Skill系统专用）
+- `SpawnTrigger` = 事件监听器（Spawn系统专用）
+- 命名虽然都叫Trigger，但职责和使用方式完全不同
+- **建议**：可以考虑将 `SpawnTrigger` 改名为 `SpawnController` 或 `SpawnEventHandler` 来避免混淆，但这不是必须的
+
+---
+
+### 问题2：现有技能道具生成实现
+
+**现状：已经实现了"技能解锁掉落"功能**
+
+#### 当前实现机制
+```
+死亡事件触发
+  ↓
+DeathDropTrigger.OnEnemyDeath()
+  ↓
+获取激活技能: skillStateManager.GetActiveSkills()
+  ↓
+DropTableProvider.GetItemsToDrop(dropTable, activeSkills)
+  ↓
+遍历掉落条目:
+  - 检查条件: entry.CheckDropCondition(activeSkills)
+    - DropConditionType.Always: 总是可掉落
+    - DropConditionType.SkillRequired: 需要特定技能才可掉落
+  - 概率判定: Random.Range(0f, 1f) <= dropChance
+  ↓
+返回掉落道具列表
+```
+
+#### 配置示例
+```
+掉落表:
+├── 小血瓶
+│   ├── conditionType: Always
+│   └── dropChance: 30%
+│
+└── 特殊材料
+    ├── conditionType: SkillRequired
+    ├── requiredSkillName: "采集技能"
+    └── dropChance: 100%  ← 有技能时100%掉落
+```
+
+**这个实现的本质：** 技能决定"是否进入掉落池"，而不是"每回合主动生成"
+
+#### 与新需求的区别
+
+| 维度 | 现有实现 | 新需求（技能每回合生成道具） |
+|------|---------|--------------------------|
+| **触发时机** | 敌人死亡事件 | 玩家回合开始 |
+| **生成方式** | 概率掉落（可能0个） | 固定生成（必定2个） |
+| **技能作用** | 解锁掉落资格 | 触发主动生成 |
+| **适用策略** | ProbabilisticSpawnStrategy | FixedSpawnStrategy |
+
+**结论：** ⚠️ **现有实现和新需求是两种不同的机制，不冲突**
+- **现有实现**：技能控制的"被动掉落"（死亡触发 + 技能解锁）
+- **新需求**：技能控制的"主动生成"（回合触发 + 技能激活）
+- 两者可以共存，服务不同的游戏场景
+
+**集成方案：**
+```
+技能系统影响生成系统的两种方式:
+
+方式1：技能解锁掉落（已实现）
+├── 触发: 敌人死亡事件
+├── 机制: 技能解锁特定道具的掉落资格
+└── 策略: ProbabilisticSpawnStrategy（概率掉落）
+
+方式2：技能主动生成（待实现）
+├── 触发: 玩家回合开始
+├── 机制: 技能激活时每回合生成固定道具
+└── 策略: FixedSpawnStrategy（固定生成）
+```
+
+---
+
+### 问题3：掉落概率逻辑检查
+
+**用户需求：** "不需要实现概率掉落"
+
+**现状检查：**
+
+#### 当前实现包含概率逻辑
+```csharp
+// DropTableProvider.cs 第136行
+if (Random.Range(0f, 1f) <= finalDropChance)
+{
+    itemsToDrop.Add(entry.itemConfig);
+}
+```
+
+**配置结构：**
+```
+ItemDropEntry:
+├── itemConfig: 道具配置
+├── dropChance: 0-1 的概率值
+├── weight: 权重（用于排序）
+└── conditionType: 掉落条件（Always/SkillRequired）
+```
+
+#### 需要明确的问题
+
+**场景1：击杀掉落是否需要概率？**
+- 如果需要：保持现有实现
+- 如果不需要：可以将所有 `dropChance` 设为 1.0（100%），但保留概率逻辑框架
+
+**场景2：技能主动生成是否需要概率？**
+- 根据描述"每回合生成2个指定道具"，这是**固定生成，不需要概率**
+- 使用 `FixedSpawnStrategy`，完全绕过概率逻辑
+
+#### 调整建议
+
+**方案A：保留概率框架，配置为必定掉落**
+```
+优势：
+- 保持系统灵活性
+- 未来可以轻松添加概率掉落
+- 当前配置 dropChance=1.0 即可
+
+配置示例：
+掉落表:
+├── 小血瓶: dropChance=1.0 (100%掉落)
+└── 大血瓶: dropChance=1.0 (100%掉落)
+```
+
+**方案B：移除概率逻辑，简化为固定掉落**
+```
+优势：
+- 代码更简单
+- 策划配置更直观
+
+调整：
+- 移除 `dropChance` 字段
+- 移除概率判定逻辑
+- 改为"每次必掉"
+
+风险：
+- 失去概率掉落的扩展性
+- 如果未来需要概率，需要重新实现
+```
+
+**方案C：根据conditionType决定是否概率判定**
+```
+逻辑：
+- DropConditionType.Always: 检查通过后100%掉落（不走概率）
+- DropConditionType.SkillRequired: 技能检查通过后100%掉落（不走概率）
+
+调整：
+if (entry.CheckDropCondition(activeSkills))
+{
+    // 直接添加，不判断概率
+    itemsToDrop.Add(entry.itemConfig);
+}
+```
+
+**推荐：方案A**
+- 保留框架，配置为1.0
+- 既满足当前"不需要概率"的需求
+- 又保持未来扩展的可能性
+- 代码改动最小
+
+---
+
+## 最终澄清总结
+
+### ✅ Trigger概念：无混淆
+- 技能系统的 `ITrigger` 和生成系统的 `SpawnTrigger` 职责不同
+- 建议：如果觉得命名容易混淆，可以将 `SpawnTrigger` 改名为 `SpawnEventHandler`
+
+### ✅ 技能道具生成：两种机制，不冲突
+- **现有**："技能解锁掉落"（死亡触发 + 概率掉落）
+- **新增**："技能主动生成"（回合触发 + 固定生成）
+- 两者使用不同的Strategy，可以并存
+
+### ⚠️ 概率逻辑：需要明确需求
+- **当前实现**：支持概率掉落
+- **如果不需要概率**：建议保留框架，配置 `dropChance=1.0`
+- **技能主动生成**：使用 `FixedSpawnStrategy`，完全不涉及概率
+
+### 更新后的三种策略分类
+
+#### 1. ListSpawnStrategy（列表生成）
+- **用途**：敌人波次生成
+- **特点**：预设完整列表，无概率
+
+#### 2. FixedSpawnStrategy（固定生成）
+- **用途**：技能主动生成道具
+- **特点**：固定种类+数量，无概率
+
+#### 3. ConditionalDropStrategy（条件掉落）← 重命名
+- **用途**：击杀掉落
+- **特点**：技能条件判定 + 可选概率
+- **灵活性**：可配置为100%掉落（dropChance=1.0）
+
+---
+
+## 分阶段实施计划
+
+### 阶段0：准备工作（0.5天）
+**目标：** 创建基础架构和接口定义
+
+**任务清单：**
+- [ ] 创建目录结构 `Assets/Scripts/SpawnSystem/Strategies/`
+- [ ] 定义 `ISpawnStrategy<T>` 接口
+- [ ] 编写策略系统架构文档
+
+**验收标准：**
+- 策略接口定义清晰，注释完整
+- 编译通过，无错误
+
+---
+
+### 阶段1：实现生成策略层（1天）
+**目标：** 实现三种生成策略，为重构提供基础
+
+**任务清单：**
+- [ ] 实现 `ListSpawnStrategy<T>`（列表生成策略）
+- [ ] 实现 `FixedSpawnStrategy<T>`（固定生成策略）
+- [ ] 重构现有掉落逻辑为 `ConditionalDropStrategy`（条件掉落策略）
+- [ ] 编写策略单元测试
+
+**验收标准：**
+- 三种策略可以独立工作
+- 单元测试通过
+- 与现有系统无冲突
+
+**风险点：**
+- 低风险，纯新增代码
+
+---
+
+### 阶段2：调整范围配置（0.5天）
+**目标：** 支持相对坐标生成，解决"相对于死亡位置生成"需求
+
+**任务清单：**
+- [ ] 修改 `SpawnRangeConfig.GetRandomPosition()` → `GetRandomLocalOffset()`
+- [ ] 更新 `BaseSpawner.CalculateSpawnPosition()` 支持传入origin参数
+- [ ] 创建 `RelativeSpaceRangeConfig` 和 `WorldSpaceRangeConfig`
+- [ ] 测试两种坐标模式
+
+**验收标准：**
+- 世界坐标生成正常工作
+- 相对坐标生成正常工作
+- 现有敌人生成功能不受影响
+
+**风险点：**
+- ⚠️ 中等风险 - 修改核心位置计算逻辑
+- **缓解措施**：保留原有方法作为fallback，充分测试
+
+---
+
+### 阶段3：重构现有Trigger（1天）
+**目标：** 将现有Trigger迁移到新架构
+
+**任务清单：**
+- [ ] `WaveSpawnTrigger` 使用 `ListSpawnStrategy`
+- [ ] `DeathDropTrigger` 使用 `ConditionalDropStrategy`
+- [ ] 保持现有概率逻辑不变（配置 `dropChance=1.0` 实现固定掉落）
+- [ ] 集成测试现有功能
+
+**验收标准：**
+- 敌人波次生成功能完全正常
+- 击杀掉落功能完全正常
+- 性能无明显下降
+
+**风险点：**
+- ⚠️ 中等风险 - 改动现有调用流程
+- **缓解措施**：保留原有方法作为fallback，添加Debug日志对比
+
+---
+
+### 阶段4：实现技能主动生成（1天）
+**目标：** 实现"技能每回合生成固定道具"功能
+
+**任务清单：**
+- [ ] 创建 `SkillItemSpawnTrigger`（订阅玩家回合开始事件）
+- [ ] 使用 `FixedSpawnStrategy`（固定种类+数量，无概率）
+- [ ] 集成技能系统的激活检查
+- [ ] 配置技能道具生成参数
+
+**验收标准：**
+- 玩家携带技能时，每回合生成指定道具
+- 技能未激活时不生成道具
+- 生成位置在世界坐标范围内
+
+**风险点：**
+- 低风险 - 纯新增功能，不影响现有系统
+
+---
+
+### 阶段5：测试与验证（0.5天）
+**目标：** 确保所有功能正常工作，无回退
+
+**测试项目：**
+- [ ] 敌人波次生成正常（初始敌人、波次敌人、循环）
+- [ ] 击杀掉落正常（基础掉落、技能解锁掉落）
+- [ ] 技能主动生成正常（回合触发、技能检查）
+- [ ] 位置生成正确（世界坐标、相对坐标）
+- [ ] 性能测试（大量生成无卡顿）
+
+**验收标准：**
+- 所有现有功能正常工作
+- 新功能按设计实现
+- 无新增Bug
+- 帧率稳定
+
+---
+
+### 阶段6：优化与文档（0.5天）
+**目标：** 完善系统和文档
+
+**任务清单：**
+- [ ] 优化生成性能
+- [ ] 清理测试代码和Debug日志
+- [ ] 编写完整的系统使用文档
+- [ ] 更新配置说明
+
+**验收标准：**
+- 文档完整清晰
+- 代码注释规范
+- 无冗余代码
+
+---
+
+## 时间估算
+
+### 总计：约 4.5-5 工作日
+
+| 阶段 | 预计时间 | 累计时间 |
+|------|---------|---------|
+| 阶段0：准备工作 | 0.5天 | 0.5天 |
+| 阶段1：实现生成策略层 | 1天 | 1.5天 |
+| 阶段2：调整范围配置 | 0.5天 | 2天 |
+| 阶段3：重构现有Trigger | 1天 | 3天 |
+| 阶段4：实现技能主动生成 | 1天 | 4天 |
+| 阶段5：测试与验证 | 0.5天 | 4.5天 |
+| 阶段6：优化与文档 | 0.5天 | **5天** |
+
+---
+
+## 关键决策点
+
+### 1. 概率处理策略
+**决策：** 保持现有概率逻辑不变
+- **击杀掉落**：保持现有 `DropTableProvider` 的概率机制
+- **配置方式**：设置 `dropChance=1.0` 实现固定掉落
+- **技能主动生成**：使用 `FixedSpawnStrategy`，完全无概率
+
+### 2. Trigger命名
+**决策：** 保持现有命名
+- **理由**：虽然与技能系统的 `ITrigger` 同名，但职责完全不同，不会造成实际混淆
+- **可选**：如果团队认为容易混淆，可在阶段6重命名为 `SpawnEventHandler`
+
+### 3. 向后兼容
+**决策：** 渐进式重构，保留fallback
+- **策略**：每个阶段保留原有接口作为fallback
+- **验证**：充分测试后再删除旧代码
+- **风险控制**：使用Git分支管理，确保可以快速回退
+
+---
+
+## 成功标准
+
+### 功能完整性
+- [ ] 敌人波次生成功能完全正常
+- [ ] 击杀掉落功能完全正常（包括技能解锁掉落）
+- [ ] 技能主动生成功能正常工作
+- [ ] 所有现有功能无回退
+
+### 架构质量
+- [ ] 四层架构清晰，职责分离明确
+- [ ] 三种策略覆盖所有生成场景
+- [ ] 范围配置支持世界坐标和相对坐标
+- [ ] 代码复用性显著提升
+
+### 扩展性
+- [ ] 易于添加新的生成策略
+- [ ] 易于添加新的触发器
+- [ ] 配置灵活，策划友好
+- [ ] 支持运行时动态调整
 
