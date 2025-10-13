@@ -63,7 +63,7 @@ public class DeathDropTrigger : SpawnTrigger<ItemConfig>
         itemSpawner.dropOffsetRange = dropOffsetRange;
         
         // 查找技能状态管理器
-        skillStateManager = FindObjectOfType<SkillStateManager>();
+        skillStateManager = FindFirstObjectByType<SkillStateManager>();
         if (skillStateManager == null)
         {
             Debug.LogWarning("[DeathDropTrigger] 未找到SkillStateManager，条件掉落功能将不可用");
@@ -156,7 +156,7 @@ public class DeathDropTrigger : SpawnTrigger<ItemConfig>
         }
         
         // 5. 生成道具
-        SpawnDroppedItems(itemsToDrop, deathData.Position);
+        SpawnDroppedItems(itemsToDrop, deathData.Position, deathData.enemyType);
         
         if (enableDebugLog)
         {
@@ -191,7 +191,8 @@ public class DeathDropTrigger : SpawnTrigger<ItemConfig>
     /// </summary>
     /// <param name="itemsToDrop">要掉落的道具列表</param>
     /// <param name="deathPosition">死亡位置</param>
-    private void SpawnDroppedItems(List<ItemConfig> itemsToDrop, Vector3 deathPosition)
+    /// <param name="enemyType">敌人类型（用于获取对应的掉落范围配置）</param>
+    private void SpawnDroppedItems(List<ItemConfig> itemsToDrop, Vector3 deathPosition, EnemyType enemyType)
     {
         if (itemsToDrop == null || itemsToDrop.Count == 0)
         {
@@ -202,12 +203,51 @@ public class DeathDropTrigger : SpawnTrigger<ItemConfig>
         // 转换为数组
         ItemConfig[] itemsArray = itemsToDrop.ToArray();
         
-        // 调用ItemSpawner批量生成
-        itemSpawner.SpawnItems(itemsArray, deathPosition);
+        // 从DropTableProvider获取对应敌人类型的掉落范围配置
+        var dropRange = dropTableProvider.GetDropRange(enemyType);
+        
+        // 根据范围配置生成位置（掉落通常使用相对坐标，以死亡位置为原点）
+        Vector3 spawnPosition = dropRange.GetRandomPosition(deathPosition);
+        
+        // 调用ItemSpawner批量生成，使用TrySpawn处理位置验证失败
+        for (int i = 0; i < itemsArray.Length; i++)
+        {
+            bool spawned = false;
+            int maxRetries = 3;
+            
+            for (int retry = 0; retry < maxRetries && !spawned; retry++)
+            {
+                Vector3 itemSpawnPosition = dropRange.GetRandomPosition(deathPosition);
+                
+                if (itemSpawner.TrySpawn(itemsArray[i], itemSpawnPosition, out GameObject spawnedObject))
+                {
+                    spawned = true;
+                    if (enableDebugLog)
+                    {
+                        Debug.Log($"[DeathDropTrigger] 道具 {i} 生成成功: {spawnedObject.name} at {itemSpawnPosition}");
+                    }
+                }
+                else
+                {
+                    if (enableDebugLog)
+                    {
+                        Debug.LogWarning($"[DeathDropTrigger] 道具 {i} 位置验证失败，重试 {retry + 1}/{maxRetries}: {itemSpawnPosition}");
+                    }
+                }
+            }
+            
+            if (!spawned)
+            {
+                Debug.LogError($"[DeathDropTrigger] 道具 {i} 生成失败，已重试 {maxRetries} 次");
+            }
+        }
         
         if (enableDebugLog)
         {
-            Debug.Log($"[DeathDropTrigger] 在位置 {deathPosition} 生成 {itemsArray.Length} 个道具");
+            Debug.Log($"[DeathDropTrigger] 敌人类型: {enemyType}");
+            Debug.Log($"[DeathDropTrigger] 死亡位置: {deathPosition}");
+            Debug.Log($"[DeathDropTrigger] 生成位置: {spawnPosition}");
+            Debug.Log($"[DeathDropTrigger] 使用掉落范围: {dropRange.GetDebugInfo()}");
         }
     }
     
@@ -232,7 +272,7 @@ public class DeathDropTrigger : SpawnTrigger<ItemConfig>
         }
         
         var itemsToDrop = dropTableProvider.GetItemsToDrop(dropTable);
-        SpawnDroppedItems(itemsToDrop, position);
+        SpawnDroppedItems(itemsToDrop, position, enemyType);
         
         Debug.Log($"[DeathDropTrigger] 测试掉落完成: {itemsToDrop.Count} 个道具");
     }

@@ -17,10 +17,30 @@ MonoBehaviour:
     maxDropCount: 2
     dropEntries:
     - itemConfig: {fileID: 11400000, guid: 944c44f9fdcc349488cc86c860e75199, type: 2}
-      dropChance: 1
+      dropChance: 0
       weight: 1
       conditionType: 0
       requiredSkillName: 
+    spawnRange:
+      coordinateSystem: 0
+      rangeShape: 0
+      worldCenter: {x: 0, y: 0, z: 0}
+      worldSize: {x: 18, y: 8}
+      worldRadius: 8
+      relativeSize: {x: 4, y: 4}
+      relativeRadius: 2
+      enablePositionOffset: 1
+      offsetRange: 0.5
   globalDropRateMultiplier: 1
   maxDropCount: 5
+  defaultSpawnRange:
+    coordinateSystem: 0
+    rangeShape: 0
+    worldCenter: {x: 0, y: 0, z: 0}
+    worldSize: {x: 20, y: 10}
+    worldRadius: 8
+    relativeSize: {x: 4, y: 4}
+    relativeRadius: 2
+    enablePositionOffset: 1
+    offsetRange: 0.5
   enableDebugLog: 1

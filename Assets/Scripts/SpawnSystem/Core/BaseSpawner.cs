@@ -44,7 +44,54 @@ public abstract class BaseSpawner<T> : MonoBehaviour
     }
     
     /// <summary>
-    /// 生成单个对象
+    /// 尝试生成单个对象
+    /// </summary>
+    /// <param name="data">生成数据</param>
+    /// <param name="position">生成位置</param>
+    /// <param name="spawnedObject">生成的对象（输出参数）</param>
+    /// <returns>是否生成成功</returns>
+    public virtual bool TrySpawn(T data, Vector3 position, out GameObject spawnedObject)
+    {
+        spawnedObject = null;
+        
+        if (data == null)
+        {
+            Debug.LogError($"[{GetType().Name}] 生成数据为空！");
+            return false;
+        }
+        
+        // 验证位置
+        if (!ValidateSpawnPosition(position))
+        {
+            if (enableDebugLog)
+            {
+                Debug.LogWarning($"[{GetType().Name}] 位置验证失败: {position}");
+            }
+            return false;
+        }
+        
+        // 生成对象
+        spawnedObject = InstantiateObject(data, position, spawnParent);
+        if (spawnedObject != null)
+        {
+            OnPostSpawn(spawnedObject, data);
+            
+            if (enableDebugLog)
+            {
+                Debug.Log($"[{GetType().Name}] 生成成功: {position}");
+            }
+            return true;
+        }
+        
+        if (enableDebugLog)
+        {
+            Debug.LogError($"[{GetType().Name}] 对象生成失败: {position}");
+        }
+        return false;
+    }
+    
+    /// <summary>
+    /// 生成单个对象（兼容性方法）
     /// </summary>
     /// <param name="data">生成数据</param>
     /// <param name="position">生成位置（可选，为null时使用范围配置）</param>
@@ -56,54 +103,38 @@ public abstract class BaseSpawner<T> : MonoBehaviour
             return;
         }
         
-        // 支持重试机制
-        int maxRetries = 5;
-        bool useSpecifiedPosition = position.HasValue;
-        Vector3 specifiedPosition = position ?? Vector3.zero;
-        
-        for (int i = 0; i < maxRetries; i++)
+        if (position.HasValue)
         {
-            Vector3 spawnPosition;
-            
-            if (useSpecifiedPosition && i == 0)
+            // 使用指定位置
+            if (!TrySpawn(data, position.Value, out GameObject spawnedObject))
             {
-                // 第一次尝试使用指定的位置
-                spawnPosition = specifiedPosition;
-            }
-            else
-            {
-                // 后续重试使用自动计算的位置
-                spawnPosition = CalculateSpawnPosition();
-            }
-            
-            // 验证位置
-            if (ValidateSpawnPosition(spawnPosition))
-            {
-                // 位置有效，执行生成
-                GameObject spawnedObject = InstantiateObject(data, spawnPosition, spawnParent);
-                if (spawnedObject != null)
-                {
-                    OnPostSpawn(spawnedObject, data);
-                    return; // 成功生成，退出
-                }
-            }
-            
-            // 位置无效或生成失败，记录并重试
-            if (enableDebugLog)
-            {
-                if (useSpecifiedPosition && i == 0)
-                {
-                    Debug.LogWarning($"[{GetType().Name}] 指定位置无效，重试 {i + 1}/{maxRetries}: {spawnPosition}");
-                }
-                else
-                {
-                    Debug.LogWarning($"[{GetType().Name}] 生成位置无效，重试 {i + 1}/{maxRetries}: {spawnPosition}");
-                }
+                Debug.LogError($"[{GetType().Name}] 指定位置生成失败: {position.Value}");
             }
         }
-        
-        // 所有重试都失败
-        Debug.LogError($"[{GetType().Name}] 生成失败，已重试 {maxRetries} 次");
+        else
+        {
+            // 没有指定位置，使用范围配置自动计算（支持重试）
+            int maxRetries = 5;
+            
+            for (int i = 0; i < maxRetries; i++)
+            {
+                Vector3 spawnPosition = CalculateSpawnPosition();
+                
+                if (TrySpawn(data, spawnPosition, out GameObject spawnedObject))
+                {
+                    return; // 成功生成，退出
+                }
+                
+                // 生成失败，记录并重试
+                if (enableDebugLog)
+                {
+                    Debug.LogWarning($"[{GetType().Name}] 自动计算位置生成失败，重试 {i + 1}/{maxRetries}: {spawnPosition}");
+                }
+            }
+            
+            // 所有重试都失败
+            Debug.LogError($"[{GetType().Name}] 自动计算位置生成失败，已重试 {maxRetries} 次");
+        }
     }
     
     /// <summary>
@@ -138,8 +169,6 @@ public abstract class BaseSpawner<T> : MonoBehaviour
     protected virtual Vector3 CalculateSpawnPosition()
     {
         Vector3 spawnPosition = rangeConfig.GetRandomPosition();
-        
-        
         return spawnPosition;
     }
     
@@ -182,7 +211,11 @@ public abstract class BaseSpawner<T> : MonoBehaviour
     /// <param name="maxY">最大Y</param>
     public void SetSpawnRange(float minX, float maxX, float minY, float maxY)
     {
-        rangeConfig.SetRectRange(minX, maxX, minY, maxY);
+        // 计算中心点和尺寸
+        Vector3 center = new Vector3((minX + maxX) * 0.5f, (minY + maxY) * 0.5f, 0f);
+        Vector2 size = new Vector2(maxX - minX, maxY - minY);
+        
+        rangeConfig.SetWorldRectRange(center, size);
         
         if (enableDebugLog)
         {
@@ -196,7 +229,7 @@ public abstract class BaseSpawner<T> : MonoBehaviour
     /// <param name="radius">半径</param>
     public void SetSpawnRange(float radius)
     {
-        rangeConfig.SetCircularRange(radius);
+        rangeConfig.SetWorldCircularRange(Vector3.zero, radius);
         
         if (enableDebugLog)
         {
@@ -204,3 +237,4 @@ public abstract class BaseSpawner<T> : MonoBehaviour
         }
     }
 }
+

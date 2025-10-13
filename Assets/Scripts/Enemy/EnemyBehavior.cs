@@ -468,6 +468,20 @@ public class EnemyBehavior : MonoBehaviour
         isDead = true;
         Debug.Log($"EnemyBehavior {name}: 敌人死亡！");
         
+        // 【关键修复】通过Enemy组件获取enemyItem位置，避免transform.Find()无法找到inactive对象的问题
+        Enemy enemy = GetComponent<Enemy>();
+        Transform enemyItem = enemy?.enemyItem;
+        Vector3 cachedEnemyItemPosition = enemyItem != null ? enemyItem.position : transform.position;
+        
+        if (enemyItem != null)
+        {
+            Debug.Log($"EnemyBehavior {name}: 通过Enemy组件获取enemyItem位置作为死亡位置: {cachedEnemyItemPosition}");
+        }
+        else
+        {
+            Debug.LogWarning($"EnemyBehavior {name}: 未找到enemyItem引用，使用根物体位置: {cachedEnemyItemPosition}");
+        }
+        
         // 立即清理攻击状态
         if (attackBehavior != null && attackRange != null)
         {
@@ -488,7 +502,9 @@ public class EnemyBehavior : MonoBehaviour
         
         // 触发死亡特效
         Debug.Log($"EnemyBehavior {name}: 触发死亡特效事件");
-        gameObject.PublishDeath("EnemyDeath", transform.position);
+        
+        // 使用缓存的位置发布死亡事件
+        gameObject.PublishDeath("EnemyDeath", cachedEnemyItemPosition);
         
         /// 禁用collider（解决碰撞问题）
         Collider2D[] colliders = GetComponentsInChildren<Collider2D>();

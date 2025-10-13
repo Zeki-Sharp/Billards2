@@ -60,8 +60,24 @@ public class ItemSpawner : BaseSpawner<ItemConfig>
             return null;
         }
         
+        if (enableDebugLog)
+        {
+            Debug.Log($"[ItemSpawner] 实例化道具: {itemConfig.itemName} at 位置({position})");
+        }
+        
         // 实例化道具预制体
         GameObject itemInstance = Instantiate(itemConfig.itemPrefab, position, Quaternion.identity, parent);
+        
+        // 验证实际生成位置
+        if (enableDebugLog && itemInstance != null)
+        {
+            Vector3 actualPosition = itemInstance.transform.position;
+            Debug.Log($"[ItemSpawner] 道具实际生成位置: {actualPosition}");
+            if (Vector3.Distance(position, actualPosition) > 0.01f)
+            {
+                Debug.LogWarning($"[ItemSpawner] 位置不匹配！期望: {position}, 实际: {actualPosition}");
+            }
+        }
         
         // 设置ItemPickup组件
         ItemPickup itemPickup = itemInstance.GetComponent<ItemPickup>();
@@ -116,19 +132,19 @@ public class ItemSpawner : BaseSpawner<ItemConfig>
             Debug.Log($"[ItemSpawner] 开始批量生成 {itemConfigs.Length} 个道具，基础位置: {basePosition}");
         }
         
-        Vector3[] positions = CalculateDropPositions(basePosition, itemConfigs.Length);
-        
+        // 直接使用传入的位置，不再重新计算偏移
+        // 位置计算应该由调用者（如DeathDropTrigger）负责
         for (int i = 0; i < itemConfigs.Length; i++)
         {
             if (itemConfigs[i] != null)
             {
                 if (enableDebugLog)
                 {
-                    Debug.Log($"[ItemSpawner] 准备生成道具 {i}: {itemConfigs[i].itemName} at {positions[i]}");
+                    Debug.Log($"[ItemSpawner] 准备生成道具 {i}: {itemConfigs[i].itemName} at {basePosition}");
                 }
                 
                 // 使用基类的Spawn方法，它会自动处理位置验证和重试
-                Spawn(itemConfigs[i], positions[i]);
+                Spawn(itemConfigs[i], basePosition);
                 
                 if (enableDebugLog)
                 {

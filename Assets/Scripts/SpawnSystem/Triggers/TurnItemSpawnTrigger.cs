@@ -192,28 +192,50 @@ public class TurnItemSpawnTrigger : MonoBehaviour
         // 转换为数组
         ItemConfig[] itemsArray = itemsToDrop.ToArray();
         
-        // 从TurnDropTableConfig获取生成位置（如果配置了的话）
-        Vector3 spawnPosition = GetSpawnPosition(turnDropTable);
+        // 从TurnDropTableProvider获取生成范围配置
+        var spawnRange = turnDropTableProvider.GetSpawnRange(turnDropTable.turnDropType);
         
-        // 调用ItemSpawner批量生成
-        itemSpawner.SpawnItems(itemsArray, spawnPosition);
+        // 根据范围配置生成位置（回合生成通常使用世界坐标）
+        Vector3 spawnPosition = spawnRange.GetRandomPosition();
+        
+        // 调用ItemSpawner批量生成，使用TrySpawn处理位置验证失败
+        for (int i = 0; i < itemsArray.Length; i++)
+        {
+            bool spawned = false;
+            int maxRetries = 3;
+            
+            for (int retry = 0; retry < maxRetries && !spawned; retry++)
+            {
+                Vector3 itemSpawnPosition = spawnRange.GetRandomPosition();
+                
+                if (itemSpawner.TrySpawn(itemsArray[i], itemSpawnPosition, out GameObject spawnedObject))
+                {
+                    spawned = true;
+                    if (enableDebugLog)
+                    {
+                        Debug.Log($"[TurnItemSpawnTrigger] 道具 {i} 生成成功: {spawnedObject.name} at {itemSpawnPosition}");
+                    }
+                }
+                else
+                {
+                    if (enableDebugLog)
+                    {
+                        Debug.LogWarning($"[TurnItemSpawnTrigger] 道具 {i} 位置验证失败，重试 {retry + 1}/{maxRetries}: {itemSpawnPosition}");
+                    }
+                }
+            }
+            
+            if (!spawned)
+            {
+                Debug.LogError($"[TurnItemSpawnTrigger] 道具 {i} 生成失败，已重试 {maxRetries} 次");
+            }
+        }
         
         if (enableDebugLog)
         {
             Debug.Log($"[TurnItemSpawnTrigger] 在位置 {spawnPosition} 生成 {itemsArray.Length} 个道具");
+            Debug.Log($"[TurnItemSpawnTrigger] 使用生成范围: {spawnRange.GetDebugInfo()}");
         }
-    }
-    
-    /// <summary>
-    /// 获取生成位置
-    /// </summary>
-    /// <param name="turnDropTable">回合掉落表配置</param>
-    /// <returns>生成位置</returns>
-    Vector3 GetSpawnPosition(TurnDropTableConfig turnDropTable)
-    {
-        // 这里可以从TurnDropTableConfig中获取位置配置
-        // 或者使用默认位置
-        return Vector3.zero; // 默认位置
     }
     
     /// <summary>

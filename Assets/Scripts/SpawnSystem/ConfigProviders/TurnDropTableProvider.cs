@@ -36,6 +36,11 @@ public class TurnDropTableProvider : ScriptableObject
     [MinValue(1)]
     public int maxDropCount = 5;
     
+    [Header("默认生成范围配置")]
+    [LabelText("默认生成范围")]
+    [Tooltip("当TurnDropTableConfig中没有配置生成范围时使用的默认范围")]
+    public SpawnRangeConfig defaultSpawnRange = new SpawnRangeConfig();
+    
     [Header("调试设置")]
     [LabelText("启用调试日志")]
     public bool enableDebugLog = true;
@@ -180,6 +185,32 @@ public class TurnDropTableProvider : ScriptableObject
     }
     
     /// <summary>
+    /// 获取默认生成范围配置
+    /// </summary>
+    /// <returns>默认生成范围配置</returns>
+    public SpawnRangeConfig GetDefaultSpawnRange()
+    {
+        return defaultSpawnRange;
+    }
+    
+    /// <summary>
+    /// 获取指定回合类型的生成范围配置
+    /// </summary>
+    /// <param name="turnDropType">回合掉落类型</param>
+    /// <returns>生成范围配置，如果未找到则返回默认配置</returns>
+    public SpawnRangeConfig GetSpawnRange(TurnDropType turnDropType)
+    {
+        var turnDropTable = GetTurnDropTable(turnDropType);
+        if (turnDropTable != null && turnDropTable.spawnRange != null)
+        {
+            return turnDropTable.spawnRange;
+        }
+        
+        // 返回默认配置
+        return defaultSpawnRange;
+    }
+    
+    /// <summary>
     /// 获取调试信息
     /// </summary>
     /// <returns>调试信息字符串</returns>
@@ -187,13 +218,18 @@ public class TurnDropTableProvider : ScriptableObject
     {
         string info = $"TurnDropTableProvider: {turnDropTables.Count} 个回合掉落表\n";
         info += $"全局掉落率倍数: {globalDropRateMultiplier}\n";
-        info += $"最大掉落数量: {maxDropCount}\n\n";
+        info += $"最大掉落数量: {maxDropCount}\n";
+        info += $"默认生成范围: {defaultSpawnRange.GetDebugInfo()}\n\n";
         
         foreach (var dropTable in turnDropTables)
         {
             if (dropTable != null)
             {
                 info += $"- {dropTable.turnDropType}: {dropTable.dropEntries.Count} 个掉落条目\n";
+                if (dropTable.spawnRange != null)
+                {
+                    info += $"  生成范围: {dropTable.spawnRange.GetDebugInfo()}\n";
+                }
             }
         }
         
@@ -239,12 +275,22 @@ public class TurnDropTableConfig
     [ListDrawerSettings(ShowIndexLabels = true)]
     public List<ItemDropEntry> dropEntries = new List<ItemDropEntry>();
     
+    [Header("生成范围配置")]
+    [LabelText("生成范围")]
+    [Tooltip("此回合类型的道具生成范围配置（为空时使用Provider的默认配置）")]
+    public SpawnRangeConfig spawnRange;
+    
     /// <summary>
     /// 获取调试信息
     /// </summary>
     /// <returns>调试信息</returns>
     public string GetDebugInfo()
     {
-        return $"{turnDropType}: {dropEntries.Count} 个掉落条目，最大掉落 {maxDropCount} 个";
+        string info = $"{turnDropType}: {dropEntries.Count} 个掉落条目，最大掉落 {maxDropCount} 个";
+        if (spawnRange != null)
+        {
+            info += $"\n生成范围: {spawnRange.GetDebugInfo()}";
+        }
+        return info;
     }
 }

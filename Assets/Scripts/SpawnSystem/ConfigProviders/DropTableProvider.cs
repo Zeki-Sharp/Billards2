@@ -36,6 +36,11 @@ public class DropTableProvider : ScriptableObject, SpawnConfigProvider<ItemConfi
     [MinValue(1)]
     public int maxDropCount = 5;
     
+    [Header("默认掉落范围配置")]
+    [LabelText("默认掉落范围")]
+    [Tooltip("当DropTableConfig中没有配置掉落范围时使用的默认范围")]
+    public SpawnRangeConfig defaultDropRange = new SpawnRangeConfig();
+    
     [Header("调试设置")]
     [LabelText("启用调试日志")]
     public bool enableDebugLog = true;
@@ -197,6 +202,32 @@ public class DropTableProvider : ScriptableObject, SpawnConfigProvider<ItemConfi
     }
     
     /// <summary>
+    /// 获取默认掉落范围配置
+    /// </summary>
+    /// <returns>默认掉落范围配置</returns>
+    public SpawnRangeConfig GetDefaultDropRange()
+    {
+        return defaultDropRange;
+    }
+    
+    /// <summary>
+    /// 获取指定敌人类型的掉落范围配置
+    /// </summary>
+    /// <param name="enemyType">敌人类型</param>
+    /// <returns>掉落范围配置，如果未找到则返回默认配置</returns>
+    public SpawnRangeConfig GetDropRange(EnemyType enemyType)
+    {
+        var dropTable = GetDropTable(enemyType);
+        if (dropTable != null && dropTable.dropRange != null)
+        {
+            return dropTable.dropRange;
+        }
+        
+        // 返回默认配置
+        return defaultDropRange;
+    }
+    
+    /// <summary>
     /// 获取调试信息
     /// </summary>
     /// <returns>调试信息字符串</returns>
@@ -204,13 +235,18 @@ public class DropTableProvider : ScriptableObject, SpawnConfigProvider<ItemConfi
     {
         string info = $"DropTableProvider: {dropTables.Count} 个掉落表\n";
         info += $"全局掉落率倍数: {globalDropRateMultiplier}\n";
-        info += $"最大掉落数量: {maxDropCount}\n\n";
+        info += $"最大掉落数量: {maxDropCount}\n";
+        info += $"默认掉落范围: {defaultDropRange.GetDebugInfo()}\n\n";
         
         foreach (var dropTable in dropTables)
         {
             if (dropTable != null)
             {
                 info += $"- {dropTable.enemyType}: {dropTable.dropEntries.Count} 个掉落条目\n";
+                if (dropTable.dropRange != null)
+                {
+                    info += $"  掉落范围: {dropTable.dropRange.GetDebugInfo()}\n";
+                }
             }
         }
         
@@ -320,13 +356,23 @@ public class DropTableConfig
     [ListDrawerSettings(ShowIndexLabels = true)]
     public List<ItemDropEntry> dropEntries = new List<ItemDropEntry>();
     
+    [Header("掉落范围配置")]
+    [LabelText("掉落范围")]
+    [Tooltip("此敌人类型的道具掉落范围配置（为空时使用Provider的默认配置）")]
+    public SpawnRangeConfig dropRange;
+    
     /// <summary>
     /// 获取调试信息
     /// </summary>
     /// <returns>调试信息</returns>
     public string GetDebugInfo()
     {
-        return $"{enemyType}: {dropEntries.Count} 个掉落条目，最大掉落 {maxDropCount} 个";
+        string info = $"{enemyType}: {dropEntries.Count} 个掉落条目，最大掉落 {maxDropCount} 个";
+        if (dropRange != null)
+        {
+            info += $"\n掉落范围: {dropRange.GetDebugInfo()}";
+        }
+        return info;
     }
 }
 

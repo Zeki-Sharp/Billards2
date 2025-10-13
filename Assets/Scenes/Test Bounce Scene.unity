@@ -810,9 +810,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   turnDropTableProvider: {fileID: 11400000, guid: f4875fc0758c7254e8efac47cb99ec79, type: 2}
   itemSpawner: {fileID: 1035620086}
-  targetTurnDropType: 0
-  spawnCenter: {x: 0, y: 0, z: 0}
-  spawnRadius: 5
   enableDebugLog: 1
 --- !u!1 &570614580
 GameObject:
@@ -8177,12 +8174,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   spawnParent: {fileID: 1579586301}
   rangeConfig:
-    rangeType: 0
-    minX: -9
-    maxX: 9
-    minY: -4
-    maxY: 4
-    radius: 8
+    coordinateSystem: 0
+    rangeShape: 0
+    worldCenter: {x: 0, y: 0, z: 0}
+    worldSize: {x: 20, y: 10}
+    worldRadius: 8
+    relativeSize: {x: 4, y: 4}
+    relativeRadius: 2
     enablePositionOffset: 1
     offsetRange: 0.5
   enableDebugLog: 1
@@ -8304,12 +8302,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   spawnParent: {fileID: 369649107}
   rangeConfig:
-    rangeType: 0
-    minX: -9
-    maxX: 9
-    minY: -4
-    maxY: 4
-    radius: 8
+    coordinateSystem: 0
+    rangeShape: 0
+    worldCenter: {x: 0, y: 0, z: 0}
+    worldSize: {x: 20, y: 10}
+    worldRadius: 8
+    relativeSize: {x: 4, y: 4}
+    relativeRadius: 2
     enablePositionOffset: 1
     offsetRange: 0.5
   enableDebugLog: 1

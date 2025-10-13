@@ -21,6 +21,16 @@ MonoBehaviour:
     count: 2
   - enemyData: {fileID: 11400000, guid: ce82a34099b9d1f4899931eb09ed10ce, type: 2}
     count: 2
+  initialEnemySpawnRange:
+    coordinateSystem: 0
+    rangeShape: 0
+    worldCenter: {x: 0, y: 0, z: 0}
+    worldSize: {x: 18, y: 8}
+    worldRadius: 8
+    relativeSize: {x: 4, y: 4}
+    relativeRadius: 2
+    enablePositionOffset: 1
+    offsetRange: 0.5
   waves:
   - enemySpawns:
     - enemyData: {fileID: 11400000, guid: 2b3490ac9962fd84fbac65c5de60aa85, type: 2}
@@ -36,4 +46,14 @@ MonoBehaviour:
       count: 1
     - enemyData: {fileID: 11400000, guid: 8d46072aeaab4c44fab958850bbe7872, type: 2}
       count: 2
+  waveEnemySpawnRange:
+    coordinateSystem: 0
+    rangeShape: 0
+    worldCenter: {x: 0, y: 0, z: 0}
+    worldSize: {x: 18, y: 8}
+    worldRadius: 8
+    relativeSize: {x: 4, y: 4}
+    relativeRadius: 2
+    enablePositionOffset: 1
+    offsetRange: 0.5
   loopWaves: 0

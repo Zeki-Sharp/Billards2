@@ -21,6 +21,26 @@ MonoBehaviour:
       weight: 1
       conditionType: 1
       requiredSkillName: "\u51FB\u6740\u6389\u843D\u56DE\u8840"
+    dropRange:
+      coordinateSystem: 1
+      rangeShape: 1
+      worldCenter: {x: 0, y: 0, z: 0}
+      worldSize: {x: 18, y: 8}
+      worldRadius: 8
+      relativeSize: {x: 4, y: 4}
+      relativeRadius: 1
+      enablePositionOffset: 0
+      offsetRange: 0
   globalDropRateMultiplier: 1
   maxDropCount: 100
+  defaultDropRange:
+    coordinateSystem: 0
+    rangeShape: 0
+    worldCenter: {x: 0, y: 0, z: 0}
+    worldSize: {x: 20, y: 10}
+    worldRadius: 8
+    relativeSize: {x: 4, y: 4}
+    relativeRadius: 2
+    enablePositionOffset: 1
+    offsetRange: 0.5
   enableDebugLog: 1

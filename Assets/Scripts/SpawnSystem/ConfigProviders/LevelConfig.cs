@@ -37,11 +37,21 @@ public class LevelConfig : ScriptableObject
     [ListDrawerSettings(ShowIndexLabels = true)]
     public List<EnemySpawn> initialEnemies = new List<EnemySpawn>();
     
+    [BoxGroup("初始敌人配置")]
+    [LabelText("初始敌人生成范围")]
+    [Tooltip("初始敌人生成的范围配置")]
+    public SpawnRangeConfig initialEnemySpawnRange = new SpawnRangeConfig();
+    
     [BoxGroup("波次配置")]
     [LabelText("波次列表")]
     [Tooltip("关卡的波次序列")]
     [ListDrawerSettings(ShowIndexLabels = true)]
     public List<WaveConfig> waves = new List<WaveConfig>();
+    
+    [BoxGroup("波次配置")]
+    [LabelText("波次敌人生成范围")]
+    [Tooltip("波次敌人生成的范围配置")]
+    public SpawnRangeConfig waveEnemySpawnRange = new SpawnRangeConfig();
     
     [BoxGroup("波次配置")]
     [LabelText("是否循环波次")]
@@ -168,11 +178,32 @@ public class LevelConfig : ScriptableObject
     }
     
     /// <summary>
+    /// 获取初始敌人生成范围配置
+    /// </summary>
+    /// <returns>生成范围配置</returns>
+    public SpawnRangeConfig GetInitialEnemySpawnRange()
+    {
+        return initialEnemySpawnRange;
+    }
+    
+    /// <summary>
+    /// 获取波次敌人生成范围配置
+    /// </summary>
+    /// <returns>生成范围配置</returns>
+    public SpawnRangeConfig GetWaveEnemySpawnRange()
+    {
+        return waveEnemySpawnRange;
+    }
+    
+    /// <summary>
     /// 获取关卡的调试信息
     /// </summary>
     /// <returns>调试信息字符串</returns>
     public string GetDebugInfo()
     {
-        return $"关卡: {levelName}, 波次数: {waves.Count}, 总敌人数: {GetTotalEnemyCount()}";
+        string info = $"关卡: {levelName}, 波次数: {waves.Count}, 总敌人数: {GetTotalEnemyCount()}\n";
+        info += $"初始敌人生成范围: {initialEnemySpawnRange.GetDebugInfo()}\n";
+        info += $"波次敌人生成范围: {waveEnemySpawnRange.GetDebugInfo()}";
+        return info;
     }
 }
