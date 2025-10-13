@@ -44,12 +44,11 @@ public abstract class BaseSpawner<T> : MonoBehaviour
     }
     
     /// <summary>
-    /// 生成单个对象（支持相对坐标）
+    /// 生成单个对象
     /// </summary>
     /// <param name="data">生成数据</param>
     /// <param name="position">生成位置（可选，为null时使用范围配置）</param>
-    /// <param name="origin">原点位置（用于相对坐标计算）</param>
-    public virtual void Spawn(T data, Vector3? position = null, Vector3 origin = default)
+    public virtual void Spawn(T data, Vector3? position = null)
     {
         if (data == null)
         {
@@ -74,11 +73,11 @@ public abstract class BaseSpawner<T> : MonoBehaviour
             else
             {
                 // 后续重试使用自动计算的位置
-                spawnPosition = CalculateSpawnPosition(origin);
+                spawnPosition = CalculateSpawnPosition();
             }
             
             // 验证位置
-            if (ValidateSpawnPosition(spawnPosition, origin))
+            if (ValidateSpawnPosition(spawnPosition))
             {
                 // 位置有效，执行生成
                 GameObject spawnedObject = InstantiateObject(data, spawnPosition, spawnParent);
@@ -133,51 +132,26 @@ public abstract class BaseSpawner<T> : MonoBehaviour
     }
     
     /// <summary>
-    /// 计算生成位置（支持相对坐标）
+    /// 计算生成位置（抽象方法，子类实现）
     /// </summary>
-    /// <param name="origin">原点位置，为Vector3.zero时使用世界坐标</param>
     /// <returns>生成位置</returns>
-    protected virtual Vector3 CalculateSpawnPosition(Vector3 origin = default)
+    protected virtual Vector3 CalculateSpawnPosition()
     {
-        Vector3 localOffset = rangeConfig.GetRandomLocalOffset();
-        Vector3 spawnPosition = origin + localOffset;
+        Vector3 spawnPosition = rangeConfig.GetRandomPosition();
+        
         
         return spawnPosition;
     }
     
     /// <summary>
-    /// 计算生成位置（抽象方法，子类实现）
-    /// 【已废弃】建议使用 CalculateSpawnPosition(Vector3 origin) 方法
-    /// </summary>
-    /// <returns>生成位置</returns>
-    [System.Obsolete("建议使用 CalculateSpawnPosition(Vector3 origin) 方法")]
-    protected virtual Vector3 CalculateSpawnPosition()
-    {
-        return CalculateSpawnPosition(Vector3.zero);
-    }
-    
-    /// <summary>
-    /// 验证生成位置（支持相对坐标）
-    /// </summary>
-    /// <param name="position">位置</param>
-    /// <param name="origin">原点位置</param>
-    /// <returns>是否有效</returns>
-    protected virtual bool ValidateSpawnPosition(Vector3 position, Vector3 origin = default)
-    {
-        Vector3 localOffset = position - origin;
-        return rangeConfig.IsLocalOffsetValid(localOffset);
-    }
-    
-    /// <summary>
     /// 验证生成位置
-    /// 【已废弃】建议使用 ValidateSpawnPosition(Vector3 position, Vector3 origin) 方法
     /// </summary>
     /// <param name="position">位置</param>
     /// <returns>是否有效</returns>
-    [System.Obsolete("建议使用 ValidateSpawnPosition(Vector3 position, Vector3 origin) 方法")]
     protected virtual bool ValidateSpawnPosition(Vector3 position)
     {
-        return ValidateSpawnPosition(position, Vector3.zero);
+        // 基础验证：检查是否在范围内
+        return rangeConfig.IsPositionValid(position);
     }
     
     /// <summary>

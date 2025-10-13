@@ -8150,7 +8150,9 @@ Transform:
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children: []
+  m_Children:
+  - {fileID: 1981942886}
+  - {fileID: 1568426789}
   m_Father: {fileID: 1787785598}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1009389295
@@ -8440,6 +8442,7 @@ MonoBehaviour:
   activeSkills:
   - {fileID: 11400000, guid: 20ef6b51707253b4bbf5e4ff06cc86a6, type: 2}
   - {fileID: 11400000, guid: 7398b80240c9a7e4bbb2f37d3adac042, type: 2}
+  - {fileID: 11400000, guid: 0dc5258c6893dc240a6eb62403a50d99, type: 2}
   enableDebugLog: 0
 --- !u!4 &1357681023
 Transform:
@@ -9428,7 +9431,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 1787785598}
+  m_Father: {fileID: 931985108}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1579586300
 GameObject:
@@ -9576,9 +9579,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   spawner: {fileID: 1035620086}
   isActive: 1
-  dropStrategy:
-    dropTableProvider: {fileID: 11400000, guid: 5562c20be5f046e4ea0752e690aec0b5, type: 2}
-    enableDebugLog: 0
+  dropTableProvider: {fileID: 11400000, guid: 5562c20be5f046e4ea0752e690aec0b5, type: 2}
+  itemSpawner: {fileID: 1035620086}
   enableDropPositionOffset: 1
   dropOffsetRange: 0.5
   filterByTag: 0
@@ -9827,8 +9829,6 @@ Transform:
   - {fileID: 1637308597}
   - {fileID: 1275009113}
   - {fileID: 889532727}
-  - {fileID: 1981942886}
-  - {fileID: 1568426789}
   - {fileID: 931985108}
   - {fileID: 1035620085}
   - {fileID: 1357681023}
@@ -10529,13 +10529,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 22a4f321b1c0e42419b22ef268a0d978, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  spawner: {fileID: 931985107}
-  isActive: 1
-  spawnStrategy:
-    configProvider: {fileID: 1568426788}
-    generateInitialEnemies: 1
-    generateWaveEnemies: 1
-    enableDebugLog: 0
+  configProvider: {fileID: 1568426788}
+  enemySpawner: {fileID: 931985107}
   generateInitialEnemies: 1
   generateWaveEnemies: 1
   showDebugInfo: 1
@@ -10552,7 +10547,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 1787785598}
+  m_Father: {fileID: 931985108}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1983208819
 GameObject:
