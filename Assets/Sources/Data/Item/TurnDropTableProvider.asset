@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3cd108db1fc102f47a45a4904afd49c5, type: 3}
+  m_Name: TurnDropTableProvider
+  m_EditorClassIdentifier: 
+  turnDropTables:
+  - turnDropType: 0
+    maxDropCount: 2
+    dropEntries:
+    - itemConfig: {fileID: 11400000, guid: 944c44f9fdcc349488cc86c860e75199, type: 2}
+      dropChance: 1
+      weight: 1
+      conditionType: 0
+      requiredSkillName: 
+  globalDropRateMultiplier: 1
+  maxDropCount: 5
+  enableDebugLog: 1
