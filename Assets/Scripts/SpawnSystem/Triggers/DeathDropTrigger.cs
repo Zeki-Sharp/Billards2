@@ -205,9 +205,11 @@ public class DeathDropTrigger : SpawnTrigger<ItemConfig>
         
         // 从DropTableProvider获取对应敌人类型的掉落范围配置
         var dropRange = dropTableProvider.GetDropRange(enemyType);
-        
-        // 根据范围配置生成位置（掉落通常使用相对坐标，以死亡位置为原点）
-        Vector3 spawnPosition = dropRange.GetRandomPosition(deathPosition);
+        if (dropRange == null)
+        {
+            Debug.LogError($"[DeathDropTrigger] 敌人类型 {enemyType} 未配置掉落范围，无法生成道具");
+            return;
+        }
         
         // 调用ItemSpawner批量生成，使用TrySpawn处理位置验证失败
         for (int i = 0; i < itemsArray.Length; i++)
@@ -246,7 +248,6 @@ public class DeathDropTrigger : SpawnTrigger<ItemConfig>
         {
             Debug.Log($"[DeathDropTrigger] 敌人类型: {enemyType}");
             Debug.Log($"[DeathDropTrigger] 死亡位置: {deathPosition}");
-            Debug.Log($"[DeathDropTrigger] 生成位置: {spawnPosition}");
             Debug.Log($"[DeathDropTrigger] 使用掉落范围: {dropRange.GetDebugInfo()}");
         }
     }

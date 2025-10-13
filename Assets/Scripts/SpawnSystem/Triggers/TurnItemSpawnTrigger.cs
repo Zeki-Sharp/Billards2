@@ -194,9 +194,11 @@ public class TurnItemSpawnTrigger : MonoBehaviour
         
         // 从TurnDropTableProvider获取生成范围配置
         var spawnRange = turnDropTableProvider.GetSpawnRange(turnDropTable.turnDropType);
-        
-        // 根据范围配置生成位置（回合生成通常使用世界坐标）
-        Vector3 spawnPosition = spawnRange.GetRandomPosition();
+        if (spawnRange == null)
+        {
+            Debug.LogError($"[TurnItemSpawnTrigger] 回合类型 {turnDropTable.turnDropType} 未配置生成范围，无法生成道具");
+            return;
+        }
         
         // 调用ItemSpawner批量生成，使用TrySpawn处理位置验证失败
         for (int i = 0; i < itemsArray.Length; i++)
@@ -233,7 +235,7 @@ public class TurnItemSpawnTrigger : MonoBehaviour
         
         if (enableDebugLog)
         {
-            Debug.Log($"[TurnItemSpawnTrigger] 在位置 {spawnPosition} 生成 {itemsArray.Length} 个道具");
+            Debug.Log($"[TurnItemSpawnTrigger] 生成 {itemsArray.Length} 个道具");
             Debug.Log($"[TurnItemSpawnTrigger] 使用生成范围: {spawnRange.GetDebugInfo()}");
         }
     }

@@ -36,10 +36,6 @@ public class TurnDropTableProvider : ScriptableObject
     [MinValue(1)]
     public int maxDropCount = 5;
     
-    [Header("默认生成范围配置")]
-    [LabelText("默认生成范围")]
-    [Tooltip("当TurnDropTableConfig中没有配置生成范围时使用的默认范围")]
-    public SpawnRangeConfig defaultSpawnRange = new SpawnRangeConfig();
     
     [Header("调试设置")]
     [LabelText("启用调试日志")]
@@ -184,20 +180,12 @@ public class TurnDropTableProvider : ScriptableObject
         return isValid;
     }
     
-    /// <summary>
-    /// 获取默认生成范围配置
-    /// </summary>
-    /// <returns>默认生成范围配置</returns>
-    public SpawnRangeConfig GetDefaultSpawnRange()
-    {
-        return defaultSpawnRange;
-    }
     
     /// <summary>
     /// 获取指定回合类型的生成范围配置
     /// </summary>
     /// <param name="turnDropType">回合掉落类型</param>
-    /// <returns>生成范围配置，如果未找到则返回默认配置</returns>
+    /// <returns>生成范围配置，如果未找到或未配置则返回null</returns>
     public SpawnRangeConfig GetSpawnRange(TurnDropType turnDropType)
     {
         var turnDropTable = GetTurnDropTable(turnDropType);
@@ -206,8 +194,12 @@ public class TurnDropTableProvider : ScriptableObject
             return turnDropTable.spawnRange;
         }
         
-        // 返回默认配置
-        return defaultSpawnRange;
+        // 没有配置生成范围，返回null
+        if (enableDebugLog)
+        {
+            Debug.LogWarning($"[TurnDropTableProvider] 回合类型 {turnDropType} 未配置生成范围");
+        }
+        return null;
     }
     
     /// <summary>
@@ -219,7 +211,6 @@ public class TurnDropTableProvider : ScriptableObject
         string info = $"TurnDropTableProvider: {turnDropTables.Count} 个回合掉落表\n";
         info += $"全局掉落率倍数: {globalDropRateMultiplier}\n";
         info += $"最大掉落数量: {maxDropCount}\n";
-        info += $"默认生成范围: {defaultSpawnRange.GetDebugInfo()}\n\n";
         
         foreach (var dropTable in turnDropTables)
         {
@@ -229,6 +220,10 @@ public class TurnDropTableProvider : ScriptableObject
                 if (dropTable.spawnRange != null)
                 {
                     info += $"  生成范围: {dropTable.spawnRange.GetDebugInfo()}\n";
+                }
+                else
+                {
+                    info += "  生成范围: 未配置\n";
                 }
             }
         }

@@ -36,10 +36,6 @@ public class DropTableProvider : ScriptableObject, SpawnConfigProvider<ItemConfi
     [MinValue(1)]
     public int maxDropCount = 5;
     
-    [Header("默认掉落范围配置")]
-    [LabelText("默认掉落范围")]
-    [Tooltip("当DropTableConfig中没有配置掉落范围时使用的默认范围")]
-    public SpawnRangeConfig defaultDropRange = new SpawnRangeConfig();
     
     [Header("调试设置")]
     [LabelText("启用调试日志")]
@@ -201,20 +197,12 @@ public class DropTableProvider : ScriptableObject, SpawnConfigProvider<ItemConfi
         return isValid;
     }
     
-    /// <summary>
-    /// 获取默认掉落范围配置
-    /// </summary>
-    /// <returns>默认掉落范围配置</returns>
-    public SpawnRangeConfig GetDefaultDropRange()
-    {
-        return defaultDropRange;
-    }
     
     /// <summary>
     /// 获取指定敌人类型的掉落范围配置
     /// </summary>
     /// <param name="enemyType">敌人类型</param>
-    /// <returns>掉落范围配置，如果未找到则返回默认配置</returns>
+    /// <returns>掉落范围配置，如果未找到或未配置则返回null</returns>
     public SpawnRangeConfig GetDropRange(EnemyType enemyType)
     {
         var dropTable = GetDropTable(enemyType);
@@ -223,8 +211,12 @@ public class DropTableProvider : ScriptableObject, SpawnConfigProvider<ItemConfi
             return dropTable.dropRange;
         }
         
-        // 返回默认配置
-        return defaultDropRange;
+        // 没有配置掉落范围，返回null
+        if (enableDebugLog)
+        {
+            Debug.LogWarning($"[DropTableProvider] 敌人类型 {enemyType} 未配置掉落范围");
+        }
+        return null;
     }
     
     /// <summary>
@@ -236,7 +228,6 @@ public class DropTableProvider : ScriptableObject, SpawnConfigProvider<ItemConfi
         string info = $"DropTableProvider: {dropTables.Count} 个掉落表\n";
         info += $"全局掉落率倍数: {globalDropRateMultiplier}\n";
         info += $"最大掉落数量: {maxDropCount}\n";
-        info += $"默认掉落范围: {defaultDropRange.GetDebugInfo()}\n\n";
         
         foreach (var dropTable in dropTables)
         {
@@ -246,6 +237,10 @@ public class DropTableProvider : ScriptableObject, SpawnConfigProvider<ItemConfi
                 if (dropTable.dropRange != null)
                 {
                     info += $"  掉落范围: {dropTable.dropRange.GetDebugInfo()}\n";
+                }
+                else
+                {
+                    info += "  掉落范围: 未配置\n";
                 }
             }
         }
