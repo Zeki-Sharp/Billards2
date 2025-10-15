@@ -7668,10 +7668,13 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   playerData: {fileID: 11400000, guid: 9fa21c5d0e8b7b24d9ae0910aa7d5197, type: 2}
-  playerCore: {fileID: 3655923765959461568}
+  playerCore: {fileID: 0}
   stateMachine: {fileID: 0}
   inputHandler: {fileID: 0}
   movementController: {fileID: 0}
+  attackManager: {fileID: 0}
+  chargeSystem: {fileID: 0}
+  statsManager: {fileID: 0}
   effects:
   - effectType: 2
     mmfPlayer: {fileID: 2097763790536435821}
@@ -7698,9 +7701,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 96bb1e49ec5d79d4ea2302f5e0e9b548, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  playerData: {fileID: 11400000, guid: 9fa21c5d0e8b7b24d9ae0910aa7d5197, type: 2}
-  attackManager: {fileID: 4836788210602037763}
-  chargeSystem: {fileID: 7844486164170001436}
 --- !u!114 &7844486164170001436
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -7730,7 +7730,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8d445734808e3e3488b87acad09b41f7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  playerData: {fileID: 11400000, guid: 9fa21c5d0e8b7b24d9ae0910aa7d5197, type: 2}
   enableDebugLog: 1
 --- !u!114 &4836788210602037763
 MonoBehaviour:
@@ -7744,7 +7743,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5a995714164cfb247bde25f61d685dda, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  playerData: {fileID: 11400000, guid: 9fa21c5d0e8b7b24d9ae0910aa7d5197, type: 2}
 --- !u!1 &3901620891104444660
 GameObject:
   m_ObjectHideFlags: 0

@@ -29,11 +29,18 @@ public class Player : MonoBehaviour
     [Header("数据设置")]
     public PlayerData playerData; // 玩家配置数据
     
-    [Header("组件引用")]
-    [SerializeField] private PlayerCore playerCore;
-    [SerializeField] private PlayerStateMachine stateMachine;
-    [SerializeField] private PlayerInputHandler inputHandler;
-    [SerializeField] private PlayerMovementController movementController;
+    [Header("核心组件")]
+    // 以下组件由 Player 自动管理，无需手动配置
+    private PlayerCore playerCore;
+    private PlayerStateMachine stateMachine;
+    private PlayerInputHandler inputHandler;
+    private PlayerMovementController movementController;
+    
+    [Header("子系统组件")]
+    // 以下组件由 Player 自动管理，无需手动配置
+    private PlayerAttackManager attackManager;
+    private ChargeSystem chargeSystem;
+    private PlayerStatsManager statsManager;
     
     [Header("特效配置")]
     [Tooltip("玩家特效配置列表，在 Inspector 中直接拖拽 MMF_Player 组件")]
@@ -64,23 +71,48 @@ public class Player : MonoBehaviour
     /// </summary>
     void InitializePlayer()
     {
-        // 获取或添加组件
+        // 1. 获取或添加所有组件
+        InitializeComponents();
+        
+        // 2. 分发数据给各个组件
+        DistributePlayerData();
+        
+        // 3. 建立组件间的引用关系
+        SetupComponentReferences();
+        
+        // 4. 初始化各个组件
+        InitializeAllComponents();
+        
+        // 5. 订阅事件
+        SubscribeToEvents();
+        
+        if (showDebugInfo)
+        {
+            Debug.Log("Player: 初始化完成，所有组件已准备就绪");
+        }
+    }
+    
+    /// <summary>
+    /// 获取或添加所有组件
+    /// </summary>
+    void InitializeComponents()
+    {
+        // 核心组件
         playerCore = GetComponent<PlayerCore>();
         stateMachine = GetComponent<PlayerStateMachine>();
         inputHandler = GetComponent<PlayerInputHandler>();
         movementController = GetComponent<PlayerMovementController>();
+        
+        // 子系统组件
+        attackManager = GetComponent<PlayerAttackManager>();
+        chargeSystem = GetComponent<ChargeSystem>();
+        statsManager = GetComponent<PlayerStatsManager>();
         
         // 确保所有组件都存在
         if (playerCore == null)
         {
             playerCore = gameObject.AddComponent<PlayerCore>();
             Debug.LogWarning("Player: 自动添加PlayerCore组件");
-        }
-        
-        // 设置数据到PlayerCore
-        if (playerCore != null)
-        {
-            playerCore.playerData = playerData;
         }
         
         if (stateMachine == null)
@@ -101,6 +133,94 @@ public class Player : MonoBehaviour
             Debug.LogWarning("Player: 自动添加PlayerMovementController组件");
         }
         
+        if (attackManager == null)
+        {
+            attackManager = gameObject.AddComponent<PlayerAttackManager>();
+            Debug.LogWarning("Player: 自动添加PlayerAttackManager组件");
+        }
+        
+        if (chargeSystem == null)
+        {
+            chargeSystem = gameObject.AddComponent<ChargeSystem>();
+            Debug.LogWarning("Player: 自动添加ChargeSystem组件");
+        }
+        
+        if (statsManager == null)
+        {
+            statsManager = gameObject.AddComponent<PlayerStatsManager>();
+            Debug.LogWarning("Player: 自动添加PlayerStatsManager组件");
+        }
+    }
+    
+    /// <summary>
+    /// 分发 PlayerData 给各个组件
+    /// </summary>
+    void DistributePlayerData()
+    {
+        // 分发数据给需要的组件
+        if (playerCore != null)
+            playerCore.SetPlayerData(playerData);
+        if (statsManager != null)
+            statsManager.SetPlayerData(playerData);
+        if (attackManager != null)
+            attackManager.SetPlayerData(playerData);
+        
+        if (showDebugInfo)
+        {
+            Debug.Log("Player: PlayerData 已分发给所有组件");
+        }
+    }
+    
+    /// <summary>
+    /// 建立组件间的引用关系
+    /// </summary>
+    void SetupComponentReferences()
+    {
+        // 建立 PlayerCore 的组件引用
+        if (playerCore != null)
+        {
+            playerCore.SetAttackManager(attackManager);
+            playerCore.SetChargeSystem(chargeSystem);
+            playerCore.SetStatsManager(statsManager);
+        }
+        
+        // 建立 AttackManager 的组件引用
+        if (attackManager != null)
+        {
+            attackManager.SetPlayerCore(playerCore);
+        }
+        
+        if (showDebugInfo)
+        {
+            Debug.Log("Player: 组件引用关系已建立");
+        }
+    }
+    
+    /// <summary>
+    /// 初始化所有组件
+    /// </summary>
+    void InitializeAllComponents()
+    {
+        // 按正确顺序初始化组件
+        if (playerCore != null)
+            playerCore.Initialize();
+        if (statsManager != null)
+            statsManager.Initialize();
+        if (attackManager != null)
+            attackManager.Initialize();
+        // ChargeSystem 不需要特殊的 Initialize 方法
+        
+        if (showDebugInfo)
+        {
+            Debug.Log("Player: 所有组件初始化完成");
+        }
+    }
+    
+    /// <summary>
+    /// 订阅事件
+    /// </summary>
+    void SubscribeToEvents()
+    {
         // 订阅状态变化事件
         if (stateMachine != null)
         {
@@ -109,7 +229,7 @@ public class Player : MonoBehaviour
         
         if (showDebugInfo)
         {
-            Debug.Log("Player: 初始化完成，所有组件已准备就绪");
+            Debug.Log("Player: 事件订阅完成");
         }
     }
     
@@ -204,6 +324,38 @@ public class Player : MonoBehaviour
     public PlayerMovementController GetMovementController()
     {
         return movementController;
+    }
+    
+    /// <summary>
+    /// 获取攻击管理器组件
+    /// </summary>
+    public PlayerAttackManager GetAttackManager()
+    {
+        return attackManager;
+    }
+    
+    /// <summary>
+    /// 获取蓄力系统组件
+    /// </summary>
+    public ChargeSystem GetChargeSystem()
+    {
+        return chargeSystem;
+    }
+    
+    /// <summary>
+    /// 获取数值管理器组件
+    /// </summary>
+    public PlayerStatsManager GetStatsManager()
+    {
+        return statsManager;
+    }
+    
+    /// <summary>
+    /// 获取玩家数据
+    /// </summary>
+    public PlayerData GetPlayerData()
+    {
+        return playerData;
     }
     
     /// <summary>

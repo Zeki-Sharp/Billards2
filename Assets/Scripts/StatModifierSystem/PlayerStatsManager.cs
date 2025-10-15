@@ -9,7 +9,8 @@ using UnityEngine;
 public class PlayerStatsManager : MonoBehaviour
 {
     [Header("基础数据")]
-    public PlayerData playerData;
+    // PlayerData 现在通过 Player 统一分发
+    private PlayerData playerData;
     
     [Header("调试设置")]
     public bool enableDebugLog = true;
@@ -23,7 +24,37 @@ public class PlayerStatsManager : MonoBehaviour
     
     #region Unity生命周期
     
+    /// <summary>
+    /// 初始化属性管理器（由 Player 调用）
+    /// </summary>
+    public void Initialize()
+    {
+        InitializeStatsManager();
+    }
+    
+    /// <summary>
+    /// 设置 PlayerData（由 Player 调用）
+    /// </summary>
+    public void SetPlayerData(PlayerData data)
+    {
+        playerData = data;
+        Debug.Log("PlayerStatsManager: PlayerData 已设置");
+    }
+    
     void Start()
+    {
+        // 如果 Player 还没有调用 Initialize，则自动初始化
+        if (playerData == null)
+        {
+            Debug.LogWarning("PlayerStatsManager: Player 尚未调用 Initialize，自动初始化");
+            InitializeStatsManager();
+        }
+    }
+    
+    /// <summary>
+    /// 初始化属性管理器
+    /// </summary>
+    void InitializeStatsManager()
     {
         if (playerData == null)
         {

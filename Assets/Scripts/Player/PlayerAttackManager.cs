@@ -23,18 +23,47 @@ using UnityEngine;
 public class PlayerAttackManager : MonoBehaviour
 {
     [Header("攻击配置")]
-    public PlayerData playerData; // 玩家配置数据
+    // PlayerData 现在通过 Player 统一分发
     
-    // 组件引用
+    // 数据和组件引用（由 Player 统一设置）
+    private PlayerData playerData;
     private PlayerCore playerCore;
     private PlayerStatsManager statsManager;
     
     /// <summary>
-    /// 初始化攻击管理器
+    /// 初始化攻击管理器（由 Player 调用）
     /// </summary>
-    void Start()
+    public void Initialize()
     {
         InitializeAttackManager();
+    }
+    
+    /// <summary>
+    /// 设置 PlayerData（由 Player 调用）
+    /// </summary>
+    public void SetPlayerData(PlayerData data)
+    {
+        playerData = data;
+        Debug.Log("PlayerAttackManager: PlayerData 已设置");
+    }
+    
+    /// <summary>
+    /// 设置 PlayerCore（由 Player 调用）
+    /// </summary>
+    public void SetPlayerCore(PlayerCore core)
+    {
+        playerCore = core;
+        Debug.Log("PlayerAttackManager: PlayerCore 已设置");
+    }
+    
+    void Start()
+    {
+        // 如果 Player 还没有调用 Initialize，则自动初始化
+        if (playerData == null)
+        {
+            Debug.LogWarning("PlayerAttackManager: Player 尚未调用 Initialize，自动初始化");
+            InitializeAttackManager();
+        }
     }
     
     /// <summary>
@@ -42,8 +71,7 @@ public class PlayerAttackManager : MonoBehaviour
     /// </summary>
     void InitializeAttackManager()
     {
-        // 获取组件引用
-        playerCore = GetComponent<PlayerCore>();
+        // 获取 StatsManager 引用
         statsManager = GetComponent<PlayerStatsManager>();
         
         if (playerCore == null)

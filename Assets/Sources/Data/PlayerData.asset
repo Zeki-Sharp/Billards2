@@ -20,7 +20,7 @@ MonoBehaviour:
   attackMode: 1
   collisionDamage: 20
   areaDamage: 15
-  areaRadius: 2
+  areaRadius: 2.5
   enemyLayerMask:
     serializedVersion: 2
     m_Bits: 64

@@ -37,10 +37,15 @@ public class PlayerMovementController : MonoBehaviour
         // 获取组件引用
         playerCore = GetComponent<PlayerCore>();
         
-        // 获取PlayerData引用
-        if (playerCore != null)
+        // 获取PlayerData引用（通过 Player 组件）
+        Player player = GetComponent<Player>();
+        if (player != null)
         {
-            playerData = playerCore.playerData;
+            playerData = player.GetPlayerData();
+        }
+        else
+        {
+            Debug.LogError("PlayerMovementController: 未找到 Player 组件，无法获取 PlayerData！");
         }
         
         // 订阅蓄力开始事件

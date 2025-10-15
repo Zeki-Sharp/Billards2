@@ -23,13 +23,16 @@ using UnityEngine;
 public class PlayerCore : MonoBehaviour
 {
     [Header("数据设置")]
-    public PlayerData playerData; // 玩家配置数据（由Player设置）
+    // PlayerData 现在通过 Player 统一分发
     
-    [Header("攻击系统")]
-    public PlayerAttackManager attackManager; // 攻击管理器引用
+    [Header("组件引用")]
+    // 组件引用现在通过 Player 统一设置
     
-    [Header("蓄力系统")]
-    public ChargeSystem chargeSystem; // 蓄力系统引用
+    // 数据和组件引用（由 Player 统一设置）
+    private PlayerData playerData;
+    private PlayerAttackManager attackManager;
+    private ChargeSystem chargeSystem;
+    private PlayerStatsManager statsManager;
     
     // 核心组件
     private BallPhysics ballPhysics;
@@ -49,6 +52,46 @@ public class PlayerCore : MonoBehaviour
     {
         return ball == this.ballPhysics;
     }
+    
+    #region 组件设置方法（由 Player 调用）
+    
+    /// <summary>
+    /// 设置 PlayerData（由 Player 调用）
+    /// </summary>
+    public void SetPlayerData(PlayerData data)
+    {
+        playerData = data;
+        Debug.Log("PlayerCore: PlayerData 已设置");
+    }
+    
+    /// <summary>
+    /// 设置 AttackManager（由 Player 调用）
+    /// </summary>
+    public void SetAttackManager(PlayerAttackManager manager)
+    {
+        attackManager = manager;
+        Debug.Log("PlayerCore: AttackManager 已设置");
+    }
+    
+    /// <summary>
+    /// 设置 ChargeSystem（由 Player 调用）
+    /// </summary>
+    public void SetChargeSystem(ChargeSystem system)
+    {
+        chargeSystem = system;
+        Debug.Log("PlayerCore: ChargeSystem 已设置");
+    }
+    
+    /// <summary>
+    /// 设置 StatsManager（由 Player 调用）
+    /// </summary>
+    public void SetStatsManager(PlayerStatsManager manager)
+    {
+        statsManager = manager;
+        Debug.Log("PlayerCore: StatsManager 已设置");
+    }
+    
+    #endregion
     
     /// <summary>
     /// 获取当前攻击力（委托给 AttackManager）
@@ -78,9 +121,22 @@ public class PlayerCore : MonoBehaviour
         return 0f;
     }
     
-    void Start()
+    /// <summary>
+    /// 初始化 PlayerCore（由 Player 调用）
+    /// </summary>
+    public void Initialize()
     {
         InitializeCore();
+    }
+    
+    void Start()
+    {
+        // 如果 Player 还没有调用 Initialize，则自动初始化
+        if (playerData == null)
+        {
+            Debug.LogWarning("PlayerCore: Player 尚未调用 Initialize，自动初始化");
+            InitializeCore();
+        }
     }
     
     void OnEnable()
@@ -670,14 +726,6 @@ public class PlayerCore : MonoBehaviour
     
     
     #region 组件设置
-    
-    /// <summary>
-    /// 设置蓄力系统引用
-    /// </summary>
-    public void SetChargeSystem(ChargeSystem system)
-    {
-        chargeSystem = system;
-    }
-    
+    // 组件设置方法已移动到上方统一管理
     #endregion
 }
