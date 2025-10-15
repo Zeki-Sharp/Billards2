@@ -359,6 +359,32 @@ public class Player : MonoBehaviour
     }
     
     /// <summary>
+    /// 设置玩家数据（用于角色选择后的数据注入）
+    /// </summary>
+    /// <param name="newPlayerData">新的玩家数据</param>
+    public void SetPlayerData(PlayerData newPlayerData)
+    {
+        if (newPlayerData == null)
+        {
+            Debug.LogError("Player: 尝试设置空的PlayerData！");
+            return;
+        }
+        
+        playerData = newPlayerData;
+        
+        if (showDebugInfo)
+        {
+            Debug.Log($"Player: 设置新的PlayerData - {newPlayerData.playerName} (攻击模式: {newPlayerData.attackMode})");
+        }
+        
+        // 重新分发数据给各个组件
+        DistributePlayerData();
+        
+        // 重新初始化所有组件以应用新数据
+        InitializeAllComponents();
+    }
+    
+    /// <summary>
     /// 重置玩家状态
     /// </summary>
     public void ResetPlayer()
