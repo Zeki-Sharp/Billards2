@@ -1,24 +1,25 @@
 using UnityEngine;
 
 /// <summary>
-/// 玩家状态机 - 事件驱动的状态管理系统
+/// 玩家状态机 - 操作级别的状态管理系统
 /// 
 /// 【核心职责】：
-/// - 管理玩家的三种状态：Idle（空闲）、Charging（蓄力）、Moving（运动）
-/// - 响应蓄力事件进行状态转换
+/// - 管理玩家的四种操作状态：Idle、Charging、Moving、MovingEnd
+/// - 响应蓄力事件和物理事件进行状态转换
 /// - 通过事件系统与其他组件通信
-/// - 协调游戏流程状态变化
+/// - 通过 OnPlayingComplete 事件通知 PlayerPhaseController
 /// 
 /// 【状态定义】：
-/// - Idle: 可以移动和开始蓄力
+/// - Idle: 等待输入，可以开始蓄力
 /// - Charging: 蓄力中，显示瞄准线
-/// - Moving: 物理发射移动中，不能进行任何操作
+/// - Moving: 物理发射移动中
+/// - MovingEnd: 球停止后的处理阶段，技能触发点（新增）
 /// 
 /// 【设计原则】：
 /// - 事件驱动架构，松耦合通信
-/// - 单一职责：只管理状态转换
-/// - 通过GameEventBus响应蓄力事件
-/// - 可独立测试和扩展
+/// - 单一职责：只管理操作状态转换
+/// - 通过GameEventBus响应输入和物理事件
+/// - 为技能系统提供触发点（MovingEnd状态）
 /// </summary>
 public class PlayerStateMachine : MonoBehaviour
 {
@@ -27,9 +28,10 @@ public class PlayerStateMachine : MonoBehaviour
     /// </summary>
     public enum PlayerState
     {
-        Idle,        // 空闲状态：可以移动、可以开始蓄力
+        Idle,        // 空闲状态：等待输入
         Charging,    // 蓄力状态：不能移动、显示瞄准线、更新蓄力进度
-        Moving       // 运动状态：物理发射移动中，不能进行任何操作
+        Moving,      // 运动状态：物理发射移动中，不能进行任何操作
+        MovingEnd    // 移动结束状态：球停止后的处理阶段，技能触发点
     }
     
     [Header("状态设置")]
@@ -45,6 +47,7 @@ public class PlayerStateMachine : MonoBehaviour
     
     // 事件
     public System.Action<PlayerState, PlayerState> OnStateChanged;
+    public System.Action OnPlayingComplete; // Playing阶段完成事件（通知PlayerPhaseController）
     
     void Start()
     {
@@ -141,6 +144,9 @@ public class PlayerStateMachine : MonoBehaviour
             case PlayerState.Moving:
                 
                 break;
+            case PlayerState.MovingEnd:
+                // MovingEnd 状态由协程处理，不需要在 Update 中更新
+                break;
         }
     }
     
@@ -159,6 +165,9 @@ public class PlayerStateMachine : MonoBehaviour
                 break;
             case PlayerState.Moving:
                 // 清理运动状态
+                break;
+            case PlayerState.MovingEnd:
+                // 清理 MovingEnd 状态
                 break;
         }
     }
@@ -180,6 +189,11 @@ public class PlayerStateMachine : MonoBehaviour
                 // 进入运动状态
                 // 状态变化会通过事件通知GameFlowController
                 break;
+            case PlayerState.MovingEnd:
+                // 进入 MovingEnd 状态
+                // 启动协程处理 MovingEnd 阶段
+                StartCoroutine(ExecuteMovingEndPhase());
+                break;
         }
     }
     
@@ -199,11 +213,52 @@ public class PlayerStateMachine : MonoBehaviour
         }
     }
     
-    
+    /// <summary>
+    /// 执行 MovingEnd 阶段
+    /// </summary>
+    System.Collections.IEnumerator ExecuteMovingEndPhase()
+    {
+        if (showDebugInfo)
+        {
+            Debug.Log("PlayerStateMachine: 进入 MovingEnd 阶段");
+        }
+        
+        // 这里是技能系统的触发点
+        // 未来技能系统会监听 MovingEnd 状态，执行各种"停球后效果"
+        // 当前阶段暂时保持空实现，只等待一小段时间
+        
+        // 等待一小段时间（0.1秒，可配置）
+        yield return new WaitForSeconds(0.1f);
+        
+        if (showDebugInfo)
+        {
+            Debug.Log("PlayerStateMachine: MovingEnd 阶段完成，通知 PlayerPhaseController");
+        }
+        
+        // 通知 PlayerPhaseController Playing 阶段完成
+        OnPlayingComplete?.Invoke();
+    }
     
     #endregion
     
     #region 外部接口
+    
+    /// <summary>
+    /// 开始 Playing 阶段（由 PlayerPhaseController 调用）
+    /// </summary>
+    public void StartPlaying()
+    {
+        // 确保从 Idle 状态开始
+        if (currentState != PlayerState.Idle)
+        {
+            SwitchToState(PlayerState.Idle);
+        }
+        
+        if (showDebugInfo)
+        {
+            Debug.Log("PlayerStateMachine: 开始 Playing 阶段");
+        }
+    }
     
     /// <summary>
     /// 蓄力开始事件处理
@@ -259,7 +314,8 @@ public class PlayerStateMachine : MonoBehaviour
             // 发布蓄力重置事件
             GameEventBus.PublishChargingReset();
             
-            SwitchToState(PlayerState.Idle);
+            // 切换到 MovingEnd 状态（球停止后的处理阶段）
+            SwitchToState(PlayerState.MovingEnd);
         }
     }
     
