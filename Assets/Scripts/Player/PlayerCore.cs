@@ -265,27 +265,27 @@ public class PlayerCore : MonoBehaviour
                 // 正常敌人，玩家攻击
                 Debug.Log($"PlayerCore: 碰到敌人 {collision.gameObject.name}");
                 
-                // 检查玩家阶段状态，只在Moving子阶段处理碰撞
-                PlayerPhaseController playerPhaseController = PlayerPhaseController.Instance;
-                if (playerPhaseController != null)
+                // 检查玩家状态，只在Moving状态处理碰撞
+                PlayerStateMachine playerStateMachine = FindFirstObjectByType<PlayerStateMachine>();
+                if (playerStateMachine != null)
                 {
-                    Debug.Log($"PlayerCore: 当前玩家子阶段: {playerPhaseController.CurrentSubPhase}");
+                    Debug.Log($"PlayerCore: 当前玩家状态: {playerStateMachine.CurrentState}");
                     
-                    if (playerPhaseController.CurrentSubPhase == PlayerPhaseController.PlayerSubPhase.Moving)
+                    if (playerStateMachine.CurrentState == PlayerStateMachine.PlayerState.Moving)
                     {
-                        // Moving子阶段：玩家攻击敌人
-                        Debug.Log("PlayerCore: 在Moving子阶段，执行攻击");
+                        // Moving状态：玩家攻击敌人
+                        Debug.Log("PlayerCore: 在Moving状态，执行攻击");
                         AttackEnemy(collision);
                     }
                     else
                     {
-                        // 在其他子阶段，不处理碰撞
-                        Debug.Log("PlayerCore: 不在Moving子阶段，不处理碰撞");
+                        // 在其他状态，不处理碰撞
+                        Debug.Log("PlayerCore: 不在Moving状态，不处理碰撞");
                     }
                 }
                 else
                 {
-                    Debug.LogWarning("PlayerCore: PlayerPhaseController 未找到！");
+                    Debug.LogWarning("PlayerCore: PlayerStateMachine 未找到！");
                 }
             }
             return;

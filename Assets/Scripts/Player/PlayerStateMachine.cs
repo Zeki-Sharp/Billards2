@@ -101,8 +101,7 @@ public class PlayerStateMachine : MonoBehaviour
         currentState = newState;
         EnterState(newState);
         
-        // 通知GameFlowController状态变化
-        NotifyGameFlowStateChange(oldState, newState);
+        // 状态变化通过 OnStateChanged 事件通知监听者
         
         OnStateChanged?.Invoke(newState, oldState);
         
@@ -112,21 +111,6 @@ public class PlayerStateMachine : MonoBehaviour
         }
     }
     
-    /// <summary>
-    /// 通知GameFlowController状态变化
-    /// </summary>
-    void NotifyGameFlowStateChange(PlayerState fromState, PlayerState toState)
-    {
-        // 现在由PlayerPhaseController来管理状态切换
-        // 这里只触发事件，让PlayerPhaseController监听
-        if (showDebugInfo)
-        {
-            Debug.Log($"PlayerStateMachine: 状态变化 {fromState} -> {toState}，通知PlayerPhaseController");
-        }
-        
-        // 触发状态变化事件，PlayerPhaseController会监听这个事件
-        OnStateChanged?.Invoke(toState, fromState);
-    }
     
     /// <summary>
     /// 更新当前状态逻辑
@@ -187,7 +171,6 @@ public class PlayerStateMachine : MonoBehaviour
                 break;
             case PlayerState.Moving:
                 // 进入运动状态
-                // 状态变化会通过事件通知GameFlowController
                 break;
             case PlayerState.MovingEnd:
                 // 进入 MovingEnd 状态
@@ -229,6 +212,17 @@ public class PlayerStateMachine : MonoBehaviour
         
         // 等待一小段时间（0.1秒，可配置）
         yield return new WaitForSeconds(0.1f);
+        
+        // 关闭时停特效
+        TimeStopEffect timeStopEffect = FindFirstObjectByType<TimeStopEffect>();
+        if (timeStopEffect != null)
+        {
+            timeStopEffect.SetIntensityImmediate(0f);
+            if (showDebugInfo)
+            {
+                Debug.Log("PlayerStateMachine: MovingEnd 阶段 - 关闭时停特效");
+            }
+        }
         
         if (showDebugInfo)
         {

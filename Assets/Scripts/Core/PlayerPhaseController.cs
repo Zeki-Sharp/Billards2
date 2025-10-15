@@ -2,55 +2,55 @@ using UnityEngine;
 using MoreMountains.Tools;
 
 /// <summary>
-/// 玩家阶段控制器 - 管理玩家阶段的所有子阶段
+/// 玩家阶段控制器 - 回合级别的流程编排器（重构版）
 /// 
 /// 【核心职责】：
-/// - 管理玩家子阶段：Normal, Charging, Moving, Transition
-/// - 协调PlayerStateMachine和相关系统
-/// - 处理玩家阶段内的所有逻辑
-/// - 与EnemyPhaseController对称设计
+/// - 管理玩家回合的三个必然流程阶段：PhaseStart、Playing、PhaseEnd
+/// - 委托 PlayerStateMachine 处理操作级别的状态管理
+/// - 与 GameFlowController 协调回合切换
+/// - 与 EnemyPhaseController 保持架构对称（都是流程编排器）
+/// 
+/// 【阶段定义】：
+/// - PhaseStart: 回合开始，重置状态
+/// - Playing: 游玩中，委托给 PlayerStateMachine（Idle → Charging → Moving → MovingEnd）
+/// - PhaseEnd: 回合结束，清理并切换到敌人回合
+/// 
+/// 【设计原则】：
+/// - 只做流程编排，不做具体执行
+/// - 单向依赖：调用 PlayerStateMachine，不监听其状态变化
+/// - 通过 OnPlayingComplete 事件接收完成通知
+/// - 所有 Phase 都是必然流程，可选能力属于技能系统
 /// </summary>
 public class PlayerPhaseController : MonoBehaviour
 {
     public static PlayerPhaseController Instance { get; private set; }
     
     /// <summary>
-    /// 玩家子阶段枚举
+    /// 玩家阶段枚举（重构版 - 只保留必然流程）
     /// </summary>
-    public enum PlayerSubPhase
+    public enum PlayerPhase
     {
-        Normal,         // 正常状态：玩家移动躲避
-        Charging,       // 蓄力状态：完全时停，玩家瞄准蓄力
-        Moving,         // 移动状态：玩家球在物理移动中，敌人和子弹时停
-        Transition      // 过渡状态：玩家可移动，敌人和子弹仍时停，白球运动
+        PhaseStart,     // 回合开始：重置状态
+        Playing,        // 游玩中：委托给 PlayerStateMachine
+        PhaseEnd        // 回合结束：清理、切换到敌人回合
     }
     
     
-    // 当前子阶段
-    private PlayerSubPhase currentSubPhase = PlayerSubPhase.Normal;
+    [Header("调试")]
+    [SerializeField] private bool showDebugInfo = true;
     
-    // 子阶段顺序（类似EnemyPhaseController的设计）
-    private readonly PlayerSubPhase[] subPhaseSequence = {
-        PlayerSubPhase.Normal,     // 正常状态
-        PlayerSubPhase.Charging,   // 蓄力状态
-        PlayerSubPhase.Moving,     // 移动状态
-        PlayerSubPhase.Transition  // 过渡状态
-    };
-    
-    private int currentSubPhaseIndex = 0;
+    // 当前阶段
+    private PlayerPhase currentPhase = PlayerPhase.PhaseStart;
     
     // 组件引用
     private PlayerStateMachine playerStateMachine;
-    private TransitionManager transitionManager;
-    private TimeStopEffect timeStopEffect;
     
     // 事件
-    public System.Action<PlayerSubPhase> OnSubPhaseStart;
-    public System.Action<PlayerSubPhase> OnSubPhaseComplete;
+    public System.Action<PlayerPhase> OnPhaseChanged;
     public System.Action OnPlayerPhaseComplete; // 整个玩家阶段完成事件
     
     // 公共属性
-    public PlayerSubPhase CurrentSubPhase => currentSubPhase;
+    public PlayerPhase CurrentPhase => currentPhase;
     
     void Awake()
     {
@@ -83,17 +83,20 @@ public class PlayerPhaseController : MonoBehaviour
     {
         // 获取组件引用
         playerStateMachine = FindFirstObjectByType<PlayerStateMachine>();
-        transitionManager = FindFirstObjectByType<TransitionManager>();
-        timeStopEffect = FindFirstObjectByType<TimeStopEffect>();
         
-        // 订阅PlayerStateMachine的状态变化事件
+        // 订阅 PlayerStateMachine 的 Playing 完成事件
         if (playerStateMachine != null)
         {
-            playerStateMachine.OnStateChanged += OnPlayerStateChanged;
+            playerStateMachine.OnPlayingComplete += OnPlayingComplete;
+            
+            if (showDebugInfo)
+            {
+                Debug.Log("PlayerPhaseController: 初始化完成，已订阅 OnPlayingComplete 事件");
+            }
         }
         else
         {
-            Debug.LogError("PlayerPhaseController: 未找到PlayerStateMachine！");
+            Debug.LogError("PlayerPhaseController: 未找到 PlayerStateMachine！");
         }
     }
     
@@ -101,7 +104,7 @@ public class PlayerPhaseController : MonoBehaviour
     {
         if (playerStateMachine != null)
         {
-            playerStateMachine.OnStateChanged -= OnPlayerStateChanged;
+            playerStateMachine.OnPlayingComplete -= OnPlayingComplete;
         }
     }
     
@@ -110,7 +113,10 @@ public class PlayerPhaseController : MonoBehaviour
     /// </summary>
     public void StartPlayerPhase()
     {
-        // 玩家阶段开始
+        if (showDebugInfo)
+        {
+            Debug.Log("PlayerPhaseController: 开始玩家阶段");
+        }
         
         // 确保PlayerStateMachine引用正确
         if (playerStateMachine == null)
@@ -118,213 +124,141 @@ public class PlayerPhaseController : MonoBehaviour
             playerStateMachine = FindFirstObjectByType<PlayerStateMachine>();
             if (playerStateMachine != null)
             {
-                playerStateMachine.OnStateChanged += OnPlayerStateChanged;
+                playerStateMachine.OnPlayingComplete += OnPlayingComplete;
             }
             else
             {
                 Debug.LogError("PlayerPhaseController: 在StartPlayerPhase时仍未找到PlayerStateMachine！");
+                return;
             }
         }
         
-        // 重置子阶段索引
-        currentSubPhaseIndex = 0;
-        
-        // 开始执行第一个子阶段
-        ExecuteNextSubPhase();
+        // 从 PhaseStart 开始
+        SwitchToPhase(PlayerPhase.PhaseStart);
     }
     
     /// <summary>
-    /// 执行下一个子阶段
+    /// 切换到指定阶段
     /// </summary>
-    void ExecuteNextSubPhase()
+    void SwitchToPhase(PlayerPhase newPhase)
     {
-        if (currentSubPhaseIndex >= subPhaseSequence.Length)
+        if (currentPhase == newPhase) return;
+        
+        PlayerPhase oldPhase = currentPhase;
+        
+        // 退出旧阶段
+        ExitPhase(oldPhase);
+        
+        // 进入新阶段
+        currentPhase = newPhase;
+        EnterPhase(newPhase);
+        
+        // 触发事件
+        OnPhaseChanged?.Invoke(newPhase);
+        
+        if (showDebugInfo)
         {
-            // 所有子阶段完成，通知GameFlowController
-            OnPlayerPhaseComplete?.Invoke();
-            return;
+            Debug.Log($"PlayerPhaseController: 阶段切换 {oldPhase} → {newPhase}");
         }
-        
-        // 获取当前子阶段
-        PlayerSubPhase subPhase = subPhaseSequence[currentSubPhaseIndex];
-        currentSubPhase = subPhase;
-        
-        // 开始执行子阶段
-        
-        // 通知子阶段开始
-        OnSubPhaseStart?.Invoke(subPhase);
-        
-        // 执行具体子阶段逻辑
-        ExecuteSubPhase(subPhase);
     }
     
     /// <summary>
-    /// 执行具体子阶段逻辑
+    /// 进入阶段
     /// </summary>
-    void ExecuteSubPhase(PlayerSubPhase subPhase)
+    void EnterPhase(PlayerPhase phase)
     {
-        switch (subPhase)
+        switch (phase)
         {
-            case PlayerSubPhase.Normal:
-                ExecuteNormalPhase();
+            case PlayerPhase.PhaseStart:
+                ExecutePhaseStart();
                 break;
-            case PlayerSubPhase.Charging:
-                ExecuteChargingPhase();
+                
+            case PlayerPhase.Playing:
+                ExecutePlaying();
                 break;
-            case PlayerSubPhase.Moving:
-                ExecuteMovingPhase();
-                break;
-            case PlayerSubPhase.Transition:
-                ExecuteTransitionPhase();
+                
+            case PlayerPhase.PhaseEnd:
+                ExecutePhaseEnd();
                 break;
         }
     }
     
     /// <summary>
-    /// 处理PlayerStateMachine的状态变化
+    /// 退出阶段
     /// </summary>
-    void OnPlayerStateChanged(PlayerStateMachine.PlayerState newState, PlayerStateMachine.PlayerState oldState)
+    void ExitPhase(PlayerPhase phase)
     {
-        // 根据PlayerStateMachine的状态变化，检查是否可以进入下一个子阶段
-        if (CanAdvanceToNextSubPhase(newState, oldState))
+        // 清理阶段特定逻辑
+        if (showDebugInfo)
         {
-            currentSubPhaseIndex++;
-            ExecuteNextSubPhase();
+            Debug.Log($"PlayerPhaseController: 退出阶段 {phase}");
         }
     }
     
     /// <summary>
-    /// 检查是否可以进入下一个子阶段
+    /// 执行 PhaseStart 阶段
     /// </summary>
-    bool CanAdvanceToNextSubPhase(PlayerStateMachine.PlayerState newState, PlayerStateMachine.PlayerState oldState)
+    void ExecutePhaseStart()
     {
-        // 根据当前子阶段和PlayerStateMachine状态变化判断
-        switch (currentSubPhase)
+        if (showDebugInfo)
         {
-            case PlayerSubPhase.Normal:
-                // Normal -> Charging: PlayerState Idle -> Charging
-                return newState == PlayerStateMachine.PlayerState.Charging && 
-                       oldState == PlayerStateMachine.PlayerState.Idle;
-                       
-            case PlayerSubPhase.Charging:
-                // Charging -> Moving: PlayerState Charging -> Moving
-                return newState == PlayerStateMachine.PlayerState.Moving && 
-                       oldState == PlayerStateMachine.PlayerState.Charging;
-                       
-            case PlayerSubPhase.Moving:
-                // Moving -> Transition: PlayerState Moving -> Idle
-                return newState == PlayerStateMachine.PlayerState.Idle && 
-                       oldState == PlayerStateMachine.PlayerState.Moving;
-                       
-            case PlayerSubPhase.Transition:
-                // Transition完成由TransitionManager通知
-                return false;
+            Debug.Log("PlayerPhaseController: 执行 PhaseStart - 重置状态");
         }
         
-        return false;
+        // 重置玩家状态（如果需要）
+        // 目前自动进入 Playing 阶段
+        SwitchToPhase(PlayerPhase.Playing);
     }
     
     /// <summary>
-    /// 执行Normal子阶段
+    /// 执行 Playing 阶段（委托给 PlayerStateMachine）
     /// </summary>
-    void ExecuteNormalPhase()
+    void ExecutePlaying()
     {
-        // 关闭时停效果
-        if (timeStopEffect != null)
+        if (showDebugInfo)
         {
-            timeStopEffect.SetIntensityImmediate(0f);
+            Debug.Log("PlayerPhaseController: 执行 Playing - 委托给 PlayerStateMachine");
         }
         
-        // 触发Normal特效
+        // 调用 PlayerStateMachine 开始游玩
+        if (playerStateMachine != null)
+        {
+            playerStateMachine.StartPlaying();
+        }
+        else
+        {
+            Debug.LogError("PlayerPhaseController: PlayerStateMachine 为 null！");
+        }
         
-        // Normal子阶段开始，等待PlayerStateMachine状态变化
-        
-
+        // 等待 PlayerStateMachine.OnPlayingComplete 事件
     }
     
     /// <summary>
-    /// 执行Charging子阶段
+    /// Playing 阶段完成回调（由 PlayerStateMachine 通知）
     /// </summary>
-    void ExecuteChargingPhase()
+    void OnPlayingComplete()
     {
-        // 时停效果由ChargeSystem控制
-        // 触发蓄力特效
-        //GameEventBus.PublishEffectEvent("Charge", Vector3.zero);
+        if (showDebugInfo)
+        {
+            Debug.Log("PlayerPhaseController: Playing 阶段完成，进入 PhaseEnd");
+        }
         
-        // Charging子阶段开始，等待PlayerStateMachine状态变化
-        
-        // Charging阶段不立即完成，等待PlayerStateMachine触发Moving
-        // 子阶段切换由OnPlayerStateChanged处理
+        SwitchToPhase(PlayerPhase.PhaseEnd);
     }
     
     /// <summary>
-    /// 执行Moving子阶段
+    /// 执行 PhaseEnd 阶段
     /// </summary>
-    void ExecuteMovingPhase()
+    void ExecutePhaseEnd()
     {
-        // 保持时停效果
-        if (timeStopEffect != null)
+        if (showDebugInfo)
         {
-            timeStopEffect.SetIntensityImmediate(1f);
+            Debug.Log("PlayerPhaseController: 执行 PhaseEnd - 清理并切换到敌人回合");
         }
         
+        // 清理临时状态
         
-        // Moving子阶段开始，等待PlayerStateMachine状态变化
-        
-    }
-    
-    /// <summary>
-    /// 执行Transition子阶段
-    /// </summary>
-    void ExecuteTransitionPhase()
-    {
-        // 开始过渡
-        if (transitionManager != null)
-        {
-            transitionManager.StartTransition();
-            
-            // 监听过渡完成
-            transitionManager.OnTransitionEnd += OnTransitionComplete;
-        }
-        
-        // 触发时停出场特效
-    }
-    
-    /// <summary>
-    /// 过渡完成回调
-    /// </summary>
-    void OnTransitionComplete()
-    {
-        if (transitionManager != null)
-        {
-            transitionManager.OnTransitionEnd -= OnTransitionComplete;
-        }
-        
-        // Transition子阶段完成
-        OnSubPhaseComplete?.Invoke(PlayerSubPhase.Transition);
-        
-        // 进入下一个子阶段（实际上是完成整个玩家阶段）
-        currentSubPhaseIndex++;
-        ExecuteNextSubPhase();
-    }
-    
-    /// <summary>
-    /// 获取子阶段描述
-    /// </summary>
-    string GetSubPhaseDescription(PlayerSubPhase subPhase)
-    {
-        switch (subPhase)
-        {
-            case PlayerSubPhase.Normal:
-                return "正常状态：玩家移动躲避";
-            case PlayerSubPhase.Charging:
-                return "蓄力状态：完全时停，玩家瞄准蓄力";
-            case PlayerSubPhase.Moving:
-                return "移动状态：玩家球在物理移动中，敌人和子弹时停";
-            case PlayerSubPhase.Transition:
-                return "过渡状态：玩家可移动，敌人和子弹仍时停，白球运动";
-            default:
-                return "未知子阶段";
-        }
+        // 通知 GameFlowController 玩家阶段完成
+        OnPlayerPhaseComplete?.Invoke();
     }
 }

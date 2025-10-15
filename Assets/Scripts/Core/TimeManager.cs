@@ -27,14 +27,14 @@ public class TimeManager : MonoBehaviour
     public float playerTimeScale = 1f;
     
     [Header("时停阶段控制")]
-    [Tooltip("在Charging阶段是否启用敌人时停")]
+    [Tooltip("在Charging状态是否启用敌人时停")]
     public bool enableEnemyTimeStopInCharging = true;
     
-    [Tooltip("在Transition阶段是否启用敌人时停")]
-    public bool enableEnemyTimeStopInTransition = true;
+    [Tooltip("在Moving状态是否启用敌人时停")]
+    public bool enableEnemyTimeStopInMoving = true;
     
-    [Tooltip("在Normal阶段是否启用敌人时停")]
-    public bool enableEnemyTimeStopInNormal = false;
+    [Tooltip("在MovingEnd状态是否启用敌人时停")]
+    public bool enableEnemyTimeStopInMovingEnd = true;
     
     [Header("时停对象控制")]
     [Tooltip("是否影响敌人移动")]
@@ -48,6 +48,7 @@ public class TimeManager : MonoBehaviour
 
     
     private GameFlowController gameFlowController;
+    private PlayerStateMachine playerStateMachine;
     
     void Awake()
     {
@@ -72,6 +73,13 @@ public class TimeManager : MonoBehaviour
         {
             Debug.LogError("TimeManager: 未找到GameFlowController实例！");
         }
+        
+        // 获取PlayerStateMachine引用
+        playerStateMachine = FindFirstObjectByType<PlayerStateMachine>();
+        if (playerStateMachine == null)
+        {
+            Debug.LogError("TimeManager: 未找到PlayerStateMachine实例！");
+        }
     }
     
     #region 公共方法
@@ -91,19 +99,19 @@ public class TimeManager : MonoBehaviour
         
         bool shouldSlowDown = false;
         
-        // 根据当前玩家子阶段和设置决定是否时停
-        PlayerPhaseController playerPhaseController = PlayerPhaseController.Instance;
-        if (playerPhaseController != null)
+        // 根据当前玩家状态和设置决定是否时停
+        if (playerStateMachine != null)
         {
-            if (playerPhaseController.CurrentSubPhase == PlayerPhaseController.PlayerSubPhase.Charging && enableEnemyTimeStopInCharging)
+            var currentState = playerStateMachine.CurrentState;
+            if (currentState == PlayerStateMachine.PlayerState.Charging && enableEnemyTimeStopInCharging)
             {
                 shouldSlowDown = true;
             }
-            else if (playerPhaseController.CurrentSubPhase == PlayerPhaseController.PlayerSubPhase.Transition && enableEnemyTimeStopInTransition)
+            else if (currentState == PlayerStateMachine.PlayerState.Moving && enableEnemyTimeStopInMoving)
             {
                 shouldSlowDown = true;
             }
-            else if (playerPhaseController.CurrentSubPhase == PlayerPhaseController.PlayerSubPhase.Normal && enableEnemyTimeStopInNormal)
+            else if (currentState == PlayerStateMachine.PlayerState.MovingEnd && enableEnemyTimeStopInMovingEnd)
             {
                 shouldSlowDown = true;
             }
@@ -153,14 +161,14 @@ public class TimeManager : MonoBehaviour
     /// </summary>
     public bool IsEnemyTimeStopped()
     {
-        PlayerPhaseController playerPhaseController = PlayerPhaseController.Instance;
-        if (playerPhaseController == null) return false;
+        if (playerStateMachine == null) return false;
         
-        bool chargingStop = playerPhaseController.CurrentSubPhase == PlayerPhaseController.PlayerSubPhase.Charging && enableEnemyTimeStopInCharging;
-        bool transitionStop = playerPhaseController.CurrentSubPhase == PlayerPhaseController.PlayerSubPhase.Transition && enableEnemyTimeStopInTransition;
-        bool normalStop = playerPhaseController.CurrentSubPhase == PlayerPhaseController.PlayerSubPhase.Normal && enableEnemyTimeStopInNormal;
+        var currentState = playerStateMachine.CurrentState;
+        bool chargingStop = currentState == PlayerStateMachine.PlayerState.Charging && enableEnemyTimeStopInCharging;
+        bool movingStop = currentState == PlayerStateMachine.PlayerState.Moving && enableEnemyTimeStopInMoving;
+        bool movingEndStop = currentState == PlayerStateMachine.PlayerState.MovingEnd && enableEnemyTimeStopInMovingEnd;
         
-        bool result = chargingStop || transitionStop || normalStop;
+        bool result = chargingStop || movingStop || movingEndStop;
         
         return result;
     }
