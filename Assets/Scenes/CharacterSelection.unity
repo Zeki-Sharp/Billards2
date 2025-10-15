@@ -676,7 +676,6 @@ RectTransform:
   m_LocalScale: {x: 0, y: 0, z: 0}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 1754439845}
   - {fileID: 1738410109}
   - {fileID: 247500637}
   m_Father: {fileID: 0}
@@ -988,6 +987,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   selectionData: {fileID: 11400000, guid: 7b4a075286903f14f9f59c4afe2885e2, type: 2}
+  characterButtonPrefab: {fileID: 2735802933560132947, guid: 4c1d6c99c8d502a4293f850debb61e87, type: 3}
   buttonContainer: {fileID: 737301689}
   startGameButton: {fileID: 247500638}
   selectedCharacterText: {fileID: 0}
@@ -1001,11 +1001,11 @@ Transform:
   m_GameObject: {fileID: 1754439842}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 878.3352, y: 82.19415, z: 1.3191273}
+  m_LocalPosition: {x: 2158.3352, y: 802.19415, z: 1.3191273}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 1433925293}
+  m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1931349597
 GameObject:
@@ -1288,3 +1288,4 @@ SceneRoots:
   - {fileID: 1433925293}
   - {fileID: 1444439767}
   - {fileID: 893274485}
+  - {fileID: 1754439845}

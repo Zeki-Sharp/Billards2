@@ -14,16 +14,6 @@ public class CharacterSelectionData : ScriptableObject
     [InfoBox("每个 PlayerData 代表一个可选角色，列表顺序决定了在选人界面中的显示顺序")]
     public List<PlayerData> availableCharacters = new List<PlayerData>();
     
-    [Header("界面设置")]
-    [LabelText("按钮预制体")]
-    [Tooltip("角色选择按钮的预制体")]
-    [Required]
-    public GameObject characterButtonPrefab;
-    
-    [LabelText("按钮容器")]
-    [Tooltip("角色按钮的父容器")]
-    [Required]
-    public Transform buttonContainer;
     
     [Button("验证配置")]
     [GUIColor(0.4f, 0.8f, 1f)]
@@ -52,20 +42,6 @@ public class CharacterSelectionData : ScriptableObject
                     isValid = false;
                 }
             }
-        }
-        
-        // 检查按钮预制体
-        if (characterButtonPrefab == null)
-        {
-            Debug.LogError("CharacterSelectionData: 按钮预制体未配置！");
-            isValid = false;
-        }
-        
-        // 检查按钮容器
-        if (buttonContainer == null)
-        {
-            Debug.LogError("CharacterSelectionData: 按钮容器未配置！");
-            isValid = false;
         }
         
         if (isValid)
@@ -97,8 +73,6 @@ public class CharacterSelectionData : ScriptableObject
     {
         return availableCharacters != null && 
                availableCharacters.Count > 0 && 
-               characterButtonPrefab != null && 
-               buttonContainer != null &&
                !availableCharacters.Exists(data => data == null || string.IsNullOrEmpty(data.playerName));
     }
     

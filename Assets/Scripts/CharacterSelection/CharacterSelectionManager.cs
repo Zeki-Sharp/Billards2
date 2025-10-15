@@ -13,6 +13,7 @@ public class CharacterSelectionManager : MonoBehaviour
     [SerializeField] private CharacterSelectionData selectionData;
     
     [Header("UI引用")]
+    [SerializeField] private GameObject characterButtonPrefab;
     [SerializeField] private Transform buttonContainer;
     [SerializeField] private Button startGameButton;
     [SerializeField] private TextMeshProUGUI selectedCharacterText;
@@ -51,10 +52,11 @@ public class CharacterSelectionManager : MonoBehaviour
             return;
         }
         
-        // 设置按钮容器
-        if (buttonContainer == null)
+        // 验证UI组件配置
+        if (characterButtonPrefab == null)
         {
-            buttonContainer = selectionData.buttonContainer;
+            Debug.LogError("CharacterSelectionManager: 角色按钮预制体未配置！");
+            return;
         }
         
         if (buttonContainer == null)
@@ -113,14 +115,8 @@ public class CharacterSelectionManager : MonoBehaviour
     /// </summary>
     void CreateCharacterButton(PlayerData characterData)
     {
-        if (selectionData.characterButtonPrefab == null)
-        {
-            Debug.LogError("CharacterSelectionManager: 按钮预制体未配置！");
-            return;
-        }
-        
         // 实例化按钮
-        GameObject buttonObj = Instantiate(selectionData.characterButtonPrefab, buttonContainer);
+        GameObject buttonObj = Instantiate(characterButtonPrefab, buttonContainer);
         
         // 获取按钮组件
         CharacterButton characterButton = buttonObj.GetComponent<CharacterButton>();
@@ -347,6 +343,7 @@ public class CharacterSelectionManager : MonoBehaviour
     {
         Debug.Log($"CharacterSelectionManager 调试信息:\n" +
                  $"配置数据: {(selectionData != null ? "已配置" : "未配置")}\n" +
+                 $"按钮预制体: {(characterButtonPrefab != null ? "已配置" : "未配置")}\n" +
                  $"按钮容器: {(buttonContainer != null ? "已配置" : "未配置")}\n" +
                  $"开始游戏按钮: {(startGameButton != null ? "已配置" : "未配置")}\n" +
                  $"角色按钮数量: {characterButtons.Count}\n" +
