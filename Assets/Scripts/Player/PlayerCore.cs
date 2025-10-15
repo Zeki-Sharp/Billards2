@@ -26,7 +26,7 @@ public class PlayerCore : MonoBehaviour
     public PlayerData playerData; // 玩家配置数据（由Player设置）
     
     [Header("攻击系统")]
-    // 攻击配置现在直接使用 PlayerData 中的攻击方式配置
+    public PlayerAttackManager attackManager; // 攻击管理器引用
     
     [Header("蓄力系统")]
     public ChargeSystem chargeSystem; // 蓄力系统引用
@@ -51,41 +51,30 @@ public class PlayerCore : MonoBehaviour
     }
     
     /// <summary>
-    /// 获取当前攻击力（从 PlayerStatsManager 获取，包含技能修正）
+    /// 获取当前攻击力（委托给 AttackManager）
     /// </summary>
     public float GetCurrentAttackDamage()
     {
-        // 优先从 PlayerStatsManager 获取（包含技能修正）
-        PlayerStatsManager statsManager = GetComponent<PlayerStatsManager>();
-        if (statsManager != null)
+        if (attackManager != null)
         {
-            return statsManager.FinalDamage;
+            return attackManager.GetCurrentAttackDamage();
         }
         
-        // 回退到基础攻击力
-        return GetBaseAttackDamage();
+        Debug.LogError("PlayerCore: AttackManager 未配置，无法获取攻击力！");
+        return 0f;
     }
     
     /// <summary>
-    /// 获取基础攻击力（从 PlayerData 获取，不包含技能修正）
+    /// 获取基础攻击力（委托给 AttackManager）
     /// </summary>
     public float GetBaseAttackDamage()
     {
-        if (playerData != null)
+        if (attackManager != null)
         {
-            switch (playerData.attackMode)
-            {
-                case PlayerData.AttackMode.Collision:
-                    return playerData.collisionDamage;
-                case PlayerData.AttackMode.Area:
-                    return playerData.areaDamage;
-                default:
-                    Debug.LogError("PlayerCore: 未知的攻击模式！");
-                    return 0f;
-            }
+            return attackManager.GetBaseAttackDamage();
         }
         
-        Debug.LogError("PlayerCore: PlayerData 未配置，无法获取攻击力！");
+        Debug.LogError("PlayerCore: AttackManager 未配置，无法获取基础攻击力！");
         return 0f;
     }
     
@@ -315,17 +304,14 @@ public class PlayerCore : MonoBehaviour
                     
                     if (playerStateMachine.CurrentState == PlayerStateMachine.PlayerState.Moving)
                     {
-                        // Moving状态：检查攻击模式
-                        if (playerData != null && playerData.attackMode == PlayerData.AttackMode.Collision)
+                        // Moving状态：委托给 AttackManager 处理
+                        if (attackManager != null)
                         {
-                            // 碰撞攻击模式：执行碰撞攻击
-                            Debug.Log("PlayerCore: 在Moving状态，执行碰撞攻击");
-                            HandleCollisionAttack(collision);
+                            attackManager.ProcessCollision(collision);
                         }
                         else
                         {
-                            // 范围攻击模式：碰撞时不造成伤害
-                            Debug.Log("PlayerCore: 范围攻击模式，碰撞时不造成伤害");
+                            Debug.LogError("PlayerCore: AttackManager 未配置，无法处理碰撞攻击！");
                         }
                     }
                     else
@@ -403,92 +389,21 @@ public class PlayerCore : MonoBehaviour
     /// </summary>
     public void HandleBallStoppedAttack()
     {
-        // 检查攻击模式，只有范围攻击才在球停止时触发
-        if (playerData != null && playerData.attackMode == PlayerData.AttackMode.Area)
+        // 委托给 AttackManager 处理球停止攻击
+        if (attackManager != null)
         {
             // 获取球的实际停止位置，而不是 PlayerCore 的位置
             Vector3 ballPosition = ballPhysics != null ? ballPhysics.transform.position : transform.position;
-            HandleAreaAttack(ballPosition);
-            Debug.Log($"PlayerCore: 球停止，触发范围攻击 - 位置: {ballPosition}");
+            attackManager.ProcessBallStopped(ballPosition);
+            Debug.Log($"PlayerCore: 球停止，委托 AttackManager 处理攻击 - 位置: {ballPosition}");
         }
         else
         {
-            Debug.Log("PlayerCore: 当前攻击模式不是范围攻击，跳过球停止攻击");
+            Debug.LogError("PlayerCore: AttackManager 未配置，无法处理球停止攻击！");
         }
     }
     
-    /// <summary>
-    /// 处理碰撞攻击
-    /// </summary>
-    void HandleCollisionAttack(Collision2D collision)
-    {
-        if (playerData == null)
-        {
-            Debug.LogError("PlayerCore: PlayerData 未配置，无法执行碰撞攻击！");
-            return;
-        }
-        
-        // 检查碰撞对象是否是敌人（包括父物体）
-        EnemyBehavior enemy = collision.gameObject.GetComponent<EnemyBehavior>();
-        if (enemy == null)
-        {
-            enemy = collision.gameObject.GetComponentInParent<EnemyBehavior>();
-        }
-        
-        if (enemy != null)
-        {
-            float finalDamage = GetCurrentAttackDamage();
-            gameObject.PublishAttack("Hit", collision.contacts[0].point, enemy.gameObject, finalDamage);
-            Debug.Log($"[PlayerCore] 碰撞攻击命中 {enemy.name}，造成伤害: {finalDamage}");
-        }
-    }
-    
-    /// <summary>
-    /// 处理范围攻击
-    /// </summary>
-    void HandleAreaAttack(Vector3 ballPosition)
-    {
-        if (playerData == null)
-        {
-            Debug.LogError("PlayerCore: PlayerData 未配置，无法执行范围攻击！");
-            return;
-        }
-        
-        Collider2D[] enemies = Physics2D.OverlapCircleAll(
-            ballPosition, 
-            playerData.areaRadius, 
-            playerData.enemyLayerMask
-        );
-        
-        float finalDamage = GetCurrentAttackDamage();
-        
-        int hitCount = 0;
-        foreach (Collider2D enemyCollider in enemies)
-        {
-            // 检查敌人组件（包括父物体）
-            EnemyBehavior enemy = enemyCollider.GetComponent<EnemyBehavior>();
-            if (enemy == null)
-            {
-                enemy = enemyCollider.GetComponentInParent<EnemyBehavior>();
-            }
-            
-            if (enemy != null)
-            {
-                gameObject.PublishAttack("Hit", ballPosition, enemy.gameObject, finalDamage);
-                hitCount++;
-                Debug.Log($"[PlayerCore] 范围攻击命中 {enemy.name}，造成伤害: {finalDamage}");
-            }
-        }
-        
-        if (hitCount > 0)
-        {
-            Debug.Log($"[PlayerCore] 范围攻击完成，命中 {hitCount} 个敌人，范围: {playerData.areaRadius}");
-        }
-        else
-        {
-            Debug.Log("[PlayerCore] 范围攻击未命中任何敌人");
-        }
-    }
+    // 攻击处理方法已移动到 PlayerAttackManager
     
     #endregion
     

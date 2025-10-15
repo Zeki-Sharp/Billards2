@@ -7509,6 +7509,7 @@ GameObject:
   - component: {fileID: 3655923765959461568}
   - component: {fileID: 7844486164170001436}
   - component: {fileID: 1984854761051162356}
+  - component: {fileID: 4836788210602037763}
   m_Layer: 3
   m_Name: Player
   m_TagString: Player
@@ -7698,7 +7699,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   playerData: {fileID: 11400000, guid: 9fa21c5d0e8b7b24d9ae0910aa7d5197, type: 2}
-  attackModeConfig: {fileID: 11400000, guid: 0d46ba0eb5176db4b80f0edcbfd2d94e, type: 2}
+  attackManager: {fileID: 4836788210602037763}
   chargeSystem: {fileID: 7844486164170001436}
 --- !u!114 &7844486164170001436
 MonoBehaviour:
@@ -7731,6 +7732,19 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   playerData: {fileID: 11400000, guid: 9fa21c5d0e8b7b24d9ae0910aa7d5197, type: 2}
   enableDebugLog: 1
+--- !u!114 &4836788210602037763
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3251294568684493535}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5a995714164cfb247bde25f61d685dda, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  playerData: {fileID: 11400000, guid: 9fa21c5d0e8b7b24d9ae0910aa7d5197, type: 2}
 --- !u!1 &3901620891104444660
 GameObject:
   m_ObjectHideFlags: 0

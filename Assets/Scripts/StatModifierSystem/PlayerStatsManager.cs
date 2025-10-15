@@ -318,9 +318,9 @@ public class PlayerStatsManager : MonoBehaviour
             case "MicroMoveSpeed":
                 return playerData.baseMicroMoveSpeed;
             case "Damage":
-                // 从 PlayerCore 获取当前攻击模式的攻击力
-                PlayerCore playerCore = GetComponent<PlayerCore>();
-                return playerCore?.GetBaseAttackDamage() ?? 0f;
+                // 从 PlayerAttackManager 获取当前攻击模式的攻击力
+                PlayerAttackManager attackManager = GetComponent<PlayerAttackManager>();
+                return attackManager?.GetBaseAttackDamage() ?? 0f;
             default:
                 Debug.LogWarning($"PlayerStatsManager: 未知的基础属性: {statName}");
                 return 0f;
