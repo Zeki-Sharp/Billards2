@@ -21,11 +21,11 @@ public class TransitionManager : MonoBehaviour
     [Header("过渡设置")]
     [SerializeField] private float transitionDuration = 3f; // 过渡持续时间
     
-    [Header("动态Transition设置")]
-    [SerializeField] private float minTransitionTime = 1f;        // 最小transition时间
-    [SerializeField] private float maxTransitionTime = 5f;        // 最大transition时间
-    [SerializeField] private float transitionThreshold = 0.3f;    // transition门槛值（0-1）
-    [SerializeField] private AnimationCurve chargingToTransitionCurve; // 可选：非线性映射曲线
+    [Header("Transition参数（由技能系统设置）")]
+    private float minTransitionTime = 1f;        // 最小transition时间
+    private float maxTransitionTime = 5f;        // 最大transition时间
+    private float transitionThreshold = 0.3f;    // transition门槛值（0-1）
+    private AnimationCurve chargingToTransitionCurve; // 可选：非线性映射曲线
     
     [Header("调试")]
     [SerializeField] private bool showDebugInfo = true;
@@ -176,10 +176,40 @@ public class TransitionManager : MonoBehaviour
     }
     
     /// <summary>
+    /// 设置 Transition 参数（由技能系统调用）
+    /// </summary>
+    /// <param name="minTime">最小时间</param>
+    /// <param name="maxTime">最大时间</param>
+    /// <param name="threshold">门槛值</param>
+    /// <param name="curve">映射曲线</param>
+    public void SetTransitionParameters(float minTime, float maxTime, float threshold, AnimationCurve curve)
+    {
+        minTransitionTime = minTime;
+        maxTransitionTime = maxTime;
+        transitionThreshold = threshold;
+        chargingToTransitionCurve = curve;
+        
+        if (showDebugInfo)
+        {
+            Debug.Log($"TransitionManager: 设置参数 - 最小: {minTime}, 最大: {maxTime}, 门槛: {threshold}");
+        }
+    }
+    
+    /// <summary>
     /// 蓄力停止事件处理
     /// </summary>
     void OnChargingStopped()
     {
+        // 检查是否有 Transition 技能
+        if (!HasTransitionSkill())
+        {
+            if (showDebugInfo)
+            {
+                Debug.Log("TransitionManager: 未携带 Transition 技能，跳过");
+            }
+            return;
+        }
+        
         // 获取当前蓄力进度，设置过渡时长
         // 这里需要从ChargeSystem获取蓄力进度
         ChargeSystem chargeSystem = FindFirstObjectByType<ChargeSystem>();
@@ -188,5 +218,26 @@ public class TransitionManager : MonoBehaviour
             float chargingPower = chargeSystem.GetChargingPower();
             SetTransitionDurationFromCharging(chargingPower);
         }
+    }
+    
+    /// <summary>
+    /// 检查是否有 Transition 技能
+    /// </summary>
+    /// <returns>是否有 Transition 技能</returns>
+    private bool HasTransitionSkill()
+    {
+        // 检查技能管理器中是否有 Transition 技能
+        SkillManager skillManager = FindFirstObjectByType<SkillManager>();
+        if (skillManager == null)
+        {
+            if (showDebugInfo)
+            {
+                Debug.LogWarning("TransitionManager: 未找到 SkillManager");
+            }
+            return false;
+        }
+        
+        // 检查是否有 Transition 类型的技能
+        return skillManager.HasActiveSkillOfType(SkillEffectType.Transition);
     }
 }

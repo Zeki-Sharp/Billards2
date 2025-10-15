@@ -57,6 +57,11 @@ public class TriggerConfig
                 // 始终为真的触发器不需要额外配置
                 return alwaysTrueTrigger;
                 
+            case TriggerType.MovingEnd:
+                var movingEndTrigger = new MovingEndTrigger();
+                // 球停止触发器不需要额外配置
+                return movingEndTrigger;
+                
             default:
                 Debug.LogError($"不支持的触发器类型: {triggerType}");
                 return null;
@@ -118,7 +123,8 @@ public enum TriggerType
     Collision,  // 碰撞触发器
     Kill,       // 击杀触发器
     DataSource, // 数据源触发器
-    AlwaysTrue  // 始终为真触发器
+    AlwaysTrue, // 始终为真触发器
+    MovingEnd   // 球停止触发器
 }
 
 /// <summary>

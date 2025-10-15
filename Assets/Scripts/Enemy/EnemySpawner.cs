@@ -101,38 +101,6 @@ public class EnemySpawner : BaseSpawner<EnemyData>
         }
     }
     
-    /// <summary>
-    /// 向后兼容：生成敌人（通过EnemyData）
-    /// 新架构中应该通过WaveSpawnTrigger调用Spawn方法
-    /// </summary>
-    /// <param name="enemyData">敌人数据</param>
-    /// <param name="count">生成数量</param>
-    public void GenerateEnemies(EnemyData enemyData, int count = 1)
-    {
-        for (int i = 0; i < count; i++)
-        {
-            Spawn(enemyData);
-        }
-        
-        if (showDebugInfo)
-        {
-            Debug.Log($"EnemySpawner: 生成 {count} 个敌人 {enemyData.enemyName}");
-        }
-    }
-    
-    /// <summary>
-    /// 向后兼容：无参数生成敌人（临时过渡方法）
-    /// 注意：此方法在新架构中已废弃，应该使用WaveSpawnTrigger
-    /// </summary>
-    [System.Obsolete("此方法已废弃，请使用WaveSpawnTrigger替代")]
-    public void GenerateEnemies()
-    {
-        if (showDebugInfo)
-        {
-            Debug.LogWarning("EnemySpawner: GenerateEnemies()无参数调用已废弃，请使用WaveSpawnTrigger替代");
-        }
-        // 暂时不执行任何操作，等待WaveSpawnTrigger实现
-    }
     
     /// <summary>
     /// 向后兼容：批量生成敌人

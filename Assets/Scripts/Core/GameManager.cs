@@ -105,7 +105,7 @@ public class GameManager : MonoBehaviour
     void CheckLoseCondition()
     {
         // 检查失败条件：通过PlayerCore检查血量
-        PlayerCore playerCore = FindObjectOfType<PlayerCore>();
+        PlayerCore playerCore = FindFirstObjectByType<PlayerCore>();
         if (playerCore != null && playerCore.GetCurrentHealth() <= 0)
         {
             GameOver();
@@ -168,7 +168,7 @@ public class GameManager : MonoBehaviour
     {
         if (isGameOver) return;
         
-        PlayerCore playerCore = FindObjectOfType<PlayerCore>();
+        PlayerCore playerCore = FindFirstObjectByType<PlayerCore>();
         if (playerCore != null)
         {
             playerCore.TakeDamage(damage);
@@ -187,7 +187,7 @@ public class GameManager : MonoBehaviour
     {
         if (isGameOver) return;
         
-        PlayerCore playerCore = FindObjectOfType<PlayerCore>();
+        PlayerCore playerCore = FindFirstObjectByType<PlayerCore>();
         if (playerCore != null)
         {
             playerCore.Heal(healAmount);

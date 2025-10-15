@@ -77,7 +77,7 @@ public class SkillConfig : ScriptableObject
     /// <summary>
     /// 创建技能实例
     /// </summary>
-    public SkillInstance CreateSkillInstance()
+    public virtual SkillInstance CreateSkillInstance()
     {
         if (!isActive)
         {
@@ -128,7 +128,7 @@ public class SkillConfig : ScriptableObject
     /// <summary>
     /// 验证配置是否有效
     /// </summary>
-    public bool IsValid()
+    public virtual bool IsValid()
     {
         bool basicValid = !string.IsNullOrEmpty(skillName) && 
                          triggerConfig != null && 
@@ -153,7 +153,7 @@ public class SkillConfig : ScriptableObject
     /// <summary>
     /// 获取调试信息
     /// </summary>
-    public string GetDebugInfo()
+    public virtual string GetDebugInfo()
     {
         string info = $"技能: {skillName}\n" +
                      $"- 触发器: {triggerConfig?.GetDebugInfo()}\n" +

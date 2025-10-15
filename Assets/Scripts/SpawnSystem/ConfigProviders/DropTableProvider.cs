@@ -407,7 +407,7 @@ public class ItemDropEntry
     /// </summary>
     private IEnumerable<ValueDropdownItem<string>> GetSpawnSkillNames()
     {
-        var skillManager = Object.FindObjectOfType<SkillManager>();
+        var skillManager = Object.FindAnyObjectByType<SkillManager>();
         if (skillManager == null)
         {
             return new List<ValueDropdownItem<string>>();

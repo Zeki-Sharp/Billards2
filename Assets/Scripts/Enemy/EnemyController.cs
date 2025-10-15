@@ -266,9 +266,8 @@ public class EnemyController : MonoBehaviour
         }
         else if (enemySpawner != null)
         {
-            // 回退到旧的生成方式（临时兼容）
-            Debug.LogWarning("EnemyController: 使用旧的敌人生成方式，建议配置WaveSpawnTrigger");
-            enemySpawner.GenerateEnemies();
+            // 警告：没有配置WaveSpawnTrigger，无法生成敌人
+            Debug.LogError("EnemyController: 未配置WaveSpawnTrigger，无法生成敌人！请配置WaveSpawnTrigger组件。");
         }
         
         // 2. 对预告阶段的敌人执行预告（新生成的敌人）

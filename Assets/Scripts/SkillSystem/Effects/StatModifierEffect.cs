@@ -46,7 +46,7 @@ public class StatModifierEffect : IEffect
     public void Initialize()
     {
         // 查找目标玩家
-        targetPlayer = Object.FindObjectOfType<PlayerCore>();
+        targetPlayer = Object.FindFirstObjectByType<PlayerCore>();
         if (targetPlayer == null)
         {
             Debug.LogError($"[{EffectName}] 未找到PlayerCore，无法应用效果");

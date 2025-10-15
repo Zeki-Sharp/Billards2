@@ -172,7 +172,7 @@ public class ItemPickup : MonoBehaviour
         }
         
         // 查找SkillManager
-        var skillManager = FindObjectOfType<SkillManager>();
+        var skillManager = FindFirstObjectByType<SkillManager>();
         if (skillManager == null)
         {
             Debug.LogError($"[ItemPickup] 未找到SkillManager，无法添加持续效果！");

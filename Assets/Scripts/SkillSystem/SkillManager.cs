@@ -33,7 +33,7 @@ public class SkillManager : MonoBehaviour
     void Start()
     {
         // 查找技能状态管理器
-        skillStateManager = FindObjectOfType<SkillStateManager>();
+        skillStateManager = FindFirstObjectByType<SkillStateManager>();
         if (skillStateManager == null)
         {
             Debug.LogWarning("[SkillManager] 未找到SkillStateManager，技能状态跟踪功能将不可用");
@@ -118,10 +118,11 @@ public class SkillManager : MonoBehaviour
         //GameEventBus.OnChargingStarted += OnNewShotStarted;
         GameEventBus.OnHealthChanged += HandleHealthChangedEvent;
         GameEventBus.OnGameFlowStateChanged += HandleGameFlowStateChanged;
+        GameEventBus.OnBallStopped += HandleBallStoppedEvent;
         
         if (enableDebugLog)
         {
-            Debug.Log("SkillManager: 已订阅攻击事件、死亡事件、发射开始事件、生命值变化事件和游戏流程状态变化事件");
+            Debug.Log("SkillManager: 已订阅攻击事件、死亡事件、发射开始事件、生命值变化事件、游戏流程状态变化事件和球停止事件");
         }
     }
     
@@ -135,6 +136,7 @@ public class SkillManager : MonoBehaviour
         //；GameEventBus.OnChargingStarted -= OnNewShotStarted;
         GameEventBus.OnHealthChanged -= HandleHealthChangedEvent;
         GameEventBus.OnGameFlowStateChanged -= HandleGameFlowStateChanged;
+        GameEventBus.OnBallStopped -= HandleBallStoppedEvent;
         
         if (enableDebugLog)
         {
@@ -231,6 +233,34 @@ public class SkillManager : MonoBehaviour
     }
     
     /// <summary>
+    /// 处理球停止事件 - 用于触发 MovingEnd 技能
+    /// </summary>
+    void HandleBallStoppedEvent(BallPhysics ballPhysics)
+    {
+        if (enableDebugLog)
+        {
+            Debug.Log($"[SkillManager] 收到球停止事件: {ballPhysics.gameObject.name}");
+        }
+        
+        // 只处理玩家球的停止事件
+        if (ballPhysics.gameObject.CompareTag("Player"))
+        {
+            // 处理所有 MovingEnd 类型的技能
+            foreach (var skillInstance in skillInstances.Values)
+            {
+                if (IsEventRelevantForSkill(ballPhysics, skillInstance))
+                {
+                    bool processed = skillInstance.ProcessEvent(ballPhysics);
+                    if (processed && enableDebugLog)
+                    {
+                        Debug.Log($"[SkillManager] MovingEnd 技能 {skillInstance.config.skillName} 被触发");
+                    }
+                }
+            }
+        }
+    }
+    
+    /// <summary>
     /// 检查事件是否与技能相关
     /// </summary>
     /// <param name="eventData">事件数据</param>
@@ -267,6 +297,11 @@ public class SkillManager : MonoBehaviour
         {
             // KillTrigger 只对死亡事件有效
             return eventData is DeathData;
+        }
+        else if (skillInstance.trigger is MovingEndTrigger)
+        {
+            // MovingEndTrigger 只对球停止事件有效
+            return eventData is BallPhysics;
         }
         
         // 默认情况下，不处理任何事件
@@ -370,6 +405,23 @@ public class SkillManager : MonoBehaviour
     public bool IsSpawnSkill(string skillName)
     {
         return spawnSkillNames.Contains(skillName);
+    }
+    
+    /// <summary>
+    /// 检查是否有指定类型的激活技能
+    /// </summary>
+    /// <param name="effectType">效果类型</param>
+    /// <returns>是否有该类型的技能</returns>
+    public bool HasActiveSkillOfType(SkillEffectType effectType)
+    {
+        foreach (var skillInstance in skillInstances.Values)
+        {
+            if (skillInstance.config.effectConfig?.effectType == effectType)
+            {
+                return true;
+            }
+        }
+        return false;
     }
     
     #endregion

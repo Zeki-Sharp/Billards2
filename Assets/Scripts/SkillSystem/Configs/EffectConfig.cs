@@ -33,6 +33,29 @@ public class SkillEffectConfig
     [MinValue(0)]
     public float healAmount = 20f;
     
+    [ShowIf("effectType", SkillEffectType.Transition)]
+    [LabelText("最小 Transition 时间")]
+    [Tooltip("Transition 的最小持续时间（秒）")]
+    [Range(0.1f, 5f)]
+    public float minTransitionTime = 1f;
+    
+    [ShowIf("effectType", SkillEffectType.Transition)]
+    [LabelText("最大 Transition 时间")]
+    [Tooltip("Transition 的最大持续时间（秒）")]
+    [Range(0.1f, 10f)]
+    public float maxTransitionTime = 5f;
+    
+    [ShowIf("effectType", SkillEffectType.Transition)]
+    [LabelText("Transition 门槛值")]
+    [Tooltip("触发 Transition 所需的最小蓄力进度（0-1）")]
+    [Range(0f, 1f)]
+    public float transitionThreshold = 0.3f;
+    
+    [ShowIf("effectType", SkillEffectType.Transition)]
+    [LabelText("蓄力到 Transition 映射曲线")]
+    [Tooltip("将蓄力进度映射到 Transition 时长的曲线")]
+    public AnimationCurve chargingToTransitionCurve;
+    
     /// <summary>
     /// 创建效果实例
     /// </summary>
@@ -61,6 +84,18 @@ public class SkillEffectConfig
                 // Spawn效果是空占位符，不需要移除条件
                 return spawnEffect;
                 
+            case SkillEffectType.Transition:
+                var transitionEffect = new TransitionEffect();
+                // 设置 Transition 专用参数
+                transitionEffect.SetParameters(
+                    minTransitionTime,
+                    maxTransitionTime,
+                    transitionThreshold,
+                    chargingToTransitionCurve
+                );
+                // Transition效果是瞬时效果，不需要移除条件
+                return transitionEffect;
+                
             default:
                 Debug.LogError($"不支持的效果类型: {effectType}");
                 return null;
@@ -80,6 +115,8 @@ public class SkillEffectConfig
                 return $"治疗: +{healAmount} HP";
             case SkillEffectType.Spawn:
                 return $"生成效果: 空占位符（功能由掉落系统处理）";
+            case SkillEffectType.Transition:
+                return $"Transition: {minTransitionTime:F1}s-{maxTransitionTime:F1}s (门槛:{transitionThreshold:F2})";
             default:
                 return $"效果: {effectType}";
         }
@@ -96,5 +133,6 @@ public enum SkillEffectType
     Status,         // 状态效果（暂未实现）
     Resource,       // 资源效果（暂未实现）
     Spawn,          // 生成效果（暂未实现）
-    Chain           // 连锁效果（暂未实现）
+    Chain,          // 连锁效果（暂未实现）
+    Transition      // Transition 过渡效果
 }
