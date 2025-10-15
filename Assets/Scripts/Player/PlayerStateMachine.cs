@@ -206,9 +206,19 @@ public class PlayerStateMachine : MonoBehaviour
             Debug.Log("PlayerStateMachine: 进入 MovingEnd 阶段");
         }
         
-        // 这里是技能系统的触发点
-        // 未来技能系统会监听 MovingEnd 状态，执行各种"停球后效果"
-        // 当前阶段暂时保持空实现，只等待一小段时间
+        // 触发球停止攻击（攻击系统触发点）
+        PlayerCore playerCore = FindFirstObjectByType<PlayerCore>();
+        if (playerCore != null)
+        {
+            playerCore.HandleBallStoppedAttack();
+            if (showDebugInfo)
+            {
+                Debug.Log("PlayerStateMachine: MovingEnd 阶段 - 触发球停止攻击");
+            }
+        }
+        
+        // 这里也是技能系统的触发点
+        // 技能系统会监听 MovingEnd 状态，执行各种"停球后效果"
         
         // 等待一小段时间（0.1秒，可配置）
         yield return new WaitForSeconds(0.1f);

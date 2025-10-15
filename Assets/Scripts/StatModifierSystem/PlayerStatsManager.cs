@@ -218,13 +218,6 @@ public class PlayerStatsManager : MonoBehaviour
     
     #region 最终值计算
     
-    /// <summary>
-    /// 获取最终攻击力
-    /// </summary>
-    public float FinalDamage
-    {
-        get { return GetFinalStat("Damage"); }
-    }
     
     /// <summary>
     /// 获取最终最大血量
@@ -240,6 +233,14 @@ public class PlayerStatsManager : MonoBehaviour
     public float FinalMicroMoveSpeed
     {
         get { return GetFinalStat("MicroMoveSpeed"); }
+    }
+    
+    /// <summary>
+    /// 获取最终攻击力
+    /// </summary>
+    public float FinalDamage
+    {
+        get { return GetFinalStat("Damage"); }
     }
     
     /// <summary>
@@ -312,12 +313,14 @@ public class PlayerStatsManager : MonoBehaviour
         
         switch (statName)
         {
-            case "Damage":
-                return playerData.baseDamage;
             case "MaxHealth":
                 return playerData.baseMaxHealth;
             case "MicroMoveSpeed":
                 return playerData.baseMicroMoveSpeed;
+            case "Damage":
+                // 从 PlayerCore 获取当前攻击模式的攻击力
+                PlayerCore playerCore = GetComponent<PlayerCore>();
+                return playerCore?.GetBaseAttackDamage() ?? 0f;
             default:
                 Debug.LogWarning($"PlayerStatsManager: 未知的基础属性: {statName}");
                 return 0f;

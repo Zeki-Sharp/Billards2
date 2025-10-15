@@ -25,6 +25,9 @@ public class PlayerCore : MonoBehaviour
     [Header("数据设置")]
     public PlayerData playerData; // 玩家配置数据（由Player设置）
     
+    [Header("攻击系统")]
+    // 攻击配置现在直接使用 PlayerData 中的攻击方式配置
+    
     [Header("蓄力系统")]
     public ChargeSystem chargeSystem; // 蓄力系统引用
     
@@ -36,10 +39,6 @@ public class PlayerCore : MonoBehaviour
     private float currentHealth;
     
     
-    // 防重复触发机制
-    private GameObject lastAttackedEnemy = null;
-    private float lastAttackTime = 0f;
-    private const float ATTACK_COOLDOWN = 0.1f; // 0.1秒冷却时间
     
     // 事件 - 血量变化事件已统一到 GameEventBus
     
@@ -49,6 +48,45 @@ public class PlayerCore : MonoBehaviour
     public bool IsMyBall(BallPhysics ball)
     {
         return ball == this.ballPhysics;
+    }
+    
+    /// <summary>
+    /// 获取当前攻击力（从 PlayerStatsManager 获取，包含技能修正）
+    /// </summary>
+    public float GetCurrentAttackDamage()
+    {
+        // 优先从 PlayerStatsManager 获取（包含技能修正）
+        PlayerStatsManager statsManager = GetComponent<PlayerStatsManager>();
+        if (statsManager != null)
+        {
+            return statsManager.FinalDamage;
+        }
+        
+        // 回退到基础攻击力
+        return GetBaseAttackDamage();
+    }
+    
+    /// <summary>
+    /// 获取基础攻击力（从 PlayerData 获取，不包含技能修正）
+    /// </summary>
+    public float GetBaseAttackDamage()
+    {
+        if (playerData != null)
+        {
+            switch (playerData.attackMode)
+            {
+                case PlayerData.AttackMode.Collision:
+                    return playerData.collisionDamage;
+                case PlayerData.AttackMode.Area:
+                    return playerData.areaDamage;
+                default:
+                    Debug.LogError("PlayerCore: 未知的攻击模式！");
+                    return 0f;
+            }
+        }
+        
+        Debug.LogError("PlayerCore: PlayerData 未配置，无法获取攻击力！");
+        return 0f;
     }
     
     void Start()
@@ -92,6 +130,8 @@ public class PlayerCore : MonoBehaviour
             Debug.LogError("PlayerCore: 请设置 PlayerData 资源！");
         }
         
+        // 攻击系统现在直接使用 PlayerData 配置，无需单独初始化
+        
         // 订阅 GameEventBus 物理事件
         GameEventBus.OnBallStopped += OnBallStoppedHandler;
         
@@ -113,6 +153,8 @@ public class PlayerCore : MonoBehaviour
             ballPhysics.ResetBall();
         }
     }
+    
+    // 攻击行为初始化已移除，现在直接使用 PlayerData 配置
     
     void OnDestroy()
     {
@@ -273,9 +315,18 @@ public class PlayerCore : MonoBehaviour
                     
                     if (playerStateMachine.CurrentState == PlayerStateMachine.PlayerState.Moving)
                     {
-                        // Moving状态：玩家攻击敌人
-                        Debug.Log("PlayerCore: 在Moving状态，执行攻击");
-                        AttackEnemy(collision);
+                        // Moving状态：检查攻击模式
+                        if (playerData != null && playerData.attackMode == PlayerData.AttackMode.Collision)
+                        {
+                            // 碰撞攻击模式：执行碰撞攻击
+                            Debug.Log("PlayerCore: 在Moving状态，执行碰撞攻击");
+                            HandleCollisionAttack(collision);
+                        }
+                        else
+                        {
+                            // 范围攻击模式：碰撞时不造成伤害
+                            Debug.Log("PlayerCore: 范围攻击模式，碰撞时不造成伤害");
+                        }
                     }
                     else
                     {
@@ -338,78 +389,6 @@ public class PlayerCore : MonoBehaviour
         enemy.DealTrapDamageToPlayer(playerObject, hitPosition);
     }
     
-    /// <summary>
-    /// 玩家攻击敌人的逻辑（Moving阶段）
-    /// </summary>
-    void AttackEnemy(Collision2D collision)
-    {
-        Debug.Log($"PlayerCore: AttackEnemy 被调用，目标: {collision.gameObject.name}");
-        
-        // 如果碰到的是陷阱，不攻击敌人
-        if (collision.gameObject.CompareTag("Trap"))
-        {
-            Debug.Log("PlayerCore: 碰到陷阱，不攻击敌人");
-            return;
-        }
-        
-        // 防重复触发检查 - 只对同一个敌人进行冷却
-        if (lastAttackedEnemy == collision.gameObject && 
-            Time.time - lastAttackTime < ATTACK_COOLDOWN)
-        {
-            Debug.Log("PlayerCore: 攻击冷却中，跳过");
-            return;
-        }
-        
-        // 更新最后攻击的敌人和时间
-        lastAttackedEnemy = collision.gameObject;
-        lastAttackTime = Time.time;
-        
-        // 获取敌人组件（从父物体中查找）
-        Enemy enemy = collision.gameObject.GetComponentInParent<Enemy>();
-        if (enemy == null) 
-        {
-            Debug.LogWarning($"PlayerCore: 目标 {collision.gameObject.name} 及其父物体中没有 Enemy 组件");
-            return;
-        }
-        
-        // 计算伤害和碰撞信息 - 从 PlayerStatsManager 获取最终伤害值
-        PlayerStatsManager statsManager = GetComponent<PlayerStatsManager>();
-        float damage = (statsManager != null) ? statsManager.GetFinalStat("Damage") : (playerData != null ? playerData.damage : 50f);
-        Vector3 hitPosition = collision.contacts[0].point; // 使用实际碰撞点
-        Vector3 hitDirection = (collision.transform.position - transform.position).normalized;
-        
-        // 添加位置验证日志
-        Vector3 oldHitPosition = (transform.position + collision.transform.position) * 0.5f;
-        float positionDifference = Vector3.Distance(hitPosition, oldHitPosition);
-        Debug.Log($"PlayerCore碰撞位置验证 - 实际碰撞点: {hitPosition}, " +
-                  $"旧方法位置: {oldHitPosition}, 位置差异: {positionDifference:F3}");
-        
-        Debug.Log($"PlayerCore: 触发攻击事件 - 伤害: {damage}, 目标: {enemy.gameObject.name}");
-        
-        // 触发攻击事件，伤害处理由事件监听器处理
-        gameObject.PublishAttack("Hit", hitPosition, enemy.gameObject, damage);
-        
-        // 处理充能力逻辑
-        BallPhysics enemyBallPhysics = collision.gameObject.GetComponent<BallPhysics>();
-        if (enemyBallPhysics != null)
-        {
-            // 检查是否还能获得充能力（基于速度）
-            if (CanGetBoost())
-            {
-                // 计算碰撞方向
-                Vector2 collisionDirection = (transform.position - collision.transform.position).normalized;
-                
-                // 给双方都添加充能力
-                Vector2 boostForce = collisionDirection * playerData.ballData.hitBoostForce * playerData.ballData.hitBoostMultiplier;
-                
-                // 给白球添加充能力
-                ballPhysics.ApplyForce(boostForce);
-                
-                // 给敌人添加充能力
-                enemyBallPhysics.ApplyForce(-boostForce);
-            }
-        }
-    }
     
     /// <summary>
     /// 检查是否还能获得充能力（基于速度）
@@ -417,6 +396,98 @@ public class PlayerCore : MonoBehaviour
     bool CanGetBoost()
     {
         return ballPhysics != null && playerData != null && playerData.ballData != null && ballPhysics.GetSpeed() > playerData.ballData.boostSpeedThreshold;
+    }
+    
+    /// <summary>
+    /// 处理球停止时的攻击（由 PlayerStateMachine 的 MovingEnd 状态调用）
+    /// </summary>
+    public void HandleBallStoppedAttack()
+    {
+        // 检查攻击模式，只有范围攻击才在球停止时触发
+        if (playerData != null && playerData.attackMode == PlayerData.AttackMode.Area)
+        {
+            // 获取球的实际停止位置，而不是 PlayerCore 的位置
+            Vector3 ballPosition = ballPhysics != null ? ballPhysics.transform.position : transform.position;
+            HandleAreaAttack(ballPosition);
+            Debug.Log($"PlayerCore: 球停止，触发范围攻击 - 位置: {ballPosition}");
+        }
+        else
+        {
+            Debug.Log("PlayerCore: 当前攻击模式不是范围攻击，跳过球停止攻击");
+        }
+    }
+    
+    /// <summary>
+    /// 处理碰撞攻击
+    /// </summary>
+    void HandleCollisionAttack(Collision2D collision)
+    {
+        if (playerData == null)
+        {
+            Debug.LogError("PlayerCore: PlayerData 未配置，无法执行碰撞攻击！");
+            return;
+        }
+        
+        // 检查碰撞对象是否是敌人（包括父物体）
+        EnemyBehavior enemy = collision.gameObject.GetComponent<EnemyBehavior>();
+        if (enemy == null)
+        {
+            enemy = collision.gameObject.GetComponentInParent<EnemyBehavior>();
+        }
+        
+        if (enemy != null)
+        {
+            float finalDamage = GetCurrentAttackDamage();
+            gameObject.PublishAttack("Hit", collision.contacts[0].point, enemy.gameObject, finalDamage);
+            Debug.Log($"[PlayerCore] 碰撞攻击命中 {enemy.name}，造成伤害: {finalDamage}");
+        }
+    }
+    
+    /// <summary>
+    /// 处理范围攻击
+    /// </summary>
+    void HandleAreaAttack(Vector3 ballPosition)
+    {
+        if (playerData == null)
+        {
+            Debug.LogError("PlayerCore: PlayerData 未配置，无法执行范围攻击！");
+            return;
+        }
+        
+        Collider2D[] enemies = Physics2D.OverlapCircleAll(
+            ballPosition, 
+            playerData.areaRadius, 
+            playerData.enemyLayerMask
+        );
+        
+        float finalDamage = GetCurrentAttackDamage();
+        
+        int hitCount = 0;
+        foreach (Collider2D enemyCollider in enemies)
+        {
+            // 检查敌人组件（包括父物体）
+            EnemyBehavior enemy = enemyCollider.GetComponent<EnemyBehavior>();
+            if (enemy == null)
+            {
+                enemy = enemyCollider.GetComponentInParent<EnemyBehavior>();
+            }
+            
+            if (enemy != null)
+            {
+                gameObject.PublishAttack("Hit", ballPosition, enemy.gameObject, finalDamage);
+                hitCount++;
+                Debug.Log($"[PlayerCore] 范围攻击命中 {enemy.name}，造成伤害: {finalDamage}");
+            }
+        }
+        
+        if (hitCount > 0)
+        {
+            Debug.Log($"[PlayerCore] 范围攻击完成，命中 {hitCount} 个敌人，范围: {playerData.areaRadius}");
+        }
+        else
+        {
+            Debug.Log("[PlayerCore] 范围攻击未命中任何敌人");
+        }
     }
     
     #endregion

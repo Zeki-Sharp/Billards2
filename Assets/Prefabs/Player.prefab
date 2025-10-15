@@ -13,7 +13,7 @@ GameObject:
   - component: {fileID: 2916857615172893942}
   - component: {fileID: 557047279362017122}
   - component: {fileID: 7487340331778245147}
-  m_Layer: 3
+  m_Layer: 5
   m_Name: UI_ChargeBar
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -103,7 +103,7 @@ MonoBehaviour:
   m_BlockingObjects: 0
   m_BlockingMask:
     serializedVersion: 2
-    m_Bits: 4294967295
+    m_Bits: 127
 --- !u!114 &7487340331778245147
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -128,7 +128,7 @@ GameObject:
   - component: {fileID: 2703022433563109909}
   - component: {fileID: 1324435600758262229}
   - component: {fileID: 6532886988059181848}
-  m_Layer: 3
+  m_Layer: 5
   m_Name: HealthBarFill
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -201,7 +201,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3580279328711339899}
-  m_Layer: 3
+  m_Layer: 2
   m_Name: EffectPlayer
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -5281,7 +5281,7 @@ GameObject:
   m_Component:
   - component: {fileID: 710692218524571458}
   - component: {fileID: 6333896146490756538}
-  m_Layer: 3
+  m_Layer: 2
   m_Name: Launch Effect
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -7698,6 +7698,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   playerData: {fileID: 11400000, guid: 9fa21c5d0e8b7b24d9ae0910aa7d5197, type: 2}
+  attackModeConfig: {fileID: 11400000, guid: 0d46ba0eb5176db4b80f0edcbfd2d94e, type: 2}
   chargeSystem: {fileID: 7844486164170001436}
 --- !u!114 &7844486164170001436
 MonoBehaviour:
@@ -12752,7 +12753,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3734913863367339365}
   - component: {fileID: 2097763790536435821}
-  m_Layer: 3
+  m_Layer: 2
   m_Name: Be Hit Effect
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -13432,7 +13433,7 @@ GameObject:
   m_Component:
   - component: {fileID: 363097942105593967}
   - component: {fileID: 7100453263434038820}
-  m_Layer: 3
+  m_Layer: 2
   m_Name: Trail
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -13579,7 +13580,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5494476993499230235}
-  m_Layer: 3
+  m_Layer: 2
   m_Name: Hole Enter Effect
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -18504,7 +18505,7 @@ GameObject:
   - component: {fileID: 1337923103868883050}
   - component: {fileID: 748182107982757718}
   - component: {fileID: 6745108652567747724}
-  m_Layer: 3
+  m_Layer: 5
   m_Name: Back
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -18665,7 +18666,7 @@ GameObject:
   m_Component:
   - component: {fileID: 5487539969232676794}
   - component: {fileID: 8772439200271523911}
-  m_Layer: 3
+  m_Layer: 2
   m_Name: Hit Attack Effect
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -19129,7 +19130,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3722086719492297280}
   - component: {fileID: 5680387213041842919}
-  m_Layer: 3
+  m_Layer: 2
   m_Name: Charge Effect
   m_TagString: Untagged
   m_Icon: {fileID: 0}
