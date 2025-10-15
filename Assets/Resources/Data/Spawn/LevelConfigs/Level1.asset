@@ -31,21 +31,7 @@ MonoBehaviour:
     relativeRadius: 2
     enablePositionOffset: 1
     offsetRange: 0.5
-  waves:
-  - enemySpawns:
-    - enemyData: {fileID: 11400000, guid: 2b3490ac9962fd84fbac65c5de60aa85, type: 2}
-      count: 2
-  - enemySpawns:
-    - enemyData: {fileID: 11400000, guid: ce82a34099b9d1f4899931eb09ed10ce, type: 2}
-      count: 2
-  - enemySpawns:
-    - enemyData: {fileID: 0}
-      count: 2
-  - enemySpawns:
-    - enemyData: {fileID: 11400000, guid: ce82a34099b9d1f4899931eb09ed10ce, type: 2}
-      count: 1
-    - enemyData: {fileID: 11400000, guid: 8d46072aeaab4c44fab958850bbe7872, type: 2}
-      count: 2
+  waves: []
   waveEnemySpawnRange:
     coordinateSystem: 0
     rangeShape: 0

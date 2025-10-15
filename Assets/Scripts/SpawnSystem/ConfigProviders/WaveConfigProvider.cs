@@ -213,4 +213,13 @@ public class WaveConfigProvider : MonoBehaviour, SpawnConfigProvider<EnemySpawn>
         }
     }
     
+    /// <summary>
+    /// 获取当前关卡配置
+    /// </summary>
+    /// <returns>当前关卡配置</returns>
+    public LevelConfig GetCurrentLevelConfig()
+    {
+        return levelConfig;
+    }
+    
 }

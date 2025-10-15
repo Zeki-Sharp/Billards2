@@ -4,9 +4,11 @@ using UnityEngine;
 /// <summary>
 /// 技能管理器 - 管理所有技能配置和运行时状态
 /// 替代 TestSkillChain，提供可配置的技能系统
+/// 使用单例模式，跨场景保留技能数据
 /// </summary>
 public class SkillManager : MonoBehaviour
 {
+    public static SkillManager Instance { get; private set; }
     [Header("技能配置")]
     [Tooltip("激活的技能配置列表")]
     public List<SkillConfig> activeSkills = new List<SkillConfig>();
@@ -29,6 +31,31 @@ public class SkillManager : MonoBehaviour
     private HashSet<string> spawnSkillNames = new HashSet<string>();
     
     #region Unity生命周期
+    
+    void Awake()
+    {
+        // 单例模式初始化
+        if (Instance == null)
+        {
+            Instance = this;
+            DontDestroyOnLoad(gameObject); // 跨场景保留
+            
+            if (enableDebugLog)
+            {
+                Debug.Log("[SkillManager] 单例初始化完成，将跨场景保留");
+            }
+        }
+        else
+        {
+            // 如果已经存在实例，销毁当前对象
+            if (enableDebugLog)
+            {
+                Debug.Log("[SkillManager] 检测到重复实例，销毁当前对象");
+            }
+            Destroy(gameObject);
+            return;
+        }
+    }
     
     void Start()
     {
@@ -311,6 +338,27 @@ public class SkillManager : MonoBehaviour
     #endregion
     
     #region 公共方法
+    
+    /// <summary>
+    /// 获取或创建 SkillManager 实例
+    /// </summary>
+    /// <returns>SkillManager 实例</returns>
+    public static SkillManager GetOrCreateInstance()
+    {
+        if (Instance == null)
+        {
+            // 如果没有实例，创建一个新的
+            GameObject skillManagerObj = new GameObject("SkillManager");
+            Instance = skillManagerObj.AddComponent<SkillManager>();
+            
+            if (Instance.enableDebugLog)
+            {
+                Debug.Log("[SkillManager] 自动创建了 SkillManager 实例");
+            }
+        }
+        
+        return Instance;
+    }
     
     /// <summary>
     /// 添加技能配置

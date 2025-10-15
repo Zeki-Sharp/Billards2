@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections.Generic;
 
 /// <summary>
 /// 统一事件总线 - 基于现有 MMEventManager 的封装
@@ -102,6 +103,25 @@ public static class GameEventBus
     /// </summary>
     public static event System.Action OnGameWin;
     
+    /// <summary>
+    /// 游戏完成事件（所有关卡完成）
+    /// </summary>
+    public static event System.Action OnGameCompleted;
+    
+    #endregion
+    
+    #region 关卡事件
+    
+    /// <summary>
+    /// 关卡开始事件
+    /// </summary>
+    public static event System.Action<int, LevelConfig> OnLevelStarted;
+    
+    /// <summary>
+    /// 关卡完成事件
+    /// </summary>
+    public static event System.Action<int, LevelConfig> OnLevelCompleted;
+    
     #endregion
     
     #region 技能系统事件
@@ -115,6 +135,26 @@ public static class GameEventBus
     /// 技能失效事件
     /// </summary>
     public static event System.Action<string> OnSkillDeactivated;
+    
+    /// <summary>
+    /// 技能选择开始事件
+    /// </summary>
+    public static event System.Action<List<SkillConfig>> OnSkillSelectionStarted;
+    
+    /// <summary>
+    /// 技能选择事件
+    /// </summary>
+    public static event System.Action<SkillConfig, List<SkillConfig>> OnSkillSelected;
+    
+    /// <summary>
+    /// 技能添加到玩家事件
+    /// </summary>
+    public static event System.Action<SkillConfig> OnSkillAddedToPlayer;
+    
+    /// <summary>
+    /// 技能选择完成事件
+    /// </summary>
+    public static event System.Action OnSkillSelectionCompleted;
     
     #endregion
     
@@ -189,6 +229,26 @@ public static class GameEventBus
     public static void PublishSkillDeactivated(string skillName) => OnSkillDeactivated?.Invoke(skillName);
     
     /// <summary>
+    /// 发布技能选择开始事件
+    /// </summary>
+    public static void PublishSkillSelectionStarted(List<SkillConfig> availableSkills) => OnSkillSelectionStarted?.Invoke(availableSkills);
+    
+    /// <summary>
+    /// 发布技能选择事件
+    /// </summary>
+    public static void PublishSkillSelected(SkillConfig selectedSkill, List<SkillConfig> availableSkills) => OnSkillSelected?.Invoke(selectedSkill, availableSkills);
+    
+    /// <summary>
+    /// 发布技能添加到玩家事件
+    /// </summary>
+    public static void PublishSkillAddedToPlayer(SkillConfig skill) => OnSkillAddedToPlayer?.Invoke(skill);
+    
+    /// <summary>
+    /// 发布技能选择完成事件
+    /// </summary>
+    public static void PublishSkillSelectionCompleted() => OnSkillSelectionCompleted?.Invoke();
+    
+    /// <summary>
     /// 发布球停止运动事件
     /// </summary>
     public static void PublishBallStopped(BallPhysics ballPhysics) => OnBallStopped?.Invoke(ballPhysics);
@@ -242,6 +302,22 @@ public static class GameEventBus
     /// 发布游戏胜利事件
     /// </summary>
     public static void PublishGameWin() => OnGameWin?.Invoke();
+    
+    /// <summary>
+    /// 发布游戏完成事件
+    /// </summary>
+    public static void PublishGameCompleted() => OnGameCompleted?.Invoke();
+    
+    /// <summary>
+    /// 发布关卡开始事件
+    /// </summary>
+    public static void PublishLevelStarted(int levelIndex, LevelConfig levelConfig) => OnLevelStarted?.Invoke(levelIndex, levelConfig);
+    
+    /// <summary>
+    /// 发布关卡完成事件
+    /// </summary>
+    public static void PublishLevelCompleted(int levelIndex, LevelConfig levelConfig) => OnLevelCompleted?.Invoke(levelIndex, levelConfig);
+    
     
     /// <summary>
     /// 发布分数变化事件
