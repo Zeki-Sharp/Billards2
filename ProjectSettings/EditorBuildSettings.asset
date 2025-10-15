@@ -12,7 +12,7 @@ EditorBuildSettings:
     path: Assets/Scenes/BilliardsTest.unity
     guid: acfbc061e8a66f242b22f051d2bd5275
   - enabled: 1
-    path: Assets/Scenes/Test Bounce Scene.unity
+    path: Assets/Scenes/Level1.unity
     guid: 40bdafff7dc6ad445912a22480bb40b8
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 2bcd2660ca9b64942af0de543d8d7100, type: 3}

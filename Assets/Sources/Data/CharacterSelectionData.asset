@@ -1,0 +1,19 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e74426a7d9d706d4e9c0a479bad4d089, type: 3}
+  m_Name: CharacterSelectionData
+  m_EditorClassIdentifier: 
+  availableCharacters:
+  - {fileID: 11400000, guid: 9fa21c5d0e8b7b24d9ae0910aa7d5197, type: 2}
+  - {fileID: 11400000, guid: 81d30639ef52a824eaa9b3cc9a99404b, type: 2}
+  characterButtonPrefab: {fileID: 2735802933560132947, guid: 4c1d6c99c8d502a4293f850debb61e87, type: 3}
+  buttonContainer: {fileID: 0}

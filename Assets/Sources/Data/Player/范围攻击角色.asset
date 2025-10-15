@@ -10,9 +10,9 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: e034a424d47a464448426d1bf0a3aaf4, type: 3}
-  m_Name: PlayerData
+  m_Name: "\u8303\u56F4\u653B\u51FB\u89D2\u8272"
   m_EditorClassIdentifier: 
-  playerName: 
+  playerName: "\u8303\u56F4\u653B\u51FB\u89D2\u8272"
   playerPrefab: {fileID: 3251294568684493535, guid: 2d86053af5e50c446a06f75cbdecb65b, type: 3}
   playerIcon: {fileID: 0}
   ballData: {fileID: 11400000, guid: 5753a6296cab86e45ba7c2b9bfd00e6e, type: 2}
