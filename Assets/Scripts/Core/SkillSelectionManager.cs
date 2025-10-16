@@ -93,6 +93,14 @@ public class SkillSelectionManager : MonoBehaviour
     {
         allAvailableSkills.Clear();
         
+        // 获取当前角色名称
+        string currentCharacterName = GetCurrentCharacterName();
+        
+        if (showDebugInfo)
+        {
+            Debug.Log($"SkillSelectionManager: 当前角色名称 = '{currentCharacterName}'");
+        }
+        
         // 使用 Resources.LoadAll 从 Resources 文件夹加载所有 SkillConfig 资产
         SkillConfig[] allSkills = Resources.LoadAll<SkillConfig>("");
         
@@ -105,7 +113,7 @@ public class SkillSelectionManager : MonoBehaviour
         {
             if (showDebugInfo)
             {
-                Debug.Log($"检查技能: 资产名={skill?.name}, 对象={skill != null}, 有效={skill?.IsValid()}, 名称='{skill?.skillName}'");
+                Debug.Log($"检查技能: 资产名={skill?.name}, 对象={skill != null}, 有效={skill?.IsValid()}, 名称='{skill?.skillName}', Tag='{skill?.skillTag}'");
             }
             
             // 检查技能是否为 null
@@ -138,6 +146,16 @@ public class SkillSelectionManager : MonoBehaviour
                 continue;
             }
             
+            // 检查技能标签是否匹配当前角色或通用标签
+            if (!IsSkillAvailableForCurrentCharacter(skill, currentCharacterName))
+            {
+                if (showDebugInfo)
+                {
+                    Debug.Log($"  → 被过滤：技能标签 '{skill.skillTag}' 不匹配当前角色 '{currentCharacterName}'");
+                }
+                continue;
+            }
+            
             // 检查是否重复
             if (allAvailableSkills.Contains(skill))
             {
@@ -152,7 +170,7 @@ public class SkillSelectionManager : MonoBehaviour
             allAvailableSkills.Add(skill);
             if (showDebugInfo)
             {
-                Debug.Log($"  → 添加成功：{skill.skillName}");
+                Debug.Log($"  → 添加成功：{skill.skillName} (Tag: {skill.skillTag})");
             }
         }
         
@@ -161,9 +179,73 @@ public class SkillSelectionManager : MonoBehaviour
             Debug.Log($"SkillSelectionManager: 最终发现 {allAvailableSkills.Count} 个有效技能配置");
             foreach (var skill in allAvailableSkills)
             {
-                Debug.Log($"  - {skill.skillName}");
+                Debug.Log($"  - {skill.skillName} (Tag: {skill.skillTag})");
             }
         }
+    }
+    
+    /// <summary>
+    /// 获取当前角色名称
+    /// </summary>
+    /// <returns>当前角色名称，如果无法获取则返回空字符串</returns>
+    string GetCurrentCharacterName()
+    {
+        PlayerData currentCharacter = SceneTransitionManager.GetSelectedCharacter();
+        
+        if (currentCharacter != null && !string.IsNullOrEmpty(currentCharacter.playerName))
+        {
+            return currentCharacter.playerName;
+        }
+        
+        if (showDebugInfo)
+        {
+            Debug.LogWarning("SkillSelectionManager: 无法获取当前角色名称，将只加载 common 和 default 标签的技能");
+        }
+        
+        return "";
+    }
+    
+    /// <summary>
+    /// 检查技能是否对当前角色可用
+    /// </summary>
+    /// <param name="skill">要检查的技能</param>
+    /// <param name="characterName">当前角色名称</param>
+    /// <returns>如果技能可用返回 true，否则返回 false</returns>
+    bool IsSkillAvailableForCurrentCharacter(SkillConfig skill, string characterName)
+    {
+        if (skill == null)
+        {
+            return false;
+        }
+        
+        string skillTag = skill.skillTag;
+        
+        // 如果技能没有设置标签，默认为 "default"
+        if (string.IsNullOrEmpty(skillTag))
+        {
+            skillTag = "default";
+        }
+        
+        // 通用技能对所有角色可用
+        if (skillTag.Equals("common", System.StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+        
+        // 默认技能对所有角色可用（兼容旧技能）
+        if (skillTag.Equals("default", System.StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+        
+        // 角色专属技能
+        if (!string.IsNullOrEmpty(characterName) && 
+            skillTag.Equals(characterName, System.StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+        
+        return false;
     }
     
     /// <summary>

@@ -19,7 +19,7 @@ MonoBehaviour:
   baseMaxHealth: 100
   attackMode: 1
   collisionDamage: 20
-  areaDamage: 15
+  areaDamage: 20
   areaRadius: 3
   enemyLayerMask:
     serializedVersion: 2

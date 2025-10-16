@@ -12,13 +12,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: efc89a18d420d744da9894a9f7094350, type: 3}
   m_Name: "\u7B80\u5355\u56DE\u8840"
   m_EditorClassIdentifier: 
-  skillName: "\u7B80\u7B54\u56DE\u8840"
+  skillName: "\u7B80\u5355\u56DE\u8840"
   description: "\u4E00\u6B21\u6027\u56DE\u590D10\u70B9\u751F\u547D\u503C"
+  skillTag: default
   triggerConfig:
     triggerType: 3
     targetTag: Enemy
-    useAttackTypeFilter: 1
-    attackType: 
     killTargetTag: Enemy
     dataExtractorType: 0
   conditionConfig:
@@ -30,6 +29,15 @@ MonoBehaviour:
     modifierValue: 2
     modifierType: 2
     healAmount: 10
+    minTransitionTime: 1
+    maxTransitionTime: 5
+    transitionThreshold: 0.3
+    chargingToTransitionCurve:
+      serializedVersion: 2
+      m_Curve: []
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
   resetConditionConfig:
     logicType: 1
     resetConditions:
@@ -37,6 +45,11 @@ MonoBehaviour:
   effectRemovalConfig:
     removalType: 0
     duration: 30
+    comparisonType: 2
+    targetValue: 0.5
+    minValue: 0
+    maxValue: 1
+    dataExtractorType: 0
   skillType: 0
   requiredLevel: 1
   isActive: 1
