@@ -14,6 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   skillName: "\u6EE1\u8840\u65F6\u4F24\u5BB3\u63D0\u5347"
   description: "\u6740\u6B7B\u654C\u4EBA\u540E\u4F24\u5BB3\u4E0A\u5347"
+  skillTag: common
   triggerConfig:
     triggerType: 2
     targetTag: Wall
@@ -45,6 +46,10 @@ MonoBehaviour:
       m_PreInfinity: 2
       m_PostInfinity: 2
       m_RotationOrder: 4
+    weakPointMarkerPrefab: {fileID: 0}
+    weakPointRadius: 0.5
+    weakPointDamageMultiplier: 1.5
+    weakPointRefreshOnHit: 1
   resetConditionConfig:
     logicType: 1
     resetConditions:

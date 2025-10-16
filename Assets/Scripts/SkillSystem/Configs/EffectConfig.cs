@@ -56,6 +56,35 @@ public class SkillEffectConfig
     [Tooltip("将蓄力进度映射到 Transition 时长的曲线")]
     public AnimationCurve chargingToTransitionCurve;
     
+    // ========== 弱点攻击配置 ==========
+    [ShowIf("effectType", SkillEffectType.WeakPoint)]
+    [BoxGroup("弱点攻击配置")]
+    [LabelText("弱点标记预制体")]
+    [Tooltip("弱点标记的UI预制体，将显示在敌人身上")]
+    [AssetsOnly]
+    [Required]
+    public GameObject weakPointMarkerPrefab;
+    
+    [ShowIf("effectType", SkillEffectType.WeakPoint)]
+    [BoxGroup("弱点攻击配置")]
+    [LabelText("判定半径")]
+    [Tooltip("弱点判定的半径（单位）")]
+    [Range(0.1f, 2f)]
+    public float weakPointRadius = 0.5f;
+    
+    [ShowIf("effectType", SkillEffectType.WeakPoint)]
+    [BoxGroup("弱点攻击配置")]
+    [LabelText("伤害倍率")]
+    [Tooltip("命中弱点时的伤害倍率")]
+    [Range(1.0f, 5.0f)]
+    public float weakPointDamageMultiplier = 1.5f;
+    
+    [ShowIf("effectType", SkillEffectType.WeakPoint)]
+    [BoxGroup("弱点攻击配置")]
+    [LabelText("击中后刷新")]
+    [Tooltip("命中弱点后是否立即刷新位置")]
+    public bool weakPointRefreshOnHit = true;
+    
     /// <summary>
     /// 创建效果实例
     /// </summary>
@@ -96,6 +125,18 @@ public class SkillEffectConfig
                 // Transition效果是瞬时效果，不需要移除条件
                 return transitionEffect;
                 
+            case SkillEffectType.WeakPoint:
+                var weakPointEffect = new WeakPointEffect();
+                // 设置弱点攻击专用参数
+                weakPointEffect.SetParameters(
+                    weakPointMarkerPrefab,
+                    weakPointRadius,
+                    weakPointDamageMultiplier,
+                    weakPointRefreshOnHit
+                );
+                // 弱点效果是持续效果，生命周期由技能管理
+                return weakPointEffect;
+                
             default:
                 Debug.LogError($"不支持的效果类型: {effectType}");
                 return null;
@@ -117,6 +158,8 @@ public class SkillEffectConfig
                 return $"生成效果: 空占位符（功能由掉落系统处理）";
             case SkillEffectType.Transition:
                 return $"Transition: {minTransitionTime:F1}s-{maxTransitionTime:F1}s (门槛:{transitionThreshold:F2})";
+            case SkillEffectType.WeakPoint:
+                return $"弱点攻击: {weakPointDamageMultiplier:F1}x伤害 (半径:{weakPointRadius:F1})";
             default:
                 return $"效果: {effectType}";
         }
@@ -134,5 +177,6 @@ public enum SkillEffectType
     Resource,       // 资源效果（暂未实现）
     Spawn,          // 生成效果（暂未实现）
     Chain,          // 连锁效果（暂未实现）
-    Transition      // Transition 过渡效果
+    Transition,     // Transition 过渡效果
+    WeakPoint       // 弱点攻击效果
 }

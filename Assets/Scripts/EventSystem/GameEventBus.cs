@@ -175,6 +175,11 @@ public static class GameEventBus
     /// </summary>
     public static event System.Action<int> OnWaveChanged;
     
+    /// <summary>
+    /// 初始敌人生成完成事件
+    /// </summary>
+    public static event System.Action OnInitialWaveSpawnComplete;
+    
     #endregion
     
     #region UI/表现事件
@@ -333,6 +338,11 @@ public static class GameEventBus
     /// 发布波次变化事件
     /// </summary>
     public static void PublishWaveChanged(int wave) => OnWaveChanged?.Invoke(wave);
+    
+    /// <summary>
+    /// 发布初始敌人生成完成事件
+    /// </summary>
+    public static void PublishInitialWaveSpawnComplete() => OnInitialWaveSpawnComplete?.Invoke();
     
     /// <summary>
     /// 发布瞄准方向变化事件

@@ -114,6 +114,9 @@ namespace Game.SpawnSystem.Triggers
             {
                 Debug.Log("[WaveSpawnTrigger] 初始敌人生成完成");
             }
+            
+            // 发布初始敌人生成完成事件
+            GameEventBus.PublishInitialWaveSpawnComplete();
         }
         
         /// <summary>
