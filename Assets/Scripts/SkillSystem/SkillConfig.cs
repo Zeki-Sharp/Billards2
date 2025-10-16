@@ -1,5 +1,9 @@
 using UnityEngine;
 using Sirenix.OdinInspector;
+using System.Collections.Generic;
+#if UNITY_EDITOR
+using System.Linq;
+#endif
 
 /// <summary>
 /// 技能配置 ScriptableObject - 用于在 Inspector 中配置技能
@@ -18,6 +22,12 @@ public class SkillConfig : ScriptableObject
     [Tooltip("技能描述")]
     [TextArea(3, 5)]
     public string description = "碰撞敌人2次后，攻击力提升100%";
+    
+    [BoxGroup("技能基本信息")]
+    [LabelText("技能标签")]
+    [Tooltip("技能所属的标签，用于区分通用技能和角色专属技能")]
+    [ValueDropdown("GetAvailableTags")]
+    public string skillTag = "default";
     
     // 技能图标暂时移除，简化配置界面
     // [BoxGroup("技能基本信息")]
@@ -168,6 +178,51 @@ public class SkillConfig : ScriptableObject
         
         return info;
     }
+    
+#if UNITY_EDITOR
+    /// <summary>
+    /// 获取所有可用的技能标签
+    /// </summary>
+    private IEnumerable<string> GetAvailableTags()
+    {
+        var tags = new List<string>();
+        
+        // 添加固定标签
+        tags.Add("default");
+        tags.Add("common");
+        
+        // 尝试从 Resources 加载角色选择数据
+        var characterSelectionData = UnityEngine.Resources.Load<CharacterSelectionData>("Data/CharacterSelectionData");
+        if (characterSelectionData != null && characterSelectionData.availableCharacters != null)
+        {
+            // 添加所有角色名称
+            foreach (var character in characterSelectionData.availableCharacters)
+            {
+                if (character != null && !string.IsNullOrEmpty(character.playerName))
+                {
+                    tags.Add(character.playerName);
+                }
+            }
+        }
+        else
+        {
+            // 如果无法加载角色选择数据，尝试从 Resources/Data/Player 目录加载所有 PlayerData
+            var allPlayerData = UnityEngine.Resources.LoadAll<PlayerData>("Data/Player");
+            if (allPlayerData != null && allPlayerData.Length > 0)
+            {
+                foreach (var playerData in allPlayerData)
+                {
+                    if (playerData != null && !string.IsNullOrEmpty(playerData.playerName))
+                    {
+                        tags.Add(playerData.playerName);
+                    }
+                }
+            }
+        }
+        
+        return tags.Distinct().OrderBy(t => t); // 去重并排序
+    }
+#endif
 }
 
 /// <summary>

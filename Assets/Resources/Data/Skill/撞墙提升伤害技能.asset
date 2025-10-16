@@ -14,11 +14,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   skillName: "\u78B0\u649E\u8FDE\u51FB"
   description: "\u78B0\u649E\u5899\u58C12\u6B21\u540E\uFF0C\u653B\u51FB\u529B\u63D0\u5347100%"
+  skillTag: "\u8303\u56F4\u653B\u51FB\u89D2\u8272"
   triggerConfig:
     triggerType: 0
     targetTag: Wall
-    useAttackTypeFilter: 0
-    attackType: Hit
     killTargetTag: Enemy
     dataExtractorType: 0
   conditionConfig:
@@ -38,6 +37,15 @@ MonoBehaviour:
     modifierValue: 2
     modifierType: 2
     healAmount: 20
+    minTransitionTime: 1
+    maxTransitionTime: 5
+    transitionThreshold: 0.3
+    chargingToTransitionCurve:
+      serializedVersion: 2
+      m_Curve: []
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
   resetConditionConfig:
     logicType: 1
     resetConditions:
@@ -45,6 +53,11 @@ MonoBehaviour:
   effectRemovalConfig:
     removalType: 1
     duration: 30
+    comparisonType: 2
+    targetValue: 0.5
+    minValue: 0
+    maxValue: 1
+    dataExtractorType: 0
   skillType: 0
   requiredLevel: 1
   isActive: 1
