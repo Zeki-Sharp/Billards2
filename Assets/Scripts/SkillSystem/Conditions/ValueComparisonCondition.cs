@@ -77,6 +77,12 @@ public class ValueComparisonCondition : ICondition
             case ComparisonType.LessThanOrEqual:
                 result = currentValue <= targetValue;
                 break;
+            case ComparisonType.LessThan:
+                result = currentValue < targetValue;
+                break;
+            case ComparisonType.GreaterThan:
+                result = currentValue > targetValue;
+                break;
             case ComparisonType.Equal:
                 result = Mathf.Approximately(currentValue, targetValue);
                 break;
@@ -125,6 +131,8 @@ public enum ComparisonType
 {
     GreaterThanOrEqual,  // >=
     LessThanOrEqual,     // <=
+    LessThan,            // <
+    GreaterThan,         // >
     Equal,               // ==
     InRange              // 范围内
 }

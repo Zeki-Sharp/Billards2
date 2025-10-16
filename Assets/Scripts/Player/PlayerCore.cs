@@ -185,12 +185,8 @@ public class PlayerCore : MonoBehaviour
         currentHealth = maxHealth; // 初始化为满血
         InitializeHealthBar(currentHealth);
         
-        // 发布初始血量事件，让技能系统能够检测到满血状态
-        GameEventBus.PublishHealthChanged(new HealthStateData
-        {
-            CurrentHealth = currentHealth,
-            MaxHealth = maxHealth
-        });
+        // 延迟发布初始血量事件，确保 SkillManager 已经订阅
+        StartCoroutine(DelayedPublishInitialHealth());
         
         // 确保球体在初始化后完全停止
         if (ballPhysics != null)
@@ -606,6 +602,24 @@ public class PlayerCore : MonoBehaviour
     {
         if (playerData == null) return 1f;
         return currentHealth / playerData.maxHealth;
+    }
+    
+    /// <summary>
+    /// 延迟发布初始血量事件，确保 SkillManager 已经订阅
+    /// </summary>
+    private System.Collections.IEnumerator DelayedPublishInitialHealth()
+    {
+        // 等待一帧，确保所有 Start() 方法都执行完毕
+        yield return null;
+        
+        float maxHealth = playerData != null ? playerData.maxHealth : 100f;
+        Debug.Log($"[PlayerCore] 延迟发布初始血量事件: {currentHealth}/{maxHealth}");
+        
+        GameEventBus.PublishHealthChanged(new HealthStateData
+        {
+            CurrentHealth = currentHealth,
+            MaxHealth = maxHealth
+        });
     }
     
     /// <summary>

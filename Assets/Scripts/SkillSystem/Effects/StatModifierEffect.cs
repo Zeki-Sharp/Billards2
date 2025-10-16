@@ -41,6 +41,23 @@ public class StatModifierEffect : IEffect
     private IEffectRemovalCondition effectRemovalCondition; // 新的效果移除条件
     
     /// <summary>
+    /// 检查修饰器是否仍然存在
+    /// </summary>
+    private void CheckModifierStatus()
+    {
+        if (isApplied && appliedModifier != null && statsManager != null)
+        {
+            // 检查修饰器是否还在活跃列表中
+            if (!statsManager.HasModifier(appliedModifier))
+            {
+                Debug.Log($"[{EffectName}] 检测到修饰器已被移除，重置效果状态");
+                isApplied = false;
+                appliedModifier = null;
+            }
+        }
+    }
+    
+    /// <summary>
     /// 初始化效果
     /// </summary>
     public void Initialize()
@@ -76,6 +93,9 @@ public class StatModifierEffect : IEffect
             Debug.LogError($"[{EffectName}] 目标玩家或属性管理器为空，无法执行效果");
             return false;
         }
+        
+        // 检查修饰器是否仍然存在
+        CheckModifierStatus();
         
         if (isApplied)
         {

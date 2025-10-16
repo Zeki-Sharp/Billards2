@@ -29,6 +29,31 @@ public class EffectRemovalConfig
     [Tooltip("反向条件检查 - 当条件不满足时移除效果")]
     public ICondition inverseCondition;
     
+    [ShowIf("removalType", EffectRemovalType.ValueComparison)]
+    [LabelText("比较类型")]
+    [Tooltip("数值比较类型")]
+    public ComparisonType comparisonType = ComparisonType.LessThan;
+    
+    [ShowIf("@removalType == EffectRemovalType.ValueComparison && comparisonType != ComparisonType.InRange")]
+    [LabelText("目标值")]
+    [Tooltip("比较的目标值")]
+    public float targetValue = 0.5f;
+    
+    [ShowIf("@removalType == EffectRemovalType.ValueComparison && comparisonType == ComparisonType.InRange")]
+    [LabelText("最小值")]
+    [Tooltip("范围比较的最小值")]
+    public float minValue = 0f;
+    
+    [ShowIf("@removalType == EffectRemovalType.ValueComparison && comparisonType == ComparisonType.InRange")]
+    [LabelText("最大值")]
+    [Tooltip("范围比较的最大值")]
+    public float maxValue = 1f;
+    
+    [ShowIf("removalType", EffectRemovalType.ValueComparison)]
+    [LabelText("数据提取器类型")]
+    [Tooltip("用于提取数值的数据提取器类型")]
+    public DataExtractorType dataExtractorType = DataExtractorType.Health;
+    
     /// <summary>
     /// 创建效果移除条件实例
     /// </summary>
@@ -44,10 +69,59 @@ public class EffectRemovalConfig
                 return new OnConditionMetEffectRemovalCondition(removalCondition);
             case EffectRemovalType.InverseConditionCheck:
                 return new InverseConditionCheckEffectRemovalCondition(inverseCondition);
+            case EffectRemovalType.ValueComparison:
+                return CreateValueComparisonRemovalCondition();
             case EffectRemovalType.Never:
                 return new NeverEffectRemovalCondition();
             default:
                 Debug.LogError($"不支持的效果移除类型: {removalType}");
+                return null;
+        }
+    }
+    
+    /// <summary>
+    /// 创建值比较移除条件
+    /// </summary>
+    private IEffectRemovalCondition CreateValueComparisonRemovalCondition()
+    {
+        // 获取数据提取器
+        System.Func<object, float> valueExtractor = GetDataExtractor(dataExtractorType);
+        if (valueExtractor == null)
+        {
+            Debug.LogError($"[EffectRemovalConfig] 不支持的数据提取器类型: {dataExtractorType}");
+            return null;
+        }
+        
+        // 根据比较类型创建条件
+        if (comparisonType == ComparisonType.InRange)
+        {
+            return new ValueComparisonEffectRemovalCondition(minValue, maxValue, valueExtractor, dataExtractorType);
+        }
+        else
+        {
+            return new ValueComparisonEffectRemovalCondition(comparisonType, targetValue, valueExtractor, dataExtractorType);
+        }
+    }
+    
+    /// <summary>
+    /// 根据类型获取数据提取器
+    /// </summary>
+    private System.Func<object, float> GetDataExtractor(DataExtractorType type)
+    {
+        switch (type)
+        {
+            case DataExtractorType.Health:
+                return DataExtractors.HealthExtractor;
+            case DataExtractorType.Attack:
+                return DataExtractors.AttackExtractor;
+            case DataExtractorType.Defense:
+                return DataExtractors.DefenseExtractor;
+            case DataExtractorType.Speed:
+                return DataExtractors.SpeedExtractor;
+            case DataExtractorType.Mana:
+                return DataExtractors.ManaExtractor;
+            default:
+                Debug.LogError($"不支持的数据提取器类型: {type}");
                 return null;
         }
     }
@@ -61,6 +135,15 @@ public class EffectRemovalConfig
         {
             case EffectRemovalType.Duration:
                 return $"效果移除: {removalType}({duration}s)";
+            case EffectRemovalType.ValueComparison:
+                if (comparisonType == ComparisonType.InRange)
+                {
+                    return $"效果移除: {removalType}({minValue}-{maxValue})";
+                }
+                else
+                {
+                    return $"效果移除: {removalType}({comparisonType} {targetValue})";
+                }
             default:
                 return $"效果移除: {removalType}";
         }
@@ -76,5 +159,6 @@ public enum EffectRemovalType
     OnPlayerPhaseEnded,  // 回合结束移除
     OnConditionMet,      // 满足条件时移除
     InverseConditionCheck, // 反向条件检查移除
+    ValueComparison,     // 值比较移除
     Never                // 永不移除
 }

@@ -157,6 +157,16 @@ public class PlayerStatsManager : MonoBehaviour
     }
     
     /// <summary>
+    /// 检查修饰器是否存在于活跃列表中
+    /// </summary>
+    /// <param name="modifier">要检查的修饰器</param>
+    /// <returns>是否存在</returns>
+    public bool HasModifier(StatModifier modifier)
+    {
+        return activeModifiers.Contains(modifier);
+    }
+    
+    /// <summary>
     /// 更新修饰器状态
     /// </summary>
     private void UpdateModifiers()
@@ -238,11 +248,33 @@ public class PlayerStatsManager : MonoBehaviour
                 // InverseConditionCheckEffectRemovalCondition 对所有事件都相关（用于反向检查）
                 return true;
             }
+            else if (modifier.effectRemovalCondition is ValueComparisonEffectRemovalCondition)
+            {
+                // ValueComparisonEffectRemovalCondition 只对特定数据类型的事件有效
+                return IsEventRelevantForValueComparison(eventData, modifier.effectRemovalCondition);
+            }
             // 其他移除条件类型...
         }
         
         // 默认情况下，对所有事件进行移除检查
         return true;
+    }
+    
+    /// <summary>
+    /// 检查事件是否与值比较移除条件相关
+    /// </summary>
+    /// <param name="eventData">事件数据</param>
+    /// <param name="removalCondition">移除条件</param>
+    /// <returns>是否相关</returns>
+    private bool IsEventRelevantForValueComparison(object eventData, IEffectRemovalCondition removalCondition)
+    {
+        if (removalCondition is ValueComparisonEffectRemovalCondition valueComparisonRemoval)
+        {
+            // 根据数据提取器类型精确匹配事件类型
+            return valueComparisonRemoval.IsEventRelevant(eventData);
+        }
+        
+        return false;
     }
     
     #endregion
