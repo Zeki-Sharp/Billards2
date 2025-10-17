@@ -27,6 +27,11 @@ public class SkillSelectionUI : MonoBehaviour
     [SerializeField] private TextMeshProUGUI skillName2; // 技能名称2
     [SerializeField] private TextMeshProUGUI skillName3; // 技能名称3
     
+    [Header("技能描述")]
+    [SerializeField] private TextMeshProUGUI skillDescription1; // 技能描述1
+    [SerializeField] private TextMeshProUGUI skillDescription2; // 技能描述2
+    [SerializeField] private TextMeshProUGUI skillDescription3; // 技能描述3
+    
     [Header("调试")]
     [SerializeField] private bool showDebugInfo = true;
     
@@ -176,11 +181,13 @@ public class SkillSelectionUI : MonoBehaviour
         {
             skillButton1?.gameObject.SetActive(true);
             skillName1?.SetText(currentSkills[0].skillName);
+            skillDescription1?.SetText(GetSkillDescription(currentSkills[0]));
         }
         else
         {
             skillButton1?.gameObject.SetActive(false);
             skillName1?.SetText("");
+            skillDescription1?.SetText("");
         }
         
         // 更新技能2
@@ -188,11 +195,13 @@ public class SkillSelectionUI : MonoBehaviour
         {
             skillButton2?.gameObject.SetActive(true);
             skillName2?.SetText(currentSkills[1].skillName);
+            skillDescription2?.SetText(GetSkillDescription(currentSkills[1]));
         }
         else
         {
             skillButton2?.gameObject.SetActive(false);
             skillName2?.SetText("");
+            skillDescription2?.SetText("");
         }
         
         // 更新技能3
@@ -200,11 +209,33 @@ public class SkillSelectionUI : MonoBehaviour
         {
             skillButton3?.gameObject.SetActive(true);
             skillName3?.SetText(currentSkills[2].skillName);
+            skillDescription3?.SetText(GetSkillDescription(currentSkills[2]));
         }
         else
         {
             skillButton3?.gameObject.SetActive(false);
             skillName3?.SetText("");
+            skillDescription3?.SetText("");
+        }
+    }
+    
+    /// <summary>
+    /// 获取技能描述文本
+    /// </summary>
+    /// <param name="skill">技能配置</param>
+    /// <returns>技能描述文本</returns>
+    string GetSkillDescription(SkillConfig skill)
+    {
+        if (skill == null)
+            return "";
+        
+        if (!string.IsNullOrEmpty(skill.description))
+        {
+            return skill.description;
+        }
+        else
+        {
+            return "暂无描述";
         }
     }
     

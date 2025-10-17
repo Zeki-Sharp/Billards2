@@ -22,6 +22,12 @@ public class PlayerData : ScriptableObject
     [LabelText("玩家图标")]
     public Sprite playerIcon;
     
+    [BoxGroup("玩家基本信息")]
+    [LabelText("角色描述")]
+    [MultiLineProperty(3)]
+    [Tooltip("角色的详细描述信息")]
+    public string characterDescription;
+    
     [BoxGroup("物理数据")]
     [LabelText("球体数据")]
     [Required]

@@ -11,7 +11,7 @@ public class CharacterButton : MonoBehaviour
     [SerializeField] private Button button;
     [SerializeField] private TextMeshProUGUI characterNameText;
     [SerializeField] private Image characterIconImage;
-    [SerializeField] private TextMeshProUGUI attackModeText;
+    [SerializeField] private TextMeshProUGUI characterDescriptionText;
     
     [Header("状态显示")]
     [SerializeField] private GameObject selectedIndicator;
@@ -88,31 +88,24 @@ public class CharacterButton : MonoBehaviour
             characterIconImage.enabled = true;
         }
         
-        // 设置攻击模式文本
-        if (attackModeText != null)
+        // 设置角色描述文本
+        if (characterDescriptionText != null)
         {
-            string attackModeDisplay = GetAttackModeDisplayName(characterData.attackMode);
-            attackModeText.text = $"攻击方式: {attackModeDisplay}";
+            if (!string.IsNullOrEmpty(characterData.characterDescription))
+            {
+                characterDescriptionText.text = characterData.characterDescription;
+                characterDescriptionText.enabled = true;
+            }
+            else
+            {
+                characterDescriptionText.text = "暂无描述";
+                characterDescriptionText.enabled = true;
+            }
         }
         
         Debug.Log($"CharacterButton: 设置角色 {characterData.playerName}");
     }
     
-    /// <summary>
-    /// 获取攻击模式显示名称
-    /// </summary>
-    string GetAttackModeDisplayName(PlayerData.AttackMode attackMode)
-    {
-        switch (attackMode)
-        {
-            case PlayerData.AttackMode.Collision:
-                return "碰撞攻击";
-            case PlayerData.AttackMode.Area:
-                return "范围攻击";
-            default:
-                return "未知";
-        }
-    }
     
     /// <summary>
     /// 设置选中状态
@@ -210,6 +203,7 @@ public class CharacterButton : MonoBehaviour
         {
             Debug.Log($"角色信息:\n" +
                      $"名称: {characterData.playerName}\n" +
+                     $"描述: {characterData.characterDescription}\n" +
                      $"攻击模式: {characterData.attackMode}\n" +
                      $"选中状态: {isSelected}");
         }
