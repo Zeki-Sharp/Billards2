@@ -33,18 +33,18 @@ public class DamageTextManager : MonoBehaviour
     public Vector2 referenceResolution = new Vector2(1920, 1080);
     
     [Header("对象池设置")]
-    [Tooltip("对象池大小")]
+    [Tooltip("对象池大小（已弃用，现在每次都创建新对象）")]
     public int poolSize = 30;
-    [Tooltip("是否自动扩展对象池")]
+    [Tooltip("是否自动扩展对象池（已弃用）")]
     public bool autoExpandPool = true;
     
     [Header("调试")]
     [Tooltip("是否启用调试日志")]
     public bool enableDebugLog = true;
     
-    // 对象池
-    private Queue<DamageText> damageTextPool = new Queue<DamageText>();
-    private List<DamageText> activeDamageTexts = new List<DamageText>();
+    // 对象池（已弃用，现在每次都创建新对象）
+    // private Queue<DamageText> damageTextPool = new Queue<DamageText>();
+    // private List<DamageText> activeDamageTexts = new List<DamageText>();
     
     // 相机引用
     private Camera targetCamera;
@@ -94,19 +94,11 @@ public class DamageTextManager : MonoBehaviour
             targetCamera = FindFirstObjectByType<Camera>();
         }
         
-        // 使用配置数据
-        if (config != null)
-        {
-            poolSize = config.poolSize;
-            autoExpandPool = config.autoExpandPool;
-        }
-        
-        // 预创建对象池
-        PreCreatePool();
+        // 对象池已弃用，不再预创建
         
         if (enableDebugLog)
         {
-            Debug.Log($"DamageTextManager 初始化完成，对象池大小: {poolSize}");
+            Debug.Log($"DamageTextManager 初始化完成，使用直接创建模式");
         }
     }
     
@@ -146,39 +138,23 @@ public class DamageTextManager : MonoBehaviour
         }
     }
     
-    /// <summary>
-    /// 预创建对象池
-    /// </summary>
-    private void PreCreatePool()
-    {
-        if (damageTextPrefab == null)
-        {
-            Debug.LogError("DamageTextManager: 伤害数字预制体未设置！");
-            return;
-        }
-        
-        for (int i = 0; i < poolSize; i++)
-        {
-            CreateDamageTextInstance();
-        }
-        
-        if (enableDebugLog)
-        {
-            Debug.Log($"DamageTextManager: 预创建了 {poolSize} 个伤害数字实例");
-        }
-    }
+    // PreCreatePool 方法已删除，现在每次都创建新对象
+    
+    // CreateDamageTextInstance 方法已删除，现在每次都创建新对象
     
     /// <summary>
-    /// 创建伤害数字实例
+    /// 创建新的伤害数字实例（每次都创建新对象）
     /// </summary>
-    private void CreateDamageTextInstance()
+    /// <returns>伤害数字实例</returns>
+    public DamageText GetDamageText()
     {
         if (damageTextCanvas == null)
         {
             Debug.LogError("DamageTextManager: Canvas 未初始化！");
-            return;
+            return null;
         }
         
+        // 直接创建新实例
         GameObject instance = Instantiate(damageTextPrefab, damageTextCanvas.transform);
         DamageText damageText = instance.GetComponent<DamageText>();
         
@@ -186,63 +162,18 @@ public class DamageTextManager : MonoBehaviour
         {
             Debug.LogError("DamageTextManager: 预制体缺少 DamageText 组件！");
             Destroy(instance);
-            return;
+            return null;
         }
         
-        instance.SetActive(false);
-        damageTextPool.Enqueue(damageText);
-    }
-    
-    /// <summary>
-    /// 从对象池获取伤害数字实例
-    /// </summary>
-    /// <returns>伤害数字实例</returns>
-    public DamageText GetDamageText()
-    {
-        DamageText damageText = null;
-        
-        // 尝试从对象池获取
-        if (damageTextPool.Count > 0)
+        if (enableDebugLog)
         {
-            damageText = damageTextPool.Dequeue();
-        }
-        // 如果对象池为空且允许自动扩展
-        else if (autoExpandPool)
-        {
-            CreateDamageTextInstance();
-            if (damageTextPool.Count > 0)
-            {
-                damageText = damageTextPool.Dequeue();
-            }
-        }
-        
-        if (damageText != null)
-        {
-            damageText.gameObject.SetActive(true);
-            activeDamageTexts.Add(damageText);
+            Debug.Log($"[DamageTextManager] 创建新的伤害数字实例");
         }
         
         return damageText;
     }
     
-    /// <summary>
-    /// 回收到对象池
-    /// </summary>
-    /// <param name="damageText">要回收的伤害数字</param>
-    public void ReturnDamageText(DamageText damageText)
-    {
-        if (damageText == null) return;
-        
-        // 从活跃列表中移除
-        activeDamageTexts.Remove(damageText);
-        
-        // 重置状态
-        damageText.gameObject.SetActive(false);
-        damageText.transform.SetParent(damageTextCanvas.transform);
-        
-        // 回收到对象池
-        damageTextPool.Enqueue(damageText);
-    }
+    // ReturnDamageText 方法已删除，现在由MMF直接销毁对象
     
     /// <summary>
     /// 显示伤害数字
@@ -363,20 +294,7 @@ public class DamageTextManager : MonoBehaviour
         }
     }
     
-    /// <summary>
-    /// 清理所有活跃的伤害数字
-    /// </summary>
-    public void ClearAllDamageTexts()
-    {
-        for (int i = activeDamageTexts.Count - 1; i >= 0; i--)
-        {
-            if (activeDamageTexts[i] != null)
-            {
-                activeDamageTexts[i].ForceReturnToPool();
-            }
-        }
-        activeDamageTexts.Clear();
-    }
+    // ClearAllDamageTexts 方法已删除，现在不需要管理活跃对象列表
     
     /// <summary>
     /// 获取伤害数字实例（供 MMF 使用）
@@ -396,18 +314,10 @@ public class DamageTextManager : MonoBehaviour
         return damageTextCanvas;
     }
     
-    /// <summary>
-    /// 获取对象池状态信息
-    /// </summary>
-    /// <returns>状态信息字符串</returns>
-    public string GetPoolStatus()
-    {
-        return $"对象池状态 - 可用: {damageTextPool.Count}, 活跃: {activeDamageTexts.Count}, 总计: {damageTextPool.Count + activeDamageTexts.Count}";
-    }
+    // GetPoolStatus 方法已删除，不再使用对象池
     
     void OnDestroy()
     {
-        // 清理所有伤害数字
-        ClearAllDamageTexts();
+        // 不再需要清理，对象由MMF自动销毁
     }
 }

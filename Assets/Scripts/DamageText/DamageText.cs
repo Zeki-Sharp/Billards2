@@ -45,42 +45,10 @@ public class DamageText : MonoBehaviour
         // 设置样式
         SetStyle();
         
-        // 启动自动回收协程
-        StartCoroutine(AutoReturnToPool());
+        // 不再需要自动回收，由MMF直接销毁
     }
     
-    /// <summary>
-    /// 自动回收协程
-    /// </summary>
-    private System.Collections.IEnumerator AutoReturnToPool()
-    {
-        // 获取 MMF Player 的总时长
-        float animationDuration = GetAnimationDuration();
-        
-        // 等待动画播放完成
-        yield return new WaitForSeconds(animationDuration);
-        
-        // 回收对象
-        ReturnToPool();
-    }
-    
-    /// <summary>
-    /// 获取 MMF 动画总时长
-    /// </summary>
-    /// <returns>动画总时长（秒）</returns>
-    private float GetAnimationDuration()
-    {
-        // 获取 MMF Player 组件
-        var mmfPlayer = GetComponent<MMF_Player>();
-        if (mmfPlayer != null)
-        {
-            // 返回 MMF Player 的总时长
-            return mmfPlayer.TotalDuration;
-        }
-        
-        // 如果没有 MMF Player，返回默认时长
-        return 1.2f;
-    }
+    // 自动回收协程已删除，现在由MMF直接销毁对象
     
     /// <summary>
     /// 设置文本内容
@@ -128,24 +96,5 @@ public class DamageText : MonoBehaviour
         }
     }
     
-    /// <summary>
-    /// 回收到对象池
-    /// 由 MMF 动画完成时调用
-    /// </summary>
-    public void ReturnToPool()
-    {
-        // 重置状态
-        rectTransform.localScale = Vector3.one;
-        
-        // 通知管理器回收
-        DamageTextManager.Instance?.ReturnDamageText(this);
-    }
-    
-    /// <summary>
-    /// 强制回收到对象池
-    /// </summary>
-    public void ForceReturnToPool()
-    {
-        ReturnToPool();
-    }
+    // ReturnToPool 和 ForceReturnToPool 方法已删除，现在由MMF直接销毁对象
 }
