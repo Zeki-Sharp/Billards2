@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections.Generic;
 
 /// <summary>
 /// 玩家攻击管理器 - 负责处理所有攻击相关的逻辑
@@ -8,12 +9,14 @@ using UnityEngine;
 /// - 处理攻击力计算和获取
 /// - 处理碰撞攻击和范围攻击
 /// - 发布攻击事件
+/// - 管理攻击范围修改器
 /// 
 /// 【主要功能】：
 /// - 攻击模式判断：根据 PlayerData 判断当前攻击模式
 /// - 攻击力计算：获取基础攻击力和最终攻击力
 /// - 攻击处理：处理碰撞攻击和范围攻击逻辑
 /// - 事件发布：通过 GameEventBus 发布攻击事件
+/// - 范围修改：支持动态修改攻击范围
 /// 
 /// 【设计原则】：
 /// - 专注攻击逻辑，不处理物理和状态管理
@@ -25,10 +28,17 @@ public class PlayerAttackManager : MonoBehaviour
     [Header("攻击配置")]
     // PlayerData 现在通过 Player 统一分发
     
+    [Header("范围攻击表现")]
+    [SerializeField] private GameObject areaCirclePrefab;
+    [SerializeField] private float circleDisplayDuration = 0.5f;
+    
     // 数据和组件引用（由 Player 统一设置）
     private PlayerData playerData;
     private PlayerCore playerCore;
     private PlayerStatsManager statsManager;
+    
+    // 范围攻击表现
+    private GameObject currentAreaCircle;
     
     /// <summary>
     /// 初始化攻击管理器（由 Player 调用）
@@ -64,6 +74,18 @@ public class PlayerAttackManager : MonoBehaviour
             Debug.LogWarning("PlayerAttackManager: Player 尚未调用 Initialize，自动初始化");
             InitializeAttackManager();
         }
+        
+        // 测试攻击范围
+        Invoke(nameof(TestAreaRadius), 2f);
+    }
+    
+    /// <summary>
+    /// 测试攻击范围（临时调试方法）
+    /// </summary>
+    private void TestAreaRadius()
+    {
+        float finalRadius = GetFinalAreaRadius();
+        Debug.Log($"[测试] 当前攻击范围: {finalRadius}");
     }
     
     /// <summary>
@@ -187,9 +209,12 @@ public class PlayerAttackManager : MonoBehaviour
             return;
         }
         
+        // 显示范围攻击圈
+        ShowAreaCircle(ballPosition);
+        
         Collider2D[] enemies = Physics2D.OverlapCircleAll(
             ballPosition, 
-            playerData.areaRadius, 
+            GetFinalAreaRadius(),  // 使用最终攻击范围（应用修改器后）
             playerData.enemyLayerMask
         );
         
@@ -215,12 +240,15 @@ public class PlayerAttackManager : MonoBehaviour
         
         if (hitCount > 0)
         {
-            Debug.Log($"[PlayerAttackManager] 范围攻击完成，命中 {hitCount} 个敌人，范围: {playerData.areaRadius}");
+            Debug.Log($"[PlayerAttackManager] 范围攻击完成，命中 {hitCount} 个敌人，范围: {GetFinalAreaRadius()}");
         }
         else
         {
             Debug.Log("[PlayerAttackManager] 范围攻击未命中任何敌人");
         }
+        
+        // 延迟隐藏范围圈
+        StartCoroutine(HideAreaCircleAfterDelay());
     }
     
     /// <summary>
@@ -274,6 +302,88 @@ public class PlayerAttackManager : MonoBehaviour
                    playerStateMachine.CurrentState == PlayerStateMachine.PlayerState.MovingEnd;
         }
         return false;
+    }
+    
+    #endregion
+    
+    #region 攻击范围获取
+    
+    /// <summary>
+    /// 获取最终的攻击范围（应用所有修改器后）
+    /// 从 PlayerStatsManager 获取
+    /// </summary>
+    /// <returns>最终攻击范围</returns>
+    public float GetFinalAreaRadius()
+    {
+        // 优先从 PlayerStatsManager 获取（包含技能修正）
+        if (statsManager != null)
+        {
+            float finalRadius = statsManager.FinalAreaRadius;
+            Debug.Log($"[PlayerAttackManager] 获取最终攻击范围: {finalRadius} (基础: {playerData?.areaRadius ?? 0f})");
+            return finalRadius;
+        }
+        
+        // 回退到基础范围
+        float baseRadius = playerData != null ? playerData.areaRadius : 0f;
+        Debug.LogWarning($"[PlayerAttackManager] StatsManager为空，使用基础攻击范围: {baseRadius}");
+        return baseRadius;
+    }
+    
+    #endregion
+    
+    #region 范围攻击表现
+    
+    /// <summary>
+    /// 显示范围攻击圈
+    /// </summary>
+    /// <param name="worldPosition">世界坐标位置</param>
+    private void ShowAreaCircle(Vector3 worldPosition)
+    {
+        if (areaCirclePrefab == null)
+        {
+            Debug.LogWarning("[PlayerAttackManager] 范围圈预制体未设置");
+            return;
+        }
+        
+        // 销毁旧的范围圈
+        if (currentAreaCircle != null)
+        {
+            Destroy(currentAreaCircle);
+        }
+        
+        // 创建新的范围圈
+        currentAreaCircle = Instantiate(areaCirclePrefab);
+        
+        // 设置位置
+        currentAreaCircle.transform.position = worldPosition;
+        
+        // 设置大小
+        float radius = GetFinalAreaRadius();
+        currentAreaCircle.transform.localScale = Vector3.one * radius * 2; // 直径
+        
+        // 确保显示在Player下层
+        SpriteRenderer circleRenderer = currentAreaCircle.GetComponent<SpriteRenderer>();
+        if (circleRenderer != null)
+        {
+            circleRenderer.sortingOrder = -10; // 比Player的sortingOrder小
+        }
+        
+        Debug.Log($"[PlayerAttackManager] 显示范围圈: 位置 {worldPosition}, 半径 {radius}");
+    }
+    
+    /// <summary>
+    /// 延迟隐藏范围圈
+    /// </summary>
+    private System.Collections.IEnumerator HideAreaCircleAfterDelay()
+    {
+        yield return new WaitForSeconds(circleDisplayDuration);
+        
+        if (currentAreaCircle != null)
+        {
+            Destroy(currentAreaCircle);
+            currentAreaCircle = null;
+            Debug.Log("[PlayerAttackManager] 隐藏范围圈");
+        }
     }
     
     #endregion

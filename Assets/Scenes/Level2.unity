@@ -9980,6 +9980,7 @@ MonoBehaviour:
   sceneNames:
   - Level1
   - Level2
+  - Level3
   currentLevelIndex: 0
   totalEnemyCount: 0
   killedEnemyCount: 0

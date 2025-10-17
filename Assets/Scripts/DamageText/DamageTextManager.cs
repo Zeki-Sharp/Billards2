@@ -309,8 +309,22 @@ public class DamageTextManager : MonoBehaviour
         Vector3 finalWorldPosition;
         if (target != null)
         {
+            // 优先使用enemyItem的位置（实际可见的敌人物体）
+            Vector3 targetPosition = target.transform.position;
+            
+            // 检查是否是敌人，如果是则使用enemyItem位置
+            Enemy enemy = target.GetComponent<Enemy>();
+            if (enemy != null && enemy.enemyItem != null)
+            {
+                targetPosition = enemy.enemyItem.position;
+                if (enableDebugLog)
+                {
+                    Debug.Log($"DamageTextManager: 使用enemyItem位置 {targetPosition} 而不是根物体位置 {target.transform.position}");
+                }
+            }
+            
             // 使用目标对象的中心位置，添加可调整的偏移
-            finalWorldPosition = target.transform.position;
+            finalWorldPosition = targetPosition;
             finalWorldPosition.y += upwardOffset; // 可调整的向上偏移
             finalWorldPosition.x += rightwardOffset; // 可调整的向右偏移
         }

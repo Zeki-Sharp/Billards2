@@ -94,7 +94,7 @@ public class SkillEffectConfig
         {
             case SkillEffectType.StatModifier:
                 var statModifierEffect = new StatModifierEffect();
-                statModifierEffect.SetModifier(targetStat, modifierValue);
+                statModifierEffect.SetModifier(targetStat, modifierValue, modifierType);
                 // 设置新的效果移除条件
                 if (effectRemovalCondition != null)
                 {

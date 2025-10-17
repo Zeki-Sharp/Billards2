@@ -331,6 +331,11 @@ public class SkillManager : MonoBehaviour
             // MovingEndTrigger 只对球停止事件有效
             return eventData is BallPhysics;
         }
+        else if (skillInstance.trigger is AlwaysTrueTrigger)
+        {
+            // AlwaysTrueTrigger 对所有事件都有效（总是返回true）
+            return true;
+        }
         
         // 默认情况下，不处理任何事件
         return false;

@@ -10,11 +10,11 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: efc89a18d420d744da9894a9f7094350, type: 3}
-  m_Name: "\u51FB\u6740\u6389\u843D\u56DE\u8840"
+  m_Name: "\u653B\u51FB\u8303\u56F4\u6269\u5927"
   m_EditorClassIdentifier: 
-  skillName: "\u51FB\u6740\u6389\u843D\u56DE\u8840"
-  description: "\u6211\u73B0\u5728\u5E0C\u671B\u65B0\u589E\u4E00\u4E2A\u6280\u80FD\u6548\u679C\uFF0C\u8FD9\u4E2A\u6548\u679C\u5728\u653B\u51FB\u654C\u4EBA\u65F6\u89E6\u53D1\uFF0C\u5177\u4F53\u6548\u679C\u662F"
-  skillTag: common
+  skillName: "\u8303\u56F4\u6269\u5927"
+  description: "\u653B\u51FB\u8303\u56F4\u6269\u59271"
+  skillTag: "\u8303\u56F4\u653B\u51FB\u89D2\u8272"
   triggerConfig:
     triggerType: 3
     targetTag: Enemy
@@ -24,7 +24,7 @@ MonoBehaviour:
     logicType: 0
     conditions:
     - conditionType: 0
-      requiredCount: 1
+      requiredCount: 2
       timeWindow: 5
       comparisonType: 0
       targetValue: 1
@@ -32,10 +32,10 @@ MonoBehaviour:
       maxValue: 1
       dataExtractorType: 0
   effectConfig:
-    effectType: 4
-    targetStat: Damage
-    modifierValue: 2
-    modifierType: 2
+    effectType: 0
+    targetStat: AreaRadius
+    modifierValue: 1
+    modifierType: 0
     healAmount: 20
     minTransitionTime: 1
     maxTransitionTime: 5
@@ -53,9 +53,9 @@ MonoBehaviour:
   resetConditionConfig:
     logicType: 1
     resetConditions:
-    - resetType: 0
+    - resetType: 2
   effectRemovalConfig:
-    removalType: 0
+    removalType: 5
     duration: 30
     comparisonType: 2
     targetValue: 0.5

@@ -307,6 +307,14 @@ public class PlayerStatsManager : MonoBehaviour
     }
     
     /// <summary>
+    /// 获取最终攻击范围（仅范围攻击模式有效）
+    /// </summary>
+    public float FinalAreaRadius
+    {
+        get { return GetFinalStat("AreaRadius"); }
+    }
+    
+    /// <summary>
     /// 获取指定属性的最终值
     /// </summary>
     public float GetFinalStat(string statName)
@@ -384,6 +392,9 @@ public class PlayerStatsManager : MonoBehaviour
                 // 从 PlayerAttackManager 获取当前攻击模式的攻击力
                 PlayerAttackManager attackManager = GetComponent<PlayerAttackManager>();
                 return attackManager?.GetBaseAttackDamage() ?? 0f;
+            case "AreaRadius":
+                // 攻击范围（仅范围攻击模式有效）
+                return playerData.areaRadius;
             default:
                 Debug.LogWarning($"PlayerStatsManager: 未知的基础属性: {statName}");
                 return 0f;

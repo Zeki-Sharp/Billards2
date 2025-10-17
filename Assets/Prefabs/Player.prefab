@@ -7839,6 +7839,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5a995714164cfb247bde25f61d685dda, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  areaCirclePrefab: {fileID: 5385583857073481511, guid: 80d37609a5c83304092f963f43215c22, type: 3}
+  circleDisplayDuration: 0.5
 --- !u!1 &3901620891104444660
 GameObject:
   m_ObjectHideFlags: 0
@@ -13725,6 +13727,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   selectionData: {fileID: 11400000, guid: 7b4a075286903f14f9f59c4afe2885e2, type: 2}
+  characterButtonPrefab: {fileID: 0}
   buttonContainer: {fileID: 0}
   startGameButton: {fileID: 1984301397519951142, guid: 4c1d6c99c8d502a4293f850debb61e87, type: 3}
   selectedCharacterText: {fileID: 0}

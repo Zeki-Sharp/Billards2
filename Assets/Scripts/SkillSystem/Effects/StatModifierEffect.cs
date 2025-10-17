@@ -11,6 +11,7 @@ public class StatModifierEffect : IEffect
     
     private string targetStat = "Damage"; // 默认修改攻击力（使用新命名）
     private float modifierValue = 1.5f;   // 默认+50%
+    private StatModifierType modifierType = StatModifierType.PercentMult; // 默认百分比乘算
     private bool isApplied = false;       // 是否已应用
     private PlayerCore targetPlayer;      // 目标玩家
     private PlayerStatsManager statsManager; // 属性管理器
@@ -20,12 +21,26 @@ public class StatModifierEffect : IEffect
     /// 设置修改参数
     /// </summary>
     /// <param name="stat">要修改的属性名</param>
-    /// <param name="modifier">修改值（倍数）</param>
+    /// <param name="modifier">修改值</param>
     public void SetModifier(string stat, float modifier)
     {
         targetStat = stat;
         modifierValue = modifier;
-        Debug.Log($"[{EffectName}] 设置修改参数: {targetStat} * {modifierValue}");
+        Debug.Log($"[{EffectName}] 设置修改参数: {targetStat} {modifierValue} ({modifierType})");
+    }
+    
+    /// <summary>
+    /// 设置修改参数（包含类型）
+    /// </summary>
+    /// <param name="stat">要修改的属性名</param>
+    /// <param name="modifier">修改值</param>
+    /// <param name="type">修改器类型</param>
+    public void SetModifier(string stat, float modifier, StatModifierType type)
+    {
+        targetStat = stat;
+        modifierValue = modifier;
+        modifierType = type;
+        Debug.Log($"[{EffectName}] 设置修改参数: {targetStat} {modifierValue} ({modifierType})");
     }
     
     /// <summary>
@@ -101,6 +116,8 @@ public class StatModifierEffect : IEffect
     /// <returns>效果是否执行成功</returns>
     public bool ExecuteEffect(object eventData)
     {
+        Debug.Log($"[{EffectName}] ExecuteEffect 被调用，目标属性: {targetStat}");
+        
         if (targetPlayer == null)
         {
             Debug.LogError($"[{EffectName}] 目标玩家为空，无法执行效果");
@@ -177,11 +194,11 @@ public class StatModifierEffect : IEffect
             return false;
         }
         
-        // 创建修饰器
+        // 创建修饰器 - 使用配置中的实际类型和值
         StatModifier statModifier = new StatModifier(
             targetStat,                                    // 目标属性
-            StatModifierType.PercentAdd,                  // 百分比增加类型
-            modifierValue - 1f,                           // 如果modifierValue是1.5，则Value是0.5 (50%增加)
+            modifierType,                                  // 从配置读取的类型
+            modifierValue,                                 // 从配置读取的值
             this                                           // 来源
         );
         
