@@ -10963,7 +10963,7 @@ PrefabInstance:
     - target: {fileID: 4109773013413894966, guid: 2d86053af5e50c446a06f75cbdecb65b, type: 3}
       propertyPath: playerData
       value: 
-      objectReference: {fileID: 11400000, guid: 81d30639ef52a824eaa9b3cc9a99404b, type: 2}
+      objectReference: {fileID: 11400000, guid: 9fa21c5d0e8b7b24d9ae0910aa7d5197, type: 2}
     - target: {fileID: 5182198335736264703, guid: 2d86053af5e50c446a06f75cbdecb65b, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0.02

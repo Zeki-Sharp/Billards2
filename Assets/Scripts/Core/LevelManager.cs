@@ -498,18 +498,10 @@ public class LevelManager : MonoBehaviour
     /// </summary>
     void SavePlayerState()
     {
-        if (PlayerStateManager.Instance != null)
+        // ✅ 数据已经在 GameRuntimeData 中，不需要额外保存
+        if (showDebugInfo)
         {
-            PlayerStateManager.Instance.SavePlayerState();
-            
-            if (showDebugInfo)
-            {
-                Debug.Log("LevelManager: 玩家状态已保存");
-            }
-        }
-        else
-        {
-            Debug.LogWarning("LevelManager: PlayerStateManager 实例未找到，无法保存玩家状态");
+            Debug.Log("LevelManager: 数据已保存在 GameRuntimeData 中");
         }
     }
     
@@ -518,38 +510,10 @@ public class LevelManager : MonoBehaviour
     /// </summary>
     void RestorePlayerState()
     {
+        // ✅ 数据已经在 GameRuntimeData 中，不需要额外恢复
         if (showDebugInfo)
         {
-            Debug.Log($"LevelManager: 开始恢复玩家状态 - PlayerStateManager.Instance = {PlayerStateManager.Instance}");
-        }
-        
-        if (PlayerStateManager.Instance != null)
-        {
-            if (showDebugInfo)
-            {
-                Debug.Log($"LevelManager: PlayerStateManager实例存在，检查其状态:");
-                Debug.Log($"  - enableDebugLog = {PlayerStateManager.Instance.GetType().GetField("enableDebugLog", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)?.GetValue(PlayerStateManager.Instance)}");
-                Debug.Log($"  - HasSavedData() = {PlayerStateManager.Instance.HasSavedData()}");
-                Debug.Log($"  - GetSavedHealth() = {PlayerStateManager.Instance.GetSavedHealth()}");
-                Debug.Log($"  - GetSavedModifiers().Count = {PlayerStateManager.Instance.GetSavedModifiers().Count}");
-            }
-            
-            if (showDebugInfo)
-            {
-                Debug.Log("LevelManager: 准备调用 PlayerStateManager.RestorePlayerState()");
-            }
-            
-            PlayerStateManager.Instance.RestorePlayerState();
-            
-            if (showDebugInfo)
-            {
-                Debug.Log("LevelManager: PlayerStateManager.RestorePlayerState() 调用完成");
-                Debug.Log("LevelManager: 玩家状态已恢复");
-            }
-        }
-        else
-        {
-            Debug.LogWarning("LevelManager: PlayerStateManager 实例未找到，无法恢复玩家状态");
+            Debug.Log("LevelManager: 数据已从 GameRuntimeData 中获取");
         }
     }
     

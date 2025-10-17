@@ -285,27 +285,28 @@ public class SkillInstance
     /// </summary>
     public bool ProcessEvent(object eventData)
     {
-        Debug.Log($"[SkillInstance] 🔍 开始处理事件 - 技能: {config.skillName}");
+        Debug.Log($"[SkillInstance] 🔍 开始处理事件 - 技能: {config.skillName}, 时间: {Time.time:F2}, 事件类型: {eventData?.GetType().Name}");
         
         // 第一步：检查触发器是否检测到事件
         bool eventDetected = trigger.CheckEvent(eventData);
         if (!eventDetected)
         {
-            Debug.Log($"[SkillInstance] ❌ 触发器未检测到事件 - 技能: {config.skillName}");
+            Debug.Log($"[SkillInstance] ❌ 触发器未检测到事件 - 技能: {config.skillName}, 触发器: {trigger?.GetType().Name}");
             return false;
         }
-        Debug.Log($"[SkillInstance] ✅ 触发器检测到事件 - 技能: {config.skillName}");
+        Debug.Log($"[SkillInstance] ✅ 触发器检测到事件 - 技能: {config.skillName}, 触发器: {trigger?.GetType().Name}");
         
         // 第二步：检查条件是否满足
         bool conditionMet = condition.CheckCondition(eventData);
         if (!conditionMet)
         {
-            Debug.Log($"[SkillInstance] ❌ 条件未满足 - 技能: {config.skillName}");
+            Debug.Log($"[SkillInstance] ❌ 条件未满足 - 技能: {config.skillName}, 条件: {condition?.GetType().Name}");
             return false;
         }
-        Debug.Log($"[SkillInstance] ✅ 条件满足 - 技能: {config.skillName}");
+        Debug.Log($"[SkillInstance] ✅ 条件满足 - 技能: {config.skillName}, 条件: {condition?.GetType().Name}");
         
         // 第三步：执行效果
+        Debug.Log($"[SkillInstance] 🎯 准备执行效果 - 技能: {config.skillName}, 效果: {effect?.GetType().Name}");
         bool effectExecuted = effect.ExecuteEffect(eventData);
         
         if (effectExecuted)

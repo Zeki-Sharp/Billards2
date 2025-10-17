@@ -25,15 +25,8 @@ public class HealEffect : IEffect
     /// </summary>
     public void Initialize()
     {
-        // 查找目标玩家
-        targetPlayer = Object.FindFirstObjectByType<PlayerCore>();
-        if (targetPlayer == null)
-        {
-            Debug.LogError($"[{EffectName}] 未找到PlayerCore，无法应用治疗效果");
-            return;
-        }
-        
-        Debug.Log($"[{EffectName}] 初始化完成，目标玩家: {targetPlayer.name}");
+        // 延迟初始化：不在初始化时查找玩家，而是在执行时动态查找
+        Debug.Log($"[{EffectName}] 初始化完成，将在执行时动态查找玩家");
     }
     
     /// <summary>
@@ -41,9 +34,10 @@ public class HealEffect : IEffect
     /// </summary>
     public bool ExecuteEffect(object eventData)
     {
-        if (targetPlayer == null)
+        // 动态查找目标玩家
+        if (!GetTargetPlayer())
         {
-            Debug.LogError($"[{EffectName}] 目标玩家为空，无法执行治疗");
+            Debug.LogError($"[{EffectName}] 无法找到目标玩家，无法执行治疗");
             return false;
         }
         
@@ -80,6 +74,44 @@ public class HealEffect : IEffect
         // GameEventBus.PublishEffectEvent("Heal", targetPlayer.transform.position, ...);
         
         Debug.Log($"[{EffectName}] 触发治疗表现效果 at {targetPlayer.transform.position}");
+    }
+    
+    /// <summary>
+    /// 动态获取目标玩家
+    /// </summary>
+    private bool GetTargetPlayer()
+    {
+        if (targetPlayer == null)
+        {
+            targetPlayer = Object.FindFirstObjectByType<PlayerCore>();
+            if (targetPlayer != null)
+            {
+                Debug.Log($"[{EffectName}] 动态找到目标玩家: {targetPlayer.name}");
+            }
+            else
+            {
+                Debug.LogWarning($"[{EffectName}] 未找到PlayerCore，可能玩家还未初始化");
+                return false;
+            }
+        }
+        
+        // 检查玩家是否就绪
+        if (!IsPlayerReady(targetPlayer))
+        {
+            Debug.LogWarning($"[{EffectName}] 玩家未就绪，重置引用并重试");
+            targetPlayer = null;
+            return false;
+        }
+        
+        return true;
+    }
+    
+    /// <summary>
+    /// 检查玩家是否就绪
+    /// </summary>
+    private bool IsPlayerReady(PlayerCore player)
+    {
+        return player != null && player.enabled && player.gameObject.activeInHierarchy;
     }
     
     /// <summary>

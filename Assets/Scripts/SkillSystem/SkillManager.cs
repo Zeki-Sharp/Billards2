@@ -66,7 +66,9 @@ public class SkillManager : MonoBehaviour
             Debug.LogWarning("[SkillManager] 未找到SkillStateManager，技能状态跟踪功能将不可用");
         }
         
-        InitializeSkills();
+        // ✅ 重新初始化技能实例（保持技能配置，重建实例）
+        ReinitializeSkillInstances();
+        
         SubscribeToEvents();
     }
     
@@ -80,57 +82,51 @@ public class SkillManager : MonoBehaviour
     #region 初始化
     
     /// <summary>
-    /// 初始化技能实例
+    /// 重新初始化技能实例（用于新场景）
     /// </summary>
-    void InitializeSkills()
+    void ReinitializeSkillInstances()
     {
+        // 清除旧的实例
         skillInstances.Clear();
+        spawnSkillNames.Clear();
         
+        // 为每个技能重新创建实例
         foreach (var skillConfig in activeSkills)
         {
-            if (skillConfig == null)
+            if (skillConfig != null && skillConfig.IsValid())
             {
-                Debug.LogWarning("SkillManager: 发现空的技能配置，跳过");
-                continue;
-            }
-            
-            if (!skillConfig.IsValid())
-            {
-                Debug.LogError($"SkillManager: 技能配置无效: {skillConfig.skillName}");
-                continue;
-            }
-            
-            var skillInstance = skillConfig.CreateSkillInstance();
-            if (skillInstance != null)
-            {
-                skillInstances[skillConfig.skillName] = skillInstance;
-                
-                // 检查是否为Spawn类型技能
-                if (skillConfig.effectConfig?.effectType == SkillEffectType.Spawn)
+                var skillInstance = skillConfig.CreateSkillInstance();
+                if (skillInstance != null)
                 {
-                    spawnSkillNames.Add(skillConfig.skillName);
+                    skillInstances[skillConfig.skillName] = skillInstance;
+                    
+                    // 检查是否为Spawn类型技能
+                    if (skillConfig.effectConfig?.effectType == SkillEffectType.Spawn)
+                    {
+                        spawnSkillNames.Add(skillConfig.skillName);
+                        if (enableDebugLog)
+                        {
+                            Debug.Log($"SkillManager: 重新注册Spawn技能 - {skillConfig.skillName}");
+                        }
+                    }
+                    
+                    // 通知技能状态管理器技能已激活
+                    skillStateManager?.AddActiveSkill(skillConfig.skillName);
+                    
                     if (enableDebugLog)
                     {
-                        Debug.Log($"SkillManager: 注册Spawn技能 - {skillConfig.skillName}");
+                        Debug.Log($"SkillManager: 重新初始化技能实例 - {skillConfig.skillName}");
                     }
-                }
-                
-                // 通知技能状态管理器技能已激活
-                skillStateManager?.AddActiveSkill(skillConfig.skillName);
-                
-                if (enableDebugLog)
-                {
-                    Debug.Log($"SkillManager: 初始化技能 - {skillConfig.skillName}");
                 }
             }
         }
         
         if (enableDebugLog)
         {
-            Debug.Log($"SkillManager: 初始化完成，共加载 {skillInstances.Count} 个技能");
+            Debug.Log($"SkillManager: 重新初始化完成，共加载 {skillInstances.Count} 个技能实例");
             foreach (var skillName in skillInstances.Keys)
             {
-                Debug.Log($"SkillManager: 已加载技能 - {skillName}");
+                Debug.Log($"SkillManager: 已重新加载技能实例 - {skillName}");
             }
         }
     }
@@ -425,7 +421,7 @@ public class SkillManager : MonoBehaviour
     [ContextMenu("重新加载技能")]
     public void ReloadSkills()
     {
-        InitializeSkills();
+        ReinitializeSkillInstances();
     }
     
     /// <summary>

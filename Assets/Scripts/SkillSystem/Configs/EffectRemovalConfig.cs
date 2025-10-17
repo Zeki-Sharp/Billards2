@@ -65,6 +65,8 @@ public class EffectRemovalConfig
                 return new DurationEffectRemovalCondition(duration);
             case EffectRemovalType.OnPlayerPhaseEnded:
                 return new OnPhaseEndedEffectRemovalCondition();
+            case EffectRemovalType.OnLevelCompleted:
+                return new OnLevelCompletedEffectRemovalCondition();
             case EffectRemovalType.OnConditionMet:
                 return new OnConditionMetEffectRemovalCondition(removalCondition);
             case EffectRemovalType.InverseConditionCheck:
@@ -157,6 +159,7 @@ public enum EffectRemovalType
 {
     Duration,            // 持续时间
     OnPlayerPhaseEnded,  // 回合结束移除
+    OnLevelCompleted,    // 关卡完成时移除
     OnConditionMet,      // 满足条件时移除
     InverseConditionCheck, // 反向条件检查移除
     ValueComparison,     // 值比较移除

@@ -90,23 +90,8 @@ public class StatModifierEffect : IEffect
     /// </summary>
     public void Initialize()
     {
-        // 查找目标玩家
-        targetPlayer = Object.FindFirstObjectByType<PlayerCore>();
-        if (targetPlayer == null)
-        {
-            Debug.LogError($"[{EffectName}] 未找到PlayerCore，无法应用效果");
-            return;
-        }
-        
-        // 查找属性管理器
-        statsManager = targetPlayer.GetComponent<PlayerStatsManager>();
-        if (statsManager == null)
-        {
-            Debug.LogError($"[{EffectName}] 未找到PlayerStatsManager，无法应用效果");
-            return;
-        }
-        
-        Debug.Log($"[{EffectName}] 初始化完成，目标玩家: {targetPlayer.name}");
+        // 延迟初始化：不在初始化时查找玩家，而是在执行时动态查找
+        Debug.Log($"[{EffectName}] 初始化完成，将在执行时动态查找玩家");
     }
     
     /// <summary>
@@ -118,9 +103,10 @@ public class StatModifierEffect : IEffect
     {
         Debug.Log($"[{EffectName}] ExecuteEffect 被调用，目标属性: {targetStat}");
         
-        if (targetPlayer == null)
+        // 动态查找目标玩家
+        if (!GetTargetPlayer())
         {
-            Debug.LogError($"[{EffectName}] 目标玩家为空，无法执行效果");
+            Debug.LogError($"[{EffectName}] 无法找到目标玩家，无法执行效果");
             return false;
         }
         
@@ -249,10 +235,60 @@ public class StatModifierEffect : IEffect
     }
     
     /// <summary>
+    /// 动态获取目标玩家
+    /// </summary>
+    private bool GetTargetPlayer()
+    {
+        if (targetPlayer == null)
+        {
+            targetPlayer = Object.FindFirstObjectByType<PlayerCore>();
+            if (targetPlayer != null)
+            {
+                // 查找属性管理器
+                statsManager = targetPlayer.GetComponent<PlayerStatsManager>();
+                if (statsManager == null)
+                {
+                    Debug.LogError($"[{EffectName}] 未找到PlayerStatsManager，无法应用效果");
+                    targetPlayer = null;
+                    return false;
+                }
+                
+                Debug.Log($"[{EffectName}] 动态找到目标玩家: {targetPlayer.name}");
+            }
+            else
+            {
+                Debug.LogWarning($"[{EffectName}] 未找到PlayerCore，可能玩家还未初始化");
+                return false;
+            }
+        }
+        
+        // 检查玩家是否就绪
+        if (!IsPlayerReady(targetPlayer))
+        {
+            Debug.LogWarning($"[{EffectName}] 玩家未就绪，重置引用并重试");
+            targetPlayer = null;
+            statsManager = null;
+            return false;
+        }
+        
+        return true;
+    }
+    
+    /// <summary>
+    /// 检查玩家是否就绪
+    /// </summary>
+    private bool IsPlayerReady(PlayerCore player)
+    {
+        return player != null && player.enabled && player.gameObject.activeInHierarchy;
+    }
+    
+    /// <summary>
     /// 重置效果状态
     /// </summary>
     public void Reset()
     {
+        Debug.Log($"[{EffectName}] 🔄 重置前状态 - isApplied: {isApplied}, appliedModifier: {appliedModifier != null}, 时间: {Time.time:F2}");
+        
         if (isApplied && appliedModifier != null)
         {
             // 如果是攻击力修改，从 DamageProcessor 中移除
@@ -275,6 +311,6 @@ public class StatModifierEffect : IEffect
         
         isApplied = false;
         appliedModifier = null;
-        Debug.Log($"[{EffectName}] 效果重置完成");
+        Debug.Log($"[{EffectName}] ✅ 重置后状态 - isApplied: {isApplied}, appliedModifier: {appliedModifier != null}, 时间: {Time.time:F2}");
     }
 }

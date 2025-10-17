@@ -10615,10 +10615,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5d21b8ae10622d748bde2b8c35d4a85a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  savedCurrentHealth: 0
-  savedActiveModifiers: []
-  enableDebugLog: 1
-  hasSavedData: 0
 --- !u!4 &2017093696
 Transform:
   m_ObjectHideFlags: 0

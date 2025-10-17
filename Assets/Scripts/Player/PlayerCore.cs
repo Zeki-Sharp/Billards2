@@ -183,18 +183,27 @@ public class PlayerCore : MonoBehaviour
         // 初始化血量（检查是否有保存的数据）
         float maxHealth = playerData != null ? playerData.maxHealth : 100f;
         
-        // 检查是否有保存的血量数据
-        if (PlayerStateManager.Instance != null && PlayerStateManager.Instance.HasSavedData())
+        // ✅ 从静态数据恢复血量
+        if (GameRuntimeData.HasCurrentHealthData())
         {
-            // 延迟恢复血量，让PlayerStateManager先完成恢复
-            StartCoroutine(DelayedHealthRestore(maxHealth));
+            currentHealth = GameRuntimeData.GetCurrentHealth();
+            Debug.Log($"[PlayerCore] 从 GameRuntimeData 恢复血量: {currentHealth}/{maxHealth}");
         }
         else
         {
             // 没有保存数据时，正常初始化
             currentHealth = maxHealth; // 初始化为满血
-            InitializeHealthBar(currentHealth);
+            Debug.Log($"[PlayerCore] 使用默认满血: {currentHealth}/{maxHealth}");
         }
+        
+        // ✅ 恢复最大血量（如果有技能修改）
+        if (GameRuntimeData.HasMaxHealthData())
+        {
+            maxHealth = GameRuntimeData.GetMaxHealth();
+            Debug.Log($"[PlayerCore] 从 GameRuntimeData 恢复最大血量: {maxHealth}");
+        }
+        
+        InitializeHealthBar(currentHealth);
         
         // 延迟发布初始血量事件，确保 SkillManager 已经订阅
         StartCoroutine(DelayedPublishInitialHealth());
@@ -569,9 +578,12 @@ public class PlayerCore : MonoBehaviour
         currentHealth -= damage;
         currentHealth = Mathf.Max(0, currentHealth);
         
+        // ✅ 保存当前血量到静态数据
+        GameRuntimeData.SetCurrentHealth(currentHealth);
+        
         float maxHealth = playerData.maxHealth;
         
-        Debug.Log($"PlayerCore: 血量更新完成，当前血量: {currentHealth}/{maxHealth}");
+        Debug.Log($"PlayerCore: 血量更新完成，当前血量: {currentHealth}/{maxHealth}，已保存到 GameRuntimeData");
         
         // 更新血条
         if (healthBar != null)
@@ -615,48 +627,6 @@ public class PlayerCore : MonoBehaviour
         return currentHealth / playerData.maxHealth;
     }
     
-    /// <summary>
-    /// 延迟血量恢复，让PlayerStateManager先完成恢复
-    /// </summary>
-    private System.Collections.IEnumerator DelayedHealthRestore(float maxHealth)
-    {
-        // 等待一帧，确保PlayerStateManager完成数据恢复
-        yield return null;
-        
-        // 检查PlayerStateManager是否已经恢复了血量
-        if (PlayerStateManager.Instance != null && PlayerStateManager.Instance.HasSavedData())
-        {
-            float savedHealth = PlayerStateManager.Instance.GetSavedHealth();
-            if (savedHealth > 0)
-            {
-                // 使用保存的血量，但确保不超过最大血量
-                currentHealth = Mathf.Min(savedHealth, maxHealth);
-                Debug.Log($"[PlayerCore] 使用保存的血量: {currentHealth}/{maxHealth}");
-            }
-            else
-            {
-                // 保存的血量无效，使用默认满血
-                currentHealth = maxHealth;
-                Debug.Log($"[PlayerCore] 保存的血量无效，使用默认满血: {currentHealth}/{maxHealth}");
-            }
-        }
-        else
-        {
-            // 没有保存数据，使用默认满血
-            currentHealth = maxHealth;
-            Debug.Log($"[PlayerCore] 没有保存数据，使用默认满血: {currentHealth}/{maxHealth}");
-        }
-        
-        // 初始化血条显示
-        InitializeHealthBar(currentHealth);
-        
-        // 发布血量变化事件
-        GameEventBus.PublishHealthChanged(new HealthStateData
-        {
-            CurrentHealth = currentHealth,
-            MaxHealth = maxHealth
-        });
-    }
     
     /// <summary>
     /// 延迟发布初始血量事件，确保 SkillManager 已经订阅
@@ -715,6 +685,9 @@ public class PlayerCore : MonoBehaviour
         float maxHealth = GetMaxHealth();
         currentHealth = Mathf.Min(health, maxHealth); // 确保不超过最大血量
         
+        // ✅ 保存当前血量到静态数据
+        GameRuntimeData.SetCurrentHealth(currentHealth);
+        
         // 更新血条显示
         InitializeHealthBar(currentHealth);
         
@@ -725,7 +698,7 @@ public class PlayerCore : MonoBehaviour
             MaxHealth = maxHealth
         });
         
-        Debug.Log($"PlayerCore: 血量已恢复到 {currentHealth}/{maxHealth}");
+        Debug.Log($"PlayerCore: 血量已恢复到 {currentHealth}/{maxHealth}，已保存到 GameRuntimeData");
     }
     
     #endregion
