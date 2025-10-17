@@ -8434,7 +8434,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c87ee035e12f35e4ea7b74d34431d6fa, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  activeSkills: []
+  activeSkills:
+  - {fileID: 11400000, guid: 1680d1ba8f8324b449383f489f884775, type: 2}
   enableDebugLog: 1
 --- !u!4 &1357681023
 Transform:
@@ -10586,6 +10587,53 @@ Transform:
   m_Children: []
   m_Father: {fileID: 931985108}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &2017093694
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2017093696}
+  - component: {fileID: 2017093695}
+  m_Layer: 0
+  m_Name: GameStateManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &2017093695
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2017093694}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5d21b8ae10622d748bde2b8c35d4a85a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  savedCurrentHealth: 0
+  savedActiveModifiers: []
+  enableDebugLog: 1
+--- !u!4 &2017093696
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2017093694}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 1098.6967, y: 712.72003, z: 9.841812}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &2076459268
 GameObject:
   m_ObjectHideFlags: 0
@@ -11026,7 +11074,7 @@ PrefabInstance:
     - target: {fileID: 4109773013413894966, guid: 2d86053af5e50c446a06f75cbdecb65b, type: 3}
       propertyPath: playerData
       value: 
-      objectReference: {fileID: 11400000, guid: 9fa21c5d0e8b7b24d9ae0910aa7d5197, type: 2}
+      objectReference: {fileID: 11400000, guid: 81d30639ef52a824eaa9b3cc9a99404b, type: 2}
     - target: {fileID: 5182198335736264703, guid: 2d86053af5e50c446a06f75cbdecb65b, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0.02
@@ -11111,3 +11159,4 @@ SceneRoots:
   - {fileID: 1462007128}
   - {fileID: 1357681023}
   - {fileID: 488077054}
+  - {fileID: 2017093696}

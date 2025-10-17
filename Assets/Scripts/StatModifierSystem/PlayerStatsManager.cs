@@ -483,4 +483,83 @@ public class PlayerStatsManager : MonoBehaviour
     }
     
     #endregion
+    
+    #region 跨关卡数据保留
+    
+    /// <summary>
+    /// 序列化当前活跃的修饰器（用于跨关卡数据保留）
+    /// </summary>
+    /// <returns>序列化后的修饰器数据列表</returns>
+    public List<StatModifierData> SerializeActiveModifiers()
+    {
+        var modifierDataList = new List<StatModifierData>();
+        
+        foreach (var modifier in activeModifiers)
+        {
+            if (modifier != null)
+            {
+                modifierDataList.Add(new StatModifierData(modifier));
+            }
+        }
+        
+        if (enableDebugLog)
+        {
+            Debug.Log($"PlayerStatsManager: 序列化了 {modifierDataList.Count} 个修饰器");
+        }
+        
+        return modifierDataList;
+    }
+    
+    /// <summary>
+    /// 从保存的数据恢复修饰器（用于跨关卡数据保留）
+    /// </summary>
+    /// <param name="modifierDataList">要恢复的修饰器数据列表</param>
+    public void RestoreModifiers(List<StatModifierData> modifierDataList)
+    {
+        if (modifierDataList == null || modifierDataList.Count == 0)
+        {
+            if (enableDebugLog)
+            {
+                Debug.Log("PlayerStatsManager: 没有修饰器数据需要恢复");
+            }
+            return;
+        }
+        
+        // 清除当前所有修饰器
+        activeModifiers.Clear();
+        cacheDirty = true;
+        
+        // 恢复修饰器（注意：这里只能恢复基础数据，无法恢复完整的对象引用）
+        foreach (var data in modifierDataList)
+        {
+            // 创建新的修饰器实例
+            var modifier = new StatModifier(
+                data.targetStat,
+                data.type,
+                data.value,
+                this  // 临时设置为当前管理器作为来源
+            );
+            
+            // 设置剩余时间（如果有的话）
+            if (data.timeRemaining > 0)
+            {
+                modifier.timeRemaining = data.timeRemaining;
+                modifier.duration = data.timeRemaining; // 设置持续时间
+            }
+            
+            // 添加到活跃列表
+            activeModifiers.Add(modifier);
+        }
+        
+        // 标记缓存需要更新
+        cacheDirty = true;
+        
+        if (enableDebugLog)
+        {
+            Debug.Log($"PlayerStatsManager: 恢复了 {modifierDataList.Count} 个修饰器");
+            Debug.Log(GetActiveModifiersDebugInfo());
+        }
+    }
+    
+    #endregion
 }

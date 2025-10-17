@@ -180,10 +180,21 @@ public class PlayerCore : MonoBehaviour
         // 订阅 GameEventBus 物理事件
         GameEventBus.OnBallStopped += OnBallStoppedHandler;
         
-        // 初始化血量（currentHealth = maxHealth）
+        // 初始化血量（检查是否有保存的数据）
         float maxHealth = playerData != null ? playerData.maxHealth : 100f;
-        currentHealth = maxHealth; // 初始化为满血
-        InitializeHealthBar(currentHealth);
+        
+        // 检查是否有保存的血量数据
+        if (PlayerStateManager.Instance != null && PlayerStateManager.Instance.HasSavedData())
+        {
+            // 延迟恢复血量，让PlayerStateManager先完成恢复
+            StartCoroutine(DelayedHealthRestore(maxHealth));
+        }
+        else
+        {
+            // 没有保存数据时，正常初始化
+            currentHealth = maxHealth; // 初始化为满血
+            InitializeHealthBar(currentHealth);
+        }
         
         // 延迟发布初始血量事件，确保 SkillManager 已经订阅
         StartCoroutine(DelayedPublishInitialHealth());
@@ -605,6 +616,49 @@ public class PlayerCore : MonoBehaviour
     }
     
     /// <summary>
+    /// 延迟血量恢复，让PlayerStateManager先完成恢复
+    /// </summary>
+    private System.Collections.IEnumerator DelayedHealthRestore(float maxHealth)
+    {
+        // 等待一帧，确保PlayerStateManager完成数据恢复
+        yield return null;
+        
+        // 检查PlayerStateManager是否已经恢复了血量
+        if (PlayerStateManager.Instance != null && PlayerStateManager.Instance.HasSavedData())
+        {
+            float savedHealth = PlayerStateManager.Instance.GetSavedHealth();
+            if (savedHealth > 0)
+            {
+                // 使用保存的血量，但确保不超过最大血量
+                currentHealth = Mathf.Min(savedHealth, maxHealth);
+                Debug.Log($"[PlayerCore] 使用保存的血量: {currentHealth}/{maxHealth}");
+            }
+            else
+            {
+                // 保存的血量无效，使用默认满血
+                currentHealth = maxHealth;
+                Debug.Log($"[PlayerCore] 保存的血量无效，使用默认满血: {currentHealth}/{maxHealth}");
+            }
+        }
+        else
+        {
+            // 没有保存数据，使用默认满血
+            currentHealth = maxHealth;
+            Debug.Log($"[PlayerCore] 没有保存数据，使用默认满血: {currentHealth}/{maxHealth}");
+        }
+        
+        // 初始化血条显示
+        InitializeHealthBar(currentHealth);
+        
+        // 发布血量变化事件
+        GameEventBus.PublishHealthChanged(new HealthStateData
+        {
+            CurrentHealth = currentHealth,
+            MaxHealth = maxHealth
+        });
+    }
+    
+    /// <summary>
     /// 延迟发布初始血量事件，确保 SkillManager 已经订阅
     /// </summary>
     private System.Collections.IEnumerator DelayedPublishInitialHealth()
@@ -644,6 +698,34 @@ public class PlayerCore : MonoBehaviour
     public float GetMaxHealth()
     {
         return playerData != null ? playerData.maxHealth : 100f;
+    }
+    
+    /// <summary>
+    /// 恢复血量（用于跨关卡数据保留）
+    /// </summary>
+    /// <param name="health">要恢复的血量值</param>
+    public void RestoreHealth(float health)
+    {
+        if (health < 0)
+        {
+            Debug.LogWarning("PlayerCore: 恢复血量不能为负数");
+            return;
+        }
+        
+        float maxHealth = GetMaxHealth();
+        currentHealth = Mathf.Min(health, maxHealth); // 确保不超过最大血量
+        
+        // 更新血条显示
+        InitializeHealthBar(currentHealth);
+        
+        // 发布血量变化事件
+        GameEventBus.PublishHealthChanged(new HealthStateData
+        {
+            CurrentHealth = currentHealth,
+            MaxHealth = maxHealth
+        });
+        
+        Debug.Log($"PlayerCore: 血量已恢复到 {currentHealth}/{maxHealth}");
     }
     
     #endregion

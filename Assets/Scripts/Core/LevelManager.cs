@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using System.Collections.Generic;
 
 /// <summary>
@@ -35,15 +36,31 @@ public class LevelManager : MonoBehaviour
     
     void Awake()
     {
+        if (showDebugInfo)
+        {
+            Debug.Log($"LevelManager.Awake() 被调用 - 当前场景: {UnityEngine.SceneManagement.SceneManager.GetActiveScene().name}");
+            Debug.Log($"LevelManager.Awake() - Instance当前值: {Instance}");
+        }
+        
         // 单例模式
         if (Instance == null)
         {
             Instance = this;
             DontDestroyOnLoad(gameObject); // 保持跨场景存在
+            
+            if (showDebugInfo)
+            {
+                Debug.Log("LevelManager: 设置为单例实例，将跨场景保留");
+            }
         }
         else
         {
-            Debug.LogWarning("发现多个LevelManager实例，销毁重复的实例");
+            if (showDebugInfo)
+            {
+                Debug.LogWarning($"LevelManager: 发现重复实例！当前场景: {UnityEngine.SceneManagement.SceneManager.GetActiveScene().name}");
+                Debug.LogWarning($"LevelManager: 现有实例在场景: {Instance.gameObject.scene.name}");
+                Debug.LogWarning("LevelManager: 销毁当前重复实例");
+            }
             Destroy(gameObject);
             return;
         }
@@ -52,6 +69,11 @@ public class LevelManager : MonoBehaviour
     void Start()
     {
         InitializeLevelManager();
+        
+        // 订阅场景加载完成事件
+        SceneManager.sceneLoaded += OnSceneLoaded;
+        
+        // 初始场景加载
         LoadCurrentSceneLevel();
     }
     
@@ -59,6 +81,7 @@ public class LevelManager : MonoBehaviour
     {
         // 取消订阅事件
         GameEventBus.OnDeath -= OnDeath;
+        SceneManager.sceneLoaded -= OnSceneLoaded;
     }
     
     /// <summary>
@@ -107,6 +130,9 @@ public class LevelManager : MonoBehaviour
         
         // 统计敌人总数
         CountTotalEnemies();
+        
+        // 恢复玩家状态（在新关卡开始时）
+        RestorePlayerState();
         
         // 重置关卡状态
         isLevelActive = true;
@@ -260,6 +286,9 @@ public class LevelManager : MonoBehaviour
             Debug.Log($"LevelManager: 关卡 {currentLevelIndex + 1} 完成！");
         }
         
+        // 保存玩家状态（在发布事件前）
+        SavePlayerState();
+        
         // 发布关卡完成事件
         GameEventBus.PublishLevelCompleted(currentLevelIndex, currentLevelConfig);
     }
@@ -332,6 +361,42 @@ public class LevelManager : MonoBehaviour
         // 假设主菜单场景名为 "MainMenu"
         UnityEngine.SceneManagement.SceneManager.LoadScene("MainMenu");
     }
+    
+    #region 场景加载事件处理
+    
+    /// <summary>
+    /// 场景加载完成事件处理
+    /// </summary>
+    /// <param name="scene">加载的场景</param>
+    /// <param name="mode">加载模式</param>
+    void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
+        if (showDebugInfo)
+        {
+            Debug.Log($"LevelManager: 场景加载完成 - {scene.name}");
+        }
+        
+        // 重新查找新场景中的WaveConfigProvider
+        waveConfigProvider = FindFirstObjectByType<WaveConfigProvider>();
+        
+        if (showDebugInfo)
+        {
+            if (waveConfigProvider != null)
+            {
+                Debug.Log($"LevelManager: 找到新场景的WaveConfigProvider - {waveConfigProvider.gameObject.name}");
+            }
+            else
+            {
+                Debug.LogError("LevelManager: 新场景中未找到WaveConfigProvider！");
+            }
+        }
+        
+        // 每次场景加载完成后都重新加载当前场景的关卡
+        // 这样确保玩家状态恢复在新场景中正确执行
+        LoadCurrentSceneLevel();
+    }
+    
+    #endregion
     
     #region 公共方法
     
@@ -422,6 +487,70 @@ public class LevelManager : MonoBehaviour
     void SkipToNextLevel()
     {
         LoadNextLevel();
+    }
+    
+    #endregion
+    
+    #region 玩家状态管理
+    
+    /// <summary>
+    /// 保存玩家状态（在关卡完成时调用）
+    /// </summary>
+    void SavePlayerState()
+    {
+        if (PlayerStateManager.Instance != null)
+        {
+            PlayerStateManager.Instance.SavePlayerState();
+            
+            if (showDebugInfo)
+            {
+                Debug.Log("LevelManager: 玩家状态已保存");
+            }
+        }
+        else
+        {
+            Debug.LogWarning("LevelManager: PlayerStateManager 实例未找到，无法保存玩家状态");
+        }
+    }
+    
+    /// <summary>
+    /// 恢复玩家状态（在新关卡开始时调用）
+    /// </summary>
+    void RestorePlayerState()
+    {
+        if (showDebugInfo)
+        {
+            Debug.Log($"LevelManager: 开始恢复玩家状态 - PlayerStateManager.Instance = {PlayerStateManager.Instance}");
+        }
+        
+        if (PlayerStateManager.Instance != null)
+        {
+            if (showDebugInfo)
+            {
+                Debug.Log($"LevelManager: PlayerStateManager实例存在，检查其状态:");
+                Debug.Log($"  - enableDebugLog = {PlayerStateManager.Instance.GetType().GetField("enableDebugLog", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)?.GetValue(PlayerStateManager.Instance)}");
+                Debug.Log($"  - HasSavedData() = {PlayerStateManager.Instance.HasSavedData()}");
+                Debug.Log($"  - GetSavedHealth() = {PlayerStateManager.Instance.GetSavedHealth()}");
+                Debug.Log($"  - GetSavedModifiers().Count = {PlayerStateManager.Instance.GetSavedModifiers().Count}");
+            }
+            
+            if (showDebugInfo)
+            {
+                Debug.Log("LevelManager: 准备调用 PlayerStateManager.RestorePlayerState()");
+            }
+            
+            PlayerStateManager.Instance.RestorePlayerState();
+            
+            if (showDebugInfo)
+            {
+                Debug.Log("LevelManager: PlayerStateManager.RestorePlayerState() 调用完成");
+                Debug.Log("LevelManager: 玩家状态已恢复");
+            }
+        }
+        else
+        {
+            Debug.LogWarning("LevelManager: PlayerStateManager 实例未找到，无法恢复玩家状态");
+        }
     }
     
     #endregion
