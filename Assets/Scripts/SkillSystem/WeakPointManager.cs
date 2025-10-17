@@ -4,8 +4,9 @@ using System.Collections.Generic;
 /// <summary>
 /// 弱点管理器 - 管理所有敌人的弱点系统
 /// 单例 MonoBehaviour，负责弱点的生成、判定、刷新和清理
+/// 实现 IDamageModifier 接口，作为高优先级伤害修改器
 /// </summary>
-public class WeakPointManager : MonoBehaviour
+public class WeakPointManager : MonoBehaviour, IDamageModifier
 {
     public static WeakPointManager Instance { get; private set; }
     
@@ -22,6 +23,94 @@ public class WeakPointManager : MonoBehaviour
     [Header("调试")]
     [SerializeField] private bool showDebugLog = true;
     
+    #region IDamageModifier 实现
+    
+    /// <summary>
+    /// 修改器优先级 - 高优先级，确保在伤害应用前执行
+    /// </summary>
+    public EventPriority Priority => EventPriority.High;
+    
+    /// <summary>
+    /// 修改器名称
+    /// </summary>
+    public string ModifierName => "弱点判定";
+    
+    /// <summary>
+    /// 是否启用此修改器
+    /// </summary>
+    public bool IsEnabled => isEnabled;
+    
+    /// <summary>
+    /// 处理伤害修改 - 弱点判定和伤害修改
+    /// </summary>
+    /// <param name="attackData">攻击数据（可修改）</param>
+    /// <returns>是否成功处理了伤害修改</returns>
+    public bool ProcessDamage(ref AttackData attackData)
+    {
+        Debug.Log($"[WeakPointManager] ProcessDamage 被调用 - 攻击者: {attackData.Attacker?.name}, 目标: {attackData.Target?.name}, 伤害: {attackData.Damage}");
+        
+        if (!isEnabled)
+        {
+            Debug.Log("[WeakPointManager] 弱点系统未启用");
+            return false;
+        }
+        
+        // 只处理玩家攻击敌人的情况
+        if (attackData.Attacker == null || !attackData.Attacker.CompareTag("Player"))
+        {
+            Debug.Log("[WeakPointManager] 不是玩家攻击，跳过");
+            return false;
+        }
+        
+        if (attackData.Target == null)
+        {
+            Debug.Log("[WeakPointManager] 攻击目标为空，跳过");
+            return false;
+        }
+        
+        // 查找目标敌人
+        Enemy targetEnemy = attackData.Target.GetComponent<Enemy>();
+        if (targetEnemy == null)
+            targetEnemy = attackData.Target.GetComponentInParent<Enemy>();
+        
+        if (targetEnemy == null)
+        {
+            Debug.Log("[WeakPointManager] 目标不是敌人，跳过");
+            return false;
+        }
+        
+        if (!weakPoints.ContainsKey(targetEnemy))
+        {
+            Debug.Log($"[WeakPointManager] 敌人 {targetEnemy.name} 没有弱点，跳过");
+            return false;
+        }
+        
+        Debug.Log($"[WeakPointManager] 开始判定弱点命中 - 敌人: {targetEnemy.name}, 攻击位置: {attackData.Position}");
+        
+        // 判定是否命中弱点（角度扇区判定）
+        if (IsWeakPointHit(targetEnemy, attackData.Position))
+        {
+            // 修改伤害值
+            float originalDamage = attackData.Damage;
+            attackData.Damage *= damageMultiplier;
+            
+            Debug.Log($"[WeakPointManager] 🎯 弱点命中! 伤害: {originalDamage} → {attackData.Damage}");
+            
+            // 刷新弱点位置（如果启用）
+            if (refreshOnHit)
+            {
+                RefreshWeakPoint(targetEnemy);
+            }
+            
+            return true; // 成功处理了伤害修改
+        }
+        
+        Debug.Log("[WeakPointManager] 未命中弱点");
+        return false; // 未命中弱点，未修改伤害
+    }
+    
+    #endregion
+    
     void Awake()
     {
         if (Instance == null)
@@ -30,6 +119,9 @@ public class WeakPointManager : MonoBehaviour
             DontDestroyOnLoad(gameObject);
             if (showDebugLog)
                 Debug.Log("[WeakPointManager] 单例创建成功");
+            
+            // 自动启用弱点系统，确保 DamageProcessor 能找到
+            Enable();
         }
         else
         {
@@ -273,9 +365,7 @@ public class WeakPointManager : MonoBehaviour
     /// </summary>
     private void SubscribeToEvents()
     {
-        // 订阅攻击事件（用于判定和修改伤害）
-        GameEventBus.OnAttack += OnAttackEvent;
-        
+        // 注意：攻击事件现在通过 DamageProcessor 自动处理，无需手动订阅
         // 订阅敌人死亡事件（清理弱点）
         GameEventBus.OnDeath += OnDeathEvent;
         
@@ -287,7 +377,7 @@ public class WeakPointManager : MonoBehaviour
         
         if (showDebugLog)
         {
-            Debug.Log("[WeakPointManager] 事件订阅完成");
+            Debug.Log("[WeakPointManager] 事件订阅完成 (攻击事件通过 DamageProcessor 处理)");
         }
     }
     
@@ -296,7 +386,7 @@ public class WeakPointManager : MonoBehaviour
     /// </summary>
     private void UnsubscribeFromEvents()
     {
-        GameEventBus.OnAttack -= OnAttackEvent;
+        // 注意：攻击事件现在通过 DamageProcessor 自动处理，无需手动取消订阅
         GameEventBus.OnDeath -= OnDeathEvent;
         GameEventBus.OnGameFlowStateChanged -= OnGameFlowStateChanged;
         GameEventBus.OnInitialWaveSpawnComplete -= HandleInitialWaveSpawnComplete;
@@ -322,53 +412,7 @@ public class WeakPointManager : MonoBehaviour
         InitializeExistingEnemies();
     }
     
-    /// <summary>
-    /// 攻击事件处理（判定并修改伤害）
-    /// </summary>
-    private void OnAttackEvent(AttackData attackData)
-    {
-        if (!isEnabled)
-            return;
-        
-        // 只处理玩家攻击敌人的情况
-        if (attackData.Attacker == null || !attackData.Attacker.CompareTag("Player"))
-            return;
-        
-        if (attackData.Target == null)
-            return;
-        
-        // 查找目标敌人
-        Enemy targetEnemy = attackData.Target.GetComponent<Enemy>();
-        if (targetEnemy == null)
-            targetEnemy = attackData.Target.GetComponentInParent<Enemy>();
-        
-        if (targetEnemy == null || !weakPoints.ContainsKey(targetEnemy))
-            return;
-        
-        // 判定是否命中弱点（角度扇区判定）
-        if (IsWeakPointHit(targetEnemy, attackData.Position))
-        {
-            // 修改伤害值
-            float originalDamage = attackData.Damage;
-            attackData.Damage *= damageMultiplier;
-            
-            Debug.Log($"[WeakPointManager] 🎯 弱点命中！伤害: {originalDamage:F1} → {attackData.Damage:F1}");
-            
-            // 播放命中特效
-            WeakPointData data = weakPoints[targetEnemy];
-            if (data.markerObject != null)
-            {
-                WeakPointMarker marker = data.markerObject.GetComponent<WeakPointMarker>();
-                marker?.OnHit();
-            }
-            
-            // 如果配置为击中刷新
-            if (refreshOnHit)
-            {
-                RefreshWeakPoint(targetEnemy);
-            }
-        }
-    }
+    // 注意：攻击事件处理现在通过 IDamageModifier.ProcessDamage 方法实现
     
     /// <summary>
     /// 判定是否命中弱点（角度扇区判定）

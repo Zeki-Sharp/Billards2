@@ -47,7 +47,7 @@ MonoBehaviour:
       m_PostInfinity: 2
       m_RotationOrder: 4
     weakPointMarkerPrefab: {fileID: 2061522790037590901, guid: 0b70a562923562241bcb4aed313b4c1d, type: 3}
-    weakPointRadius: 0.5
+    weakPointRadius: 1
     weakPointDamageMultiplier: 1.5
     weakPointRefreshOnHit: 1
   resetConditionConfig:

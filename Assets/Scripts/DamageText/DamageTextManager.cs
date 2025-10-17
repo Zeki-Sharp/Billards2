@@ -69,14 +69,14 @@ public class DamageTextManager : MonoBehaviour
     
     void OnEnable()
     {
-        // 订阅攻击事件
-        GameEventBus.OnAttack += HandleAttack;
+        // 订阅伤害处理完成事件 - 使用最终处理后的伤害值
+        GameEventBus.OnDamageProcessed += HandleDamageProcessed;
     }
     
     void OnDisable()
     {
-        // 取消订阅攻击事件
-        GameEventBus.OnAttack -= HandleAttack;
+        // 取消订阅伤害处理完成事件
+        GameEventBus.OnDamageProcessed -= HandleDamageProcessed;
     }
     
     /// <summary>
@@ -331,21 +331,21 @@ public class DamageTextManager : MonoBehaviour
     }
     
     /// <summary>
-    /// 事件监听 - 处理攻击事件中的伤害数字事件
+    /// 事件监听 - 处理伤害处理完成事件中的伤害数字显示
     /// </summary>
-    /// <param name="attackData">攻击数据</param>
-    private void HandleAttack(AttackData attackData)
+    /// <param name="processedData">处理完成的伤害数据</param>
+    private void HandleDamageProcessed(ProcessedDamageData processedData)
     {
-        
         // 检查是否有伤害值且大于0
-        if (attackData.Damage > 0f)
+        if (processedData.FinalDamage > 0f)
         {
-            // 显示伤害数字
-            ShowDamageText(attackData.Position, attackData.Damage, attackData.Target);
+            // 显示伤害数字 - 使用最终处理后的伤害值
+            ShowDamageText(processedData.OriginalData.Position, processedData.FinalDamage, processedData.OriginalData.Target);
             
-        }
-        else
-        {
+            if (enableDebugLog)
+            {
+                Debug.Log($"DamageTextManager: 显示最终伤害数字 {processedData.FinalDamage} (原始: {processedData.OriginalData.Damage})");
+            }
         }
     }
     

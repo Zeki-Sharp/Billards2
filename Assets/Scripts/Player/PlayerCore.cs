@@ -141,14 +141,14 @@ public class PlayerCore : MonoBehaviour
     
     void OnEnable()
     {
-        // 订阅攻击事件
-        GameEventBus.OnAttack += HandleAttack;
+        // 订阅伤害处理完成事件 - 应用最终伤害
+        GameEventBus.OnDamageProcessed += HandleDamageProcessed;
     }
     
     void OnDisable()
     {
-        // 取消订阅攻击事件
-        GameEventBus.OnAttack -= HandleAttack;
+        // 取消订阅伤害处理完成事件
+        GameEventBus.OnDamageProcessed -= HandleDamageProcessed;
     }
     
     #region 初始化
@@ -667,13 +667,13 @@ public class PlayerCore : MonoBehaviour
     /// <summary>
     /// 处理攻击事件（C# Action 实现）
     /// </summary>
-    private void HandleAttack(AttackData attackData)
+    private void HandleDamageProcessed(ProcessedDamageData processedData)
     {
         // 检查自己是否是攻击目标
-        if (attackData.Target == gameObject && attackData.Damage > 0f)
+        if (processedData.OriginalData.Target == gameObject && processedData.FinalDamage > 0f)
         {
             // 处理伤害
-            TakeDamage(attackData.Damage);
+            TakeDamage(processedData.FinalDamage);
         }
     }
     

@@ -73,16 +73,16 @@ public class EnemyBehavior : MonoBehaviour
             Debug.LogWarning($"EnemyBehavior {name}: 未找到玩家！");
         }
         
-        // 订阅攻击事件
-        GameEventBus.OnAttack += OnEnemyAttacked;
+        // 订阅伤害处理完成事件 - 应用最终伤害
+        GameEventBus.OnDamageProcessed += OnDamageProcessed;
         
-        Debug.Log($"EnemyBehavior {name}: Start 完成");
+        Debug.Log($"EnemyBehavior {name}: Start 完成 (订阅伤害处理完成事件)");
     }
     
     void OnDestroy()
     {
-        // 取消订阅攻击事件
-        GameEventBus.OnAttack -= OnEnemyAttacked;
+        // 取消订阅伤害处理完成事件
+        GameEventBus.OnDamageProcessed -= OnDamageProcessed;
     }
     
     void Update()
@@ -358,21 +358,21 @@ public class EnemyBehavior : MonoBehaviour
     /// <summary>
     /// 敌人受击处理
     /// </summary>
-    private void OnEnemyAttacked(AttackData attackData)
+    private void OnDamageProcessed(ProcessedDamageData processedData)
     {
-        Debug.Log($"EnemyBehavior {name}: 接收到攻击事件 - 目标: {attackData.Target?.name}, 伤害: {attackData.Damage}, 攻击者: {attackData.Attacker?.name}");
+        Debug.Log($"EnemyBehavior {name}: 接收到伤害处理完成事件 - 目标: {processedData.OriginalData.Target?.name}, 最终伤害: {processedData.FinalDamage}, 攻击者: {processedData.OriginalData.Attacker?.name}");
         
         // 检查自己是否是攻击目标
-        if (attackData.Target == gameObject && attackData.Damage > 0f)
+        if (processedData.OriginalData.Target == gameObject && processedData.FinalDamage > 0f)
         {
-            Debug.Log($"EnemyBehavior {name}: 受到 {attackData.Damage} 点伤害！");
+            Debug.Log($"EnemyBehavior {name}: 受到 {processedData.FinalDamage} 点伤害！");
             
             // 处理敌人受击逻辑
-            TakeDamage(attackData.Damage);
+            TakeDamage(processedData.FinalDamage);
         }
         else
         {
-            Debug.Log($"EnemyBehavior {name}: 不是攻击目标，忽略攻击事件");
+            Debug.Log($"EnemyBehavior {name}: 不是攻击目标，忽略伤害处理完成事件");
         }
     }
     

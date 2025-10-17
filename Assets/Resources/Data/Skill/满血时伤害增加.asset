@@ -34,7 +34,7 @@ MonoBehaviour:
   effectConfig:
     effectType: 0
     targetStat: Damage
-    modifierValue: 2
+    modifierValue: 1.5
     modifierType: 2
     healAmount: 20
     minTransitionTime: 1

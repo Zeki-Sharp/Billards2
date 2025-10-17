@@ -34,8 +34,8 @@ MonoBehaviour:
   effectConfig:
     effectType: 0
     targetStat: Damage
-    modifierValue: 2
-    modifierType: 2
+    modifierValue: 5
+    modifierType: 0
     healAmount: 20
     minTransitionTime: 1
     maxTransitionTime: 5
@@ -46,12 +46,16 @@ MonoBehaviour:
       m_PreInfinity: 2
       m_PostInfinity: 2
       m_RotationOrder: 4
+    weakPointMarkerPrefab: {fileID: 0}
+    weakPointRadius: 0.5
+    weakPointDamageMultiplier: 1.5
+    weakPointRefreshOnHit: 1
   resetConditionConfig:
     logicType: 1
     resetConditions:
     - resetType: 1
   effectRemovalConfig:
-    removalType: 1
+    removalType: 5
     duration: 30
     comparisonType: 2
     targetValue: 0.5

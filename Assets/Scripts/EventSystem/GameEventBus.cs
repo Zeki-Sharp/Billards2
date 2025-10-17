@@ -2,6 +2,28 @@ using UnityEngine;
 using System.Collections.Generic;
 
 /// <summary>
+/// 事件优先级枚举
+/// 用于控制事件处理器的执行顺序
+/// </summary>
+public enum EventPriority
+{
+    /// <summary>关键优先级（系统级）</summary>
+    Critical = 0,
+    
+    /// <summary>高优先级（弱点判定、状态检查）</summary>
+    High = 1,
+    
+    /// <summary>普通优先级（默认）</summary>
+    Normal = 2,
+    
+    /// <summary>低优先级（伤害应用、UI更新）</summary>
+    Low = 3,
+    
+    /// <summary>后台优先级（日志、统计）</summary>
+    Background = 4
+}
+
+/// <summary>
 /// 统一事件总线 - 基于现有 MMEventManager 的封装
 /// 提供统一的事件接口，同时保持与现有系统的兼容性
 /// 
@@ -10,12 +32,14 @@ using System.Collections.Generic;
 /// - 提供统一的事件发布方法
 /// - 封装游戏逻辑和表现的桥接
 /// - 集成 MMEventManager 调用
+/// - 支持伤害处理流程
 /// 
 /// 【设计原则】：
 /// - 统一性：所有事件通过 GameEventBus 处理
 /// - 简洁性：统一的事件接口，无冗余代码
 /// - 扩展性：易于添加新事件类型
 /// - 类型安全：编译时检查
+/// - 伤害处理：通过 DamageProcessor 统一处理
 /// </summary>
 public static class GameEventBus
 {
@@ -25,6 +49,11 @@ public static class GameEventBus
     /// 攻击事件
     /// </summary>
     public static event System.Action<AttackData> OnAttack;
+    
+    /// <summary>
+    /// 伤害处理完成事件
+    /// </summary>
+    public static event System.Action<ProcessedDamageData> OnDamageProcessed;
     
     /// <summary>
     /// 死亡事件
@@ -212,6 +241,11 @@ public static class GameEventBus
     /// 发布攻击事件
     /// </summary>
     public static void PublishAttack(AttackData attackData) => OnAttack?.Invoke(attackData);
+    
+    /// <summary>
+    /// 发布伤害处理完成事件
+    /// </summary>
+    public static void PublishDamageProcessed(ProcessedDamageData processedData) => OnDamageProcessed?.Invoke(processedData);
     
     /// <summary>
     /// 发布死亡事件
@@ -477,6 +511,7 @@ public static class GameEventBus
     {
         return $"GameEventBus 事件订阅统计:\n" +
                $"- OnAttack: {OnAttack?.GetInvocationList()?.Length ?? 0} 订阅者\n" +
+               $"- OnDamageProcessed: {OnDamageProcessed?.GetInvocationList()?.Length ?? 0} 订阅者\n" +
                $"- OnDeath: {OnDeath?.GetInvocationList()?.Length ?? 0} 订阅者\n" +
                $"- OnAimDirectionChanged: {OnAimDirectionChanged?.GetInvocationList()?.Length ?? 0} 订阅者\n" +
                $"- OnAimVisibilityChanged: {OnAimVisibilityChanged?.GetInvocationList()?.Length ?? 0} 订阅者\n" +

@@ -14,7 +14,7 @@ public class StatModifierEffect : IEffect
     private bool isApplied = false;       // 是否已应用
     private PlayerCore targetPlayer;      // 目标玩家
     private PlayerStatsManager statsManager; // 属性管理器
-    private StatModifier appliedModifier; // 应用的修饰器
+    private object appliedModifier; // 应用的修饰器（可能是 StatModifier 或 SkillDamageModifier）
     
     /// <summary>
     /// 设置修改参数
@@ -45,14 +45,27 @@ public class StatModifierEffect : IEffect
     /// </summary>
     private void CheckModifierStatus()
     {
-        if (isApplied && appliedModifier != null && statsManager != null)
+        if (isApplied && appliedModifier != null)
         {
-            // 检查修饰器是否还在活跃列表中
-            if (!statsManager.HasModifier(appliedModifier))
+            // 如果是攻击力修改器，检查是否应该移除
+            if (appliedModifier is SkillDamageModifier skillModifier)
             {
-                Debug.Log($"[{EffectName}] 检测到修饰器已被移除，重置效果状态");
-                isApplied = false;
-                appliedModifier = null;
+                if (!skillModifier.IsEnabled)
+                {
+                    Debug.Log($"[{EffectName}] 检测到技能伤害修改器已被禁用，重置效果状态");
+                    isApplied = false;
+                    appliedModifier = null;
+                }
+            }
+            // 如果是属性修改器，检查是否还在活跃列表中
+            else if (appliedModifier is StatModifier statModifier && statsManager != null)
+            {
+                if (!statsManager.HasModifier(statModifier))
+                {
+                    Debug.Log($"[{EffectName}] 检测到属性修饰器已被移除，重置效果状态");
+                    isApplied = false;
+                    appliedModifier = null;
+                }
             }
         }
     }
@@ -88,9 +101,9 @@ public class StatModifierEffect : IEffect
     /// <returns>效果是否执行成功</returns>
     public bool ExecuteEffect(object eventData)
     {
-        if (targetPlayer == null || statsManager == null)
+        if (targetPlayer == null)
         {
-            Debug.LogError($"[{EffectName}] 目标玩家或属性管理器为空，无法执行效果");
+            Debug.LogError($"[{EffectName}] 目标玩家为空，无法执行效果");
             return false;
         }
         
@@ -103,8 +116,69 @@ public class StatModifierEffect : IEffect
             return true;
         }
         
+        // 特殊处理：如果目标属性是攻击力，委托给 DamageProcessor 处理
+        if (targetStat == "Damage")
+        {
+            return ExecuteDamageModification();
+        }
+        
+        // 其他属性使用原来的 StatModifier 方式
+        return ExecuteStatModification();
+    }
+    
+    /// <summary>
+    /// 执行攻击力修改 - 委托给 DamageProcessor
+    /// </summary>
+    /// <returns>是否执行成功</returns>
+    private bool ExecuteDamageModification()
+    {
+        // 查找 DamageProcessor
+        DamageProcessor damageProcessor = DamageProcessor.Instance;
+        if (damageProcessor == null)
+        {
+            Debug.LogError($"[{EffectName}] 未找到 DamageProcessor，无法处理攻击力修改");
+            return false;
+        }
+        
+        // 创建技能伤害修改器
+        string modifierName = $"技能攻击力修改_{targetStat}";
+        SkillDamageModifier damageModifier = new SkillDamageModifier(
+            modifierName,
+            modifierValue,
+            effectRemovalCondition,
+            true
+        );
+        
+        // 注册到 DamageProcessor
+        damageProcessor.RegisterDamageModifier(damageModifier);
+        
+        // 保存引用用于后续移除
+        appliedModifier = damageModifier;
+        
+        Debug.Log($"[{EffectName}] 攻击力修改委托给 DamageProcessor: {targetStat} x{modifierValue}");
+        
+        isApplied = true;
+        
+        // 触发表现效果
+        TriggerVisualEffect();
+        
+        return true;
+    }
+    
+    /// <summary>
+    /// 执行其他属性修改 - 使用原来的 StatModifier 方式
+    /// </summary>
+    /// <returns>是否执行成功</returns>
+    private bool ExecuteStatModification()
+    {
+        if (statsManager == null)
+        {
+            Debug.LogError($"[{EffectName}] 属性管理器为空，无法执行效果");
+            return false;
+        }
+        
         // 创建修饰器
-        appliedModifier = new StatModifier(
+        StatModifier statModifier = new StatModifier(
             targetStat,                                    // 目标属性
             StatModifierType.PercentAdd,                  // 百分比增加类型
             modifierValue - 1f,                           // 如果modifierValue是1.5，则Value是0.5 (50%增加)
@@ -114,11 +188,11 @@ public class StatModifierEffect : IEffect
         // 设置移除条件（使用新接口）
         if (effectRemovalCondition != null)
         {
-            appliedModifier.SetEffectRemovalCondition(effectRemovalCondition);
+            statModifier.SetEffectRemovalCondition(effectRemovalCondition);
         }
         
         // 应用修饰器
-        statsManager.ApplyModifier(appliedModifier);
+        statsManager.ApplyModifier(statModifier);
         
         // 获取修改前后的值用于日志
         float finalValue = statsManager.GetFinalStat(targetStat);
@@ -126,6 +200,8 @@ public class StatModifierEffect : IEffect
         
         Debug.Log($"[{EffectName}] 属性修改成功: {targetStat} {baseValue} -> {finalValue} (x{modifierValue})");
         
+        // 保存引用
+        appliedModifier = statModifier;
         isApplied = true;
         
         // 触发表现效果
@@ -160,11 +236,24 @@ public class StatModifierEffect : IEffect
     /// </summary>
     public void Reset()
     {
-        // 移除应用的修饰器
-        if (isApplied && appliedModifier != null && statsManager != null)
+        if (isApplied && appliedModifier != null)
         {
-            statsManager.RemoveModifier(appliedModifier);
-            Debug.Log($"[{EffectName}] 移除修饰器: {appliedModifier.GetDebugInfo()}");
+            // 如果是攻击力修改，从 DamageProcessor 中移除
+            if (targetStat == "Damage" && appliedModifier is SkillDamageModifier skillModifier)
+            {
+                DamageProcessor damageProcessor = DamageProcessor.Instance;
+                if (damageProcessor != null)
+                {
+                    damageProcessor.UnregisterDamageModifier(skillModifier);
+                    Debug.Log($"[{EffectName}] 从 DamageProcessor 移除攻击力修改器");
+                }
+            }
+            // 如果是其他属性修改，从 PlayerStatsManager 中移除
+            else if (statsManager != null && appliedModifier is StatModifier statModifier)
+            {
+                statsManager.RemoveModifier(statModifier);
+                Debug.Log($"[{EffectName}] 移除属性修饰器: {statModifier.GetDebugInfo()}");
+            }
         }
         
         isApplied = false;

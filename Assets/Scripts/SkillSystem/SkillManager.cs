@@ -140,7 +140,8 @@ public class SkillManager : MonoBehaviour
     /// </summary>
     void SubscribeToEvents()
     {
-        GameEventBus.OnAttack += HandleAttackEvent;
+        // 订阅伤害处理完成事件（在伤害修改完成后处理技能效果）
+        GameEventBus.OnDamageProcessed += HandleDamageProcessedEvent;
         GameEventBus.OnDeath += HandleDeathEvent;
         //GameEventBus.OnChargingStarted += OnNewShotStarted;
         GameEventBus.OnHealthChanged += HandleHealthChangedEvent;
@@ -149,7 +150,7 @@ public class SkillManager : MonoBehaviour
         
         if (enableDebugLog)
         {
-            Debug.Log("SkillManager: 已订阅攻击事件、死亡事件、发射开始事件、生命值变化事件、游戏流程状态变化事件和球停止事件");
+            Debug.Log("SkillManager: 已订阅伤害处理完成事件、死亡事件、发射开始事件、生命值变化事件、游戏流程状态变化事件和球停止事件");
         }
     }
     
@@ -158,7 +159,7 @@ public class SkillManager : MonoBehaviour
     /// </summary>
     void UnsubscribeFromEvents()
     {
-        GameEventBus.OnAttack -= HandleAttackEvent;
+        GameEventBus.OnDamageProcessed -= HandleDamageProcessedEvent;
         GameEventBus.OnDeath -= HandleDeathEvent;
         //；GameEventBus.OnChargingStarted -= OnNewShotStarted;
         GameEventBus.OnHealthChanged -= HandleHealthChangedEvent;
@@ -176,21 +177,21 @@ public class SkillManager : MonoBehaviour
     #region 事件处理
     
     /// <summary>
-    /// 处理攻击事件
+    /// 处理伤害处理完成事件
     /// </summary>
-    void HandleAttackEvent(AttackData attackData)
+    void HandleDamageProcessedEvent(ProcessedDamageData processedData)
     {
         if (enableDebugLog)
         {
-            Debug.Log($"[SkillManager] 收到攻击事件: {attackData.AttackType} at {attackData.Position}");
+            Debug.Log($"[SkillManager] 收到伤害处理完成事件: {processedData.OriginalData.AttackType} at {processedData.OriginalData.Position}, 最终伤害: {processedData.FinalDamage}");
         }
         
         // 只处理攻击相关的技能
         foreach (var skillInstance in skillInstances.Values)
         {
-            if (IsEventRelevantForSkill(attackData, skillInstance))
+            if (IsEventRelevantForSkill(processedData.OriginalData, skillInstance))
             {
-                bool processed = skillInstance.ProcessEvent(attackData);
+                bool processed = skillInstance.ProcessEvent(processedData.OriginalData);
                 if (processed && enableDebugLog)
                 {
                     Debug.Log($"[SkillManager] 技能 {skillInstance.config.skillName} 被触发");
