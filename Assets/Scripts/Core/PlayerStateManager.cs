@@ -442,6 +442,10 @@ public class StatModifierData
     public string sourceType;     // 来源类型
     public float timeRemaining;   // 剩余时间
     
+    // 🔑 新增：移除条件信息（解决跨场景信息丢失问题）
+    public string removalConditionType;  // 移除条件类型: "Duration", "OnPhaseEnd", "Never", 等
+    public float removalDuration;        // 如果是Duration类型，持续时间
+    
     /// <summary>
     /// 构造函数 - 从StatModifier创建
     /// </summary>
@@ -455,6 +459,23 @@ public class StatModifierData
             type = modifier.type;
             sourceType = modifier.source?.GetType().Name ?? "Unknown";
             timeRemaining = modifier.timeRemaining;
+            
+            // ✅ 保存移除条件信息
+            if (modifier.effectRemovalCondition != null)
+            {
+                removalConditionType = modifier.effectRemovalCondition.GetType().Name;
+                
+                // 如果是Duration类型，保存持续时间
+                if (modifier.effectRemovalCondition is DurationEffectRemovalCondition durationCondition)
+                {
+                    // Duration信息已经在timeRemaining中，这里记录原始持续时间
+                    removalDuration = modifier.duration;
+                }
+            }
+            else
+            {
+                removalConditionType = "Never";  // 没有移除条件，永久生效
+            }
         }
     }
     
@@ -468,6 +489,8 @@ public class StatModifierData
         type = StatModifierType.Add;
         sourceType = "";
         timeRemaining = 0f;
+        removalConditionType = "Never";
+        removalDuration = 0f;
     }
     
     /// <summary>
@@ -476,6 +499,36 @@ public class StatModifierData
     /// <returns>调试信息字符串</returns>
     public string GetDebugInfo()
     {
-        return $"{targetStat}: {value} ({type}) - 来源: {sourceType}, 剩余时间: {timeRemaining}";
+        return $"{targetStat}: {value} ({type}) - 来源: {sourceType}, 剩余时间: {timeRemaining}, 移除条件: {removalConditionType}";
+    }
+    
+    /// <summary>
+    /// 重建移除条件对象
+    /// </summary>
+    /// <returns>重建的移除条件，如果无法重建则返回null</returns>
+    public IEffectRemovalCondition RebuildRemovalCondition()
+    {
+        if (string.IsNullOrEmpty(removalConditionType) || removalConditionType == "Never")
+        {
+            return null;  // 没有移除条件
+        }
+        
+        // 根据类型重建移除条件对象
+        switch (removalConditionType)
+        {
+            case "DurationEffectRemovalCondition":
+                return new DurationEffectRemovalCondition(removalDuration);
+                
+            case "OnPhaseEndedEffectRemovalCondition":
+                return new OnPhaseEndedEffectRemovalCondition();
+                
+            case "NeverEffectRemovalCondition":
+                return new NeverEffectRemovalCondition();
+                
+            // 其他类型暂时不支持序列化，返回null
+            default:
+                Debug.LogWarning($"[StatModifierData] 不支持的移除条件类型: {removalConditionType}，将作为永久效果处理");
+                return null;
+        }
     }
 }

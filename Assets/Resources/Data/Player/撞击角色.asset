@@ -28,5 +28,5 @@ MonoBehaviour:
   baseMicroMoveSpeed: 2
   canLevelUp: 0
   startingLevel: 1
-  maxLevel: 100
+  maxLevel: 90
   experienceMultiplier: 1
