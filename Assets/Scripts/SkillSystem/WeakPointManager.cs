@@ -271,7 +271,7 @@ public class WeakPointManager : MonoBehaviour, IDamageModifier
         {
             // 获取敌人的 enemyItem Transform（实际可见的敌人物体）
             Transform enemyTransform = enemy.enemyItem != null ? enemy.enemyItem : enemy.transform;
-            marker.Initialize(enemyTransform, localPos);
+            marker.Initialize(enemyTransform, localPos, data.currentDirection);
         }
         else
         {
@@ -308,7 +308,7 @@ public class WeakPointManager : MonoBehaviour, IDamageModifier
         if (data.markerObject != null)
         {
             WeakPointMarker marker = data.markerObject.GetComponent<WeakPointMarker>();
-            marker?.UpdatePosition(newLocalPos);
+            marker?.UpdatePosition(newLocalPos, newDirection);
         }
         
         if (showDebugLog)
