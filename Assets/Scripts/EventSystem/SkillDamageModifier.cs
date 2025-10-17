@@ -107,7 +107,29 @@ public class SkillDamageModifier : IDamageModifier
         if (removalCondition == null)
             return false;
         
-        return removalCondition.ShouldRemoveEffect(null);
+        // 直接读取玩家当前血量，构造 HealthStateData
+        PlayerCore playerCore = Object.FindFirstObjectByType<PlayerCore>();
+        if (playerCore == null)
+        {
+            if (showDebugLog)
+            {
+                Debug.LogWarning($"[SkillDamageModifier] {modifierName} 未找到 PlayerCore，无法检查移除条件");
+            }
+            return false;
+        }
+        
+        HealthStateData currentHealth = new HealthStateData
+        {
+            CurrentHealth = playerCore.GetCurrentHealth(),
+            MaxHealth = playerCore.GetMaxHealth()
+        };
+        
+        if (showDebugLog)
+        {
+            Debug.Log($"[SkillDamageModifier] {modifierName} 检查移除条件 - 血量: {currentHealth.CurrentHealth}/{currentHealth.MaxHealth} ({currentHealth.HealthPercentage:P1})");
+        }
+        
+        return removalCondition.ShouldRemoveEffect(currentHealth);
     }
     
     #endregion
