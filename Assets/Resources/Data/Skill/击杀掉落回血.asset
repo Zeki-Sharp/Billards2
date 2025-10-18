@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   skillName: "\u51FB\u6740\u6389\u843D\u56DE\u8840"
   description: "\u51FB\u6740\u654C\u4EBA\u540E\uFF0C\u6389\u843D\u4E00\u4E2A\u56DE\u590D10\u751F\u547D\u503C\u7684\u9053\u5177"
-  skillTag: common
+  skillTag: default
   triggerConfig:
     triggerType: 3
     targetTag: Enemy

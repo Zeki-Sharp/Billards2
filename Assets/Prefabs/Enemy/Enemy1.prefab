@@ -255,6 +255,10 @@ PrefabInstance:
       propertyPath: m_Layer
       value: 2
       objectReference: {fileID: 0}
+    - target: {fileID: 8062005456479160996, guid: 92bb8c5569acb9348bf9d53ecaefe6fb, type: 3}
+      propertyPath: managedReferences[3244891132767502415].TargetGameObject
+      value: 
+      objectReference: {fileID: 7420645124294310907}
     - target: {fileID: 8847496780498689127, guid: 92bb8c5569acb9348bf9d53ecaefe6fb, type: 3}
       propertyPath: m_Constraints
       value: 4
