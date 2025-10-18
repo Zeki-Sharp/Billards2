@@ -41,7 +41,7 @@ public class DamageProcessor : MonoBehaviour
         if (Instance == null)
         {
             Instance = this;
-            DontDestroyOnLoad(gameObject);
+            //DontDestroyOnLoad(gameObject);
             if (enableDebugLog)
                 Debug.Log("[DamageProcessor] 单例创建成功");
         }

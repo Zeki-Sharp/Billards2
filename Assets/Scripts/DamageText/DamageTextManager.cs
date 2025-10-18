@@ -58,7 +58,7 @@ public class DamageTextManager : MonoBehaviour
         if (Instance == null)
         {
             Instance = this;
-            DontDestroyOnLoad(gameObject);
+            //DontDestroyOnLoad(gameObject);
             InitializeManager();
         }
         else
