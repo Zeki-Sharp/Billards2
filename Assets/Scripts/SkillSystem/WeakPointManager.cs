@@ -375,6 +375,9 @@ public class WeakPointManager : MonoBehaviour, IDamageModifier
         // 订阅初始敌人生成完成事件
         GameEventBus.OnInitialWaveSpawnComplete += HandleInitialWaveSpawnComplete;
         
+        // 订阅波次敌人生成完成事件
+        GameEventBus.OnWaveEnemiesSpawnComplete += HandleWaveEnemiesSpawnComplete;
+        
         if (showDebugLog)
         {
             Debug.Log("[WeakPointManager] 事件订阅完成 (攻击事件通过 DamageProcessor 处理)");
@@ -390,6 +393,7 @@ public class WeakPointManager : MonoBehaviour, IDamageModifier
         GameEventBus.OnDeath -= OnDeathEvent;
         GameEventBus.OnGameFlowStateChanged -= OnGameFlowStateChanged;
         GameEventBus.OnInitialWaveSpawnComplete -= HandleInitialWaveSpawnComplete;
+        GameEventBus.OnWaveEnemiesSpawnComplete -= HandleWaveEnemiesSpawnComplete;
         
         if (showDebugLog)
         {
@@ -409,6 +413,21 @@ public class WeakPointManager : MonoBehaviour, IDamageModifier
             Debug.Log("[WeakPointManager] 接收到初始敌人生成完成事件，开始扫描现有敌人");
         
         // 现在扫描并添加弱点
+        InitializeExistingEnemies();
+    }
+    
+    /// <summary>
+    /// 处理波次敌人生成完成事件
+    /// </summary>
+    private void HandleWaveEnemiesSpawnComplete()
+    {
+        if (!isEnabled)
+            return;
+        
+        if (showDebugLog)
+            Debug.Log("[WeakPointManager] 接收到波次敌人生成完成事件，开始扫描新敌人");
+        
+        // 扫描并为新敌人添加弱点
         InitializeExistingEnemies();
     }
     

@@ -209,6 +209,11 @@ public static class GameEventBus
     /// </summary>
     public static event System.Action OnInitialWaveSpawnComplete;
     
+    /// <summary>
+    /// 波次敌人生成完成事件
+    /// </summary>
+    public static event System.Action OnWaveEnemiesSpawnComplete;
+    
     #endregion
     
     #region UI/表现事件
@@ -377,6 +382,11 @@ public static class GameEventBus
     /// 发布初始敌人生成完成事件
     /// </summary>
     public static void PublishInitialWaveSpawnComplete() => OnInitialWaveSpawnComplete?.Invoke();
+    
+    /// <summary>
+    /// 发布波次敌人生成完成事件
+    /// </summary>
+    public static void PublishWaveEnemiesSpawnComplete() => OnWaveEnemiesSpawnComplete?.Invoke();
     
     /// <summary>
     /// 发布瞄准方向变化事件

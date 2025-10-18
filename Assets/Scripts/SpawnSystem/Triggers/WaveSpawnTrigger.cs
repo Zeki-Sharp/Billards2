@@ -171,6 +171,9 @@ namespace Game.SpawnSystem.Triggers
             {
                 Debug.Log("[WaveSpawnTrigger] 当前波次敌人生成完成");
             }
+            
+            // 发布波次敌人生成完成事件
+            GameEventBus.PublishWaveEnemiesSpawnComplete();
         }
         
         /// <summary>
