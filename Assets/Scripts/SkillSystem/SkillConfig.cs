@@ -296,7 +296,21 @@ public class SkillInstance
         }
         Debug.Log($"[SkillInstance] ✅ 触发器检测到事件 - 技能: {config.skillName}, 触发器: {trigger?.GetType().Name}");
         
-        // 第二步：检查条件是否满足
+        // 第二步：检查移除条件（OnEffectRemovalResetCondition 场景）
+        // 在检查条件之前先检查是否需要移除效果
+        if (effectRemovalCondition != null && resetCondition is OnEffectRemovalResetCondition)
+        {
+            bool shouldRemove = effectRemovalCondition.ShouldRemoveEffect(eventData);
+            if (shouldRemove)
+            {
+                Debug.Log($"[SkillInstance] 🗑️ 移除条件满足，重置触发条件和效果 - 技能: {config.skillName}");
+                condition.Reset();  // 重置触发条件
+                effect.Reset();     // 重置效果状态
+                return false; // 移除后不继续处理
+            }
+        }
+        
+        // 第三步：检查条件是否满足
         bool conditionMet = condition.CheckCondition(eventData);
         if (!conditionMet)
         {
@@ -305,7 +319,7 @@ public class SkillInstance
         }
         Debug.Log($"[SkillInstance] ✅ 条件满足 - 技能: {config.skillName}, 条件: {condition?.GetType().Name}");
         
-        // 第三步：执行效果
+        // 第四步：执行效果
         Debug.Log($"[SkillInstance] 🎯 准备执行效果 - 技能: {config.skillName}, 效果: {effect?.GetType().Name}");
         bool effectExecuted = effect.ExecuteEffect(eventData);
         
@@ -313,8 +327,8 @@ public class SkillInstance
         {
             Debug.Log($"[SkillInstance] 🎯 技能 {config.skillName} 执行成功！");
             
-            // 第四步：检查重置条件
-            if (resetCondition != null)
+            // 第五步：检查重置条件（常规重置场景）
+            if (resetCondition != null && !(resetCondition is OnEffectRemovalResetCondition))
             {
                 bool shouldReset = resetCondition.ShouldReset(eventData);
                 Debug.Log($"[SkillInstance] 🔄 重置条件检查: {shouldReset} - 技能: {config.skillName}");
@@ -326,7 +340,7 @@ public class SkillInstance
                     Debug.Log($"[SkillInstance] 🔄 重置条件满足，立即重置触发条件 - {config.skillName}");
                 }
             }
-            else
+            else if (resetCondition == null)
             {
                 Debug.LogWarning($"[SkillInstance] ⚠️ 重置条件为空 - 技能: {config.skillName}");
             }

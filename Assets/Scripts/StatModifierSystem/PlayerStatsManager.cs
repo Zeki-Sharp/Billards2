@@ -252,11 +252,6 @@ public class PlayerStatsManager : MonoBehaviour
                 // OnConditionMetEffectRemovalCondition 对所有事件都相关
                 return true;
             }
-            else if (modifier.effectRemovalCondition is InverseConditionCheckEffectRemovalCondition)
-            {
-                // InverseConditionCheckEffectRemovalCondition 对所有事件都相关（用于反向检查）
-                return true;
-            }
             else if (modifier.effectRemovalCondition is ValueComparisonEffectRemovalCondition)
             {
                 // ValueComparisonEffectRemovalCondition 只对特定数据类型的事件有效

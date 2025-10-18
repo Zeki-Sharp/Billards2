@@ -21,8 +21,6 @@ public class RemovalConditionConfig
         {
             case RemovalConditionType.OnPlayerPhaseEnded:
                 return new OnPlayerPhaseEndedCondition();
-            case RemovalConditionType.InverseConditionCheck:
-                return new InverseConditionCheck();
             case RemovalConditionType.Duration:
                 return new DurationCondition();
             case RemovalConditionType.Immediate:
@@ -50,7 +48,6 @@ public class RemovalConditionConfig
 public enum RemovalConditionType
 {
     OnPlayerPhaseEnded,   // 玩家回合结束时移除
-    InverseConditionCheck, // 反向条件检查移除
     Duration,             // 持续时间移除（暂未实现）
     Immediate,            // 立即移除（用于ActionEffect，执行后重置触发条件）
     Never                 // 永不移除

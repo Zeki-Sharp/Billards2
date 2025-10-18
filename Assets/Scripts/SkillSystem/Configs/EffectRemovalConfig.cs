@@ -24,11 +24,6 @@ public class EffectRemovalConfig
     [Tooltip("满足条件时移除效果")]
     public ICondition removalCondition;
     
-    [ShowIf("removalType", EffectRemovalType.InverseConditionCheck)]
-    [LabelText("反向条件")]
-    [Tooltip("反向条件检查 - 当条件不满足时移除效果")]
-    public ICondition inverseCondition;
-    
     [ShowIf("removalType", EffectRemovalType.ValueComparison)]
     [LabelText("比较类型")]
     [Tooltip("数值比较类型")]
@@ -69,8 +64,6 @@ public class EffectRemovalConfig
                 return new OnLevelCompletedEffectRemovalCondition();
             case EffectRemovalType.OnConditionMet:
                 return new OnConditionMetEffectRemovalCondition(removalCondition);
-            case EffectRemovalType.InverseConditionCheck:
-                return new InverseConditionCheckEffectRemovalCondition(inverseCondition);
             case EffectRemovalType.ValueComparison:
                 return CreateValueComparisonRemovalCondition();
             case EffectRemovalType.Never:
@@ -161,7 +154,6 @@ public enum EffectRemovalType
     OnPlayerPhaseEnded,  // 回合结束移除
     OnLevelCompleted,    // 关卡完成时移除
     OnConditionMet,      // 满足条件时移除
-    InverseConditionCheck, // 反向条件检查移除
     ValueComparison,     // 值比较移除
     Never                // 永不移除
 }

@@ -26,6 +26,8 @@ public class SingleResetConditionConfig
                 return new ImmediateResetCondition();
             case ResetConditionType.OnPlayerPhaseEnded:
                 return new OnPhaseEndedResetCondition();
+            case ResetConditionType.OnEffectRemovalConditionMet:
+                return new OnEffectRemovalResetCondition();
             case ResetConditionType.Never:
                 return new NeverResetCondition();
             default:
@@ -45,6 +47,8 @@ public class SingleResetConditionConfig
                 return "立即重置";
             case ResetConditionType.OnPlayerPhaseEnded:
                 return "回合结束重置";
+            case ResetConditionType.OnEffectRemovalConditionMet:
+                return "效果移除时重置";
             case ResetConditionType.Never:
                 return "永不复位";
             default:
@@ -139,6 +143,7 @@ public enum ResetConditionType
 {
     Immediate,              // 立即重置
     OnPlayerPhaseEnded,     // 回合结束重置
+    OnEffectRemovalConditionMet,  // 效果移除条件满足时重置
     Never                   // 永不复位
 }
 
