@@ -21,7 +21,7 @@ public class SkillDamageModifier : IDamageModifier
     /// <summary>
     /// 是否启用此修改器
     /// </summary>
-    public bool IsEnabled => isEnabled && !ShouldRemove();
+    public bool IsEnabled => isEnabled;
     
     /// <summary>
     /// 处理伤害修改 - 技能伤害修改
@@ -42,8 +42,10 @@ public class SkillDamageModifier : IDamageModifier
         {
             if (showDebugLog)
             {
-                Debug.Log($"[SkillDamageModifier] {modifierName} 满足移除条件，跳过处理");
+                Debug.Log($"[SkillDamageModifier] {modifierName} 满足移除条件，自动禁用修改器");
             }
+            // 自动禁用修改器，防止累积叠加
+            isEnabled = false;
             return false;
         }
         

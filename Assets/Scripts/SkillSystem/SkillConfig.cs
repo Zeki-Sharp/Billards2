@@ -390,7 +390,29 @@ public class SkillInstance
         // 重置条件满足时：重置触发条件和 canExecute
         if (resetCondition != null)
         {
-            bool shouldReset = resetCondition.ShouldReset(eventData);
+            // 检查重置条件是否需要特定类型的事件数据
+            bool shouldReset = false;
+            
+            // 如果是值比较重置条件，需要提供正确的数据
+            if (resetCondition is ValueComparisonResetCondition valueComparisonResetCondition)
+            {
+                // 检查事件是否与数据提取器类型相关
+                if (valueComparisonResetCondition.IsEventRelevant(eventData))
+                {
+                    shouldReset = resetCondition.ShouldReset(eventData);
+                }
+                else
+                {
+                    // 如果事件类型不匹配，跳过重置检查
+                    Debug.Log($"[SkillInstance] 跳过值比较重置条件检查 - 事件类型不匹配: {eventData?.GetType().Name}");
+                }
+            }
+            else
+            {
+                // 其他类型的重置条件直接检查
+                shouldReset = resetCondition.ShouldReset(eventData);
+            }
+            
             if (shouldReset)
             {
                 condition.Reset();         // 重置触发条件

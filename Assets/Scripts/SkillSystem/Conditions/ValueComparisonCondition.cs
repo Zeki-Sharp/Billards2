@@ -66,6 +66,17 @@ public class ValueComparisonCondition : ICondition
             return false;
         }
         
+        // 检查事件数据类型是否匹配
+        if (eventData != null)
+        {
+            // 如果事件数据类型不匹配，直接返回false
+            if (eventData is System.Enum && !(eventData is HealthStateData || eventData is AttackData))
+            {
+                Debug.Log($"[{ConditionName}] 跳过不匹配的事件类型: {eventData.GetType().Name}");
+                return false;
+            }
+        }
+        
         float currentValue = valueExtractor(eventData);
         
         bool result = false;

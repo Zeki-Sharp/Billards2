@@ -173,23 +173,32 @@ public class StatModifierEffect : IEffect
             return false;
         }
         
-        // 创建技能伤害修改器
-        string modifierName = $"技能攻击力修改_{targetStat}";
-        SkillDamageModifier damageModifier = new SkillDamageModifier(
-            modifierName,
-            modifierValue,
-            modifierType,
-            effectRemovalCondition,
-            true
-        );
-        
-        // 注册到 DamageProcessor
-        damageProcessor.RegisterDamageModifier(damageModifier);
-        
-        // 保存引用用于后续移除
-        appliedModifier = damageModifier;
-        
-        Debug.Log($"[{EffectName}] 攻击力修改委托给 DamageProcessor: {targetStat} {modifierType} {modifierValue}");
+        // 如果已经应用过修改器，先重新启用它
+        if (isApplied && appliedModifier is SkillDamageModifier existingModifier)
+        {
+            existingModifier.SetEnabled(true);
+            Debug.Log($"[{EffectName}] 重新启用现有攻击力修改器: {targetStat} {modifierType} {modifierValue}");
+        }
+        else
+        {
+            // 创建新的技能伤害修改器
+            string modifierName = $"技能攻击力修改_{targetStat}";
+            SkillDamageModifier damageModifier = new SkillDamageModifier(
+                modifierName,
+                modifierValue,
+                modifierType,
+                effectRemovalCondition,
+                true
+            );
+            
+            // 注册到 DamageProcessor
+            damageProcessor.RegisterDamageModifier(damageModifier);
+            
+            // 保存引用用于后续移除
+            appliedModifier = damageModifier;
+            
+            Debug.Log($"[{EffectName}] 创建新的攻击力修改器: {targetStat} {modifierType} {modifierValue}");
+        }
         
         isApplied = true;
         
