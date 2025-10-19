@@ -324,8 +324,8 @@ public class CharacterSelectionUI : MonoBehaviour
     /// </summary>
     void OnBackButtonClicked()
     {
-        // TODO: 实现返回逻辑
-        Debug.Log("CharacterSelectionUI: 返回按钮点击 - 功能待实现");
+        Debug.Log("CharacterSelectionUI: 返回按钮点击");
+        // 功能待实现
     }
     
     /// <summary>

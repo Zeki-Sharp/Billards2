@@ -14,7 +14,6 @@ public class NeverEffectRemovalCondition : IEffectRemovalCondition
     /// </summary>
     public void Initialize()
     {
-        Debug.Log($"[{ConditionName}] 初始化完成 - 永不移除效果");
     }
 
     /// <summary>
@@ -33,6 +32,5 @@ public class NeverEffectRemovalCondition : IEffectRemovalCondition
     /// </summary>
     public void Reset()
     {
-        Debug.Log($"[{ConditionName}] 状态重置 - 永不移除条件无需重置");
     }
 }

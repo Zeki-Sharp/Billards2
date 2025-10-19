@@ -18,7 +18,6 @@ public class KillTrigger : ITrigger
     public void SetTargetTag(string tag)
     {
         targetTag = tag;
-        Debug.Log($"[{TriggerName}] 设置目标标签: {targetTag}");
     }
     
     /// <summary>

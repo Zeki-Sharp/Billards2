@@ -8,17 +8,12 @@ using UnityEngine;
 public class OnPhaseEndedEffectRemovalCondition : IEffectRemovalCondition
 {
     public string ConditionName => "OnPhaseEndedEffectRemovalCondition";
-    
-    private bool isPlayerPhaseEnded = false;
 
     /// <summary>
     /// 初始化效果移除条件
     /// </summary>
     public void Initialize()
     {
-        Debug.Log($"[{ConditionName}] 初始化完成 - 回合结束时移除效果");
-        // TODO: 订阅回合结束事件
-        // GameEventBus.Subscribe<PlayerPhaseEndedEvent>(OnPlayerPhaseEnded);
     }
 
     /// <summary>
@@ -58,7 +53,5 @@ public class OnPhaseEndedEffectRemovalCondition : IEffectRemovalCondition
     /// </summary>
     public void Reset()
     {
-        isPlayerPhaseEnded = false;
-        Debug.Log($"[{ConditionName}] 状态重置 - 回合结束移除条件已重置");
     }
 }

@@ -29,7 +29,6 @@ public class DurationEffectRemovalCondition : IEffectRemovalCondition
     {
         startTime = Time.time;
         isInitialized = true;
-        Debug.Log($"[{ConditionName}] 初始化完成 - 持续时间: {duration}秒");
     }
 
     /// <summary>
@@ -63,6 +62,5 @@ public class DurationEffectRemovalCondition : IEffectRemovalCondition
     {
         startTime = Time.time;
         isInitialized = true;
-        Debug.Log($"[{ConditionName}] 状态重置 - 重新开始计时: {duration}秒");
     }
 }

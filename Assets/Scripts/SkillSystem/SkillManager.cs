@@ -139,7 +139,6 @@ public class SkillManager : MonoBehaviour
         // 订阅伤害处理完成事件（在伤害修改完成后处理技能效果）
         GameEventBus.OnDamageProcessed += HandleDamageProcessedEvent;
         GameEventBus.OnDeath += HandleDeathEvent;
-        //GameEventBus.OnChargingStarted += OnNewShotStarted;
         GameEventBus.OnHealthChanged += HandleHealthChangedEvent;
         GameEventBus.OnGameFlowStateChanged += HandleGameFlowStateChanged;
         GameEventBus.OnBallStopped += HandleBallStoppedEvent;
@@ -157,7 +156,6 @@ public class SkillManager : MonoBehaviour
     {
         GameEventBus.OnDamageProcessed -= HandleDamageProcessedEvent;
         GameEventBus.OnDeath -= HandleDeathEvent;
-        //；GameEventBus.OnChargingStarted -= OnNewShotStarted;
         GameEventBus.OnHealthChanged -= HandleHealthChangedEvent;
         GameEventBus.OnGameFlowStateChanged -= HandleGameFlowStateChanged;
         GameEventBus.OnBallStopped -= HandleBallStoppedEvent;

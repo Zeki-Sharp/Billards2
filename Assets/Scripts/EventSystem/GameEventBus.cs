@@ -488,8 +488,7 @@ public static class GameEventBus
             var enemyBehavior = deadObject.GetComponent<EnemyBehavior>();
             if (enemyBehavior != null)
             {
-                // TODO: 从EnemyBehavior获取敌人类型
-                // 目前默认使用Normal
+                // 目前默认使用Normal类型
                 enemyType = EnemyType.Normal;
             }
         }

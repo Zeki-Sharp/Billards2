@@ -35,7 +35,6 @@ public class ImmediateResetCondition : IResetCondition
     /// </summary>
     public void Initialize()
     {
-        Debug.Log($"[{ConditionName}] 初始化完成 - 立即重置触发条件");
     }
 
     /// <summary>
@@ -71,6 +70,5 @@ public class ImmediateResetCondition : IResetCondition
     /// </summary>
     public void Reset()
     {
-        Debug.Log($"[{ConditionName}] 状态重置 - 立即重置条件无需特殊重置");
     }
 }

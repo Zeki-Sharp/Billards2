@@ -29,7 +29,6 @@ public class StatModifierEffect : IEffect
     public void SetCanExecute(bool canExecute)
     {
         this.canExecute = canExecute;
-        Debug.Log($"[{EffectName}] SetCanExecute: {canExecute}");
     }
     
     /// <summary>
@@ -41,7 +40,6 @@ public class StatModifierEffect : IEffect
     {
         targetStat = stat;
         modifierValue = modifier;
-        Debug.Log($"[{EffectName}] 设置修改参数: {targetStat} {modifierValue} ({modifierType})");
     }
     
     /// <summary>
@@ -55,7 +53,6 @@ public class StatModifierEffect : IEffect
         targetStat = stat;
         modifierValue = modifier;
         modifierType = type;
-        Debug.Log($"[{EffectName}] 设置修改参数: {targetStat} {modifierValue} ({modifierType})");
     }
     
     /// <summary>
@@ -65,7 +62,6 @@ public class StatModifierEffect : IEffect
     public void SetEffectRemovalCondition(IEffectRemovalCondition condition)
     {
         effectRemovalCondition = condition;
-        Debug.Log($"[{EffectName}] 设置效果移除条件: {condition?.ConditionName}");
     }
     
     private IEffectRemovalCondition effectRemovalCondition; // 新的效果移除条件
@@ -82,7 +78,6 @@ public class StatModifierEffect : IEffect
             {
                 if (!skillModifier.IsEnabled)
                 {
-                    Debug.Log($"[{EffectName}] 检测到技能伤害修改器已被禁用，重置效果状态");
                     isApplied = false;
                     appliedModifier = null;
                 }
@@ -92,7 +87,6 @@ public class StatModifierEffect : IEffect
             {
                 if (!statsManager.HasModifier(statModifier))
                 {
-                    Debug.Log($"[{EffectName}] 检测到属性修饰器已被移除，重置效果状态");
                     isApplied = false;
                     appliedModifier = null;
                 }
@@ -106,7 +100,6 @@ public class StatModifierEffect : IEffect
     public void Initialize()
     {
         // 延迟初始化：不在初始化时查找玩家，而是在执行时动态查找
-        Debug.Log($"[{EffectName}] 初始化完成，将在执行时动态查找玩家");
     }
     
     /// <summary>
@@ -116,12 +109,9 @@ public class StatModifierEffect : IEffect
     /// <returns>效果是否执行成功</returns>
     public bool ExecuteEffect(object eventData)
     {
-        Debug.Log($"[{EffectName}] ExecuteEffect 被调用，目标属性: {targetStat}, canExecute: {canExecute}, isApplied: {isApplied}");
-        
         // 只检查执行权限（完全由重置条件控制）
         if (!canExecute)
         {
-            Debug.Log($"[{EffectName}] 不允许执行效果（canExecute=false）");
             return false;
         }
         
@@ -153,7 +143,6 @@ public class StatModifierEffect : IEffect
         if (result)
         {
             canExecute = false;
-            Debug.Log($"[{EffectName}] 效果执行成功，设置 canExecute=false");
         }
         
         return result;
@@ -177,7 +166,6 @@ public class StatModifierEffect : IEffect
         if (isApplied && appliedModifier is SkillDamageModifier existingModifier)
         {
             existingModifier.SetEnabled(true);
-            Debug.Log($"[{EffectName}] 重新启用现有攻击力修改器: {targetStat} {modifierType} {modifierValue}");
         }
         else
         {
@@ -196,8 +184,6 @@ public class StatModifierEffect : IEffect
             
             // 保存引用用于后续移除
             appliedModifier = damageModifier;
-            
-            Debug.Log($"[{EffectName}] 创建新的攻击力修改器: {targetStat} {modifierType} {modifierValue}");
         }
         
         isApplied = true;
@@ -237,12 +223,6 @@ public class StatModifierEffect : IEffect
         // 应用修饰器
         statsManager.ApplyModifier(statModifier);
         
-        // 获取修改前后的值用于日志
-        float finalValue = statsManager.GetFinalStat(targetStat);
-        float baseValue = statsManager.GetBaseStat(targetStat);
-        
-        Debug.Log($"[{EffectName}] 属性修改成功: {targetStat} {baseValue} -> {finalValue} (x{modifierValue})");
-        
         // 保存引用
         appliedModifier = statModifier;
         isApplied = true;
@@ -259,19 +239,6 @@ public class StatModifierEffect : IEffect
     private void TriggerVisualEffect()
     {
         // 触发攻击力提升的表现特效
-        // 使用现有的特效类型，比如 "Hit" 或自定义的升级特效
-        // GameEventBus.PublishEffectEvent(
-        //     "Hit",  // 使用现有的特效类型，或者可以扩展 EffectManager 支持新的特效类型
-        //     targetPlayer.transform.position, 
-        //     Vector3.up, 
-        //     targetPlayer.gameObject, 
-        //     "Player"
-        // );
-        
-        Debug.Log($"[{EffectName}] 触发表现效果: 攻击力提升特效 at {targetPlayer.transform.position}");
-        
-        // TODO: 后续可以在 EffectManager 中添加专门的技能特效类型
-        // 如: "SkillUpgrade", "StatBoost" 等，用于技能相关的表现效果
     }
     
     /// <summary>
@@ -327,8 +294,6 @@ public class StatModifierEffect : IEffect
     /// </summary>
     public void Reset()
     {
-        Debug.Log($"[{EffectName}] 🔄 重置前状态 - isApplied: {isApplied}, canExecute: {canExecute}, appliedModifier: {appliedModifier != null}, 时间: {Time.time:F2}");
-        
         if (isApplied && appliedModifier != null)
         {
             // 如果是攻击力修改，从 DamageProcessor 中移除
@@ -338,20 +303,17 @@ public class StatModifierEffect : IEffect
                 if (damageProcessor != null)
                 {
                     damageProcessor.UnregisterDamageModifier(skillModifier);
-                    Debug.Log($"[{EffectName}] 从 DamageProcessor 移除攻击力修改器");
                 }
             }
             // 如果是其他属性修改，从 PlayerStatsManager 中移除
             else if (statsManager != null && appliedModifier is StatModifier statModifier)
             {
                 statsManager.RemoveModifier(statModifier);
-                Debug.Log($"[{EffectName}] 移除属性修饰器: {statModifier.GetDebugInfo()}");
             }
         }
         
         isApplied = false;
         appliedModifier = null;
         // 注意：不重置 canExecute，因为它完全由重置条件控制
-        Debug.Log($"[{EffectName}] ✅ 重置后状态 - isApplied: {isApplied}, canExecute: {canExecute}, appliedModifier: {appliedModifier != null}, 时间: {Time.time:F2}");
     }
 }

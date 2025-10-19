@@ -28,7 +28,6 @@ public class HealEffect : IEffect
     public void SetHealAmount(float amount)
     {
         healAmount = amount;
-        Debug.Log($"[{EffectName}] 设置治疗量: {healAmount}");
     }
     
     /// <summary>
@@ -37,7 +36,6 @@ public class HealEffect : IEffect
     public void Initialize()
     {
         // 延迟初始化：不在初始化时查找玩家，而是在执行时动态查找
-        Debug.Log($"[{EffectName}] 初始化完成，将在执行时动态查找玩家");
     }
     
     /// <summary>
@@ -52,22 +50,9 @@ public class HealEffect : IEffect
             return false;
         }
         
-        // 记录治疗前的血量
-        float beforeHealth = targetPlayer.GetCurrentHealth();
-        float maxHealth = targetPlayer.GetMaxHealth();
-        
-        Debug.Log($"[{EffectName}] 🩹 开始执行治疗 - 治疗量: {healAmount}, 当前血量: {beforeHealth}/{maxHealth}");
-        
         // 执行治疗
         targetPlayer.Heal(healAmount);
-        
-        // 记录治疗后的血量
-        float afterHealth = targetPlayer.GetCurrentHealth();
-        float actualHealed = afterHealth - beforeHealth;
-        
-        Debug.Log($"[{EffectName}] ✅ 治疗完成 - 治疗量: {healAmount}, " +
-                  $"实际恢复: {actualHealed}, " +
-                  $"血量变化: {beforeHealth}/{maxHealth} → {afterHealth}/{maxHealth}");
+        Debug.Log($"[技能] 治疗效果触发 +{healAmount}");
         
         // 触发治疗表现效果（可选）
         TriggerVisualEffect();
@@ -80,11 +65,7 @@ public class HealEffect : IEffect
     /// </summary>
     private void TriggerVisualEffect()
     {
-        // TODO: 可以在这里触发治疗特效
-        // 例如：绿色光芒、回血数字等
-        // GameEventBus.PublishEffectEvent("Heal", targetPlayer.transform.position, ...);
-        
-        Debug.Log($"[{EffectName}] 触发治疗表现效果 at {targetPlayer.transform.position}");
+        // 可以在这里触发治疗特效（例如：绿色光芒、回血数字等）
     }
     
     /// <summary>
@@ -95,13 +76,9 @@ public class HealEffect : IEffect
         if (targetPlayer == null)
         {
             targetPlayer = Object.FindFirstObjectByType<PlayerCore>();
-            if (targetPlayer != null)
+            if (targetPlayer == null)
             {
-                Debug.Log($"[{EffectName}] 动态找到目标玩家: {targetPlayer.name}");
-            }
-            else
-            {
-                Debug.LogWarning($"[{EffectName}] 未找到PlayerCore，可能玩家还未初始化");
+                Debug.LogWarning($"[{EffectName}] 未找到PlayerCore");
                 return false;
             }
         }
@@ -109,7 +86,6 @@ public class HealEffect : IEffect
         // 检查玩家是否就绪
         if (!IsPlayerReady(targetPlayer))
         {
-            Debug.LogWarning($"[{EffectName}] 玩家未就绪，重置引用并重试");
             targetPlayer = null;
             return false;
         }
@@ -131,8 +107,6 @@ public class HealEffect : IEffect
     public void Reset()
     {
         // 治疗是瞬时效果，无需重置
-        // 如果未来需要支持"持续回血"，可以在这里处理
-        Debug.Log($"[{EffectName}] 效果重置（治疗是瞬时效果，无需处理）");
     }
 }
 

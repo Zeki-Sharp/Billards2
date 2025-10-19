@@ -53,7 +53,12 @@ MonoBehaviour:
   resetConditionConfig:
     logicType: 1
     resetConditions:
-    - resetType: 2
+    - resetType: 3
+      comparisonType: 1
+      targetValue: 0.99
+      minValue: 0
+      maxValue: 1
+      dataExtractorType: 0
   effectRemovalConfig:
     removalType: 2
     duration: 30

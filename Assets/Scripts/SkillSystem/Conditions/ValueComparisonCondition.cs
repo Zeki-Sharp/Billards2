@@ -72,7 +72,6 @@ public class ValueComparisonCondition : ICondition
             // 如果事件数据类型不匹配，直接返回false
             if (eventData is System.Enum && !(eventData is HealthStateData || eventData is AttackData))
             {
-                Debug.Log($"[{ConditionName}] 跳过不匹配的事件类型: {eventData.GetType().Name}");
                 return false;
             }
         }
@@ -105,15 +104,6 @@ public class ValueComparisonCondition : ICondition
                 return false;
         }
         
-        Debug.Log($"[{ConditionName}] 值比较: {currentValue} vs {targetValue} ({comparisonType}) = {result}");
-        
-        // 添加调用栈信息来追踪调用来源
-        if (currentValue == 0f && eventData != null)
-        {
-            Debug.LogWarning($"[{ConditionName}] 检测到值为0，事件数据类型: {eventData.GetType().Name}");
-            Debug.LogWarning($"[{ConditionName}] 调用栈: {System.Environment.StackTrace}");
-        }
-        
         return result;
     }
     
@@ -131,7 +121,6 @@ public class ValueComparisonCondition : ICondition
     public void ResetOnPhaseEnd()
     {
         // 值比较条件不需要重置，因为它是基于当前值的即时比较
-        Debug.Log($"[{ConditionName}] 回合结束重置状态 - 无需操作（值比较条件）");
     }
 }
 

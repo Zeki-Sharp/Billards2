@@ -45,7 +45,6 @@ public class CompositeResetCondition : IResetCondition
         {
             resetCondition?.Initialize();
         }
-        Debug.Log($"[{ConditionName}] 初始化完成，包含 {resetConditions.Count} 个重置条件，逻辑类型: {logicType}");
     }
     
     /// <summary>
@@ -88,7 +87,6 @@ public class CompositeResetCondition : IResetCondition
         {
             resetCondition?.Reset();
         }
-        Debug.Log($"[{ConditionName}] 重置所有 {resetConditions.Count} 个重置条件");
     }
     
     /// <summary>

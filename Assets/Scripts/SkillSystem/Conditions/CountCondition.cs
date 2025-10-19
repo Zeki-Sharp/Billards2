@@ -20,7 +20,6 @@ public class CountCondition : ICondition
     public void SetRequiredCount(int count)
     {
         requiredCount = count;
-        Debug.Log($"[{ConditionName}] 设置计数阈值: {requiredCount}");
     }
     
     /// <summary>
@@ -43,13 +42,6 @@ public class CountCondition : ICondition
         currentCount++;
         bool conditionMet = currentCount >= requiredCount;
         
-        Debug.Log($"[{ConditionName}] 条件检查 - 当前计数: {currentCount}/{requiredCount}, 条件满足: {conditionMet}");
-        
-        if (conditionMet)
-        {
-            Debug.Log($"[{ConditionName}] ✅ 条件满足！达到计数阈值 {requiredCount}");
-        }
-        
         return conditionMet;
     }
     
@@ -58,7 +50,6 @@ public class CountCondition : ICondition
     /// </summary>
     public void Reset()
     {
-        Debug.Log($"[{ConditionName}] 🔄 重置条件 - 计数从 {currentCount} 重置为 0");
         currentCount = 0;
     }
     
@@ -68,7 +59,6 @@ public class CountCondition : ICondition
     public void ResetOnPhaseEnd()
     {
         // CountCondition 默认在回合结束时重置
-        Debug.Log($"[{ConditionName}] 🔄 回合结束重置条件 - 计数从 {currentCount} 重置为 0");
         currentCount = 0;
     }
 }

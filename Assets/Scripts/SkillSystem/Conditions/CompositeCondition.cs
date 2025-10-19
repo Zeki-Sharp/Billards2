@@ -20,7 +20,6 @@ public class CompositeCondition : ICondition
     public void SetLogicType(ConditionLogicType logicType)
     {
         this.logicType = logicType;
-        Debug.Log($"[{ConditionName}] 设置逻辑类型: {logicType}");
     }
     
     /// <summary>
@@ -32,7 +31,6 @@ public class CompositeCondition : ICondition
         if (condition != null)
         {
             conditions.Add(condition);
-            Debug.Log($"[{ConditionName}] 添加条件: {condition.ConditionName}");
         }
     }
     
@@ -45,7 +43,6 @@ public class CompositeCondition : ICondition
         {
             condition?.Initialize();
         }
-        Debug.Log($"[{ConditionName}] 初始化完成，包含 {conditions.Count} 个条件，逻辑类型: {logicType}");
     }
     
     /// <summary>
@@ -67,13 +64,11 @@ public class CompositeCondition : ICondition
         {
             // AND 逻辑：所有条件都必须满足
             result = conditions.All(condition => condition.CheckCondition(eventData));
-            Debug.Log($"[{ConditionName}] AND 逻辑检查: {result} (需要所有 {conditions.Count} 个条件都满足)");
         }
         else
         {
             // OR 逻辑：任一条件满足即可
             result = conditions.Any(condition => condition.CheckCondition(eventData));
-            Debug.Log($"[{ConditionName}] OR 逻辑检查: {result} (需要任一 {conditions.Count} 个条件满足)");
         }
         
         return result;
@@ -88,7 +83,6 @@ public class CompositeCondition : ICondition
         {
             condition?.Reset();
         }
-        Debug.Log($"[{ConditionName}] 重置所有 {conditions.Count} 个条件");
     }
     
     /// <summary>
@@ -100,6 +94,5 @@ public class CompositeCondition : ICondition
         {
             condition?.ResetOnPhaseEnd();
         }
-        Debug.Log($"[{ConditionName}] 回合结束重置所有 {conditions.Count} 个条件");
     }
 }

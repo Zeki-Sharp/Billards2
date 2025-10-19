@@ -49,14 +49,12 @@ public class DataSourceTrigger : ITrigger
         if (!hasInitialized)
         {
             hasInitialized = true;
-            Debug.Log($"[DataSourceTrigger] 初始化检查，数据类型: {extractorType}");
             return true; // 初始化时总是触发
         }
         
         // 情况2：生命值变化时触发
         if (IsHealthDataChange(eventData))
         {
-            Debug.Log($"[DataSourceTrigger] 检测到生命值变化事件");
             return true;
         }
         
@@ -94,7 +92,6 @@ public class DataSourceTrigger : ITrigger
     public void Reset()
     {
         hasInitialized = false;
-        Debug.Log($"[DataSourceTrigger] 重置触发器状态");
     }
     
     /// <summary>
@@ -104,21 +101,6 @@ public class DataSourceTrigger : ITrigger
     /// <returns>数据提取函数</returns>
     private System.Func<object, float> GetDataExtractor(DataExtractorType type)
     {
-        switch (type)
-        {
-            case DataExtractorType.Health:
-                return DataExtractors.HealthExtractor;
-            case DataExtractorType.Attack:
-                return DataExtractors.AttackExtractor;
-            case DataExtractorType.Defense:
-                return DataExtractors.DefenseExtractor;
-            case DataExtractorType.Speed:
-                return DataExtractors.SpeedExtractor;
-            case DataExtractorType.Mana:
-                return DataExtractors.ManaExtractor;
-            default:
-                Debug.LogError($"不支持的数据提取器类型: {type}");
-                return null;
-        }
+        return DataExtractors.GetExtractor(type);
     }
 }

@@ -14,7 +14,6 @@ public class AlwaysTrueTrigger : ITrigger
     /// </summary>
     public void Initialize()
     {
-        Debug.Log($"[{TriggerName}] 初始化完成 - 始终返回true");
     }
     
     /// <summary>
@@ -35,6 +34,5 @@ public class AlwaysTrueTrigger : ITrigger
     public void Reset()
     {
         // 始终为真的触发器不需要重置逻辑
-        Debug.Log($"[{TriggerName}] 重置触发器状态");
     }
 }

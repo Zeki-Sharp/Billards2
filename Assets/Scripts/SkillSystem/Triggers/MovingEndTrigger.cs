@@ -26,8 +26,6 @@ public class MovingEndTrigger : ITrigger
         
         // 订阅球停止事件
         GameEventBus.OnBallStopped += OnBallStopped;
-        
-        Debug.Log($"[{TriggerName}] 初始化完成 - 监听球停止事件");
     }
     
     /// <summary>
@@ -50,7 +48,6 @@ public class MovingEndTrigger : ITrigger
                     if (!hasTriggered)
                     {
                         hasTriggered = true;
-                        Debug.Log($"[{TriggerName}] 检测到玩家球停止，触发技能");
                         return true;
                     }
                 }
@@ -66,7 +63,6 @@ public class MovingEndTrigger : ITrigger
     public void Reset()
     {
         hasTriggered = false;
-        Debug.Log($"[{TriggerName}] 重置触发器状态");
     }
     
     /// <summary>
@@ -76,7 +72,6 @@ public class MovingEndTrigger : ITrigger
     void OnBallStopped(BallPhysics ballPhysics)
     {
         // 这个方法主要用于初始化时的订阅，实际检查在 CheckEvent 中进行
-        Debug.Log($"[{TriggerName}] 收到球停止事件 - 球: {ballPhysics.gameObject.name}");
     }
     
     /// <summary>
@@ -85,6 +80,5 @@ public class MovingEndTrigger : ITrigger
     public void Cleanup()
     {
         GameEventBus.OnBallStopped -= OnBallStopped;
-        Debug.Log($"[{TriggerName}] 清理事件订阅");
     }
 }

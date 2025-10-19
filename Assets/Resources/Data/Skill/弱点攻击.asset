@@ -53,7 +53,7 @@ MonoBehaviour:
   resetConditionConfig:
     logicType: 1
     resetConditions:
-    - resetType: 2
+    - resetType: 1
       comparisonType: 1
       targetValue: 0.99
       minValue: 0

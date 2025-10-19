@@ -25,7 +25,6 @@ public class OnConditionMetEffectRemovalCondition : IEffectRemovalCondition
     /// </summary>
     public void Initialize()
     {
-        Debug.Log($"[{ConditionName}] 初始化完成 - 条件满足时移除效果: {targetCondition?.ConditionName}");
         targetCondition?.Initialize();
     }
 
@@ -57,6 +56,5 @@ public class OnConditionMetEffectRemovalCondition : IEffectRemovalCondition
     public void Reset()
     {
         targetCondition?.Reset();
-        Debug.Log($"[{ConditionName}] 状态重置 - 条件满足移除条件已重置");
     }
 }

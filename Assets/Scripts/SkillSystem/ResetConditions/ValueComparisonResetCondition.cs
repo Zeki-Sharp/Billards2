@@ -55,11 +55,8 @@ public class ValueComparisonResetCondition : IResetCondition
         // 根据数据提取器类型订阅相应的事件
         if (dataExtractorType == DataExtractorType.Health) {
             GameEventBus.OnHealthChanged += OnHealthChanged;
-            Debug.Log($"[{ConditionName}] 订阅生命值变化事件 - 数据类型: {dataExtractorType}");
         }
         // 其他数据类型可以后续添加
-        
-        Debug.Log($"[{ConditionName}] 初始化完成 - 值比较重置条件, 数据类型: {dataExtractorType}");
     }
     
     /// <summary>
@@ -97,7 +94,6 @@ public class ValueComparisonResetCondition : IResetCondition
         }
         
         valueCondition?.Reset();
-        Debug.Log($"[{ConditionName}] 状态重置 - 值比较重置条件已重置");
     }
     
     /// <summary>

@@ -18,7 +18,6 @@ public class CollisionTrigger : ITrigger
     public void SetTargetTag(string tag)
     {
         targetTag = tag;
-        Debug.Log($"[{TriggerName}] 设置目标标签: {targetTag}");
     }
     
     /// <summary>
@@ -26,7 +25,6 @@ public class CollisionTrigger : ITrigger
     /// </summary>
     public void Initialize()
     {
-        Debug.Log($"[{TriggerName}] 初始化完成，目标标签: {targetTag}");
     }
     
     /// <summary>
@@ -44,12 +42,7 @@ public class CollisionTrigger : ITrigger
             
             if (tagMatches)
             {
-                Debug.Log($"[{TriggerName}] 检测到碰撞事件: {attackData.AttackType} at {attackData.Position}, 目标标签: {attackData.TargetTag}");
                 return true;
-            }
-            else
-            {
-                Debug.Log($"[{TriggerName}] 碰撞事件目标标签不匹配: 期望={targetTag}, 实际={attackData.TargetTag}");
             }
             
             return false;
@@ -63,7 +56,6 @@ public class CollisionTrigger : ITrigger
     /// </summary>
     public void Reset()
     {
-        // 第一阶段最小验证：不需要特殊重置逻辑
-        Debug.Log($"[{TriggerName}] 状态重置");
+        // 不需要特殊重置逻辑
     }
 }

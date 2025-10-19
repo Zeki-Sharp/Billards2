@@ -13,7 +13,6 @@ public class AlwaysTrueCondition : ICondition
     /// </summary>
     public void Initialize()
     {
-        Debug.Log($"[{ConditionName}] 初始化完成 - 无条件限制");
     }
     
     /// <summary>
@@ -23,7 +22,6 @@ public class AlwaysTrueCondition : ICondition
     /// <returns>总是返回true</returns>
     public bool CheckCondition(object eventData)
     {
-        Debug.Log($"[{ConditionName}] 无条件限制，直接通过");
         return true;
     }
     
@@ -33,7 +31,6 @@ public class AlwaysTrueCondition : ICondition
     public void Reset()
     {
         // 无条件状态，无需重置
-        Debug.Log($"[{ConditionName}] 重置状态 - 无需操作");
     }
     
     /// <summary>
@@ -42,6 +39,5 @@ public class AlwaysTrueCondition : ICondition
     public void ResetOnPhaseEnd()
     {
         // 无条件状态，无需重置
-        Debug.Log($"[{ConditionName}] 回合结束重置状态 - 无需操作");
     }
 }

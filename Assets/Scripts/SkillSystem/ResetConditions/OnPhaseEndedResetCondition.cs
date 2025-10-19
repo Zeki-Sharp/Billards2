@@ -14,7 +14,6 @@ public class OnPhaseEndedResetCondition : IResetCondition
     /// </summary>
     public void Initialize()
     {
-        Debug.Log($"[{ConditionName}] 初始化完成 - 回合结束时重置触发条件");
     }
 
     /// <summary>
@@ -54,7 +53,6 @@ public class OnPhaseEndedResetCondition : IResetCondition
     /// </summary>
     public void Reset()
     {
-        Debug.Log($"[{ConditionName}] 状态重置 - 回合结束重置条件已重置");
     }
     
     /// <summary>

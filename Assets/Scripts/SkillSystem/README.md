@@ -4,6 +4,13 @@
 
 这是技能系统的阶段1实现，使用 ScriptableObject + 管理器组件模式，替代了临时的 TestSkillChain。系统支持可视化配置，保持与现有架构的一致性。
 
+## 📚 重要文档
+
+- **[重置条件 vs 效果移除条件](README_ResetVsRemoval.md)** ⭐ 必读
+  - 详细说明 IResetCondition 和 IEffectRemovalCondition 的区别
+  - 提供完整的使用场景和配置示例
+  - 包含生命周期图表和常见问题解答
+
 ## 核心组件
 
 ### 1. SkillConfig (ScriptableObject)

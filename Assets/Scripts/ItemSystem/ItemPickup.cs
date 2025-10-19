@@ -213,7 +213,7 @@ public class ItemPickup : MonoBehaviour
         // 播放拾取音效
         if (itemConfig.pickupSound != null)
         {
-            // TODO: 集成音效系统
+            // 音效系统待集成
             // AudioManager.PlaySound(itemConfig.pickupSound, transform.position);
             
             if (enableDebugLog)
