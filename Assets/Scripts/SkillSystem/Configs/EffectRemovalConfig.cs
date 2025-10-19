@@ -79,13 +79,8 @@ public class EffectRemovalConfig
     /// </summary>
     private IEffectRemovalCondition CreateValueComparisonRemovalCondition()
     {
-        // 获取数据提取器
-        System.Func<object, float> valueExtractor = GetDataExtractor(dataExtractorType);
-        if (valueExtractor == null)
-        {
-            Debug.LogError($"[EffectRemovalConfig] 不支持的数据提取器类型: {dataExtractorType}");
-            return null;
-        }
+        // 直接使用DataExtractors静态类获取数据提取器
+        System.Func<object, float> valueExtractor = DataExtractors.GetExtractor(dataExtractorType);
         
         // 根据比较类型创建条件
         if (comparisonType == ComparisonType.InRange)
@@ -95,29 +90,6 @@ public class EffectRemovalConfig
         else
         {
             return new ValueComparisonEffectRemovalCondition(comparisonType, targetValue, valueExtractor, dataExtractorType);
-        }
-    }
-    
-    /// <summary>
-    /// 根据类型获取数据提取器
-    /// </summary>
-    private System.Func<object, float> GetDataExtractor(DataExtractorType type)
-    {
-        switch (type)
-        {
-            case DataExtractorType.Health:
-                return DataExtractors.HealthExtractor;
-            case DataExtractorType.Attack:
-                return DataExtractors.AttackExtractor;
-            case DataExtractorType.Defense:
-                return DataExtractors.DefenseExtractor;
-            case DataExtractorType.Speed:
-                return DataExtractors.SpeedExtractor;
-            case DataExtractorType.Mana:
-                return DataExtractors.ManaExtractor;
-            default:
-                Debug.LogError($"不支持的数据提取器类型: {type}");
-                return null;
         }
     }
     

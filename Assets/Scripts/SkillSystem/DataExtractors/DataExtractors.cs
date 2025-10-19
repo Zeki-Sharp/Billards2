@@ -55,6 +55,31 @@ public static class DataExtractors
             return playerState.CurrentMana;
         return 0f;
     };
+    
+    /// <summary>
+    /// 根据类型获取对应的数据提取器
+    /// </summary>
+    /// <param name="type">数据提取器类型</param>
+    /// <returns>数据提取函数</returns>
+    public static System.Func<object, float> GetExtractor(DataExtractorType type)
+    {
+        switch (type)
+        {
+            case DataExtractorType.Health:
+                return HealthExtractor;
+            case DataExtractorType.Attack:
+                return AttackExtractor;
+            case DataExtractorType.Defense:
+                return DefenseExtractor;
+            case DataExtractorType.Speed:
+                return SpeedExtractor;
+            case DataExtractorType.Mana:
+                return ManaExtractor;
+            default:
+                UnityEngine.Debug.LogError($"不支持的数据提取器类型: {type}");
+                return (eventData) => 0f;
+        }
+    }
 }
 
 /// <summary>

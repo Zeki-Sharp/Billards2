@@ -89,8 +89,8 @@ public class SingleResetConditionConfig
     /// </summary>
     private IResetCondition CreateValueComparisonResetCondition()
     {
-        // 获取值提取器
-        var valueExtractor = GetDataExtractor(dataExtractorType);
+        // 直接使用DataExtractors静态类获取值提取器
+        var valueExtractor = DataExtractors.GetExtractor(dataExtractorType);
         
         if (comparisonType == ComparisonType.InRange)
         {
@@ -99,47 +99,6 @@ public class SingleResetConditionConfig
         else
         {
             return new ValueComparisonResetCondition(comparisonType, targetValue, valueExtractor, dataExtractorType);
-        }
-    }
-    
-    /// <summary>
-    /// 获取数据提取器函数
-    /// </summary>
-    private System.Func<object, float> GetDataExtractor(DataExtractorType extractorType)
-    {
-        switch (extractorType)
-        {
-            case DataExtractorType.Health:
-                return (data) => {
-                    if (data is HealthStateData healthData)
-                        return healthData.HealthPercentage;
-                    return 0f;
-                };
-            case DataExtractorType.Attack:
-                return (data) => {
-                    if (data is AttackData attackData)
-                        return attackData.Damage;
-                    return 0f;
-                };
-            case DataExtractorType.Defense:
-                return (data) => {
-                    if (data is AttackData attackData)
-                        return attackData.Damage; // 防御值暂时使用伤害值
-                    return 0f;
-                };
-            case DataExtractorType.Speed:
-                return (data) => {
-                    // 速度变化事件暂未实现
-                    return 0f;
-                };
-            case DataExtractorType.Mana:
-                return (data) => {
-                    // 法力变化事件暂未实现
-                    return 0f;
-                };
-            default:
-                Debug.LogWarning($"[SingleResetConditionConfig] 未知的数据提取器类型: {extractorType}");
-                return (data) => 0f;
         }
     }
     

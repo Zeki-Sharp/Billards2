@@ -69,31 +69,6 @@ public class TriggerConfig
     }
     
     /// <summary>
-    /// 根据类型获取数据提取器
-    /// </summary>
-    /// <param name="type">数据提取器类型</param>
-    /// <returns>数据提取函数</returns>
-    private System.Func<object, float> GetDataExtractor(DataExtractorType type)
-    {
-        switch (type)
-        {
-            case DataExtractorType.Health:
-                return DataExtractors.HealthExtractor;
-            case DataExtractorType.Attack:
-                return DataExtractors.AttackExtractor;
-            case DataExtractorType.Defense:
-                return DataExtractors.DefenseExtractor;
-            case DataExtractorType.Speed:
-                return DataExtractors.SpeedExtractor;
-            case DataExtractorType.Mana:
-                return DataExtractors.ManaExtractor;
-            default:
-                Debug.LogError($"不支持的数据提取器类型: {type}");
-                return (eventData) => 0f;
-        }
-    }
-    
-    /// <summary>
     /// 获取调试信息
     /// </summary>
     public string GetDebugInfo()

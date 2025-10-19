@@ -71,7 +71,9 @@ public class SingleConditionConfig
                 {
                     valueComparisonCondition.SetRange(minValue, maxValue);
                 }
-                valueComparisonCondition.SetValueExtractor(GetDataExtractor(dataExtractorType));
+                // 直接使用DataExtractors静态类，不再通过中间方法
+                System.Func<object, float> extractor = DataExtractors.GetExtractor(dataExtractorType);
+                valueComparisonCondition.SetValueExtractor(extractor);
                 return valueComparisonCondition;
             case ConditionType.TimeWindow:
                 // 暂时返回 null，后续实现
@@ -80,31 +82,6 @@ public class SingleConditionConfig
             default:
                 Debug.LogError($"不支持的条件类型: {conditionType}");
                 return null;
-        }
-    }
-    
-    /// <summary>
-    /// 根据类型获取数据提取器
-    /// </summary>
-    /// <param name="type">数据提取器类型</param>
-    /// <returns>数据提取函数</returns>
-    private System.Func<object, float> GetDataExtractor(DataExtractorType type)
-    {
-        switch (type)
-        {
-            case DataExtractorType.Health:
-                return DataExtractors.HealthExtractor;
-            case DataExtractorType.Attack:
-                return DataExtractors.AttackExtractor;
-            case DataExtractorType.Defense:
-                return DataExtractors.DefenseExtractor;
-            case DataExtractorType.Speed:
-                return DataExtractors.SpeedExtractor;
-            case DataExtractorType.Mana:
-                return DataExtractors.ManaExtractor;
-            default:
-                Debug.LogError($"不支持的数据提取器类型: {type}");
-                return (eventData) => 0f;
         }
     }
     
