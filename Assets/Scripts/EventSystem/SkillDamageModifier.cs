@@ -49,11 +49,26 @@ public class SkillDamageModifier : IDamageModifier
         
         // 修改伤害值
         float originalDamage = attackData.Damage;
-        attackData.Damage *= damageMultiplier;
+        
+        switch (modifierType)
+        {
+            case StatModifierType.Add:
+                attackData.Damage += modifierValue;
+                break;
+            case StatModifierType.PercentAdd:
+                attackData.Damage *= (1f + modifierValue);
+                break;
+            case StatModifierType.PercentMult:
+                attackData.Damage *= modifierValue;
+                break;
+            default:
+                Debug.LogWarning($"[SkillDamageModifier] {modifierName} 未知的修饰器类型: {modifierType}");
+                return false;
+        }
         
         if (showDebugLog)
         {
-            Debug.Log($"[SkillDamageModifier] {modifierName} 修改伤害: {originalDamage} → {attackData.Damage}");
+            Debug.Log($"[SkillDamageModifier] {modifierName} 修改伤害: {originalDamage} → {attackData.Damage} (类型: {modifierType}, 值: {modifierValue})");
         }
         
         return true; // 成功处理了伤害修改
@@ -64,7 +79,8 @@ public class SkillDamageModifier : IDamageModifier
     #region 私有字段
     
     private string modifierName;
-    private float damageMultiplier;
+    private float modifierValue;
+    private StatModifierType modifierType;
     private bool isEnabled;
     private IEffectRemovalCondition removalCondition;
     private bool showDebugLog;
@@ -77,20 +93,22 @@ public class SkillDamageModifier : IDamageModifier
     /// 创建技能伤害修改器
     /// </summary>
     /// <param name="name">修改器名称</param>
-    /// <param name="multiplier">伤害倍率</param>
+    /// <param name="value">修改值</param>
+    /// <param name="type">修改类型</param>
     /// <param name="removalCondition">移除条件</param>
     /// <param name="debugLog">是否显示调试日志</param>
-    public SkillDamageModifier(string name, float multiplier, IEffectRemovalCondition removalCondition = null, bool debugLog = true)
+    public SkillDamageModifier(string name, float value, StatModifierType type, IEffectRemovalCondition removalCondition = null, bool debugLog = true)
     {
         this.modifierName = name;
-        this.damageMultiplier = multiplier;
+        this.modifierValue = value;
+        this.modifierType = type;
         this.removalCondition = removalCondition;
         this.isEnabled = true;
         this.showDebugLog = debugLog;
         
         if (showDebugLog)
         {
-            Debug.Log($"[SkillDamageModifier] 创建修改器: {modifierName}, 倍率: {damageMultiplier}");
+            Debug.Log($"[SkillDamageModifier] 创建修改器: {modifierName}, 值: {modifierValue}, 类型: {modifierType}");
         }
     }
     
@@ -137,15 +155,30 @@ public class SkillDamageModifier : IDamageModifier
     #region 公共方法
     
     /// <summary>
-    /// 设置伤害倍率
+    /// 设置修改值
     /// </summary>
-    /// <param name="multiplier">伤害倍率</param>
-    public void SetDamageMultiplier(float multiplier)
+    /// <param name="value">修改值</param>
+    public void SetModifierValue(float value)
     {
-        damageMultiplier = multiplier;
+        modifierValue = value;
         if (showDebugLog)
         {
-            Debug.Log($"[SkillDamageModifier] {modifierName} 设置伤害倍率: {multiplier}");
+            Debug.Log($"[SkillDamageModifier] {modifierName} 设置修改值: {value} (类型: {modifierType})");
+        }
+    }
+    
+    /// <summary>
+    /// 设置修改类型和值
+    /// </summary>
+    /// <param name="value">修改值</param>
+    /// <param name="type">修改类型</param>
+    public void SetModifier(float value, StatModifierType type)
+    {
+        modifierValue = value;
+        modifierType = type;
+        if (showDebugLog)
+        {
+            Debug.Log($"[SkillDamageModifier] {modifierName} 设置修改器: 值={value}, 类型={type}");
         }
     }
     

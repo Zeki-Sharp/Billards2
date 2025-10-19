@@ -178,6 +178,7 @@ public class StatModifierEffect : IEffect
         SkillDamageModifier damageModifier = new SkillDamageModifier(
             modifierName,
             modifierValue,
+            modifierType,
             effectRemovalCondition,
             true
         );
@@ -188,7 +189,7 @@ public class StatModifierEffect : IEffect
         // 保存引用用于后续移除
         appliedModifier = damageModifier;
         
-        Debug.Log($"[{EffectName}] 攻击力修改委托给 DamageProcessor: {targetStat} x{modifierValue}");
+        Debug.Log($"[{EffectName}] 攻击力修改委托给 DamageProcessor: {targetStat} {modifierType} {modifierValue}");
         
         isApplied = true;
         

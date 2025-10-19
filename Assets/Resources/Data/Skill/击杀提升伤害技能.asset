@@ -34,7 +34,7 @@ MonoBehaviour:
   effectConfig:
     effectType: 0
     targetStat: Damage
-    modifierValue: 1.5
+    modifierValue: 5
     modifierType: 0
     healAmount: 20
     minTransitionTime: 1
@@ -54,6 +54,11 @@ MonoBehaviour:
     logicType: 1
     resetConditions:
     - resetType: 1
+      comparisonType: 1
+      targetValue: 0.99
+      minValue: 0
+      maxValue: 1
+      dataExtractorType: 0
   effectRemovalConfig:
     removalType: 5
     duration: 30

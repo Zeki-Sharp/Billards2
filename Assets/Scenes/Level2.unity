@@ -8622,9 +8622,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c87ee035e12f35e4ea7b74d34431d6fa, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  activeSkills:
-  - {fileID: 11400000, guid: f3389976e8425cb41b9e1b27c8013e6e, type: 2}
-  - {fileID: 11400000, guid: 20ef6b51707253b4bbf5e4ff06cc86a6, type: 2}
+  activeSkills: []
   enableDebugLog: 1
 --- !u!4 &1357681023
 Transform:
