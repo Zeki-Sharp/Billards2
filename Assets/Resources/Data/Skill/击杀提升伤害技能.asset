@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   skillName: "\u6B7B\u4EA1\u63D0\u5347"
   description: "\u6740\u6B7B\u654C\u4EBA\u540E\u4F24\u5BB3\u4E0A\u5347"
-  skillTag: default
+  skillTag: common
   triggerConfig:
     triggerType: 1
     targetTag: Wall
