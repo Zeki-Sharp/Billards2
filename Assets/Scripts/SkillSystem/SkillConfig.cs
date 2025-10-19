@@ -109,6 +109,7 @@ public class SkillConfig : ScriptableObject
         
         var effect = effectConfig?.CreateEffect(effectRemovalCondition);
         
+        
         if (trigger == null || condition == null || effect == null || resetCondition == null)
         {
             Debug.LogError($"技能 {skillName} 基础组件创建失败");
@@ -249,6 +250,11 @@ public class SkillInstance
     public IResetCondition resetCondition;  // 所有技能都有
     public IEffectRemovalCondition effectRemovalCondition; // 只有PropertyEffect有
     
+    /// <summary>
+    /// 技能实例唯一ID
+    /// </summary>
+    public string InstanceId { get; private set; }
+    
     public SkillInstance(SkillConfig config, ITrigger trigger, ICondition condition, IEffect effect, 
                         IResetCondition resetCondition, 
                         IEffectRemovalCondition effectRemovalCondition = null)
@@ -260,12 +266,26 @@ public class SkillInstance
         this.resetCondition = resetCondition;
         this.effectRemovalCondition = effectRemovalCondition;
         
+        // 生成唯一实例ID
+        this.InstanceId = $"{config.skillName}_{System.Guid.NewGuid()}";
+        
         // 初始化所有组件
         this.trigger?.Initialize();
         this.condition?.Initialize();
         this.effect?.Initialize();
         this.resetCondition?.Initialize();
         this.effectRemovalCondition?.Initialize();
+        
+        // 设置重置条件的目标技能实例ID和依赖组件
+        this.resetCondition?.SetTargetSkillInstanceId(this.InstanceId);
+        
+        // 如果是值比较重置条件，设置依赖组件
+        if (this.resetCondition is ValueComparisonResetCondition valueComparisonResetCondition)
+        {
+            valueComparisonResetCondition.SetDependencies(this.condition, this.effect);
+        }
+        
+        Debug.Log($"[SkillInstance] 创建技能实例 - 技能: {config.skillName}, 实例ID: {InstanceId}");
     }
     
     /// <summary>
@@ -285,7 +305,7 @@ public class SkillInstance
     /// </summary>
     public bool ProcessEvent(object eventData)
     {
-        Debug.Log($"[SkillInstance] 🔍 开始处理事件 - 技能: {config.skillName}, 时间: {Time.time:F2}, 事件类型: {eventData?.GetType().Name}");
+        Debug.Log($"[SkillInstance] 🔍 开始处理事件 - 技能: {config.skillName}, 实例ID: {InstanceId}, 时间: {Time.time:F2}, 事件类型: {eventData?.GetType().Name}");
         
         // 第一步：检查触发器是否检测到事件
         bool eventDetected = trigger.CheckEvent(eventData);
@@ -296,21 +316,7 @@ public class SkillInstance
         }
         Debug.Log($"[SkillInstance] ✅ 触发器检测到事件 - 技能: {config.skillName}, 触发器: {trigger?.GetType().Name}");
         
-        // 第二步：检查移除条件（OnEffectRemovalResetCondition 场景）
-        // 在检查条件之前先检查是否需要移除效果
-        if (effectRemovalCondition != null && resetCondition is OnEffectRemovalResetCondition)
-        {
-            bool shouldRemove = effectRemovalCondition.ShouldRemoveEffect(eventData);
-            if (shouldRemove)
-            {
-                Debug.Log($"[SkillInstance] 🗑️ 移除条件满足，重置触发条件和效果 - 技能: {config.skillName}");
-                condition.Reset();  // 重置触发条件
-                effect.Reset();     // 重置效果状态
-                return false; // 移除后不继续处理
-            }
-        }
-        
-        // 第三步：检查条件是否满足
+        // 第二步：检查条件是否满足
         bool conditionMet = condition.CheckCondition(eventData);
         if (!conditionMet)
         {
@@ -319,7 +325,7 @@ public class SkillInstance
         }
         Debug.Log($"[SkillInstance] ✅ 条件满足 - 技能: {config.skillName}, 条件: {condition?.GetType().Name}");
         
-        // 第四步：执行效果
+        // 第三步：执行效果
         Debug.Log($"[SkillInstance] 🎯 准备执行效果 - 技能: {config.skillName}, 效果: {effect?.GetType().Name}");
         bool effectExecuted = effect.ExecuteEffect(eventData);
         
@@ -327,23 +333,18 @@ public class SkillInstance
         {
             Debug.Log($"[SkillInstance] 🎯 技能 {config.skillName} 执行成功！");
             
-            // 第五步：检查重置条件（常规重置场景）
-            if (resetCondition != null && !(resetCondition is OnEffectRemovalResetCondition))
+            // 第四步：发布技能执行完毕事件（带实例ID）
+            var skillEvent = new SkillExecutedEventData
             {
-                bool shouldReset = resetCondition.ShouldReset(eventData);
-                Debug.Log($"[SkillInstance] 🔄 重置条件检查: {shouldReset} - 技能: {config.skillName}");
-                
-                if (shouldReset)
-                {
-                    // 立即重置条件
-                    condition.Reset();
-                    Debug.Log($"[SkillInstance] 🔄 重置条件满足，立即重置触发条件 - {config.skillName}");
-                }
-            }
-            else if (resetCondition == null)
-            {
-                Debug.LogWarning($"[SkillInstance] ⚠️ 重置条件为空 - 技能: {config.skillName}");
-            }
+                SkillName = config.skillName,
+                SkillInstanceId = this.InstanceId,
+                OriginalEventData = eventData,
+                Success = true,
+                Timestamp = Time.time
+            };
+            
+            // 发布事件，让重置条件响应
+            PublishSkillExecutedEvent(skillEvent);
         }
         else
         {
@@ -354,20 +355,72 @@ public class SkillInstance
     }
     
     /// <summary>
+    /// 处理技能执行完毕事件
+    /// </summary>
+    /// <param name="eventData">技能执行完毕事件数据</param>
+    public void HandleSkillExecutedEvent(object eventData)
+    {
+        if (eventData is SkillExecutedEventData skillEvent)
+        {
+            // 只处理自己的事件
+            if (skillEvent.SkillInstanceId == this.InstanceId)
+            {
+                Debug.Log($"[SkillInstance] 收到技能执行完毕事件 - 技能: {config.skillName}, 实例ID: {InstanceId}");
+                
+                // 立即重置条件响应技能执行完毕事件
+                if (resetCondition?.ShouldReset(eventData) == true) {
+                    condition.Reset();         // 重置触发条件
+                    effect.SetCanExecute(true); // 重新允许执行
+                    Debug.Log($"[SkillInstance] 🔄 技能执行完毕，立即重置 - {config.skillName}");
+                }
+            }
+            else
+            {
+                Debug.Log($"[SkillInstance] 忽略其他技能的事件 - 技能: {config.skillName}, 事件来源: {skillEvent.SkillInstanceId}");
+            }
+        }
+    }
+    
+    /// <summary>
     /// 处理回合结束事件
     /// </summary>
     /// <param name="eventData">回合结束事件数据</param>
     public void HandlePhaseEndEvent(object eventData)
     {
+        // 重置条件满足时：重置触发条件和 canExecute
         if (resetCondition != null)
         {
             bool shouldReset = resetCondition.ShouldReset(eventData);
             if (shouldReset)
             {
-                condition.Reset();  // 重置触发条件
-                effect.Reset();     // 重置效果状态
-                Debug.Log($"[SkillInstance] 🔄 回合结束，重置触发条件和效果 - {config.skillName}");
+                condition.Reset();         // 重置触发条件
+                effect.SetCanExecute(true); // 重新允许执行
+                Debug.Log($"[SkillInstance] 🔄 回合结束，重置触发条件和 canExecute - {config.skillName}");
             }
         }
+        
+        // 移除条件满足时：只移除效果
+        if (effectRemovalCondition != null)
+        {
+            bool shouldRemove = effectRemovalCondition.ShouldRemoveEffect(eventData);
+            if (shouldRemove)
+            {
+                effect.Reset();  // 移除效果（不影响 canExecute）
+                Debug.Log($"[SkillInstance] 🗑️ 回合结束，移除效果 - {config.skillName}");
+            }
+        }
+    }
+    
+    /// <summary>
+    /// 发布技能执行完毕事件
+    /// </summary>
+    /// <param name="skillEvent">技能执行完毕事件数据</param>
+    private void PublishSkillExecutedEvent(SkillExecutedEventData skillEvent)
+    {
+        Debug.Log($"[SkillInstance] 📢 发布技能执行完毕事件 - {skillEvent.GetDebugInfo()}");
+        
+        // 发布事件，让重置条件响应
+        // 这里可以通过事件总线或直接调用事件处理方法
+        HandleSkillExecutedEvent(skillEvent);
     }
 }

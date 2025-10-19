@@ -13,6 +13,34 @@ public class SingleResetConditionConfig
     [Tooltip("选择重置条件类型")]
     public ResetConditionType resetType = ResetConditionType.Immediate;
     
+    // 值比较条件参数 - 只在 resetType == ValueComparison 时显示
+    [ShowIf("resetType", ResetConditionType.ValueComparison)]
+    [LabelText("比较类型")]
+    [Tooltip("比较类型")]
+    public ComparisonType comparisonType = ComparisonType.LessThanOrEqual;
+    
+    [ShowIf("resetType", ResetConditionType.ValueComparison)]
+    [LabelText("目标值")]
+    [Tooltip("目标值")]
+    public float targetValue = 0.99f;
+    
+    [ShowIf("resetType", ResetConditionType.ValueComparison)]
+    [ShowIf("comparisonType", ComparisonType.InRange)]
+    [LabelText("最小值")]
+    [Tooltip("最小值")]
+    public float minValue = 0f;
+    
+    [ShowIf("resetType", ResetConditionType.ValueComparison)]
+    [ShowIf("comparisonType", ComparisonType.InRange)]
+    [LabelText("最大值")]
+    [Tooltip("最大值")]
+    public float maxValue = 1f;
+    
+    [ShowIf("resetType", ResetConditionType.ValueComparison)]
+    [LabelText("数据提取器类型")]
+    [Tooltip("数据提取器类型")]
+    public DataExtractorType dataExtractorType = DataExtractorType.Health;
+    
     
     
     /// <summary>
@@ -26,8 +54,8 @@ public class SingleResetConditionConfig
                 return new ImmediateResetCondition();
             case ResetConditionType.OnPlayerPhaseEnded:
                 return new OnPhaseEndedResetCondition();
-            case ResetConditionType.OnEffectRemovalConditionMet:
-                return new OnEffectRemovalResetCondition();
+            case ResetConditionType.ValueComparison:
+                return CreateValueComparisonResetCondition();
             case ResetConditionType.Never:
                 return new NeverResetCondition();
             default:
@@ -47,12 +75,108 @@ public class SingleResetConditionConfig
                 return "立即重置";
             case ResetConditionType.OnPlayerPhaseEnded:
                 return "回合结束重置";
-            case ResetConditionType.OnEffectRemovalConditionMet:
-                return "效果移除时重置";
+            case ResetConditionType.ValueComparison:
+                return $"值比较重置: {GetValueComparisonDebugInfo()}";
             case ResetConditionType.Never:
                 return "永不复位";
             default:
                 return $"重置条件: {resetType}";
+        }
+    }
+    
+    /// <summary>
+    /// 创建值比较重置条件
+    /// </summary>
+    private IResetCondition CreateValueComparisonResetCondition()
+    {
+        // 获取值提取器
+        var valueExtractor = GetDataExtractor(dataExtractorType);
+        
+        if (comparisonType == ComparisonType.InRange)
+        {
+            return new ValueComparisonResetCondition(minValue, maxValue, valueExtractor, dataExtractorType);
+        }
+        else
+        {
+            return new ValueComparisonResetCondition(comparisonType, targetValue, valueExtractor, dataExtractorType);
+        }
+    }
+    
+    /// <summary>
+    /// 获取数据提取器函数
+    /// </summary>
+    private System.Func<object, float> GetDataExtractor(DataExtractorType extractorType)
+    {
+        switch (extractorType)
+        {
+            case DataExtractorType.Health:
+                return (data) => {
+                    if (data is HealthStateData healthData)
+                        return healthData.HealthPercentage;
+                    return 0f;
+                };
+            case DataExtractorType.Attack:
+                return (data) => {
+                    if (data is AttackData attackData)
+                        return attackData.Damage;
+                    return 0f;
+                };
+            case DataExtractorType.Defense:
+                return (data) => {
+                    if (data is AttackData attackData)
+                        return attackData.Damage; // 防御值暂时使用伤害值
+                    return 0f;
+                };
+            case DataExtractorType.Speed:
+                return (data) => {
+                    // 速度变化事件暂未实现
+                    return 0f;
+                };
+            case DataExtractorType.Mana:
+                return (data) => {
+                    // 法力变化事件暂未实现
+                    return 0f;
+                };
+            default:
+                Debug.LogWarning($"[SingleResetConditionConfig] 未知的数据提取器类型: {extractorType}");
+                return (data) => 0f;
+        }
+    }
+    
+    /// <summary>
+    /// 获取值比较调试信息
+    /// </summary>
+    private string GetValueComparisonDebugInfo()
+    {
+        if (comparisonType == ComparisonType.InRange)
+        {
+            return $"{dataExtractorType} 在范围 [{minValue}, {maxValue}] 内";
+        }
+        else
+        {
+            return $"{dataExtractorType} {GetComparisonSymbol()} {targetValue}";
+        }
+    }
+    
+    /// <summary>
+    /// 获取比较符号
+    /// </summary>
+    private string GetComparisonSymbol()
+    {
+        switch (comparisonType)
+        {
+            case ComparisonType.GreaterThan:
+                return ">";
+            case ComparisonType.GreaterThanOrEqual:
+                return ">=";
+            case ComparisonType.LessThan:
+                return "<";
+            case ComparisonType.LessThanOrEqual:
+                return "<=";
+            case ComparisonType.Equal:
+                return "==";
+            default:
+                return "?";
         }
     }
 }
@@ -143,7 +267,7 @@ public enum ResetConditionType
 {
     Immediate,              // 立即重置
     OnPlayerPhaseEnded,     // 回合结束重置
-    OnEffectRemovalConditionMet,  // 效果移除条件满足时重置
+    ValueComparison,        // 值比较重置
     Never                   // 永不复位
 }
 

@@ -27,4 +27,10 @@ public interface IResetCondition
     /// 重置重置条件状态
     /// </summary>
     void Reset();
+    
+    /// <summary>
+    /// 设置目标技能实例ID（用于事件过滤）
+    /// </summary>
+    /// <param name="skillInstanceId">技能实例ID</param>
+    void SetTargetSkillInstanceId(string skillInstanceId);
 }

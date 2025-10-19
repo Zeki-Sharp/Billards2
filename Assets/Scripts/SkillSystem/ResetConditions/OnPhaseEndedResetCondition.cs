@@ -56,4 +56,14 @@ public class OnPhaseEndedResetCondition : IResetCondition
     {
         Debug.Log($"[{ConditionName}] 状态重置 - 回合结束重置条件已重置");
     }
+    
+    /// <summary>
+    /// 设置目标技能实例ID（用于事件过滤）
+    /// </summary>
+    /// <param name="skillInstanceId">技能实例ID</param>
+    public void SetTargetSkillInstanceId(string skillInstanceId)
+    {
+        // 回合结束重置条件不需要过滤，因为回合结束事件是全局的
+        Debug.Log($"[{ConditionName}] 设置目标技能实例ID: {skillInstanceId} (回合结束重置条件不需要过滤)");
+    }
 }

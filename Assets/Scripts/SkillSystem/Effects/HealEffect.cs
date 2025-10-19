@@ -8,6 +8,17 @@ public class HealEffect : IEffect
 {
     public string EffectName => "HealEffect";
     
+    // 瞬时效果，总是可以执行
+    public bool CanExecute => true;
+    
+    /// <summary>
+    /// 设置是否允许执行（空实现，瞬时效果总是可以执行）
+    /// </summary>
+    public void SetCanExecute(bool canExecute)
+    {
+        // 瞬时效果不需要控制执行权限
+    }
+    
     private float healAmount = 20f;
     private PlayerCore targetPlayer;
     

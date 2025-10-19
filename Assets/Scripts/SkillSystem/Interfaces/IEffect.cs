@@ -28,4 +28,15 @@ public interface IEffect
     /// 重置效果状态
     /// </summary>
     void Reset();
+    
+    /// <summary>
+    /// 是否允许执行（完全由重置条件控制）
+    /// </summary>
+    bool CanExecute { get; }
+    
+    /// <summary>
+    /// 设置是否允许执行（完全由重置条件控制）
+    /// </summary>
+    /// <param name="canExecute">是否允许执行</param>
+    void SetCanExecute(bool canExecute);
 }

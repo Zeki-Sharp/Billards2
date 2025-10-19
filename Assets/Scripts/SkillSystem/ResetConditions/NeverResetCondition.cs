@@ -35,4 +35,14 @@ public class NeverResetCondition : IResetCondition
     {
         Debug.Log($"[{ConditionName}] 状态重置 - 永不复位条件无需重置");
     }
+    
+    /// <summary>
+    /// 设置目标技能实例ID（用于事件过滤）
+    /// </summary>
+    /// <param name="skillInstanceId">技能实例ID</param>
+    public void SetTargetSkillInstanceId(string skillInstanceId)
+    {
+        // 永不复位条件不需要过滤
+        Debug.Log($"[{ConditionName}] 设置目标技能实例ID: {skillInstanceId} (永不复位条件不需要过滤)");
+    }
 }

@@ -8,6 +8,17 @@ public class WeakPointEffect : IEffect
 {
     public string EffectName => "WeakPointEffect";
     
+    // 瞬时效果，总是可以执行
+    public bool CanExecute => true;
+    
+    /// <summary>
+    /// 设置是否允许执行（空实现，瞬时效果总是可以执行）
+    /// </summary>
+    public void SetCanExecute(bool canExecute)
+    {
+        // 瞬时效果不需要控制执行权限
+    }
+    
     // 配置参数（从 SkillEffectConfig 传入）
     private GameObject weakPointMarkerPrefab;
     private float radius;

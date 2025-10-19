@@ -90,4 +90,18 @@ public class CompositeResetCondition : IResetCondition
         }
         Debug.Log($"[{ConditionName}] 重置所有 {resetConditions.Count} 个重置条件");
     }
+    
+    /// <summary>
+    /// 设置目标技能实例ID（用于事件过滤）
+    /// </summary>
+    /// <param name="skillInstanceId">技能实例ID</param>
+    public void SetTargetSkillInstanceId(string skillInstanceId)
+    {
+        // 为所有子重置条件设置目标技能实例ID
+        foreach (var resetCondition in resetConditions)
+        {
+            resetCondition?.SetTargetSkillInstanceId(skillInstanceId);
+        }
+        Debug.Log($"[{ConditionName}] 为所有 {resetConditions.Count} 个子重置条件设置目标技能实例ID: {skillInstanceId}");
+    }
 }

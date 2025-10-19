@@ -12,10 +12,25 @@ public class StatModifierEffect : IEffect
     private string targetStat = "Damage"; // 默认修改攻击力（使用新命名）
     private float modifierValue = 1.5f;   // 默认+50%
     private StatModifierType modifierType = StatModifierType.PercentMult; // 默认百分比乘算
-    private bool isApplied = false;       // 是否已应用
+    private bool isApplied = false;       // 效果是否已应用（由移除条件控制）
+    private bool canExecute = true;       // 是否允许执行（完全由重置条件控制）
     private PlayerCore targetPlayer;      // 目标玩家
     private PlayerStatsManager statsManager; // 属性管理器
     private object appliedModifier; // 应用的修饰器（可能是 StatModifier 或 SkillDamageModifier）
+    
+    /// <summary>
+    /// 是否允许执行（完全由重置条件控制）
+    /// </summary>
+    public bool CanExecute => canExecute;
+    
+    /// <summary>
+    /// 设置是否允许执行（完全由重置条件控制）
+    /// </summary>
+    public void SetCanExecute(bool canExecute)
+    {
+        this.canExecute = canExecute;
+        Debug.Log($"[{EffectName}] SetCanExecute: {canExecute}");
+    }
     
     /// <summary>
     /// 设置修改参数
@@ -101,7 +116,14 @@ public class StatModifierEffect : IEffect
     /// <returns>效果是否执行成功</returns>
     public bool ExecuteEffect(object eventData)
     {
-        Debug.Log($"[{EffectName}] ExecuteEffect 被调用，目标属性: {targetStat}");
+        Debug.Log($"[{EffectName}] ExecuteEffect 被调用，目标属性: {targetStat}, canExecute: {canExecute}, isApplied: {isApplied}");
+        
+        // 只检查执行权限（完全由重置条件控制）
+        if (!canExecute)
+        {
+            Debug.Log($"[{EffectName}] 不允许执行效果（canExecute=false）");
+            return false;
+        }
         
         // 动态查找目标玩家
         if (!GetTargetPlayer())
@@ -113,20 +135,28 @@ public class StatModifierEffect : IEffect
         // 检查修饰器是否仍然存在
         CheckModifierStatus();
         
-        if (isApplied)
-        {
-            Debug.Log($"[{EffectName}] 效果已应用，跳过重复执行");
-            return true;
-        }
+        // 执行效果逻辑（不管是否已应用，只要canExecute为true就执行）
+        bool result;
         
         // 特殊处理：如果目标属性是攻击力，委托给 DamageProcessor 处理
         if (targetStat == "Damage")
         {
-            return ExecuteDamageModification();
+            result = ExecuteDamageModification();
+        }
+        else
+        {
+            // 其他属性使用原来的 StatModifier 方式
+            result = ExecuteStatModification();
         }
         
-        // 其他属性使用原来的 StatModifier 方式
-        return ExecuteStatModification();
+        // 执行成功后，禁止再次执行（由重置条件重新允许）
+        if (result)
+        {
+            canExecute = false;
+            Debug.Log($"[{EffectName}] 效果执行成功，设置 canExecute=false");
+        }
+        
+        return result;
     }
     
     /// <summary>
@@ -283,11 +313,11 @@ public class StatModifierEffect : IEffect
     }
     
     /// <summary>
-    /// 重置效果状态
+    /// 重置效果状态（由移除条件调用）
     /// </summary>
     public void Reset()
     {
-        Debug.Log($"[{EffectName}] 🔄 重置前状态 - isApplied: {isApplied}, appliedModifier: {appliedModifier != null}, 时间: {Time.time:F2}");
+        Debug.Log($"[{EffectName}] 🔄 重置前状态 - isApplied: {isApplied}, canExecute: {canExecute}, appliedModifier: {appliedModifier != null}, 时间: {Time.time:F2}");
         
         if (isApplied && appliedModifier != null)
         {
@@ -311,6 +341,7 @@ public class StatModifierEffect : IEffect
         
         isApplied = false;
         appliedModifier = null;
-        Debug.Log($"[{EffectName}] ✅ 重置后状态 - isApplied: {isApplied}, appliedModifier: {appliedModifier != null}, 时间: {Time.time:F2}");
+        // 注意：不重置 canExecute，因为它完全由重置条件控制
+        Debug.Log($"[{EffectName}] ✅ 重置后状态 - isApplied: {isApplied}, canExecute: {canExecute}, appliedModifier: {appliedModifier != null}, 时间: {Time.time:F2}");
     }
 }

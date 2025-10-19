@@ -8,6 +8,17 @@ public class TransitionEffect : IEffect
 {
     public string EffectName => "TransitionEffect";
     
+    // 瞬时效果，总是可以执行
+    public bool CanExecute => true;
+    
+    /// <summary>
+    /// 设置是否允许执行（空实现，瞬时效果总是可以执行）
+    /// </summary>
+    public void SetCanExecute(bool canExecute)
+    {
+        // 瞬时效果不需要控制执行权限
+    }
+    
     private TransitionManager transitionManager;
     
     // Transition 参数（从技能配置中获取）
