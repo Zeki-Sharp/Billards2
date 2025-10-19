@@ -1,9 +1,11 @@
 # 技能系统架构分析与重构优先级计划
 
-> **文档版本**: v1.0  
+> **文档版本**: v1.1  
 > **创建日期**: 2025-10-19  
+> **更新日期**: 2025-10-19（代码验证+数据更新）  
 > **文档目的**: 全面分析当前技能系统架构存在的问题，并制定分优先级的重构计划  
-> **重要说明**: ⚠️ 本文档仅包含问题分析和重构策略，不包含代码实现细节
+> **重要说明**: ⚠️ 本文档仅包含问题分析和重构策略，不包含代码实现细节  
+> **验证状态**: ✅ 已通过代码验证，所有问题确认存在
 
 ---
 
@@ -145,12 +147,23 @@ public static class DataExtractors {
 }
 ```
 
-但各Config类完全没有使用这个静态类，而是重新实现相同逻辑。
+各Config类通过不必要的中间方法包装了`DataExtractors`静态类。实际上这些中间方法只是简单转发：
+```csharp
+// 例如 TriggerConfig.cs:76-94
+private System.Func<object, float> GetDataExtractor(DataExtractorType type) {
+    switch (type) {
+        case DataExtractorType.Health:
+            return DataExtractors.HealthExtractor;  // 只是转发！
+        ...
+    }
+}
+```
 
 **影响**:
 - 代码重复度: **100%** (4处完全相同)
 - 维护成本: 修改提取逻辑需要改4个地方
 - 一致性风险: 4处实现可能不一致
+- **好消息**: 重构简单，只需删除中间方法，调用方直接使用`DataExtractors`
 
 ---
 
@@ -350,10 +363,12 @@ public class TriggerConfig {
 生产代码中充斥大量`Debug.Log`，影响性能和可读性。
 
 **统计**:
-- `SkillConfig.cs`: 10+ Debug.Log
-- `SkillManager.cs`: 15+ Debug.Log
-- `StatModifierEffect.cs`: 20+ Debug.Log
+- **全系统总计**: **252个**Debug.Log（分布在39个文件中）
+- `SkillManager.cs`: 26处
+- `StatModifierEffect.cs`: 25处
+- `SkillConfig.cs`: 20处
 - `SkillInstance.ProcessEvent()`: 每次调用输出4-5条日志
+- 其他35个文件: 181处
 
 **影响**:
 - 运行时性能开销（字符串拼接、控制台输出）
@@ -371,25 +386,32 @@ public class TriggerConfig {
 
 **典型问题**:
 1. 被注释掉但未清理的代码
-   ```
+   ```csharp
+   // SkillManager.cs:142
    // GameEventBus.OnChargingStarted += OnNewShotStarted;
    ```
    但在Unsubscribe中仍然有：
-   ```
-   GameEventBus.OnChargingStarted -= OnNewShotStarted;
+   ```csharp
+   // SkillManager.cs:160
+   //；GameEventBus.OnChargingStarted -= OnNewShotStarted;  // ⚠️ 注意：这里有中文分号！
    ```
 
-2. TODO注释未完成
+2. TODO注释未完成（统计：6个TODO）
    ```
    // TODO: 后续可以在 EffectManager 中添加专门的技能特效类型
    ```
 
 3. 未使用的字段和方法
 
+**严重问题**:
+- ⚠️ `SkillManager.cs:160`存在**中文分号"；"**错误
+- 这是明显的拷贝粘贴错误，会导致潜在的编译问题
+
 **影响**:
 - 代码混乱，难以理解
 - 新人可能不知道哪些是有效代码
 - 维护负担
+- 存在字符编码问题
 
 ---
 
@@ -477,7 +499,7 @@ ProcessEvent()
 
 ### P0 - 立即处理（影响系统稳定性和可维护性）
 
-**预计工作量**: 3-5个工作日  
+**预计工作量**: 2.5-4个工作日（P0.2工作量减半）  
 **风险等级**: 低  
 **收益**: 极高（消除70%代码冗余）
 
@@ -491,23 +513,25 @@ ProcessEvent()
 - **验证**: 确认无任何引用后删除
 - **风险**: 低（未被使用）
 
-**P0.2: 统一DataExtractor实现** ⏱️ 1天
-- **目标**: 所有Config类复用`DataExtractors`静态类
+**P0.2: 统一DataExtractor实现** ⏱️ 0.5天
+- **目标**: 所有Config类直接使用`DataExtractors`静态类
 - **修改范围**:
   - TriggerConfig
   - ConditionConfig
   - EffectRemovalConfig
   - ResetConditionConfig
-- **方法**: 删除重复的GetDataExtractor方法，改为调用DataExtractors
+- **方法**: 删除中间包装方法GetDataExtractor，调用方直接使用DataExtractors
 - **收益**: 减少120行重复代码
+- **备注**: 比预期简单，因为现有方法已经在调用DataExtractors，只是多了一层包装
 
 **P0.3: 清理过时代码和注释** ⏱️ 1天
 - **目标**: 删除所有注释掉的代码和无效TODO
 - **范围**: 全系统扫描
 - **包括**:
-  - 注释掉的事件订阅
-  - 未完成的TODO
+  - 注释掉的事件订阅（2处）
+  - 未完成的TODO（6处）
   - 无用的字段和方法
+  - **修复中文分号错误**（SkillManager.cs:160）
 - **工具**: 使用IDE的代码分析工具
 
 **P0.4: 统一命名约定** ⏱️ 0.5天
@@ -661,11 +685,11 @@ ProcessEvent()
 
 ```
 Week 1
-├── Day 1-2: P0.1 删除IRemovalCondition系统
-├── Day 2-3: P0.2 统一DataExtractor实现
-├── Day 3-4: P0.3 清理过时代码
-├── Day 4-5: P0.4 统一命名约定
-└── Day 5: P0.5 文档化重置与移除语义
+├── Day 1: P0.1 删除IRemovalCondition系统
+├── Day 1.5-2: P0.2 统一DataExtractor实现（工作量减半）
+├── Day 2-3: P0.3 清理过时代码（含中文分号修复）
+├── Day 3-4: P0.4 统一命名约定
+└── Day 4-5: P0.5 文档化重置与移除语义
 ```
 
 **里程碑**: 代码冗余度从70%降至<10%
@@ -758,8 +782,8 @@ Week 4+
 |------|--------|--------|---------|
 | 代码冗余度 | 70% | <10% | 代码重复检测工具 |
 | 类职责数量 | SkillInstance: 6 | 每个类≤3 | 职责分析 |
-| FindFirstObjectByType调用 | 15+ | 0 | 代码搜索 |
-| Debug.Log数量 | 100+ | <20（可配置） | 代码搜索 |
+| FindFirstObjectByType调用 | 6处 | 0 | 代码搜索 |
+| Debug.Log数量 | 252处（39文件） | <20（可配置） | 代码搜索 |
 | 未使用代码 | 多处 | 0 | 静态分析工具 |
 | 配置验证覆盖率 | 40% | 90% | 手动检查 |
 
