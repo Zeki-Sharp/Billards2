@@ -82,9 +82,7 @@ public class BallPhysics : MonoBehaviour
             // 不要修改CircleCollider2D的半径，只读取
             ballCollider.isTrigger = false;
             
-            // 计算实际的世界空间半径（考虑缩放）并更新ballData
-            float actualRadius = ballCollider.radius * Mathf.Max(transform.lossyScale.x, transform.lossyScale.y);
-            ballData.radius = actualRadius;
+            // 半径由Collider决定，不需要存储到ballData
         }
         
         // 创建物理材质（只有当ballCollider存在时才设置）
@@ -350,5 +348,17 @@ public class BallPhysics : MonoBehaviour
             rb.linearVelocity = Vector2.zero;
             rb.angularVelocity = 0f;
         }
+    }
+    
+    /// <summary>
+    /// 获取球体的实际半径（考虑缩放）
+    /// </summary>
+    public float GetRadius()
+    {
+        if (ballCollider != null)
+        {
+            return ballCollider.radius * Mathf.Max(transform.lossyScale.x, transform.lossyScale.y);
+        }
+        return 0.5f; // 默认值
     }
 }

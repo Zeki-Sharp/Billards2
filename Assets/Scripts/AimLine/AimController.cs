@@ -286,9 +286,9 @@ public class AimController : MonoBehaviour
             if (playerCore != null)
             {
                 BallPhysics ballPhysics = playerCore.GetComponent<BallPhysics>();
-                if (ballPhysics != null && ballPhysics.ballData != null)
+                if (ballPhysics != null)
                 {
-                    ballRadius = ballPhysics.ballData.radius;
+                    ballRadius = ballPhysics.GetRadius();
                 }
             }
             

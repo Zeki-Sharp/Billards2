@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: "\u653B\u51FB\u8303\u56F4\u6269\u5927"
   m_EditorClassIdentifier: 
   skillName: "\u8303\u56F4\u6269\u5927"
-  description: "\u653B\u51FB\u8303\u56F4\u6269\u59271"
+  description: "\u653B\u51FB\u8303\u56F4\u6269\u59270.5"
   skillTag: "\u8303\u56F4\u653B\u51FB\u89D2\u8272"
   triggerConfig:
     triggerType: 3
@@ -34,7 +34,7 @@ MonoBehaviour:
   effectConfig:
     effectType: 0
     targetStat: AreaRadius
-    modifierValue: 1
+    modifierValue: 0.5
     modifierType: 0
     healAmount: 20
     minTransitionTime: 1
@@ -60,7 +60,7 @@ MonoBehaviour:
       maxValue: 1
       dataExtractorType: 0
   effectRemovalConfig:
-    removalType: 2
+    removalType: 5
     duration: 30
     comparisonType: 2
     targetValue: 0.5
