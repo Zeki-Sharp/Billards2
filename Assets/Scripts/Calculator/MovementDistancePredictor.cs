@@ -22,7 +22,7 @@ public class MovementDistancePredictor : MonoBehaviour
     [Header("性能设置")]
     public float updateInterval = 0.1f;        // 更新间隔（秒）
     public float cacheThreshold = 0.5f;        // 缓存阈值（力度变化）
-    public bool enableCaching = false;         // 临时禁用缓存强制重新计算
+    public bool enableCaching = true;          // 是否启用缓存
     
     [Header("物理模拟设置")]
     public float simulationTimeStep = 0.005f;  // 模拟时间步长（更小更精确）
@@ -46,8 +46,6 @@ public class MovementDistancePredictor : MonoBehaviour
     private float lastUpdateTime = 0f;
     private float lastPredictedDistance = 0f;
     
-    // 调试信息
-    private bool showDebugInfo = false;
     
     // 物理模拟相关
     private GameObject tempBall;
@@ -75,10 +73,6 @@ public class MovementDistancePredictor : MonoBehaviour
         // 初始化缓存
         distanceCache = new DistanceCache(cacheThreshold);
         
-        if (showDebugInfo)
-        {
-            Debug.Log("[MovementDistancePredictor] 初始化完成");
-        }
     }
     
     #endregion
@@ -93,8 +87,6 @@ public class MovementDistancePredictor : MonoBehaviour
     /// <returns>预测的运动距离</returns>
     public float PredictMovementDistance(float initialVelocity, BallData ballData)
     {
-        Debug.Log($"[MovementDistancePredictor] 开始预测: 力度={initialVelocity:F2}, BallData={(ballData != null ? "有效" : "null")}");
-        
         if (ballData == null)
         {
             Debug.LogError("[MovementDistancePredictor] BallData为null，返回0距离");
@@ -104,7 +96,6 @@ public class MovementDistancePredictor : MonoBehaviour
         // 检查更新频率
         if (!ShouldUpdate())
         {
-            Debug.Log($"[MovementDistancePredictor] 使用上次结果: 距离={lastPredictedDistance:F2}");
             return lastPredictedDistance;
         }
         
@@ -114,12 +105,10 @@ public class MovementDistancePredictor : MonoBehaviour
         if (enableCaching && distanceCache.IsValid(initialVelocity))
         {
             predictedDistance = distanceCache.GetCachedDistance();
-            Debug.Log($"[MovementDistancePredictor] 使用缓存: 力度={initialVelocity:F2}, 距离={predictedDistance:F2}");
         }
         else
         {
             // 重新计算
-            Debug.Log($"[MovementDistancePredictor] 开始重新计算: 力度={initialVelocity:F2}");
             predictedDistance = CalculateMovementDistance(initialVelocity, ballData);
             
             // 更新缓存
@@ -127,8 +116,6 @@ public class MovementDistancePredictor : MonoBehaviour
             {
                 distanceCache.UpdateCache(initialVelocity, predictedDistance);
             }
-            
-            Debug.Log($"[MovementDistancePredictor] 重新计算完成: 力度={initialVelocity:F2}, 距离={predictedDistance:F2}");
         }
         
         // 更新状态
@@ -195,8 +182,6 @@ public class MovementDistancePredictor : MonoBehaviour
             // 应用偏差校正
             float finalDistance = ApplyDistanceOffset(totalDistance);
             
-            Debug.Log($"[方案A] 初始速度: {initialVelocity:F2}, 模拟距离: {totalDistance:F2}, 校正后距离: {finalDistance:F2}, 阻尼: {ballData.linearDamping:F3}");
-            
             return finalDistance;
         }
         catch (System.Exception e)
@@ -247,7 +232,6 @@ public class MovementDistancePredictor : MonoBehaviour
         ballStartTime = 0f;
         currentBallData = ballData; // 存储当前BallData
         
-        Debug.Log($"[方案A] 创建临时球体 - 位置: {tempBall.transform.position}, 质量: {tempRb.mass}, 阻尼: {tempRb.linearDamping}");
     }
     
     /// <summary>
@@ -259,7 +243,6 @@ public class MovementDistancePredictor : MonoBehaviour
         Vector3 lastPosition = tempBall.transform.position;
         float currentTime = 0f;
         
-        Debug.Log($"[方案A] 开始模拟 - 初始位置: {lastPosition}, 初始速度: {tempRb.linearVelocity}");
         
         // 初始化物理状态（发射时设置固定参数）
         SetFixedPhysicsForLaunch();
@@ -291,21 +274,14 @@ public class MovementDistancePredictor : MonoBehaviour
             totalDistance += stepDistance;
             lastPosition = afterPos;
             
-            // 每10步输出一次调试信息
-            if (step % 10 == 0 || step < 5)
-            {
-                Debug.Log($"[方案A] 第{step}步 - 位置变化: {beforePos} → {afterPos}, 距离: {stepDistance:F3}, 速度变化: {beforeVel} → {afterVel}, 总距离: {totalDistance:F3}");
-            }
             
             // 停止条件：|v| < vMin
             if (tempRb.linearVelocity.magnitude < simulationStopThreshold)
             {
-                Debug.Log($"[方案A] 第{step}步停止，总距离: {totalDistance:F2}, 最终速度: {tempRb.linearVelocity.magnitude:F3}");
                 break;
             }
         }
         
-        Debug.Log($"[方案A] 模拟结束 - 总距离: {totalDistance:F3}, 最终位置: {tempBall.transform.position}, 最终速度: {tempRb.linearVelocity}");
         return totalDistance;
     }
     
@@ -407,10 +383,6 @@ public class MovementDistancePredictor : MonoBehaviour
             {
                 isMoving = true;
                 ballStartTime = currentTime;
-                if (showDebugInfo)
-                {
-                    Debug.Log($"[物理模拟] 球开始运动，记录时间 {ballStartTime:F2}");
-                }
             }
         }
         else
@@ -419,10 +391,6 @@ public class MovementDistancePredictor : MonoBehaviour
             if (isMoving)
             {
                 isMoving = false;
-                if (showDebugInfo)
-                {
-                    Debug.Log($"[物理模拟] 球停止运动，运动时长: {currentTime - ballStartTime:F2}s");
-                }
             }
         }
     }
@@ -465,10 +433,6 @@ public class MovementDistancePredictor : MonoBehaviour
                 );
                 targetDamping += timeDamping;
                 
-                if (showDebugInfo)
-                {
-                    Debug.Log($"[物理模拟] 时间阻尼 - 运动时长: {timeSinceStart:F2}s, 时间阻尼: {timeDamping:F2}, 总阻尼: {targetDamping:F2}");
-                }
             }
         }
         
@@ -482,10 +446,6 @@ public class MovementDistancePredictor : MonoBehaviour
             tempMaterial.bounciness = targetBounciness;
             lastBounciness = targetBounciness;
             
-            if (showDebugInfo)
-            {
-                Debug.Log($"[物理模拟] 更新弹性: {targetBounciness:F3}");
-            }
         }
         
         // 更新阻尼
@@ -494,10 +454,6 @@ public class MovementDistancePredictor : MonoBehaviour
             tempRb.linearDamping = targetDamping;
             lastDamping = targetDamping;
             
-            if (showDebugInfo)
-            {
-                Debug.Log($"[物理模拟] 更新阻尼: {targetDamping:F3}");
-            }
         }
         
         // 更新最后更新时间
@@ -530,10 +486,6 @@ public class MovementDistancePredictor : MonoBehaviour
             correctedDistance = 0f;
         }
         
-        if (distanceOffset != 0f)
-        {
-            Debug.Log($"[偏差校正] 原始距离: {originalDistance:F2}, 校正值: {distanceOffset:F2}, 校正后: {correctedDistance:F2}");
-        }
         
         return correctedDistance;
     }
@@ -550,13 +502,6 @@ public class MovementDistancePredictor : MonoBehaviour
         return Time.time - lastUpdateTime > updateInterval;
     }
     
-    /// <summary>
-    /// 设置调试信息显示
-    /// </summary>
-    public void SetDebugInfo(bool enabled)
-    {
-        showDebugInfo = enabled;
-    }
     
     /// <summary>
     /// 清除缓存
@@ -575,7 +520,6 @@ public class MovementDistancePredictor : MonoBehaviour
     public void SetDistanceOffset(float offset)
     {
         distanceOffset = offset;
-        Debug.Log($"[MovementDistancePredictor] 设置偏差校正值: {offset:F2}");
     }
     
     /// <summary>
@@ -584,66 +528,16 @@ public class MovementDistancePredictor : MonoBehaviour
     public void SetDistanceOffsetEnabled(bool enabled)
     {
         enableDistanceOffset = enabled;
-        Debug.Log($"[MovementDistancePredictor] 偏差校正: {(enabled ? "启用" : "禁用")}");
     }
     
     /// <summary>
-    /// 在Inspector中显示调试信息
+    /// 测试预测功能
     /// </summary>
     [ContextMenu("测试预测")]
     void TestPrediction()
     {
         if (Application.isPlaying)
         {
-            // 使用默认参数测试
-            float testForce = 15f;
-            var testBallData = ScriptableObject.CreateInstance<BallData>();
-            testBallData.linearDamping = 0.1f;
-            testBallData.friction = 0.1f;
-            testBallData.maxSpeed = 25f;
-            
-            float distance = PredictMovementDistance(testForce, testBallData);
-            Debug.Log($"[MovementDistancePredictor] 测试预测 - 力度:{testForce}, 距离:{distance:F2}");
-        }
-    }
-    
-    /// <summary>
-    /// 详细调试预测过程
-    /// </summary>
-    [ContextMenu("详细调试预测")]
-    void DebugPrediction()
-    {
-        if (Application.isPlaying)
-        {
-            showDebugInfo = true;
-            
-            // 测试不同力度
-            float[] testForces = {5f, 10f, 15f, 20f, 25f};
-            var testBallData = ScriptableObject.CreateInstance<BallData>();
-            testBallData.linearDamping = 0.1f;
-            testBallData.friction = 0.1f;
-            testBallData.maxSpeed = 25f;
-            
-            Debug.Log("=== 详细预测调试 ===");
-            foreach (float force in testForces)
-            {
-                float distance = ForcePredictMovementDistance(force, testBallData);
-                Debug.Log($"力度: {force:F1} → 预测距离: {distance:F2}");
-            }
-            
-            showDebugInfo = false;
-        }
-    }
-    
-    /// <summary>
-    /// 测试方案A物理模拟
-    /// </summary>
-    [ContextMenu("测试方案A物理模拟")]
-    void TestPhysicsSimulation()
-    {
-        if (Application.isPlaying)
-        {
-            // 测试方案A物理模拟
             float testForce = 15f;
             var testBallData = ScriptableObject.CreateInstance<BallData>();
             testBallData.linearDamping = 0.1f;
@@ -661,10 +555,8 @@ public class MovementDistancePredictor : MonoBehaviour
             testBallData.minBounciness = 0.3f;
             testBallData.maxBounciness = 1.0f;
             
-            Debug.Log("=== 方案A物理模拟测试 ===");
-            
-            float distance = ForcePredictMovementDistance(testForce, testBallData);
-            Debug.Log($"方案A物理模拟 - 力度: {testForce:F1} → 距离: {distance:F2}");
+            float distance = PredictMovementDistance(testForce, testBallData);
+            Debug.Log($"[MovementDistancePredictor] 测试预测 - 力度:{testForce}, 距离:{distance:F2}");
         }
     }
     

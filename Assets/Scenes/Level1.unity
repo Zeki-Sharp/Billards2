@@ -504,7 +504,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3838414888512623922, guid: e719b1822f259c14cb3dd6f62d9c465d, type: 3}
       propertyPath: reflectionLength
-      value: 5
+      value: 6
       objectReference: {fileID: 0}
     - target: {fileID: 5125386412533849888, guid: e719b1822f259c14cb3dd6f62d9c465d, type: 3}
       propertyPath: m_Name
@@ -556,7 +556,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8175702448868890031, guid: e719b1822f259c14cb3dd6f62d9c465d, type: 3}
       propertyPath: distanceOffset
-      value: -0.5
+      value: -0.7
       objectReference: {fileID: 0}
     - target: {fileID: 8175702448868890031, guid: e719b1822f259c14cb3dd6f62d9c465d, type: 3}
       propertyPath: updateInterval
