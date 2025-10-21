@@ -19,7 +19,7 @@ MonoBehaviour:
   ballData: {fileID: 11400000, guid: 5753a6296cab86e45ba7c2b9bfd00e6e, type: 2}
   baseMaxHealth: 100
   attackMode: 0
-  collisionDamage: 2
+  collisionDamage: 20
   areaDamage: 15
   areaRadius: 2.5
   enemyLayerMask:

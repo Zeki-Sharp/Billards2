@@ -16,8 +16,8 @@ MonoBehaviour:
   enemyContainerPrefab: {fileID: 7420645124294310907, guid: 3953b119ae556034889e4bc9a3e4948f, type: 3}
   enemyIcon: {fileID: 0}
   ballData: {fileID: 11400000, guid: d1c30c129175ecf48a42f1070d15a627, type: 2}
-  maxHealth: 6
-  damage: 1
+  maxHealth: 60
+  damage: 10
   attackCooldown: 1
   moveSpeed: 3
   attackRange: 3
