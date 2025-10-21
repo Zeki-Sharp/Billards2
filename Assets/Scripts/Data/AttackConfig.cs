@@ -13,9 +13,6 @@ public class RangedAttackConfig
     [Tooltip("投射到玩家附近的距离")]
     public float projectionDistance = 2f;
     
-    [Tooltip("攻击冷却时间")]
-    public float cooldown = 2f;
-    
     [Header("随机偏移设置")]
     [Tooltip("是否使用随机偏移")]
     public bool useRandomOffset = true;

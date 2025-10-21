@@ -8622,7 +8622,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c87ee035e12f35e4ea7b74d34431d6fa, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  activeSkills: []
+  activeSkills:
+  - {fileID: 11400000, guid: 7398b80240c9a7e4bbb2f37d3adac042, type: 2}
   enableDebugLog: 1
 --- !u!4 &1357681023
 Transform:
@@ -10843,7 +10844,7 @@ PrefabInstance:
     - target: {fileID: 4109773013413894966, guid: 2d86053af5e50c446a06f75cbdecb65b, type: 3}
       propertyPath: playerData
       value: 
-      objectReference: {fileID: 11400000, guid: 81d30639ef52a824eaa9b3cc9a99404b, type: 2}
+      objectReference: {fileID: 11400000, guid: 9fa21c5d0e8b7b24d9ae0910aa7d5197, type: 2}
     - target: {fileID: 5182198335736264703, guid: 2d86053af5e50c446a06f75cbdecb65b, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0.02

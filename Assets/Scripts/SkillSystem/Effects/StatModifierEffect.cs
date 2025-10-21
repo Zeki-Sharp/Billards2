@@ -1,7 +1,7 @@
 using UnityEngine;
 
 /// <summary>
-/// 数值调整效果 - 技能系统第一阶段最小验证
+/// 数值调整效果 - 单模式 + 叠加控制
 /// 使用修饰器系统修改玩家的某个属性（如攻击力+50%）
 /// 支持临时效果和基于条件的移除
 /// </summary>
@@ -12,11 +12,16 @@ public class StatModifierEffect : IEffect
     private string targetStat = "Damage"; // 默认修改攻击力（使用新命名）
     private float modifierValue = 1.5f;   // 默认+50%
     private StatModifierType modifierType = StatModifierType.PercentMult; // 默认百分比乘算
-    private bool isApplied = false;       // 效果是否已应用（由移除条件控制）
     private bool canExecute = true;       // 是否允许执行（完全由重置条件控制）
     private PlayerCore targetPlayer;      // 目标玩家
     private PlayerStatsManager statsManager; // 属性管理器
-    private object appliedModifier; // 应用的修饰器（可能是 StatModifier 或 SkillDamageModifier）
+    
+    // 叠加控制字段
+    private bool allowStacking = true;    // 是否允许叠加
+    private bool hasTriggered = false;    // 是否已经触发（用于非叠加效果）
+    
+    // 修改器管理字段
+    private System.Collections.Generic.List<object> appliedModifiers = new System.Collections.Generic.List<object>(); // 应用的修饰器列表
     
     /// <summary>
     /// 是否允许执行（完全由重置条件控制）
@@ -29,6 +34,25 @@ public class StatModifierEffect : IEffect
     public void SetCanExecute(bool canExecute)
     {
         this.canExecute = canExecute;
+    }
+    
+    /// <summary>
+    /// 设置是否允许叠加
+    /// </summary>
+    /// <param name="allowStacking">是否允许叠加</param>
+    public void SetAllowStacking(bool allowStacking)
+    {
+        this.allowStacking = allowStacking;
+        Debug.Log($"[{EffectName}] 设置允许叠加: {allowStacking}");
+    }
+    
+    /// <summary>
+    /// 获取是否允许叠加
+    /// </summary>
+    /// <returns>是否允许叠加</returns>
+    public bool GetAllowStacking()
+    {
+        return allowStacking;
     }
     
     /// <summary>
@@ -67,29 +91,33 @@ public class StatModifierEffect : IEffect
     private IEffectRemovalCondition effectRemovalCondition; // 新的效果移除条件
     
     /// <summary>
-    /// 检查修饰器是否仍然存在
+    /// 清理已失效的修改器
     /// </summary>
-    private void CheckModifierStatus()
+    private void CleanupInvalidModifiers()
     {
-        if (isApplied && appliedModifier != null)
+        for (int i = appliedModifiers.Count - 1; i >= 0; i--)
         {
+            var modifier = appliedModifiers[i];
+            bool shouldRemove = false;
+            
             // 如果是攻击力修改器，检查是否应该移除
-            if (appliedModifier is SkillDamageModifier skillModifier)
+            if (modifier is SkillDamageModifier skillModifier)
             {
-                if (!skillModifier.IsEnabled)
-                {
-                    isApplied = false;
-                    appliedModifier = null;
-                }
+                // 简化版本：SkillDamageModifier 总是启用，不需要检查
+                // 移除条件由 StatModifierEffect 的 Reset() 方法处理
             }
             // 如果是属性修改器，检查是否还在活跃列表中
-            else if (appliedModifier is StatModifier statModifier && statsManager != null)
+            else if (modifier is StatModifier statModifier && statsManager != null)
             {
                 if (!statsManager.HasModifier(statModifier))
                 {
-                    isApplied = false;
-                    appliedModifier = null;
+                    shouldRemove = true;
                 }
+            }
+            
+            if (shouldRemove)
+            {
+                appliedModifiers.RemoveAt(i);
             }
         }
     }
@@ -115,6 +143,13 @@ public class StatModifierEffect : IEffect
             return false;
         }
         
+        // 叠加控制检查：如果不允许叠加且已经触发，则跳过执行
+        if (!allowStacking && hasTriggered)
+        {
+            Debug.Log($"[{EffectName}] 不允许叠加且已触发，跳过执行");
+            return false;
+        }
+        
         // 动态查找目标玩家
         if (!GetTargetPlayer())
         {
@@ -122,21 +157,25 @@ public class StatModifierEffect : IEffect
             return false;
         }
         
-        // 检查修饰器是否仍然存在
-        CheckModifierStatus();
+        // 清理已失效的修改器
+        CleanupInvalidModifiers();
         
-        // 执行效果逻辑（不管是否已应用，只要canExecute为true就执行）
+        // 统一执行效果逻辑（总是创建新修改器）
         bool result;
-        
-        // 特殊处理：如果目标属性是攻击力，委托给 DamageProcessor 处理
         if (targetStat == "Damage")
         {
             result = ExecuteDamageModification();
         }
         else
         {
-            // 其他属性使用原来的 StatModifier 方式
             result = ExecuteStatModification();
+        }
+        
+        // 更新触发状态
+        if (result && !allowStacking)
+        {
+            hasTriggered = true;
+            Debug.Log($"[{EffectName}] 标记已触发，后续不允许叠加");
         }
         
         // 执行成功后，禁止再次执行（由重置条件重新允许）
@@ -162,31 +201,33 @@ public class StatModifierEffect : IEffect
             return false;
         }
         
-        // 如果已经应用过修改器，先重新启用它
-        if (isApplied && appliedModifier is SkillDamageModifier existingModifier)
-        {
-            existingModifier.SetEnabled(true);
-        }
-        else
-        {
-            // 创建新的技能伤害修改器
-            string modifierName = $"技能攻击力修改_{targetStat}";
-            SkillDamageModifier damageModifier = new SkillDamageModifier(
-                modifierName,
-                modifierValue,
-                modifierType,
-                effectRemovalCondition,
-                true
-            );
-            
-            // 注册到 DamageProcessor
-            damageProcessor.RegisterDamageModifier(damageModifier);
-            
-            // 保存引用用于后续移除
-            appliedModifier = damageModifier;
-        }
+        // 总是创建新的技能伤害修改器（支持叠加）
+        string modifierName = $"技能攻击力修改_{targetStat}_{System.Guid.NewGuid().ToString("N").Substring(0, 8)}";
+        SkillDamageModifier damageModifier = new SkillDamageModifier(
+            modifierName,
+            modifierValue,
+            modifierType,
+            effectRemovalCondition,
+            true
+        );
         
-        isApplied = true;
+        // 设置移除回调
+        damageModifier.SetOnRemovedCallback(() => {
+            // 只重置标记，不删除修改器（因为修改器已经被禁用了）
+            if (!allowStacking)
+            {
+                hasTriggered = false;
+                Debug.Log($"[{EffectName}] 修改器被移除，重置触发标记，允许重新触发");
+            }
+        });
+        
+        // 注册到 DamageProcessor
+        damageProcessor.RegisterDamageModifier(damageModifier);
+        
+        // 保存引用用于后续移除
+        appliedModifiers.Add(damageModifier);
+        
+        Debug.Log($"[{EffectName}] 创建新的攻击力修改器: {modifierName}, 当前修改器数量: {appliedModifiers.Count}");
         
         // 触发表现效果
         TriggerVisualEffect();
@@ -224,8 +265,9 @@ public class StatModifierEffect : IEffect
         statsManager.ApplyModifier(statModifier);
         
         // 保存引用
-        appliedModifier = statModifier;
-        isApplied = true;
+        appliedModifiers.Add(statModifier);
+        
+        Debug.Log($"[{EffectName}] 创建新的属性修改器: {targetStat}, 当前修改器数量: {appliedModifiers.Count}");
         
         // 触发表现效果
         TriggerVisualEffect();
@@ -290,30 +332,42 @@ public class StatModifierEffect : IEffect
     }
     
     /// <summary>
-    /// 重置效果状态（由移除条件调用）
+    /// 重置效果状态（删除所有修改器）
     /// </summary>
     public void Reset()
     {
-        if (isApplied && appliedModifier != null)
+        Debug.Log($"[{EffectName}] 重置效果，删除所有修改器，当前数量: {appliedModifiers.Count}");
+        
+        // 删除所有应用的修改器
+        for (int i = appliedModifiers.Count - 1; i >= 0; i--)
         {
+            var modifier = appliedModifiers[i];
+            
             // 如果是攻击力修改，从 DamageProcessor 中移除
-            if (targetStat == "Damage" && appliedModifier is SkillDamageModifier skillModifier)
+            if (modifier is SkillDamageModifier skillModifier)
             {
                 DamageProcessor damageProcessor = DamageProcessor.Instance;
                 if (damageProcessor != null)
                 {
                     damageProcessor.UnregisterDamageModifier(skillModifier);
+                    Debug.Log($"[{EffectName}] 删除攻击力修改器: {skillModifier.ModifierName}");
                 }
             }
             // 如果是其他属性修改，从 PlayerStatsManager 中移除
-            else if (statsManager != null && appliedModifier is StatModifier statModifier)
+            else if (modifier is StatModifier statModifier && statsManager != null)
             {
                 statsManager.RemoveModifier(statModifier);
+                Debug.Log($"[{EffectName}] 删除属性修改器: {statModifier.targetStat}");
             }
         }
         
-        isApplied = false;
-        appliedModifier = null;
+        // 清空修改器列表
+        appliedModifiers.Clear();
+        
+        // 重置触发状态（效果被移除时重置，允许重新触发）
+        hasTriggered = false;
+        Debug.Log($"[{EffectName}] 效果被移除，重置触发标记，允许重新触发");
+        
         // 注意：不重置 canExecute，因为它完全由重置条件控制
     }
 }

@@ -1,7 +1,7 @@
 using UnityEngine;
 
 /// <summary>
-/// 技能伤害修改器 - 通用的技能伤害修改实现
+/// 技能伤害修改器 - 支持双模式：创建/删除模式和启用/禁用模式
 /// 所有需要修改攻击力的技能都使用这个通用修改器
 /// </summary>
 public class SkillDamageModifier : IDamageModifier
@@ -30,24 +30,30 @@ public class SkillDamageModifier : IDamageModifier
     /// <returns>是否成功处理了伤害修改</returns>
     public bool ProcessDamage(ref AttackData attackData)
     {
-        if (!IsEnabled)
+        // 检查是否启用
+        if (!isEnabled)
+        {
             return false;
+        }
+        
+        // 检查是否应该移除
+        if (ShouldRemove())
+        {
+            isEnabled = false;
+            if (showDebugLog)
+            {
+                Debug.Log($"[SkillDamageModifier] {modifierName} 条件满足，自动禁用");
+            }
+            
+            // 通知 StatModifierEffect 重置标记
+            onRemoved?.Invoke();
+            
+            return false;
+        }
         
         // 只处理玩家攻击的情况
         if (attackData.Attacker == null || !attackData.Attacker.CompareTag("Player"))
             return false;
-        
-        // 检查移除条件
-        if (ShouldRemove())
-        {
-            if (showDebugLog)
-            {
-                Debug.Log($"[SkillDamageModifier] {modifierName} 满足移除条件，自动禁用修改器");
-            }
-            // 自动禁用修改器，防止累积叠加
-            isEnabled = false;
-            return false;
-        }
         
         // 修改伤害值
         float originalDamage = attackData.Damage;
@@ -83,9 +89,10 @@ public class SkillDamageModifier : IDamageModifier
     private string modifierName;
     private float modifierValue;
     private StatModifierType modifierType;
-    private bool isEnabled;
-    private IEffectRemovalCondition removalCondition;
     private bool showDebugLog;
+    private bool isEnabled = true;                    // 是否启用
+    private IEffectRemovalCondition removalCondition; // 移除条件
+    private System.Action onRemoved;                  // 移除回调
     
     #endregion
     
@@ -97,7 +104,7 @@ public class SkillDamageModifier : IDamageModifier
     /// <param name="name">修改器名称</param>
     /// <param name="value">修改值</param>
     /// <param name="type">修改类型</param>
-    /// <param name="removalCondition">移除条件</param>
+    /// <param name="removalCondition">移除条件（可选）</param>
     /// <param name="debugLog">是否显示调试日志</param>
     public SkillDamageModifier(string name, float value, StatModifierType type, IEffectRemovalCondition removalCondition = null, bool debugLog = true)
     {
@@ -105,12 +112,70 @@ public class SkillDamageModifier : IDamageModifier
         this.modifierValue = value;
         this.modifierType = type;
         this.removalCondition = removalCondition;
-        this.isEnabled = true;
         this.showDebugLog = debugLog;
+        this.isEnabled = true;
         
         if (showDebugLog)
         {
             Debug.Log($"[SkillDamageModifier] 创建修改器: {modifierName}, 值: {modifierValue}, 类型: {modifierType}");
+        }
+    }
+    
+    #endregion
+    
+    #region 公共方法
+    
+    /// <summary>
+    /// 设置修改值
+    /// </summary>
+    /// <param name="value">修改值</param>
+    public void SetModifierValue(float value)
+    {
+        modifierValue = value;
+        if (showDebugLog)
+        {
+            Debug.Log($"[SkillDamageModifier] {modifierName} 设置修改值: {value} (类型: {modifierType})");
+        }
+    }
+    
+    /// <summary>
+    /// 设置修改类型和值
+    /// </summary>
+    /// <param name="value">修改值</param>
+    /// <param name="type">修改类型</param>
+    public void SetModifier(float value, StatModifierType type)
+    {
+        modifierValue = value;
+        modifierType = type;
+        if (showDebugLog)
+        {
+            Debug.Log($"[SkillDamageModifier] {modifierName} 设置修改器: 值={value}, 类型={type}");
+        }
+    }
+    
+    /// <summary>
+    /// 设置修改器启用状态
+    /// </summary>
+    /// <param name="enabled">是否启用</param>
+    public void SetEnabled(bool enabled)
+    {
+        isEnabled = enabled;
+        if (showDebugLog)
+        {
+            Debug.Log($"[SkillDamageModifier] {modifierName} 设置启用状态: {enabled}");
+        }
+    }
+    
+    /// <summary>
+    /// 设置移除回调
+    /// </summary>
+    /// <param name="callback">移除时调用的回调</param>
+    public void SetOnRemovedCallback(System.Action callback)
+    {
+        onRemoved = callback;
+        if (showDebugLog)
+        {
+            Debug.Log($"[SkillDamageModifier] {modifierName} 设置移除回调");
         }
     }
     
@@ -150,63 +215,6 @@ public class SkillDamageModifier : IDamageModifier
         }
         
         return removalCondition.ShouldRemoveEffect(currentHealth);
-    }
-    
-    #endregion
-    
-    #region 公共方法
-    
-    /// <summary>
-    /// 设置修改值
-    /// </summary>
-    /// <param name="value">修改值</param>
-    public void SetModifierValue(float value)
-    {
-        modifierValue = value;
-        if (showDebugLog)
-        {
-            Debug.Log($"[SkillDamageModifier] {modifierName} 设置修改值: {value} (类型: {modifierType})");
-        }
-    }
-    
-    /// <summary>
-    /// 设置修改类型和值
-    /// </summary>
-    /// <param name="value">修改值</param>
-    /// <param name="type">修改类型</param>
-    public void SetModifier(float value, StatModifierType type)
-    {
-        modifierValue = value;
-        modifierType = type;
-        if (showDebugLog)
-        {
-            Debug.Log($"[SkillDamageModifier] {modifierName} 设置修改器: 值={value}, 类型={type}");
-        }
-    }
-    
-    /// <summary>
-    /// 启用/禁用修改器
-    /// </summary>
-    /// <param name="enabled">是否启用</param>
-    public void SetEnabled(bool enabled)
-    {
-        isEnabled = enabled;
-        if (showDebugLog)
-        {
-            Debug.Log($"[SkillDamageModifier] {modifierName} {(enabled ? "启用" : "禁用")}修改器");
-        }
-    }
-    
-    /// <summary>
-    /// 手动移除修改器
-    /// </summary>
-    public void Remove()
-    {
-        isEnabled = false;
-        if (showDebugLog)
-        {
-            Debug.Log($"[SkillDamageModifier] {modifierName} 手动移除修改器");
-        }
     }
     
     #endregion

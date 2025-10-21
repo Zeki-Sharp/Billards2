@@ -123,7 +123,7 @@ public class AimLineReflectionCalculator : MonoBehaviour
                     Vector3 secondBallCenterAtHit = (Vector3)secondHit.point + (Vector3)secondHit.normal * ballRadius;
                     pathPoints.Add(secondBallCenterAtHit);
                     
-                    // 计算第二次反射方向并添加延伸点（用于标记两次碰撞，但不渲染）
+                    // 计算第二次反射方向并添加延伸点（用于渲染第三段瞄准线）
                     Vector2 secondNormal = secondHit.normal;
                     Vector2 secondReflectDir = Vector2.Reflect(currentDir, secondNormal);
                     

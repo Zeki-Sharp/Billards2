@@ -490,18 +490,6 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 1787785598}
     m_Modifications:
-    - target: {fileID: 2050217528864470944, guid: e719b1822f259c14cb3dd6f62d9c465d, type: 3}
-      propertyPath: landingPointColor.b
-      value: 0.4339267
-      objectReference: {fileID: 0}
-    - target: {fileID: 2050217528864470944, guid: e719b1822f259c14cb3dd6f62d9c465d, type: 3}
-      propertyPath: landingPointColor.g
-      value: 0.9622642
-      objectReference: {fileID: 0}
-    - target: {fileID: 2050217528864470944, guid: e719b1822f259c14cb3dd6f62d9c465d, type: 3}
-      propertyPath: landingPointColor.r
-      value: 0.43764746
-      objectReference: {fileID: 0}
     - target: {fileID: 3357877017394172215, guid: e719b1822f259c14cb3dd6f62d9c465d, type: 3}
       propertyPath: playerCore
       value: 
@@ -510,22 +498,6 @@ PrefabInstance:
       propertyPath: targetCamera
       value: 
       objectReference: {fileID: 859979524}
-    - target: {fileID: 3838414888512623922, guid: e719b1822f259c14cb3dd6f62d9c465d, type: 3}
-      propertyPath: maxDistance
-      value: 10
-      objectReference: {fileID: 0}
-    - target: {fileID: 3838414888512623922, guid: e719b1822f259c14cb3dd6f62d9c465d, type: 3}
-      propertyPath: reflectionLength
-      value: 6
-      objectReference: {fileID: 0}
-    - target: {fileID: 3838414888512623922, guid: e719b1822f259c14cb3dd6f62d9c465d, type: 3}
-      propertyPath: firstReflectionLength
-      value: 6
-      objectReference: {fileID: 0}
-    - target: {fileID: 3838414888512623922, guid: e719b1822f259c14cb3dd6f62d9c465d, type: 3}
-      propertyPath: secondReflectionLength
-      value: 0.1
-      objectReference: {fileID: 0}
     - target: {fileID: 5125386412533849888, guid: e719b1822f259c14cb3dd6f62d9c465d, type: 3}
       propertyPath: m_Name
       value: Launcher
@@ -569,22 +541,6 @@ PrefabInstance:
     - target: {fileID: 5181106650949996532, guid: e719b1822f259c14cb3dd6f62d9c465d, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 8175702448868890031, guid: e719b1822f259c14cb3dd6f62d9c465d, type: 3}
-      propertyPath: cacheThreshold
-      value: 0.3
-      objectReference: {fileID: 0}
-    - target: {fileID: 8175702448868890031, guid: e719b1822f259c14cb3dd6f62d9c465d, type: 3}
-      propertyPath: distanceOffset
-      value: -0.7
-      objectReference: {fileID: 0}
-    - target: {fileID: 8175702448868890031, guid: e719b1822f259c14cb3dd6f62d9c465d, type: 3}
-      propertyPath: updateInterval
-      value: 0.1
-      objectReference: {fileID: 0}
-    - target: {fileID: 8175702448868890031, guid: e719b1822f259c14cb3dd6f62d9c465d, type: 3}
-      propertyPath: simulationTimeStep
-      value: 0.005
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

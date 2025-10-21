@@ -67,8 +67,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 660f04bbfffb09f46b18766ed8aebaba, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  maxDistance: 6
-  reflectionLength: 3
+  maxDistance: 10
+  firstReflectionLength: 6
+  secondReflectionLength: 1
   reflectionLayers:
     serializedVersion: 2
     m_Bits: 123
@@ -143,9 +144,11 @@ MonoBehaviour:
   updateInterval: 0.1
   cacheThreshold: 0.3
   enableCaching: 1
-  simulationTimeStep: 0.02
+  simulationTimeStep: 0.005
   maxSimulationSteps: 500
   simulationStopThreshold: 0.1
+  distanceOffset: -0.7
+  enableDistanceOffset: 1
 --- !u!114 &2050217528864470944
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -160,9 +163,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   landingPointSprite: {fileID: -2413806693520163455, guid: a86470a33a6bf42c4b3595704624658b, type: 3}
   landingPointSize: 0.8
-  landingPointColor: {r: 1, g: 1, b: 1, a: 0.5803922}
+  landingPointColor: {r: 0.43764746, g: 0.9622642, b: 0.4339267, a: 0.5803922}
   landingPointSortingOrder: 11
   showLandingPoint: 1
   minDisplayDistance: 0.5
   maxDisplayDistance: 30
-  showDebugInfo: 0
+  showAttackRangeCircle: 1
+  attackRangeCircleSprite: {fileID: -2413806693520163455, guid: a86470a33a6bf42c4b3595704624658b, type: 3}
+  attackRangeCircleColor: {r: 1, g: 0.5, b: 0, a: 0.3}
+  attackRangeCircleSortingOrder: 10
+  showDebugInfo: 1

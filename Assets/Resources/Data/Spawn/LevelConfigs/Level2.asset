@@ -25,7 +25,7 @@ MonoBehaviour:
     coordinateSystem: 0
     rangeShape: 0
     worldCenter: {x: 0, y: 0, z: 0}
-    worldSize: {x: 18, y: 8}
+    worldSize: {x: 16, y: 8}
     worldRadius: 8
     relativeSize: {x: 4, y: 4}
     relativeRadius: 2
@@ -34,7 +34,7 @@ MonoBehaviour:
   waves:
   - enemySpawns:
     - enemyData: {fileID: 0}
-      count: 2
+      count: 0
   - enemySpawns:
     - enemyData: {fileID: 11400000, guid: ce82a34099b9d1f4899931eb09ed10ce, type: 2}
       count: 2

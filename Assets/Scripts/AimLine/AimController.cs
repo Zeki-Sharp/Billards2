@@ -414,7 +414,7 @@ public class AimController : MonoBehaviour
                 
                 if (showDebugInfo)
                 {
-                    Debug.Log($"[AimController] 落点判断 - 预测距离: {lastPredictedDistance:F2}, 瞄准线长度: {aimLineLength:F2}");
+                    Debug.Log($"[AimController] 落点判断 - 预测距离: {lastPredictedDistance:F2}, 瞄准线长度: {aimLineLength:F2}, 条件: {lastPredictedDistance <= aimLineLength && lastPredictedDistance > 0}");
                 }
                 
                 // 判断是否显示落点（去掉各种限制，只保留基本条件）

@@ -27,6 +27,12 @@ public class SkillEffectConfig
     [Tooltip("修改器类型")]
     public StatModifierType modifierType = StatModifierType.PercentMult;
     
+    [ShowIf("effectType", SkillEffectType.StatModifier)]
+    [LabelText("允许叠加")]
+    [Tooltip("是否允许效果叠加（如击杀增加攻击力）")]
+    [InfoBox("✓ 允许叠加：每次触发都创建新修改器，支持叠加效果\n✗ 不允许叠加：只创建一次修改器，后续触发跳过", InfoMessageType.Info)]
+    public bool allowStacking = true;
+    
     [ShowIf("effectType", SkillEffectType.Heal)]
     [LabelText("治疗量")]
     [Tooltip("治疗量（恢复的生命值）")]
@@ -95,6 +101,7 @@ public class SkillEffectConfig
             case SkillEffectType.StatModifier:
                 var statModifierEffect = new StatModifierEffect();
                 statModifierEffect.SetModifier(targetStat, modifierValue, modifierType);
+                statModifierEffect.SetAllowStacking(allowStacking); // 设置是否允许叠加
                 // 设置新的效果移除条件
                 if (effectRemovalCondition != null)
                 {

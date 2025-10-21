@@ -36,6 +36,7 @@ MonoBehaviour:
     targetStat: Damage
     modifierValue: 5
     modifierType: 0
+    allowStacking: 1
     healAmount: 20
     minTransitionTime: 1
     maxTransitionTime: 5

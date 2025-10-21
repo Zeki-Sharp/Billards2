@@ -7706,11 +7706,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 99fb07427277eeb4aa1f7dae44de0546, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  maxChargingTime: 2
   maxForce: 20
   minForce: 1
-  useCyclingCharge: 1
-  useBowPullMode: 1
   maxPullDistance: 1.5
   minPullDistance: 0.5
   playerCore: {fileID: 3655923765959461568}
