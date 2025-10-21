@@ -9,7 +9,8 @@ public class AimLineReflectionCalculator : MonoBehaviour
 {
     [Header("反射设置")]
     [SerializeField] private float maxDistance = 20f;  // 最大瞄准距离（无碰撞时）
-    [SerializeField] private float reflectionLength = 10f;  // 反射后线段固定长度
+    [SerializeField] private float firstReflectionLength = 10f;  // 第一次反射后线段长度
+    [SerializeField] private float secondReflectionLength = 10f;  // 第二次反射后线段长度
     [SerializeField] private LayerMask reflectionLayers = -1;  // 可反射的层
     [SerializeField] private LayerMask ignoreLayers = 2;  // 忽略的层（Layer 1 = TransparentFX，用于攻击范围）
     [SerializeField] private LayerMask playerLayer = 8;  // Player层
@@ -113,19 +114,29 @@ public class AimLineReflectionCalculator : MonoBehaviour
             {
                 // 从球体中心位置开始，检查反射后是否还有第二次碰撞
                 Vector3 reflectionStartPos = ballCenterAtHit + (Vector3)currentDir * reflectionOffset;
-                RaycastHit2D secondHit = Physics2D.CircleCast(reflectionStartPos, ballRadius, currentDir, reflectionLength, actualLayers);
+                RaycastHit2D secondHit = Physics2D.CircleCast(reflectionStartPos, ballRadius, currentDir, firstReflectionLength, actualLayers);
                 
                 if (secondHit.collider != null)
                 {
-                    // 有第二次碰撞，直接到第二次碰撞位置结束
+                    // 有第二次碰撞，添加第二个碰撞点
                     // 计算球体中心在第二次碰撞时的位置：碰撞点 + 法向量 * 球半径
                     Vector3 secondBallCenterAtHit = (Vector3)secondHit.point + (Vector3)secondHit.normal * ballRadius;
                     pathPoints.Add(secondBallCenterAtHit);
+                    
+                    // 计算第二次反射方向并添加延伸点（用于标记两次碰撞，但不渲染）
+                    Vector2 secondNormal = secondHit.normal;
+                    Vector2 secondReflectDir = Vector2.Reflect(currentDir, secondNormal);
+                    
+                    if (secondReflectDir.magnitude > 0.01f)
+                    {
+                        Vector3 secondReflectionEndPoint = secondBallCenterAtHit + (Vector3)secondReflectDir * secondReflectionLength;
+                        pathPoints.Add(secondReflectionEndPoint);
+                    }
                 }
                 else
                 {
                     // 没有第二次碰撞，延伸到固定长度
-                    Vector3 reflectionEndPoint = ballCenterAtHit + (Vector3)currentDir * reflectionLength;
+                    Vector3 reflectionEndPoint = ballCenterAtHit + (Vector3)currentDir * firstReflectionLength;
                     pathPoints.Add(reflectionEndPoint);
                 }
             }
@@ -186,16 +197,18 @@ public class AimLineReflectionCalculator : MonoBehaviour
     /// <param name="reflectionLength">反射后线段固定长度</param>
     /// <param name="reflectionLayers">反射层</param>
     /// <param name="ballTag">球体标签（射线检测时排除）</param>
-    public void SetReflectionSettings(float maxDistance, float reflectionLength, LayerMask reflectionLayers, string ballTag)
+    public void SetReflectionSettings(float maxDistance, float firstReflectionLength, float secondReflectionLength, LayerMask reflectionLayers, string ballTag)
     {
         this.maxDistance = maxDistance;
-        this.reflectionLength = reflectionLength;
+        this.firstReflectionLength = firstReflectionLength;
+        this.secondReflectionLength = secondReflectionLength;
         this.reflectionLayers = reflectionLayers;
         this.ballTag = ballTag;
         
         // 清除缓存，强制重新计算
         ClearPath();
     }
+    
     
     
     /// <summary>

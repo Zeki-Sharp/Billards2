@@ -255,49 +255,6 @@ public class AimController : MonoBehaviour
         }
     }
     
-    /// <summary>
-    /// 更新落点显示
-    /// </summary>
-    /// <param name="pathPoints">瞄准线路径点</param>
-    void UpdateLandingPointDisplay(List<Vector3> pathPoints)
-    {
-        if (!enableDistancePrediction || landingPointManager == null)
-        {
-            return;
-        }
-        
-        // 计算瞄准线总长度
-        float aimLineLength = aimLineRenderer.GetPathTotalLength(pathPoints);
-        
-        // 判断是否显示落点
-        if (lastPredictedDistance < aimLineLength && lastPredictedDistance > 0)
-        {
-            // 截断路径到预测距离
-            List<Vector3> truncatedPath = aimLineRenderer.TruncatePathAtDistance(pathPoints, lastPredictedDistance);
-            
-            // 获取落点位置（截断路径的最后一个点）
-            if (truncatedPath.Count > 0)
-            {
-                Vector3 landingPosition = truncatedPath[truncatedPath.Count - 1];
-                landingPointManager.ShowLandingPoint(landingPosition);
-                
-                if (showDebugInfo)
-                {
-                    Debug.Log($"[AimController] 显示落点 - 位置: {landingPosition}, 预测距离: {lastPredictedDistance:F2}, 瞄准线长度: {aimLineLength:F2}");
-                }
-            }
-        }
-        else
-        {
-            // 隐藏落点
-            landingPointManager.HideLandingPoint();
-            
-            if (showDebugInfo)
-            {
-                Debug.Log($"[AimController] 隐藏落点 - 预测距离: {lastPredictedDistance:F2}, 瞄准线长度: {aimLineLength:F2}");
-            }
-        }
-    }
     
     /// <summary>
     /// 更新瞄准方向（拉弓模式：从鼠标指向球）
@@ -389,6 +346,12 @@ public class AimController : MonoBehaviour
     {
         isVisible = false;
         
+        // 隐藏落点
+        if (landingPointManager != null)
+        {
+            landingPointManager.HideLandingPoint();
+        }
+        
         // 取消订阅蓄力进度事件
         GameEventBus.OnChargingProgressChanged -= UpdateChargingProgress;
         GameEventBus.OnForceChanged -= UpdateForceDisplay;
@@ -454,8 +417,7 @@ public class AimController : MonoBehaviour
                     Debug.Log($"[AimController] 落点判断 - 预测距离: {lastPredictedDistance:F2}, 瞄准线长度: {aimLineLength:F2}");
                 }
                 
-                // 判断是否显示落点
-                // 修复逻辑：如果预测距离小于瞄准线长度，显示落点；否则显示完整瞄准线
+                // 判断是否显示落点（去掉各种限制，只保留基本条件）
                 if (lastPredictedDistance <= aimLineLength && lastPredictedDistance > 0)
                 {
                     // 截断路径到预测距离并渲染

@@ -128,7 +128,10 @@ public class AimLineRenderer : MonoBehaviour
         // 根据路径点数创建分段
         int segmentCount = pathPoints.Count - 1;
         
-        for (int i = 0; i < segmentCount; i++)
+        // 渲染所有段
+        int renderSegmentCount = segmentCount;
+        
+        for (int i = 0; i < renderSegmentCount; i++)
         {
             // 创建分段线段
             LineRenderer segmentLine = CreateSegmentLine(i);
@@ -163,8 +166,11 @@ public class AimLineRenderer : MonoBehaviour
             if (materialController != null)
             {
                 float segmentLength = Vector3.Distance(startPoint, endPoint);
-                bool isLastSegment = (i == segmentCount - 1);
-                materialController.UpdateSegmentMaterial(segmentLine, segmentLength, isLastSegment);
+                
+                // 判断是否应该渐隐 - 总是最后一段渐隐
+                bool shouldFade = (i == renderSegmentCount - 1);
+                
+                materialController.UpdateSegmentMaterial(segmentLine, segmentLength, shouldFade);
             }
         }
         
