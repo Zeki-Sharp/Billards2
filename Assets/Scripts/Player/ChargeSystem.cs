@@ -17,14 +17,9 @@ using UnityEngine;
 /// </summary>
 public class ChargeSystem : MonoBehaviour
 {
-    [Header("蓄力设置")]
-    [SerializeField] private float maxChargingTime = 3f; // 最大蓄力时间
+    [Header("拉弓式蓄力设置")]
     [SerializeField] private float maxForce = 25f; // 最大力度
     [SerializeField] private float minForce = 5f; // 最小力度
-    [SerializeField] private bool useCyclingCharge = false; // 是否使用循环蓄力
-    
-    [Header("拉弓式蓄力设置")]
-    [SerializeField] private bool useBowPullMode = false; // 是否使用拉弓模式
     [SerializeField] private float maxPullDistance = 8f; // 最大拉弓距离（世界单位）
     [SerializeField] private float minPullDistance = 1f; // 最小拉弓距离
     
@@ -136,67 +131,21 @@ public class ChargeSystem : MonoBehaviour
     {
         if (!isCharging) return;
         
-        // 拉弓模式：基于鼠标距离计算蓄力
-        if (useBowPullMode)
-        {
-            UpdateBowPullCharging();
-        }
-        else
-        {
-            // 原有的时间蓄力模式
-            UpdateTimeBasedCharging();
-        }
+        // 基于鼠标距离计算蓄力
+        UpdateBowPullCharging();
         
         // 计算当前力度
         CalculateCurrentForce();
         
         // 触发事件
-        if (useCyclingCharge && !useBowPullMode)
-        {
-            // 循环蓄力：UI 应该显示力度的归一化值（0-1 循环变化）
-            float normalizedForce = (currentForce - minForce) / (maxForce - minForce);
-            GameEventBus.PublishChargingProgressChanged(normalizedForce);
-        }
-        else
-        {
-            // 线性蓄力或拉弓模式：UI 显示蓄力进度
-            GameEventBus.PublishChargingProgressChanged(chargingPower);
-        }
+        GameEventBus.PublishChargingProgressChanged(chargingPower);
         GameEventBus.PublishForceChanged(currentForce);
         
         // 调试信息
         if (showDebugInfo && Time.frameCount % 30 == 0) // 每30帧打印一次
         {
-            if (useBowPullMode)
-            {
-                Debug.Log($"ChargeSystem [拉弓模式]: 蓄力进度={chargingPower:F2}, 当前力度={currentForce:F2}");
-            }
-            else
-            {
-                float chargingTime = Time.time - chargingStartTime;
-                Debug.Log($"ChargeSystem [时间模式]: 蓄力时间={chargingTime:F2}s, 蓄力进度={chargingPower:F2}, 当前力度={currentForce:F2}");
-            }
+            Debug.Log($"ChargeSystem [拉弓模式]: 蓄力进度={chargingPower:F2}, 当前力度={currentForce:F2}");
         }
-        
-        // 检查是否蓄力完成
-        if (chargingPower >= 1f && !useBowPullMode)
-        {
-            chargingPower = 1f;
-            
-            if (showDebugInfo)
-            {
-                Debug.Log("ChargeSystem: 蓄力完成！");
-            }
-        }
-    }
-    
-    /// <summary>
-    /// 更新基于时间的蓄力（原有逻辑）
-    /// </summary>
-    void UpdateTimeBasedCharging()
-    {
-        float chargingTime = Time.time - chargingStartTime;
-        chargingPower = Mathf.Clamp01(chargingTime / maxChargingTime);
     }
     
     /// <summary>
@@ -276,38 +225,8 @@ public class ChargeSystem : MonoBehaviour
     /// </summary>
     void CalculateCurrentForce()
     {
-        if (useBowPullMode)
-        {
-            // 拉弓模式：直接基于蓄力进度（距离）计算力度
-            currentForce = Mathf.Lerp(minForce, maxForce, chargingPower);
-        }
-        else if (useCyclingCharge)
-        {
-            // 循环蓄力：力度在 minForce 和 maxForce 之间反复循环
-            // 0-maxChargingTime: min → max (上升)
-            // maxChargingTime-2*maxChargingTime: max → min (下降)
-            // 2*maxChargingTime-3*maxChargingTime: min → max (上升)
-            // ...持续循环
-            
-            float chargingTime = Time.time - chargingStartTime;
-            float cycleProgress = (chargingTime / maxChargingTime) % 2f;  // 0-2 循环
-            
-            if (cycleProgress < 1f)
-            {
-                // 上升阶段：minForce → maxForce
-                currentForce = Mathf.Lerp(minForce, maxForce, cycleProgress);
-            }
-            else
-            {
-                // 下降阶段：maxForce → minForce
-                currentForce = Mathf.Lerp(maxForce, minForce, cycleProgress - 1f);
-            }
-        }
-        else
-        {
-            // 线性蓄力：基于蓄力进度
-            currentForce = Mathf.Lerp(minForce, maxForce, chargingPower);
-        }
+        // 拉弓模式：直接基于蓄力进度（距离）计算力度
+        currentForce = Mathf.Lerp(minForce, maxForce, chargingPower);
     }
     
     #endregion
@@ -361,28 +280,14 @@ public class ChargeSystem : MonoBehaviour
     /// <summary>
     /// 设置蓄力参数
     /// </summary>
-    public void SetChargingParameters(float maxTime, float maxF, float minF)
+    public void SetChargingParameters(float maxF, float minF)
     {
-        maxChargingTime = maxTime;
         maxForce = maxF;
         minForce = minF;
         
         if (showDebugInfo)
         {
-            Debug.Log($"ChargeSystem: 更新蓄力参数 - 最大时间: {maxTime}, 最大力度: {maxF}, 最小力度: {minF}");
-        }
-    }
-    
-    /// <summary>
-    /// 设置循环蓄力模式
-    /// </summary>
-    public void SetCyclingMode(bool useCycling)
-    {
-        useCyclingCharge = useCycling;
-        
-        if (showDebugInfo)
-        {
-            Debug.Log($"ChargeSystem: 设置循环模式 - 使用循环: {useCycling}");
+            Debug.Log($"ChargeSystem: 更新蓄力参数 - 最大力度: {maxF}, 最小力度: {minF}");
         }
     }
     
@@ -395,11 +300,8 @@ public class ChargeSystem : MonoBehaviour
     
     #region 公共属性
     
-    public float MaxChargingTime => maxChargingTime;
     public float MaxForce => maxForce;
     public float MinForce => minForce;
-    public bool UseCyclingCharge => useCyclingCharge;
-    public bool UseBowPullMode => useBowPullMode;
     
     #endregion
     
