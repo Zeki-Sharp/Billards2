@@ -27,6 +27,9 @@ public class AimController : MonoBehaviour
     [Header("球体设置")]
     public PlayerCore playerCore; // 玩家核心引用
     
+    [Header("蓄力系统")]
+    public ChargeSystem chargeSystem; // 蓄力系统引用（用于判断拉弓模式）
+    
     [Header("相机设置")]
     public Camera targetCamera; // 目标相机，如果为空则使用主相机
     
@@ -155,7 +158,7 @@ public class AimController : MonoBehaviour
     }
     
     /// <summary>
-    /// 更新瞄准方向（从白球指向鼠标）
+    /// 更新瞄准方向（根据模式决定方向）
     /// </summary>
     void UpdateAimDirection()
     {
@@ -168,8 +171,19 @@ public class AimController : MonoBehaviour
         // 转换为世界坐标
         Vector3 mouseWorldPos = GetMouseWorldPosition(mouseScreenPos);
         
-        // 计算瞄准方向 - 从白球指向鼠标的方向
-        Vector3 direction = mouseWorldPos - playerCore.transform.position;
+        // 计算瞄准方向 - 根据蓄力模式决定方向
+        Vector3 direction;
+        if (chargeSystem != null && chargeSystem.UseBowPullMode)
+        {
+            // 拉弓模式：从鼠标指向球（发射方向）
+            direction = playerCore.transform.position - mouseWorldPos;
+        }
+        else
+        {
+            // 原模式：从球指向鼠标
+            direction = mouseWorldPos - playerCore.transform.position;
+        }
+        
         if (direction.magnitude > 0.1f) // 避免零向量
         {
             aimDirection = direction.normalized;

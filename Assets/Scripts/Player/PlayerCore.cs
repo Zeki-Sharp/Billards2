@@ -290,11 +290,21 @@ public class PlayerCore : MonoBehaviour
         float chargingPower = chargeSystem.GetChargingPower();
         float currentForce = chargeSystem.GetCurrentForce();
         
-        
-        // 计算发射方向（朝向鼠标位置）
+        // 计算发射方向（根据蓄力模式决定方向）
         Vector3 mouseWorldPos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
         mouseWorldPos.z = 0;
-        Vector2 direction = (mouseWorldPos - transform.position).normalized;
+        
+        Vector2 direction;
+        if (chargeSystem.UseBowPullMode)
+        {
+            // 拉弓模式：从鼠标指向球（发射方向）
+            direction = (transform.position - mouseWorldPos).normalized;
+        }
+        else
+        {
+            // 原模式：从球指向鼠标
+            direction = (mouseWorldPos - transform.position).normalized;
+        }
         
         // 使用蓄力系统的力度（直接使用蓄力系统计算的力度）
         float force = currentForce;
