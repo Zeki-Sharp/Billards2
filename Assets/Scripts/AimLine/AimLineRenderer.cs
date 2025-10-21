@@ -190,6 +190,111 @@ public class AimLineRenderer : MonoBehaviour
         ClearCollisionIndicators();
     }
     
+    /// <summary>
+    /// 渲染带长度限制的分段瞄准线
+    /// </summary>
+    /// <param name="pathPoints">完整路径点列表</param>
+    /// <param name="maxDistance">最大显示距离</param>
+    /// <returns>实际渲染的路径点列表</returns>
+    public List<Vector3> RenderSegmentedAimLineWithLengthLimit(List<Vector3> pathPoints, float maxDistance)
+    {
+        if (pathPoints == null || pathPoints.Count <= 1)
+        {
+            ClearAllLines();
+            return new List<Vector3>();
+        }
+        
+        // 计算截断后的路径点
+        List<Vector3> truncatedPoints = CalculateTruncatedPath(pathPoints, maxDistance);
+        
+        // 渲染截断后的瞄准线
+        RenderSegmentedAimLine(truncatedPoints);
+        
+        if (showDebugInfo)
+        {
+            Debug.Log($"[AimLineRenderer] 渲染长度限制瞄准线 - 原始点数: {pathPoints.Count}, 截断后点数: {truncatedPoints.Count}, 最大距离: {maxDistance}");
+        }
+        
+        return truncatedPoints;
+    }
+    
+    /// <summary>
+    /// 计算截断后的路径点
+    /// </summary>
+    /// <param name="pathPoints">完整路径点列表</param>
+    /// <param name="maxDistance">最大距离</param>
+    /// <returns>截断后的路径点列表</returns>
+    List<Vector3> CalculateTruncatedPath(List<Vector3> pathPoints, float maxDistance)
+    {
+        List<Vector3> truncatedPoints = new List<Vector3>();
+        
+        if (pathPoints.Count <= 1)
+        {
+            return truncatedPoints;
+        }
+        
+        // 添加起点
+        truncatedPoints.Add(pathPoints[0]);
+        
+        float accumulatedDistance = 0f;
+        
+        // 遍历路径点，计算累积距离
+        for (int i = 1; i < pathPoints.Count; i++)
+        {
+            float segmentDistance = Vector3.Distance(pathPoints[i - 1], pathPoints[i]);
+            
+            // 如果加上这段距离会超过最大距离
+            if (accumulatedDistance + segmentDistance > maxDistance)
+            {
+                // 计算在这段中的截断点
+                float remainingDistance = maxDistance - accumulatedDistance;
+                Vector3 direction = (pathPoints[i] - pathPoints[i - 1]).normalized;
+                Vector3 truncationPoint = pathPoints[i - 1] + direction * remainingDistance;
+                
+                truncatedPoints.Add(truncationPoint);
+                break;
+            }
+            
+            // 添加当前点
+            truncatedPoints.Add(pathPoints[i]);
+            accumulatedDistance += segmentDistance;
+        }
+        
+        return truncatedPoints;
+    }
+    
+    /// <summary>
+    /// 获取路径总长度
+    /// </summary>
+    /// <param name="pathPoints">路径点列表</param>
+    /// <returns>总长度</returns>
+    public float GetPathTotalLength(List<Vector3> pathPoints)
+    {
+        if (pathPoints == null || pathPoints.Count <= 1)
+        {
+            return 0f;
+        }
+        
+        float totalLength = 0f;
+        for (int i = 1; i < pathPoints.Count; i++)
+        {
+            totalLength += Vector3.Distance(pathPoints[i - 1], pathPoints[i]);
+        }
+        
+        return totalLength;
+    }
+    
+    /// <summary>
+    /// 在指定距离处截断路径
+    /// </summary>
+    /// <param name="pathPoints">完整路径点列表</param>
+    /// <param name="truncationDistance">截断距离</param>
+    /// <returns>截断后的路径点列表</returns>
+    public List<Vector3> TruncatePathAtDistance(List<Vector3> pathPoints, float truncationDistance)
+    {
+        return CalculateTruncatedPath(pathPoints, truncationDistance);
+    }
+    
     
     /// <summary>
     /// 创建分段线段

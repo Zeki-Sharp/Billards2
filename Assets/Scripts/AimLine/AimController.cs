@@ -37,6 +37,10 @@ public class AimController : MonoBehaviour
     [Header("渲染器")]
     public AimLineRenderer aimLineRenderer; // 瞄准线渲染器引用
     
+    [Header("距离预测设置")]
+    [Tooltip("是否启用距离预测和落点显示")]
+    public bool enableDistancePrediction = true;
+    
     [Header("调试设置")]
     [SerializeField] private bool showDebugInfo = true; // 是否显示调试信息
     
@@ -44,6 +48,12 @@ public class AimController : MonoBehaviour
     private Camera cam;
     private bool isVisible = false; // 是否显示瞄准线
     private Vector2 aimDirection;
+    
+    // 距离预测相关
+    private MovementDistancePredictor distancePredictor;
+    private AimLineLandingPointManager landingPointManager;
+    private ChargeSystem chargeSystem;
+    private float lastPredictedDistance = 0f;
     
     void Start()
     {
@@ -95,6 +105,7 @@ public class AimController : MonoBehaviour
         // 初始化组件
         InitializeReflectionCalculator();
         InitializeRenderer();
+        InitializeDistancePrediction();
         
         if (showDebugInfo)
         {
@@ -152,6 +163,139 @@ public class AimController : MonoBehaviour
         else if (aimLineRenderer == null)
         {
             Debug.LogWarning("AimController: 渲染器初始化失败");
+        }
+    }
+    
+    /// <summary>
+    /// 初始化距离预测组件
+    /// </summary>
+    void InitializeDistancePrediction()
+    {
+        if (!enableDistancePrediction)
+        {
+            if (showDebugInfo)
+            {
+                Debug.Log("AimController: 距离预测已禁用");
+            }
+            return;
+        }
+        
+        // 获取距离预测器组件
+        distancePredictor = GetComponent<MovementDistancePredictor>();
+        if (distancePredictor == null)
+        {
+            Debug.LogWarning("AimController: 找不到MovementDistancePredictor组件，距离预测功能将不可用");
+        }
+        
+        // 获取落点管理器组件
+        landingPointManager = GetComponent<AimLineLandingPointManager>();
+        if (landingPointManager == null)
+        {
+            Debug.LogWarning("AimController: 找不到AimLineLandingPointManager组件，落点显示功能将不可用");
+        }
+        
+        // 获取蓄力系统组件（用于获取当前力度）
+        if (playerCore != null)
+        {
+            chargeSystem = playerCore.GetComponent<ChargeSystem>();
+            if (chargeSystem == null)
+            {
+                Debug.LogWarning("AimController: 找不到ChargeSystem组件，无法获取当前力度");
+            }
+        }
+        
+        if (showDebugInfo)
+        {
+            Debug.Log($"AimController: 距离预测初始化完成 - 预测器: {(distancePredictor != null ? "已找到" : "未找到")}, 落点管理器: {(landingPointManager != null ? "已找到" : "未找到")}, 蓄力系统: {(chargeSystem != null ? "已找到" : "未找到")}");
+        }
+    }
+    
+    /// <summary>
+    /// 更新移动距离预测
+    /// </summary>
+    void UpdateMovementPrediction()
+    {
+        if (!enableDistancePrediction || distancePredictor == null || chargeSystem == null)
+        {
+            return;
+        }
+        
+        // 获取当前力度并转换为速度
+        float currentForce = chargeSystem.GetCurrentForce();
+        // 力度转换为速度：假设力度直接对应速度（需要根据实际物理调整）
+        float initialVelocity = currentForce;
+        
+        // 获取球的物理数据
+        BallData ballData = null;
+        if (playerCore != null)
+        {
+            BallPhysics ballPhysics = playerCore.GetComponent<BallPhysics>();
+            if (ballPhysics != null)
+            {
+                ballData = ballPhysics.ballData;
+            }
+        }
+        
+        if (ballData == null)
+        {
+            if (showDebugInfo)
+            {
+                Debug.LogWarning("AimController: 无法获取BallData，跳过距离预测");
+            }
+            return;
+        }
+        
+        // 预测移动距离
+        float predictedDistance = distancePredictor.PredictMovementDistance(initialVelocity, ballData);
+        lastPredictedDistance = predictedDistance;
+        
+        if (showDebugInfo)
+        {
+            Debug.Log($"[AimController] 距离预测 - 力度: {currentForce:F2}, 预测距离: {predictedDistance:F2}, BallData阻尼: {(ballData != null ? ballData.linearDamping.ToString("F3") : "null")}");
+        }
+    }
+    
+    /// <summary>
+    /// 更新落点显示
+    /// </summary>
+    /// <param name="pathPoints">瞄准线路径点</param>
+    void UpdateLandingPointDisplay(List<Vector3> pathPoints)
+    {
+        if (!enableDistancePrediction || landingPointManager == null)
+        {
+            return;
+        }
+        
+        // 计算瞄准线总长度
+        float aimLineLength = aimLineRenderer.GetPathTotalLength(pathPoints);
+        
+        // 判断是否显示落点
+        if (lastPredictedDistance < aimLineLength && lastPredictedDistance > 0)
+        {
+            // 截断路径到预测距离
+            List<Vector3> truncatedPath = aimLineRenderer.TruncatePathAtDistance(pathPoints, lastPredictedDistance);
+            
+            // 获取落点位置（截断路径的最后一个点）
+            if (truncatedPath.Count > 0)
+            {
+                Vector3 landingPosition = truncatedPath[truncatedPath.Count - 1];
+                landingPointManager.ShowLandingPoint(landingPosition);
+                
+                if (showDebugInfo)
+                {
+                    Debug.Log($"[AimController] 显示落点 - 位置: {landingPosition}, 预测距离: {lastPredictedDistance:F2}, 瞄准线长度: {aimLineLength:F2}");
+                }
+            }
+        }
+        else
+        {
+            // 隐藏落点
+            landingPointManager.HideLandingPoint();
+            
+            if (showDebugInfo)
+            {
+                Debug.Log($"[AimController] 隐藏落点 - 预测距离: {lastPredictedDistance:F2}, 瞄准线长度: {aimLineLength:F2}");
+            }
         }
     }
     
@@ -295,7 +439,63 @@ public class AimController : MonoBehaviour
             }
             
             List<Vector3> pathPoints = reflectionCalculator.CalculateReflectionPath(startPos, aimDirection, ballRadius);
-            aimLineRenderer.RenderSegmentedAimLine(pathPoints);
+            
+            // 更新距离预测
+            UpdateMovementPrediction();
+            
+            // 根据距离预测决定是否显示落点并截断瞄准线
+            if (enableDistancePrediction && distancePredictor != null && landingPointManager != null)
+            {
+                // 计算瞄准线总长度
+                float aimLineLength = aimLineRenderer.GetPathTotalLength(pathPoints);
+                
+                if (showDebugInfo)
+                {
+                    Debug.Log($"[AimController] 落点判断 - 预测距离: {lastPredictedDistance:F2}, 瞄准线长度: {aimLineLength:F2}");
+                }
+                
+                // 判断是否显示落点
+                // 修复逻辑：如果预测距离小于瞄准线长度，显示落点；否则显示完整瞄准线
+                if (lastPredictedDistance <= aimLineLength && lastPredictedDistance > 0)
+                {
+                    // 截断路径到预测距离并渲染
+                    List<Vector3> truncatedPath = aimLineRenderer.TruncatePathAtDistance(pathPoints, lastPredictedDistance);
+                    aimLineRenderer.RenderSegmentedAimLine(truncatedPath);
+                    
+                    // 显示落点在截断位置
+                    if (truncatedPath.Count > 0)
+                    {
+                        Vector3 landingPosition = truncatedPath[truncatedPath.Count - 1];
+                        landingPointManager.ShowLandingPoint(landingPosition);
+                        
+                        if (showDebugInfo)
+                        {
+                            Debug.Log($"[AimController] 显示落点 - 位置: {landingPosition}");
+                        }
+                    }
+                }
+                else
+                {
+                    // 显示完整瞄准线，隐藏落点
+                    aimLineRenderer.RenderSegmentedAimLine(pathPoints);
+                    landingPointManager.HideLandingPoint();
+                    
+                    if (showDebugInfo)
+                    {
+                        Debug.Log($"[AimController] 隐藏落点 - 预测距离: {lastPredictedDistance:F2}, 瞄准线长度: {aimLineLength:F2}");
+                    }
+                }
+            }
+            else
+            {
+                // 距离预测未启用或组件缺失，使用原始逻辑
+                aimLineRenderer.RenderSegmentedAimLine(pathPoints);
+                
+                if (showDebugInfo)
+                {
+                    Debug.Log($"[AimController] 距离预测未启用 - enableDistancePrediction: {enableDistancePrediction}, distancePredictor: {(distancePredictor != null)}, landingPointManager: {(landingPointManager != null)}");
+                }
+            }
         }
         else
         {
@@ -322,6 +522,47 @@ public class AimController : MonoBehaviour
     public Vector2 GetAimDirection()
     {
         return aimDirection;
+    }
+    
+    /// <summary>
+    /// 获取当前预测的移动距离
+    /// </summary>
+    /// <returns>预测距离</returns>
+    public float GetPredictedDistance()
+    {
+        return lastPredictedDistance;
+    }
+    
+    /// <summary>
+    /// 设置是否启用距离预测
+    /// </summary>
+    /// <param name="enable">是否启用</param>
+    public void SetDistancePredictionEnabled(bool enable)
+    {
+        enableDistancePrediction = enable;
+        
+        if (!enable && landingPointManager != null)
+        {
+            landingPointManager.HideLandingPoint();
+        }
+    }
+    
+    /// <summary>
+    /// 获取距离预测器组件
+    /// </summary>
+    /// <returns>距离预测器</returns>
+    public MovementDistancePredictor GetDistancePredictor()
+    {
+        return distancePredictor;
+    }
+    
+    /// <summary>
+    /// 获取落点管理器组件
+    /// </summary>
+    /// <returns>落点管理器</returns>
+    public AimLineLandingPointManager GetLandingPointManager()
+    {
+        return landingPointManager;
     }
     
     

@@ -1,0 +1,168 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &5125386412533849888
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 5181106650949996532}
+  - component: {fileID: 3357877017394172215}
+  - component: {fileID: 3838414888512623922}
+  - component: {fileID: 8664044329718287280}
+  - component: {fileID: 8943938372370279972}
+  - component: {fileID: 8175702448868890031}
+  - component: {fileID: 2050217528864470944}
+  m_Layer: 0
+  m_Name: Launcher
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &5181106650949996532
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5125386412533849888}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -1.5790039, y: 2.4969542, z: -0.04567779}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &3357877017394172215
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5125386412533849888}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 07880cd37e99074408a4dee92b460510, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  playerCore: {fileID: 0}
+  targetCamera: {fileID: 0}
+  reflectionCalculator: {fileID: 3838414888512623922}
+  aimLineRenderer: {fileID: 8943938372370279972}
+  enableDistancePrediction: 1
+  showDebugInfo: 1
+--- !u!114 &3838414888512623922
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5125386412533849888}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 660f04bbfffb09f46b18766ed8aebaba, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  maxDistance: 6
+  reflectionLength: 3
+  reflectionLayers:
+    serializedVersion: 2
+    m_Bits: 123
+  ignoreLayers:
+    serializedVersion: 2
+    m_Bits: 6
+  playerLayer:
+    serializedVersion: 2
+    m_Bits: 8
+  reflectionOffset: 0.1
+  ballTag: Player
+  enableDebugLog: 0
+  showDebugGizmos: 0
+--- !u!114 &8664044329718287280
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5125386412533849888}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: de1dd1e2e728ff64dbfb945f78209fa0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  aimLineMaterial: {fileID: 2100000, guid: a7476e36e1167774583b2bd7f2791667, type: 2}
+  referenceLength: 1
+  baseUScale: 4
+  minUScale: 1
+  maxUScale: 100
+  autoScrollSpeed: 0.8
+  enableFlowEffect: 1
+  fadeLength: 1
+  fadeStrength: 1
+  fadeCurve: 1.4
+  enableFadeEffect: 1
+  enableDebugLog: 0
+--- !u!114 &8943938372370279972
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5125386412533849888}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fd567649da0657c4e8a5ad78ad67e53d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  defaultLineWidth: 0.1
+  defaultSortingOrder: 10
+  defaultCapVertices: 8
+  collisionIndicatorSprite: {fileID: -2413806693520163455, guid: a86470a33a6bf42c4b3595704624658b, type: 3}
+  indicatorSize: 0.8
+  indicatorColor: {r: 1, g: 1, b: 1, a: 0.5882353}
+  indicatorSortingOrder: 11
+  showCollisionIndicators: 1
+  materialController: {fileID: 0}
+  showDebugInfo: 0
+--- !u!114 &8175702448868890031
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5125386412533849888}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5a109767f28e8f74ab8c7b142af3f8a2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  updateInterval: 0.1
+  cacheThreshold: 0.3
+  enableCaching: 1
+  simulationTimeStep: 0.02
+  maxSimulationSteps: 500
+  simulationStopThreshold: 0.1
+--- !u!114 &2050217528864470944
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5125386412533849888}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d8704819be4bfaa4dbf8a2042dc2abe8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  landingPointSprite: {fileID: -2413806693520163455, guid: a86470a33a6bf42c4b3595704624658b, type: 3}
+  landingPointSize: 0.8
+  landingPointColor: {r: 1, g: 1, b: 1, a: 0.5803922}
+  landingPointSortingOrder: 11
+  showLandingPoint: 1
+  minDisplayDistance: 0.5
+  maxDisplayDistance: 30
+  showDebugInfo: 0
