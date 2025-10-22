@@ -270,8 +270,8 @@ public class AimController : MonoBehaviour
         // 转换为世界坐标
         Vector3 mouseWorldPos = GetMouseWorldPosition(mouseScreenPos);
         
-        // 计算瞄准方向 - 拉弓模式：从鼠标指向球（发射方向）
-        Vector3 direction = playerCore.transform.position - mouseWorldPos;
+        // 计算瞄准方向 - 从球指向鼠标（发射方向）
+        Vector3 direction = mouseWorldPos - playerCore.transform.position;
         
         if (direction.magnitude > 0.1f) // 避免零向量
         {

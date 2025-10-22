@@ -17,11 +17,10 @@ using UnityEngine;
 /// </summary>
 public class ChargeSystem : MonoBehaviour
 {
-    [Header("拉弓式蓄力设置")]
+    [Header("时间蓄力设置")]
     [SerializeField] private float maxForce = 25f; // 最大力度
     [SerializeField] private float minForce = 5f; // 最小力度
-    [SerializeField] private float maxPullDistance = 8f; // 最大拉弓距离（世界单位）
-    [SerializeField] private float minPullDistance = 1f; // 最小拉弓距离
+    [SerializeField] private float chargeTime = 2f; // 蓄满力所需时间（秒）
     
     [Header("组件引用")]
     [SerializeField] private PlayerCore playerCore; // 用于获取球位置
@@ -131,8 +130,10 @@ public class ChargeSystem : MonoBehaviour
     {
         if (!isCharging) return;
         
-        // 基于鼠标距离计算蓄力
-        UpdateBowPullCharging();
+        // 基于时间计算蓄力（循环模式：0->1->0->1...）
+        float elapsedTime = Time.time - chargingStartTime;
+        // PingPong 会在 0 到 chargeTime 之间来回，除以 chargeTime 得到 0-1 的循环值
+        chargingPower = Mathf.PingPong(elapsedTime, chargeTime) / chargeTime;
         
         // 计算当前力度
         CalculateCurrentForce();
@@ -144,80 +145,8 @@ public class ChargeSystem : MonoBehaviour
         // 调试信息
         if (showDebugInfo && Time.frameCount % 30 == 0) // 每30帧打印一次
         {
-            Debug.Log($"ChargeSystem [拉弓模式]: 蓄力进度={chargingPower:F2}, 当前力度={currentForce:F2}");
+            Debug.Log($"ChargeSystem [循环模式]: 蓄力进度={chargingPower:F2}, 当前力度={currentForce:F2}");
         }
-    }
-    
-    /// <summary>
-    /// 更新基于鼠标距离的拉弓蓄力
-    /// </summary>
-    void UpdateBowPullCharging()
-    {
-        // 检查必要的组件引用
-        if (playerCore == null)
-        {
-            if (showDebugInfo)
-            {
-                Debug.LogWarning("ChargeSystem: PlayerCore未设置，无法使用拉弓模式");
-            }
-            return;
-        }
-        
-        // 获取相机
-        Camera cam = targetCamera != null ? targetCamera : Camera.main;
-        if (cam == null)
-        {
-            if (showDebugInfo)
-            {
-                Debug.LogWarning("ChargeSystem: 找不到相机，无法使用拉弓模式");
-            }
-            return;
-        }
-        
-        // 获取鼠标世界坐标
-        Vector3 mouseWorldPos = GetMouseWorldPosition(cam);
-        
-        // 获取球位置
-        Vector3 ballPos = playerCore.transform.position;
-        
-        // 计算距离
-        float distance = Vector2.Distance(new Vector2(mouseWorldPos.x, mouseWorldPos.y), new Vector2(ballPos.x, ballPos.y));
-        
-        // 距离映射到蓄力进度 (0-1)
-        if (distance <= minPullDistance)
-        {
-            chargingPower = 0f;
-        }
-        else if (distance >= maxPullDistance)
-        {
-            chargingPower = 1f;
-        }
-        else
-        {
-            chargingPower = (distance - minPullDistance) / (maxPullDistance - minPullDistance);
-        }
-    }
-    
-    /// <summary>
-    /// 获取鼠标的世界坐标（2D）
-    /// 复用AimController的坐标转换逻辑
-    /// </summary>
-    Vector3 GetMouseWorldPosition(Camera cam)
-    {
-        // 使用New Input System获取鼠标位置
-        Vector2 mousePos = UnityEngine.InputSystem.Mouse.current.position.ReadValue();
-        Vector3 mouseScreenPos = new Vector3(mousePos.x, mousePos.y, 0f);
-        
-        // 转换为世界坐标（与AimController相同的转换逻辑）
-        float screenWidth = Screen.width;
-        float screenHeight = Screen.height;
-        float cameraSize = cam.orthographicSize;
-        float aspectRatio = (float)screenWidth / screenHeight;
-        
-        float worldX = (mouseScreenPos.x / screenWidth - 0.5f) * cameraSize * aspectRatio * 2f;
-        float worldY = (mouseScreenPos.y / screenHeight - 0.5f) * cameraSize * 2f;
-        
-        return new Vector3(worldX, worldY, 0f);
     }
     
     /// <summary>
@@ -225,7 +154,7 @@ public class ChargeSystem : MonoBehaviour
     /// </summary>
     void CalculateCurrentForce()
     {
-        // 拉弓模式：直接基于蓄力进度（距离）计算力度
+        // 时间模式：直接基于蓄力进度（时间）计算力度
         currentForce = Mathf.Lerp(minForce, maxForce, chargingPower);
     }
     
