@@ -12,7 +12,7 @@ public class EnemyBehavior : MonoBehaviour
     public EnemyData enemyData;
     
     [Header("移动设置")]
-    private bool isMoving = false;  // 是否正在移动
+    // 移动状态由 BaseMovementBehavior 统一管理
     
     [Header("行为系统")]
     private IMovementBehavior movementBehavior;  // 移动行为组件
@@ -185,8 +185,7 @@ public class EnemyBehavior : MonoBehaviour
             Vector2 targetPosition = movementBehavior.ExecuteMovement(transform, player, enemyData);
             currentMovementDirection = movementBehavior.GetMovementDirection();
             
-            // 设置移动状态
-            isMoving = true;
+            // 设置移动状态（由 BaseMovementBehavior 管理）
             movementBehavior.SetMoving(true);
             
             // 开始平滑移动
@@ -226,8 +225,7 @@ public class EnemyBehavior : MonoBehaviour
         // 确保最终位置准确
         transform.position = targetPosition;
         
-        // 重置移动状态
-        isMoving = false;
+        // 重置移动状态（由 BaseMovementBehavior 管理）
         movementBehavior?.SetMoving(false);
         
         Debug.Log($"EnemyBehavior {name}: 移动完成，最终位置: {transform.position}");
@@ -246,7 +244,7 @@ public class EnemyBehavior : MonoBehaviour
     /// </summary>
     public bool IsMoving()
     {
-        return movementBehavior?.IsMoving() ?? isMoving;
+        return movementBehavior?.IsMoving() ?? false;
     }
     
     /// <summary>
