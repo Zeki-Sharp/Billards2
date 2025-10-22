@@ -10931,6 +10931,14 @@ PrefabInstance:
       propertyPath: targetCamera
       value: 
       objectReference: {fileID: 859979524}
+    - target: {fileID: 3838414888512623922, guid: e719b1822f259c14cb3dd6f62d9c465d, type: 3}
+      propertyPath: maxDistance
+      value: 8
+      objectReference: {fileID: 0}
+    - target: {fileID: 3838414888512623922, guid: e719b1822f259c14cb3dd6f62d9c465d, type: 3}
+      propertyPath: firstReflectionLength
+      value: 4
+      objectReference: {fileID: 0}
     - target: {fileID: 5125386412533849888, guid: e719b1822f259c14cb3dd6f62d9c465d, type: 3}
       propertyPath: m_Name
       value: Launcher

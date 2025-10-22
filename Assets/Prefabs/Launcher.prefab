@@ -67,8 +67,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 660f04bbfffb09f46b18766ed8aebaba, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  maxDistance: 10
-  firstReflectionLength: 6
+  maxDistance: 8
+  firstReflectionLength: 4
   secondReflectionLength: 1
   reflectionLayers:
     serializedVersion: 2
