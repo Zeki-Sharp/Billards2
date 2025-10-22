@@ -127,12 +127,15 @@ public class BallPhysics : MonoBehaviour
         }
         else
         {
-            // 球停止运动
+            // 球停止运动 - 只在状态变化时发布事件
             if (isMoving)
             {
                 isMoving = false;
                 float movementDuration = Time.time - ballStartTime;
                 Debug.Log($"BallPhysics: 球停止运动，运动时长 {movementDuration:F2} 秒");
+                
+                // 发布球停止事件（只在状态变化时发布一次）
+                GameEventBus.PublishBallStopped(this);
             }
             
             // 如果速度低于停止阈值，强制停止
@@ -140,16 +143,12 @@ public class BallPhysics : MonoBehaviour
             {
                 rb.linearVelocity = Vector2.zero;
                 rb.angularVelocity = 0f;
-                // 发布到GameEventBus
-                GameEventBus.PublishBallStopped(this);
             }
             else if (currentSpeed <= 0.01f)
             {
                 // 速度极低时也认为已停止
                 rb.linearVelocity = Vector2.zero;
                 rb.angularVelocity = 0f;
-                // 发布到GameEventBus
-                GameEventBus.PublishBallStopped(this);
             }
         }
         
