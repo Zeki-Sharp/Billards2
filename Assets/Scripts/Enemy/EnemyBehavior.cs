@@ -121,22 +121,13 @@ public class EnemyBehavior : MonoBehaviour
             return;
         }
         
-        // 在玩家及其子物体中查找 PlayerCore 组件
-        PlayerCore playerCore = player.GetComponentInChildren<PlayerCore>();
-        if (playerCore != null)
-        {
-            // 从 EnemyData 读取伤害值
-            float damage = enemyData.damage;
-            
-            // 对玩家造成伤害
-            playerCore.TakeDamage(damage);
-
-            gameObject.PublishAttack("Hit", transform.position, player, damage);
-        }
-        else
-        {
-            Debug.LogWarning($"【攻击范围检测】EnemyBehavior {name}: 玩家及其子物体中没有找到 PlayerCore 组件，无法造成伤害！");
-        }
+        // 从 EnemyData 读取伤害值
+        float damage = enemyData.damage;
+        
+        // 只发布攻击事件，让 DamageProcessor 统一处理伤害应用
+        gameObject.PublishAttack("Hit", transform.position, player, damage);
+        
+        Debug.Log($"EnemyBehavior {name}: 发布攻击事件，伤害: {damage}");
     }
     
     /// <summary>
@@ -431,29 +422,12 @@ public class EnemyBehavior : MonoBehaviour
             return;
         }
         
-        // 查找 PlayerCore 组件
-        PlayerCore playerCore = playerObject.GetComponent<PlayerCore>();
-        if (playerCore == null)
-        {
-            playerCore = playerObject.GetComponentInChildren<PlayerCore>();
-        }
+        float damage = enemyData.damage;
         
-        if (playerCore != null)
-        {
-            float damage = enemyData.damage;
-            
-            // 对玩家造成伤害（忽略阶段）
-            playerCore.TakeDamageIgnorePhase(damage);
-            
-            // 发布攻击事件（触发受击特效）
-            gameObject.PublishAttack("Hit", hitPosition, playerObject, damage);
-            
-            Debug.Log($"EnemyBehavior {name}: 陷阱对玩家造成 {damage} 点伤害");
-        }
-        else
-        {
-            Debug.LogWarning($"EnemyBehavior {name}: 玩家对象中未找到 PlayerCore 组件");
-        }
+        // 只发布攻击事件，让 DamageProcessor 统一处理伤害应用
+        gameObject.PublishAttack("Hit", hitPosition, playerObject, damage);
+        
+        Debug.Log($"EnemyBehavior {name}: 陷阱发布攻击事件，伤害: {damage}");
     }
     
     /// <summary>

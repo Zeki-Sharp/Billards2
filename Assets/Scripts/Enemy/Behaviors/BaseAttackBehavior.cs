@@ -64,28 +64,16 @@ public abstract class BaseAttackBehavior : IAttackBehavior
             return;
         }
         
-        // 在玩家及其子物体中查找 PlayerCore 组件
-        PlayerCore playerCore = playerObject.GetComponentInChildren<PlayerCore>();
-        if (playerCore != null)
+        // 从 EnemyData 读取伤害值
+        float damage = enemyData.damage;
+        
+        // 只发布攻击事件，让 DamageProcessor 统一处理伤害应用
+        if (enemyTransform != null)
         {
-            // 从 EnemyData 读取伤害值
-            float damage = enemyData.damage;
-            
-            // 对玩家造成伤害
-            playerCore.TakeDamage(damage);
-            
-            // 触发攻击事件
-            if (enemyTransform != null)
-            {
-                enemyTransform.gameObject.PublishAttack("Hit", enemyTransform.position, playerObject, damage);
-            }
-            
-            Debug.Log($"BaseAttackBehavior: 对玩家造成 {damage} 点伤害");
+            enemyTransform.gameObject.PublishAttack("Hit", enemyTransform.position, playerObject, damage);
         }
-        else
-        {
-            Debug.LogWarning("BaseAttackBehavior: 玩家及其子物体中没有找到 PlayerCore 组件");
-        }
+        
+        Debug.Log($"BaseAttackBehavior: 发布攻击事件，伤害: {damage}");
     }
     
     /// <summary>
