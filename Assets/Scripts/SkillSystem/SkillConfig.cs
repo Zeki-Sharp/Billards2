@@ -1,8 +1,8 @@
 using UnityEngine;
 using Sirenix.OdinInspector;
 using System.Collections.Generic;
-#if UNITY_EDITOR
 using System.Linq;
+#if UNITY_EDITOR
 #endif
 
 /// <summary>
@@ -223,6 +223,24 @@ public class SkillConfig : ScriptableObject
         return tags.Distinct().OrderBy(t => t); // 去重并排序
     }
 #endif
+    
+    /// <summary>
+    /// 获取动态生成的技能描述
+    /// </summary>
+    /// <returns>动态生成的描述文字</returns>
+    public string GetDynamicDescription()
+    {
+        // 使用反射调用静态方法，避免编译时依赖
+        var method = System.Type.GetType("SkillDescriptionGenerator")?.GetMethod("GenerateDescription", 
+            System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static);
+        
+        if (method != null)
+        {
+            return method.Invoke(null, new object[] { this }) as string ?? description;
+        }
+        
+        return description; // 回退到原始描述
+    }
 }
 
 /// <summary>

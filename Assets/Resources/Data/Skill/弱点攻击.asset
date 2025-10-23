@@ -32,10 +32,11 @@ MonoBehaviour:
       maxValue: 1
       dataExtractorType: 0
   effectConfig:
-    effectType: 7
+    effectType: 3
     targetStat: Damage
     modifierValue: 2
     modifierType: 2
+    allowStacking: 1
     healAmount: 20
     minTransitionTime: 1
     maxTransitionTime: 5
@@ -48,6 +49,13 @@ MonoBehaviour:
       m_RotationOrder: 4
     weakPointMarkerPrefab: {fileID: 2061522790037590901, guid: 0b70a562923562241bcb4aed313b4c1d, type: 3}
     weakPointRadius: 1
+    dropItemConfig: {fileID: 0}
+    dropChance: 1
+    dropRangeConfig:
+      dropRadius: 1
+      dropShape: 0
+      positionOffset: {x: 0, y: 0, z: 0}
+      coordinateSystemType: 0
     weakPointDamageMultiplier: 1.5
     weakPointRefreshOnHit: 1
   resetConditionConfig:

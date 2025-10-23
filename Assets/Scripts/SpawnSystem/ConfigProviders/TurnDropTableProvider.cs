@@ -109,7 +109,7 @@ public class TurnDropTableProvider : ScriptableObject
             {
                 if (enableDebugLog)
                 {
-                    Debug.Log($"[TurnDropTableProvider] 掉落条件不满足，跳过: {entry.itemConfig.itemName} (需要技能: {entry.requiredSkillName})");
+                    Debug.Log($"[TurnDropTableProvider] 掉落条件不满足，跳过: {entry.itemConfig.itemName}");
                 }
                 continue;
             }
@@ -123,9 +123,7 @@ public class TurnDropTableProvider : ScriptableObject
                 
                 if (enableDebugLog)
                 {
-                    string conditionInfo = entry.conditionType == DropConditionType.SkillRequired ? 
-                        $" (技能条件: {entry.requiredSkillName})" : "";
-                    Debug.Log($"[TurnDropTableProvider] 掉落道具: {entry.itemConfig.itemName} (概率: {finalDropChance:P1}){conditionInfo}");
+                    Debug.Log($"[TurnDropTableProvider] 掉落道具: {entry.itemConfig.itemName} (概率: {finalDropChance:P1})");
                 }
             }
         }

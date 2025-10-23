@@ -12,12 +12,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8ff1c7e156b0bca4a988603a406a7fc0, type: 3}
   m_Name: Health_Item
   m_EditorClassIdentifier: 
-  itemName: Health_Item
+  itemName: "\u5C0F\u8840\u74F6"
   description: "\u8FD9\u662F\u4E00\u4E2A\u795E\u79D8\u7684\u9053\u5177..."
   icon: {fileID: 0}
   itemSkill: {fileID: 11400000, guid: 295137818e7240147adb54c0a36f42cf, type: 2}
   isInstantEffect: 1
-  dropChance: 1
   itemPrefab: {fileID: 5612692153959467649, guid: c5ef7f4e58ed0574d970771b6894b71c, type: 3}
   pickupEffect: {fileID: 0}
   pickupSound: {fileID: 0}

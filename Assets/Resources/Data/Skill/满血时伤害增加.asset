@@ -27,7 +27,7 @@ MonoBehaviour:
       requiredCount: 1
       timeWindow: 5
       comparisonType: 0
-      targetValue: 0.99
+      targetValue: 1
       minValue: 0
       maxValue: 1
       dataExtractorType: 0

@@ -78,6 +78,27 @@ public class SkillEffectConfig
     [Range(0.1f, 2f)]
     public float weakPointRadius = 0.5f;
     
+    // ========== 掉落物品配置 ==========
+    [ShowIf("effectType", SkillEffectType.DropItem)]
+    [BoxGroup("掉落物品配置")]
+    [LabelText("掉落物品配置")]
+    [Tooltip("要掉落的物品配置")]
+    [Required]
+    public ItemConfig dropItemConfig;
+    
+    [ShowIf("effectType", SkillEffectType.DropItem)]
+    [BoxGroup("掉落物品配置")]
+    [LabelText("掉落概率")]
+    [Tooltip("掉落此物品的概率（0-1）")]
+    [Range(0f, 1f)]
+    public float dropChance = 1.0f;
+    
+    [ShowIf("effectType", SkillEffectType.DropItem)]
+    [BoxGroup("掉落物品配置")]
+    [LabelText("掉落范围配置")]
+    [Tooltip("掉落位置的范围配置")]
+    public DropRangeConfig dropRangeConfig = new DropRangeConfig();
+    
     [ShowIf("effectType", SkillEffectType.WeakPoint)]
     [BoxGroup("弱点攻击配置")]
     [LabelText("伤害倍率")]
@@ -115,11 +136,6 @@ public class SkillEffectConfig
                 // 治疗是瞬时效果，不需要移除条件
                 return healEffect;
                 
-            case SkillEffectType.Spawn:
-                var spawnEffect = new SpawnEffect();
-                // Spawn效果是空占位符，不需要移除条件
-                return spawnEffect;
-                
             case SkillEffectType.Transition:
                 var transitionEffect = new TransitionEffect();
                 // 设置 Transition 专用参数
@@ -144,6 +160,13 @@ public class SkillEffectConfig
                 // 弱点效果是持续效果，生命周期由技能管理
                 return weakPointEffect;
                 
+            case SkillEffectType.DropItem:
+                var dropItemEffect = new DropItemEffect();
+                // 设置掉落物品专用参数
+                dropItemEffect.SetDropConfig(dropItemConfig, dropChance, dropRangeConfig);
+                // 掉落效果是瞬时效果，不需要移除条件
+                return dropItemEffect;
+                
             default:
                 Debug.LogError($"不支持的效果类型: {effectType}");
                 return null;
@@ -161,8 +184,6 @@ public class SkillEffectConfig
                 return $"属性修改: {targetStat} x{modifierValue} ({modifierType})";
             case SkillEffectType.Heal:
                 return $"治疗: +{healAmount} HP";
-            case SkillEffectType.Spawn:
-                return $"生成效果: 空占位符（功能由掉落系统处理）";
             case SkillEffectType.Transition:
                 return $"Transition: {minTransitionTime:F1}s-{maxTransitionTime:F1}s (门槛:{transitionThreshold:F2})";
             case SkillEffectType.WeakPoint:
@@ -180,10 +201,7 @@ public enum SkillEffectType
 {
     StatModifier,   // 属性修改效果
     Heal,           // 治疗效果（恢复当前生命值）
-    Status,         // 状态效果（暂未实现）
-    Resource,       // 资源效果（暂未实现）
-    Spawn,          // 生成效果（暂未实现）
-    Chain,          // 连锁效果（暂未实现）
     Transition,     // Transition 过渡效果
-    WeakPoint       // 弱点攻击效果
+    WeakPoint,      // 弱点攻击效果
+    DropItem        // 掉落物品效果
 }

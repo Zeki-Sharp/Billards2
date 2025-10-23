@@ -16,7 +16,7 @@ MonoBehaviour:
   description: "\u51FB\u6740\u654C\u4EBA\u540E\uFF0C\u6389\u843D\u4E00\u4E2A\u56DE\u590D10\u751F\u547D\u503C\u7684\u9053\u5177"
   skillTag: common
   triggerConfig:
-    triggerType: 3
+    triggerType: 1
     targetTag: Enemy
     killTargetTag: Enemy
     dataExtractorType: 0
@@ -36,6 +36,7 @@ MonoBehaviour:
     targetStat: Damage
     modifierValue: 2
     modifierType: 2
+    allowStacking: 1
     healAmount: 20
     minTransitionTime: 1
     maxTransitionTime: 5
@@ -48,6 +49,13 @@ MonoBehaviour:
       m_RotationOrder: 4
     weakPointMarkerPrefab: {fileID: 0}
     weakPointRadius: 0.5
+    dropItemConfig: {fileID: 11400000, guid: 944c44f9fdcc349488cc86c860e75199, type: 2}
+    dropChance: 1
+    dropRangeConfig:
+      dropRadius: 1
+      dropShape: 0
+      positionOffset: {x: 0, y: 0, z: 0}
+      coordinateSystemType: 0
     weakPointDamageMultiplier: 1.5
     weakPointRefreshOnHit: 1
   resetConditionConfig:

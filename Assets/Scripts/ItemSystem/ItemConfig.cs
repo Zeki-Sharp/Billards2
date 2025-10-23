@@ -67,7 +67,7 @@ public class ItemConfig : ScriptableObject
                     return ItemType.Consumable;
                 case SkillEffectType.StatModifier:
                     return ItemType.Buff;
-                case SkillEffectType.Spawn:
+                case SkillEffectType.DropItem:
                     return ItemType.Special;
                 default:
                     return ItemType.Unknown;

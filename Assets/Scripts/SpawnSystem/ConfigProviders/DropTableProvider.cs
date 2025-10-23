@@ -8,8 +8,7 @@ using System.Linq;
 /// </summary>
 public enum DropConditionType
 {
-    Always,         // 总是掉落
-    SkillRequired   // 需要特定技能
+    Always         // 总是掉落
 }
 
 /// <summary>
@@ -126,7 +125,7 @@ public class DropTableProvider : ScriptableObject, SpawnConfigProvider<ItemConfi
             {
                 if (enableDebugLog)
                 {
-                    Debug.Log($"[DropTableProvider] 掉落条件不满足，跳过: {entry.itemConfig.itemName} (需要技能: {entry.requiredSkillName})");
+                    Debug.Log($"[DropTableProvider] 掉落条件不满足，跳过: {entry.itemConfig.itemName}");
                 }
                 continue;
             }
@@ -140,9 +139,7 @@ public class DropTableProvider : ScriptableObject, SpawnConfigProvider<ItemConfi
                 
                 if (enableDebugLog)
                 {
-                    string conditionInfo = entry.conditionType == DropConditionType.SkillRequired ? 
-                        $" (技能条件: {entry.requiredSkillName})" : "";
-                    Debug.Log($"[DropTableProvider] 掉落道具: {entry.itemConfig.itemName} (概率: {finalDropChance:P1}){conditionInfo}");
+                    Debug.Log($"[DropTableProvider] 掉落道具: {entry.itemConfig.itemName} (概率: {finalDropChance:P1})");
                 }
             }
         }
@@ -396,48 +393,15 @@ public class ItemDropEntry
     [Tooltip("掉落此道具的条件类型")]
     public DropConditionType conditionType = DropConditionType.Always;
     
-    [LabelText("需要技能名称")]
-    [Tooltip("当条件类型为SkillRequired时，需要激活的技能名称")]
-    [ShowIf("conditionType", DropConditionType.SkillRequired)]
-    [ValueDropdown("GetSpawnSkillNames")]
-    public string requiredSkillName = "";
-    
-    /// <summary>
-    /// 获取所有可用的Spawn技能名称（用于下拉选择）
-    /// </summary>
-    private IEnumerable<ValueDropdownItem<string>> GetSpawnSkillNames()
-    {
-        var skillManager = Object.FindAnyObjectByType<SkillManager>();
-        if (skillManager == null)
-        {
-            return new List<ValueDropdownItem<string>>();
-        }
-        
-        var spawnSkills = skillManager.GetSpawnSkillNames();
-        return spawnSkills.Select(skillName => new ValueDropdownItem<string>(skillName, skillName));
-    }
-    
     /// <summary>
     /// 检查掉落条件是否满足
     /// </summary>
-    /// <param name="activeSkills">当前激活的技能名称集合</param>
+    /// <param name="activeSkills">当前激活的技能名称集合（已废弃，保留兼容性）</param>
     /// <returns>是否满足掉落条件</returns>
-    public bool CheckDropCondition(HashSet<string> activeSkills)
+    public bool CheckDropCondition(HashSet<string> activeSkills = null)
     {
-        switch (conditionType)
-        {
-            case DropConditionType.Always:
-                Debug.Log($"[ItemDropEntry] 检查掉落条件 - 类型: Always, 道具: {itemConfig?.itemName}, 结果: true");
-                return true;
-            case DropConditionType.SkillRequired:
-                bool hasSkill = !string.IsNullOrEmpty(requiredSkillName) && 
-                               activeSkills != null && 
-                               activeSkills.Contains(requiredSkillName);
-                Debug.Log($"[ItemDropEntry] 检查掉落条件 - 类型: SkillRequired, 道具: {itemConfig?.itemName}, 需要技能: {requiredSkillName}, 激活技能数: {activeSkills?.Count ?? 0}, 结果: {hasSkill}");
-                return hasSkill;
-            default:
-                return true;
-        }
+        // 现在只有Always条件，总是返回true
+        return true;
     }
     
     /// <summary>
@@ -447,8 +411,6 @@ public class ItemDropEntry
     public string GetDebugInfo()
     {
         string itemName = itemConfig != null ? itemConfig.itemName : "空";
-        string conditionInfo = conditionType == DropConditionType.SkillRequired ? 
-            $" (需要技能: {requiredSkillName})" : "";
-        return $"{itemName}: {dropChance:P0} (权重: {weight}){conditionInfo}";
+        return $"{itemName}: {dropChance:P0} (权重: {weight})";
     }
 }

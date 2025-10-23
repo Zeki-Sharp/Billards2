@@ -229,6 +229,14 @@ public class SkillSelectionUI : MonoBehaviour
         if (skill == null)
             return "";
         
+        // 优先使用动态生成的描述
+        string dynamicDescription = skill.GetDynamicDescription();
+        if (!string.IsNullOrEmpty(dynamicDescription))
+        {
+            return dynamicDescription;
+        }
+        
+        // 回退到原始描述
         if (!string.IsNullOrEmpty(skill.description))
         {
             return skill.description;

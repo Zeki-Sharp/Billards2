@@ -26,9 +26,9 @@ public class SkillManager : MonoBehaviour
     private Dictionary<string, SkillInstance> skillInstances = new Dictionary<string, SkillInstance>();
     
     /// <summary>
-    /// Spawn类型技能名称列表（用于掉落系统）
+    /// DropItem类型技能名称列表（用于掉落系统）
     /// </summary>
-    private HashSet<string> spawnSkillNames = new HashSet<string>();
+    private HashSet<string> dropItemSkillNames = new HashSet<string>();
     
     #region Unity生命周期
     
@@ -88,7 +88,7 @@ public class SkillManager : MonoBehaviour
     {
         // 清除旧的实例
         skillInstances.Clear();
-        spawnSkillNames.Clear();
+        dropItemSkillNames.Clear();
         
         // 为每个技能重新创建实例
         foreach (var skillConfig in activeSkills)
@@ -100,13 +100,13 @@ public class SkillManager : MonoBehaviour
                 {
                     skillInstances[skillConfig.skillName] = skillInstance;
                     
-                    // 检查是否为Spawn类型技能
-                    if (skillConfig.effectConfig?.effectType == SkillEffectType.Spawn)
+                    // 检查是否为DropItem类型技能
+                    if (skillConfig.effectConfig?.effectType == SkillEffectType.DropItem)
                     {
-                        spawnSkillNames.Add(skillConfig.skillName);
+                        dropItemSkillNames.Add(skillConfig.skillName);
                         if (enableDebugLog)
                         {
-                            Debug.Log($"SkillManager: 重新注册Spawn技能 - {skillConfig.skillName}");
+                            Debug.Log($"SkillManager: 重新注册DropItem技能 - {skillConfig.skillName}");
                         }
                     }
                     
@@ -383,6 +383,16 @@ public class SkillManager : MonoBehaviour
         {
             skillInstances[skillConfig.skillName] = skillInstance;
             
+            // 检查是否为DropItem类型技能，注册到dropItemSkillNames
+            if (skillConfig.effectConfig?.effectType == SkillEffectType.DropItem)
+            {
+                dropItemSkillNames.Add(skillConfig.skillName);
+                if (enableDebugLog)
+                {
+                    Debug.Log($"SkillManager: 注册DropItem技能 - {skillConfig.skillName}");
+                }
+            }
+            
             // 通知技能状态管理器技能已激活
             skillStateManager?.AddActiveSkill(skillConfig.skillName);
             
@@ -440,19 +450,19 @@ public class SkillManager : MonoBehaviour
     }
     
     /// <summary>
-    /// 获取所有Spawn类型技能名称（用于掉落系统）
+    /// 获取所有DropItem类型技能名称（用于掉落系统）
     /// </summary>
-    public HashSet<string> GetSpawnSkillNames()
+    public HashSet<string> GetDropItemSkillNames()
     {
-        return new HashSet<string>(spawnSkillNames);
+        return new HashSet<string>(dropItemSkillNames);
     }
     
     /// <summary>
-    /// 检查指定技能是否为Spawn类型
+    /// 检查指定技能是否为DropItem类型
     /// </summary>
-    public bool IsSpawnSkill(string skillName)
+    public bool IsDropItemSkill(string skillName)
     {
-        return spawnSkillNames.Contains(skillName);
+        return dropItemSkillNames.Contains(skillName);
     }
     
     /// <summary>

@@ -16,11 +16,10 @@ MonoBehaviour:
   - enemyType: 0
     maxDropCount: 100
     dropEntries:
-    - itemConfig: {fileID: 11400000, guid: 944c44f9fdcc349488cc86c860e75199, type: 2}
-      dropChance: 1
+    - itemConfig: {fileID: 0}
+      dropChance: 0.3
       weight: 1
-      conditionType: 1
-      requiredSkillName: "\u51FB\u6740\u6389\u843D\u56DE\u8840"
+      conditionType: 0
     dropRange:
       coordinateSystem: 1
       rangeShape: 1
@@ -33,14 +32,4 @@ MonoBehaviour:
       offsetRange: 0
   globalDropRateMultiplier: 1
   maxDropCount: 100
-  defaultDropRange:
-    coordinateSystem: 0
-    rangeShape: 0
-    worldCenter: {x: 0, y: 0, z: 0}
-    worldSize: {x: 20, y: 10}
-    worldRadius: 8
-    relativeSize: {x: 4, y: 4}
-    relativeRadius: 2
-    enablePositionOffset: 1
-    offsetRange: 0.5
   enableDebugLog: 1
