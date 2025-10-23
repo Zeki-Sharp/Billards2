@@ -69,17 +69,6 @@ public class SkillConfig : ScriptableObject
     public EffectRemovalConfig effectRemovalConfig = new EffectRemovalConfig();
     
     [BoxGroup("技能属性")]
-    [LabelText("技能类型")]
-    [Tooltip("技能类型")]
-    public SkillType skillType = SkillType.Passive;
-    
-    [BoxGroup("技能属性")]
-    [LabelText("所需等级")]
-    [Tooltip("所需等级")]
-    [MinValue(1)]
-    public int requiredLevel = 1;
-    
-    [BoxGroup("技能属性")]
     [LabelText("是否激活")]
     [Tooltip("是否激活")]
     public bool isActive = true;
@@ -243,15 +232,6 @@ public class SkillConfig : ScriptableObject
     }
 }
 
-/// <summary>
-/// 技能类型枚举
-/// </summary>
-public enum SkillType
-{
-    Passive,    // 被动技能
-    Active,     // 主动技能（暂未实现）
-    Ultimate    // 终极技能（暂未实现）
-}
 
 /// <summary>
 /// 技能实例 - 包含配置和运行时组件
