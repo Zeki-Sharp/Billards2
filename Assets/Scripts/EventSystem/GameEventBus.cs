@@ -185,6 +185,11 @@ public static class GameEventBus
     /// </summary>
     public static event System.Action OnSkillSelectionCompleted;
     
+    /// <summary>
+    /// 技能升级事件
+    /// </summary>
+    public static event System.Action<string, int> OnSkillUpgraded;
+    
     #endregion
     
     #region 游戏数据事件
@@ -291,6 +296,11 @@ public static class GameEventBus
     /// 发布技能选择完成事件
     /// </summary>
     public static void PublishSkillSelectionCompleted() => OnSkillSelectionCompleted?.Invoke();
+    
+    /// <summary>
+    /// 发布技能升级事件
+    /// </summary>
+    public static void PublishSkillUpgraded(string skillName, int newLevel) => OnSkillUpgraded?.Invoke(skillName, newLevel);
     
     /// <summary>
     /// 发布球停止运动事件

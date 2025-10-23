@@ -15,58 +15,69 @@ MonoBehaviour:
   skillName: "\u8303\u56F4\u6269\u5927"
   description: "\u653B\u51FB\u8303\u56F4\u6269\u59270.5"
   skillTag: "\u8303\u56F4\u653B\u51FB\u89D2\u8272"
-  triggerConfig:
-    triggerType: 3
-    targetTag: Enemy
-    killTargetTag: Enemy
-    dataExtractorType: 0
-  conditionConfig:
-    logicType: 0
-    conditions:
-    - conditionType: 0
-      requiredCount: 2
-      timeWindow: 5
-      comparisonType: 0
-      targetValue: 1
+  skillLevels:
+  - level: 1
+    isActive: 1
+    levelDescription: 
+    triggerConfig:
+      triggerType: 3
+      targetTag: Enemy
+      killTargetTag: Enemy
+      dataExtractorType: 0
+    conditionConfig:
+      logicType: 0
+      conditions:
+      - conditionType: 0
+        requiredCount: 2
+        timeWindow: 5
+        comparisonType: 0
+        targetValue: 1
+        minValue: 0
+        maxValue: 1
+        dataExtractorType: 0
+    effectConfig:
+      effectType: 0
+      targetStat: AreaRadius
+      modifierValue: 1
+      modifierType: 0
+      allowStacking: 1
+      healAmount: 20
+      minTransitionTime: 1
+      maxTransitionTime: 5
+      transitionThreshold: 0.3
+      chargingToTransitionCurve:
+        serializedVersion: 2
+        m_Curve: []
+        m_PreInfinity: 2
+        m_PostInfinity: 2
+        m_RotationOrder: 4
+      weakPointMarkerPrefab: {fileID: 0}
+      weakPointRadius: 0.5
+      dropItemConfig: {fileID: 0}
+      dropChance: 1
+      dropRangeConfig:
+        dropRadius: 1
+        dropShape: 0
+        positionOffset: {x: 0, y: 0, z: 0}
+        coordinateSystemType: 0
+      weakPointDamageMultiplier: 1.5
+      weakPointRefreshOnHit: 1
+    resetConditionConfig:
+      logicType: 1
+      resetConditions:
+      - resetType: 3
+        comparisonType: 1
+        targetValue: 0.99
+        minValue: 0
+        maxValue: 1
+        dataExtractorType: 0
+    effectRemovalConfig:
+      removalType: 5
+      duration: 30
+      comparisonType: 2
+      targetValue: 0.5
       minValue: 0
       maxValue: 1
       dataExtractorType: 0
-  effectConfig:
-    effectType: 0
-    targetStat: AreaRadius
-    modifierValue: 0.5
-    modifierType: 0
-    healAmount: 20
-    minTransitionTime: 1
-    maxTransitionTime: 5
-    transitionThreshold: 0.3
-    chargingToTransitionCurve:
-      serializedVersion: 2
-      m_Curve: []
-      m_PreInfinity: 2
-      m_PostInfinity: 2
-      m_RotationOrder: 4
-    weakPointMarkerPrefab: {fileID: 0}
-    weakPointRadius: 0.5
-    weakPointDamageMultiplier: 1.5
-    weakPointRefreshOnHit: 1
-  resetConditionConfig:
-    logicType: 1
-    resetConditions:
-    - resetType: 3
-      comparisonType: 1
-      targetValue: 0.99
-      minValue: 0
-      maxValue: 1
-      dataExtractorType: 0
-  effectRemovalConfig:
-    removalType: 5
-    duration: 30
-    comparisonType: 2
-    targetValue: 0.5
-    minValue: 0
-    maxValue: 1
-    dataExtractorType: 0
-  skillType: 0
-  requiredLevel: 1
+  requiredSkills: []
   isActive: 1

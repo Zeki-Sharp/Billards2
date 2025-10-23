@@ -60,8 +60,11 @@ public class ItemConfig : ScriptableObject
         {
             if (itemSkill == null) return ItemType.Unknown;
             
-            // 根据技能效果类型推断道具类型
-            switch (itemSkill.effectConfig.effectType)
+            // 根据技能效果类型推断道具类型（从等级1获取）
+            var level1Config = itemSkill.GetLevelConfig(1);
+            if (level1Config?.effectConfig == null) return ItemType.Unknown;
+            
+            switch (level1Config.effectConfig.effectType)
             {
                 case SkillEffectType.Heal:
                     return ItemType.Consumable;

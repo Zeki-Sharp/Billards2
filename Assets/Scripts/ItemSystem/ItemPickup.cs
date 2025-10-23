@@ -140,8 +140,15 @@ public class ItemPickup : MonoBehaviour
             Debug.Log($"[ItemPickup] 执行一次性效果: {itemConfig.itemSkill.skillName}");
         }
         
-        // 创建效果实例
-        var effect = itemConfig.itemSkill.effectConfig.CreateEffect();
+        // 创建效果实例（从等级1获取）
+        var level1Config = itemConfig.itemSkill.GetLevelConfig(1);
+        if (level1Config?.effectConfig == null)
+        {
+            Debug.LogError($"[ItemPickup] 技能 {itemConfig.itemSkill.skillName} 没有等级1配置");
+            return false;
+        }
+        
+        var effect = level1Config.effectConfig.CreateEffect();
         
         if (effect == null)
         {

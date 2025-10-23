@@ -85,6 +85,5 @@ MonoBehaviour:
     minValue: 0
     maxValue: 1
     dataExtractorType: 0
-  skillType: 0
-  requiredLevel: 1
-  isActive: 1
+  requiredSkills: []
+  isActive: 0

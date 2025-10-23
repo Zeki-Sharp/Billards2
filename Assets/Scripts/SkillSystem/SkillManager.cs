@@ -100,13 +100,14 @@ public class SkillManager : MonoBehaviour
                 {
                     skillInstances[skillConfig.skillName] = skillInstance;
                     
-                    // 检查是否为DropItem类型技能
-                    if (skillConfig.effectConfig?.effectType == SkillEffectType.DropItem)
+                    // 检查是否为DropItem类型技能（从当前等级获取）
+                    var currentLevelConfig = skillConfig.GetLevelConfig(skillInstance.currentLevel);
+                    if (currentLevelConfig?.effectConfig?.effectType == SkillEffectType.DropItem)
                     {
                         dropItemSkillNames.Add(skillConfig.skillName);
                         if (enableDebugLog)
                         {
-                            Debug.Log($"SkillManager: 重新注册DropItem技能 - {skillConfig.skillName}");
+                            Debug.Log($"SkillManager: 重新注册DropItem技能 - {skillConfig.skillName} Lv{skillInstance.currentLevel}");
                         }
                     }
                     
@@ -290,11 +291,16 @@ public class SkillManager : MonoBehaviour
     /// <returns>是否相关</returns>
     private bool IsEventRelevantForSkill(object eventData, SkillInstance skillInstance)
     {
+        // 获取当前等级的触发器
+        var trigger = skillInstance.currentLevelInstance?.trigger;
+        if (trigger == null) return false;
+        
         // 根据触发器的类型判断事件相关性
-        if (skillInstance.trigger is DataSourceTrigger dataSourceTrigger)
+        if (trigger is DataSourceTrigger dataSourceTrigger)
         {
             // DataSourceTrigger 根据配置的数据提取器类型判断
-            switch (skillInstance.config.triggerConfig.dataExtractorType)
+            var currentLevelConfig = skillInstance.config.GetLevelConfig(skillInstance.currentLevel);
+            switch (currentLevelConfig?.triggerConfig?.dataExtractorType)
             {
                 case DataExtractorType.Health:
                     return eventData is HealthStateData;
@@ -310,22 +316,22 @@ public class SkillManager : MonoBehaviour
                     return false;
             }
         }
-        else if (skillInstance.trigger is CollisionTrigger)
+        else if (trigger is CollisionTrigger)
         {
             // CollisionTrigger 只对攻击事件有效
             return eventData is AttackData;
         }
-        else if (skillInstance.trigger is KillTrigger)
+        else if (trigger is KillTrigger)
         {
             // KillTrigger 只对死亡事件有效
             return eventData is DeathData;
         }
-        else if (skillInstance.trigger is MovingEndTrigger)
+        else if (trigger is MovingEndTrigger)
         {
             // MovingEndTrigger 只对球停止事件有效
             return eventData is BallPhysics;
         }
-        else if (skillInstance.trigger is AlwaysTrueTrigger)
+        else if (trigger is AlwaysTrueTrigger)
         {
             // AlwaysTrueTrigger 对所有事件都有效（总是返回true）
             return true;
@@ -383,13 +389,14 @@ public class SkillManager : MonoBehaviour
         {
             skillInstances[skillConfig.skillName] = skillInstance;
             
-            // 检查是否为DropItem类型技能，注册到dropItemSkillNames
-            if (skillConfig.effectConfig?.effectType == SkillEffectType.DropItem)
+            // 检查是否为DropItem类型技能，注册到dropItemSkillNames（从当前等级获取）
+            var currentLevelConfig = skillConfig.GetLevelConfig(skillInstance.currentLevel);
+            if (currentLevelConfig?.effectConfig?.effectType == SkillEffectType.DropItem)
             {
                 dropItemSkillNames.Add(skillConfig.skillName);
                 if (enableDebugLog)
                 {
-                    Debug.Log($"SkillManager: 注册DropItem技能 - {skillConfig.skillName}");
+                    Debug.Log($"SkillManager: 注册DropItem技能 - {skillConfig.skillName} Lv{skillInstance.currentLevel}");
                 }
             }
             
@@ -474,12 +481,108 @@ public class SkillManager : MonoBehaviour
     {
         foreach (var skillInstance in skillInstances.Values)
         {
-            if (skillInstance.config.effectConfig?.effectType == effectType)
+            // 从当前等级获取效果类型
+            var currentLevelConfig = skillInstance.config.GetLevelConfig(skillInstance.currentLevel);
+            if (currentLevelConfig?.effectConfig?.effectType == effectType)
             {
                 return true;
             }
         }
         return false;
+    }
+    
+    /// <summary>
+    /// 升级技能到指定等级
+    /// </summary>
+    /// <param name="skillName">技能名称</param>
+    /// <param name="newLevel">新等级</param>
+    /// <returns>是否升级成功</returns>
+    public bool UpgradeSkill(string skillName, int newLevel)
+    {
+        if (!skillInstances.ContainsKey(skillName))
+        {
+            Debug.LogError($"SkillManager: 技能 {skillName} 不存在，无法升级");
+            return false;
+        }
+        
+        var skillInstance = skillInstances[skillName];
+        
+        // 检查是否可以升级
+        if (newLevel <= skillInstance.currentLevel)
+        {
+            Debug.LogWarning($"SkillManager: 技能 {skillName} 无法降级到等级 {newLevel}");
+            return false;
+        }
+        
+        // 执行升级
+        bool upgradeSuccess = skillInstance.UpgradeToLevel(newLevel);
+        if (upgradeSuccess)
+        {
+            // 更新DropItem技能列表
+            UpdateDropItemSkillList(skillName, skillInstance);
+            
+            if (enableDebugLog)
+            {
+                Debug.Log($"SkillManager: 技能 {skillName} 升级到等级 {newLevel}");
+            }
+            
+            // 发布技能升级事件（暂时注释，等待Unity重新编译）
+            // GameEventBus.PublishSkillUpgraded(skillName, skillInstance.currentLevel);
+        }
+        
+        return upgradeSuccess;
+    }
+    
+    /// <summary>
+    /// 检查技能是否可以升级
+    /// </summary>
+    /// <param name="skillName">技能名称</param>
+    /// <returns>是否可以升级</returns>
+    public bool CanUpgradeSkill(string skillName)
+    {
+        if (!skillInstances.ContainsKey(skillName))
+        {
+            return false;
+        }
+        
+        return skillInstances[skillName].CanUpgrade();
+    }
+    
+    /// <summary>
+    /// 获取技能的下一个等级
+    /// </summary>
+    /// <param name="skillName">技能名称</param>
+    /// <returns>下一个等级，如果没有返回-1</returns>
+    public int GetSkillNextLevel(string skillName)
+    {
+        if (!skillInstances.ContainsKey(skillName))
+        {
+            return -1;
+        }
+        
+        return skillInstances[skillName].GetNextLevel();
+    }
+    
+    /// <summary>
+    /// 更新DropItem技能列表
+    /// </summary>
+    /// <param name="skillName">技能名称</param>
+    /// <param name="skillInstance">技能实例</param>
+    private void UpdateDropItemSkillList(string skillName, SkillInstance skillInstance)
+    {
+        // 移除旧的DropItem注册
+        dropItemSkillNames.Remove(skillName);
+        
+        // 检查新等级是否为DropItem类型
+        var currentLevelConfig = skillInstance.config.GetLevelConfig(skillInstance.currentLevel);
+        if (currentLevelConfig?.effectConfig?.effectType == SkillEffectType.DropItem)
+        {
+            dropItemSkillNames.Add(skillName);
+            if (enableDebugLog)
+            {
+                Debug.Log($"SkillManager: 更新DropItem技能 - {skillName} Lv{skillInstance.currentLevel}");
+            }
+        }
     }
     
     #endregion

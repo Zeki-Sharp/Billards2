@@ -3,6 +3,17 @@ using System.Collections.Generic;
 using System.Linq;
 
 /// <summary>
+/// 技能选择选项 - 包含技能配置和选择类型信息
+/// </summary>
+[System.Serializable]
+public class SkillSelectionOption
+{
+    public SkillConfig skillConfig;
+    public bool isUpgrade;  // true表示升级，false表示新技能
+    public int targetLevel; // 目标等级
+}
+
+/// <summary>
 /// 技能选择管理器 - 负责管理技能选择逻辑
 /// 
 /// 【核心职责】：
@@ -308,49 +319,85 @@ public class SkillSelectionManager : MonoBehaviour
     }
     
     /// <summary>
-    /// 生成随机技能选择
+    /// 生成随机技能选择（支持技能升级）
     /// </summary>
     void GenerateRandomSkillSelection()
     {
         currentSelection.Clear();
         
-        // 获取玩家已有的技能（用于去重）
+        // 获取玩家已有的技能
         List<SkillConfig> playerSkills = GetPlayerExistingSkills();
         
-        // 过滤掉玩家已有的技能
-        List<SkillConfig> availableSkills = allAvailableSkills
-            .Where(skill => !playerSkills.Contains(skill))
-            .ToList();
+        // 创建技能选择选项列表
+        List<SkillSelectionOption> availableOptions = new List<SkillSelectionOption>();
         
-        if (availableSkills.Count == 0)
+        // 1. 添加新技能选项（未学习的技能）
+        foreach (var skill in allAvailableSkills)
+        {
+            if (!playerSkills.Contains(skill) && IsSkillUnlocked(skill) && skill.isActive)
+            {
+                availableOptions.Add(new SkillSelectionOption
+                {
+                    skillConfig = skill,
+                    isUpgrade = false,
+                    targetLevel = 1
+                });
+            }
+        }
+        
+        // 2. 添加技能升级选项（已学习但可升级的技能）
+        foreach (var skill in playerSkills)
+        {
+            if (skillManager != null)
+            {
+                var skillInstance = skillManager.GetSkillInstance(skill.skillName);
+                if (skillInstance != null && skillInstance.CanUpgrade())
+                {
+                    int nextLevel = skillInstance.GetNextLevel();
+                    availableOptions.Add(new SkillSelectionOption
+                    {
+                        skillConfig = skill,
+                        isUpgrade = true,
+                        targetLevel = nextLevel
+                    });
+                }
+            }
+        }
+        
+        if (availableOptions.Count == 0)
         {
             if (showDebugInfo)
             {
-                Debug.LogWarning("SkillSelectionManager: 所有技能都已被学习，无法提供新技能选择");
+                Debug.LogWarning("SkillSelectionManager: 没有可选择的技能或升级选项");
             }
             return;
         }
         
-        // 随机选择技能
-        int selectionCount = Mathf.Min(skillSelectionCount, availableSkills.Count);
+        // 随机选择技能选项
+        int selectionCount = Mathf.Min(skillSelectionCount, availableOptions.Count);
         
         // 使用 Fisher-Yates 洗牌算法进行随机选择
         for (int i = 0; i < selectionCount; i++)
         {
-            int randomIndex = Random.Range(i, availableSkills.Count);
+            int randomIndex = Random.Range(i, availableOptions.Count);
             
             // 交换元素
-            SkillConfig temp = availableSkills[i];
-            availableSkills[i] = availableSkills[randomIndex];
-            availableSkills[randomIndex] = temp;
+            SkillSelectionOption temp = availableOptions[i];
+            availableOptions[i] = availableOptions[randomIndex];
+            availableOptions[randomIndex] = temp;
             
             // 添加到选择列表
-            currentSelection.Add(availableSkills[i]);
+            currentSelection.Add(availableOptions[i].skillConfig);
         }
         
         if (showDebugInfo)
         {
-            Debug.Log($"SkillSelectionManager: 从 {availableSkills.Count} 个可用技能中选择了 {currentSelection.Count} 个技能");
+            Debug.Log($"SkillSelectionManager: 从 {availableOptions.Count} 个可用选项中选择了 {currentSelection.Count} 个技能");
+            foreach (var option in availableOptions.Take(selectionCount))
+            {
+                string optionType = option.isUpgrade ? $"升级到Lv{option.targetLevel}" : "新技能";
+                Debug.Log($"  - {option.skillConfig.skillName} ({optionType})");
+            }
         }
     }
     
@@ -378,6 +425,58 @@ public class SkillSelectionManager : MonoBehaviour
         }
         
         return existingSkills;
+    }
+    
+    /// <summary>
+    /// 检查技能是否已解锁（满足前置技能要求）
+    /// </summary>
+    /// <param name="skill">要检查的技能</param>
+    /// <returns>如果技能已解锁返回 true，否则返回 false</returns>
+    bool IsSkillUnlocked(SkillConfig skill)
+    {
+        if (skill == null)
+        {
+            return false;
+        }
+        
+        // 如果没有前置技能要求，直接解锁
+        if (skill.requiredSkills == null || skill.requiredSkills.Count == 0)
+        {
+            return true;
+        }
+        
+        // 获取玩家已有的技能
+        List<SkillConfig> playerSkills = GetPlayerExistingSkills();
+        
+        // 检查是否拥有所有前置技能
+        foreach (string requiredSkillName in skill.requiredSkills)
+        {
+            // 跳过空的前置技能名称
+            if (string.IsNullOrEmpty(requiredSkillName))
+            {
+                continue;
+            }
+            
+            // 检查玩家是否拥有此前置技能
+            bool hasRequiredSkill = playerSkills.Any(playerSkill => 
+                playerSkill.skillName == requiredSkillName);
+            
+            if (!hasRequiredSkill)
+            {
+                if (showDebugInfo)
+                {
+                    Debug.Log($"SkillSelectionManager: 技能 '{skill.skillName}' 未解锁 - 缺少前置技能 '{requiredSkillName}'");
+                }
+                return false; // 缺少前置技能
+            }
+        }
+        
+        // 拥有所有前置技能，已解锁
+        if (showDebugInfo)
+        {
+            Debug.Log($"SkillSelectionManager: 技能 '{skill.skillName}' 已解锁");
+        }
+        return true;
     }
     
     /// <summary>
@@ -409,8 +508,8 @@ public class SkillSelectionManager : MonoBehaviour
             Debug.Log($"SkillSelectionManager: 玩家选择了技能 - {selectedSkill.skillName}");
         }
         
-        // 将技能添加到玩家技能列表
-        AddSkillToPlayer(selectedSkill);
+        // 将技能添加到玩家技能列表或升级技能
+        AddOrUpgradeSkill(selectedSkill);
         
         // 发布技能选择事件
         GameEventBus.PublishSkillSelected(selectedSkill, currentSelection);
@@ -420,10 +519,10 @@ public class SkillSelectionManager : MonoBehaviour
     }
     
     /// <summary>
-    /// 将技能添加到玩家技能列表
+    /// 将技能添加到玩家技能列表或升级技能
     /// </summary>
-    /// <param name="skill">要添加的技能</param>
-    void AddSkillToPlayer(SkillConfig skill)
+    /// <param name="skill">要添加或升级的技能</param>
+    void AddOrUpgradeSkill(SkillConfig skill)
     {
         // 尝试获取 SkillManager 单例
         if (skillManager == null)
@@ -431,23 +530,53 @@ public class SkillSelectionManager : MonoBehaviour
             skillManager = SkillManager.GetOrCreateInstance();
         }
         
-        if (skillManager != null)
+        if (skillManager == null)
         {
-            // 调用 SkillManager 添加技能
-            skillManager.AddSkill(skill);
-            
-            if (showDebugInfo)
+            Debug.LogError("SkillSelectionManager: SkillManager 单例未找到，无法添加或升级技能！");
+            return;
+        }
+        
+        // 检查玩家是否已经拥有此技能
+        var existingSkillInstance = skillManager.GetSkillInstance(skill.skillName);
+        
+        if (existingSkillInstance != null)
+        {
+            // 玩家已拥有此技能，执行升级
+            if (existingSkillInstance.CanUpgrade())
             {
-                Debug.Log($"SkillSelectionManager: 成功添加技能到玩家 - {skill.skillName}");
+                int nextLevel = existingSkillInstance.GetNextLevel();
+                bool upgradeSuccess = skillManager.UpgradeSkill(skill.skillName, nextLevel);
+                
+                if (upgradeSuccess)
+                {
+                    if (showDebugInfo)
+                    {
+                        Debug.Log($"SkillSelectionManager: 成功升级技能 - {skill.skillName} 到等级 {nextLevel}");
+                    }
+                }
+                else
+                {
+                    Debug.LogError($"SkillSelectionManager: 技能升级失败 - {skill.skillName}");
+                }
+            }
+            else
+            {
+                Debug.LogWarning($"SkillSelectionManager: 技能 {skill.skillName} 已达到最高等级，无法升级");
             }
         }
         else
         {
-            Debug.LogError("SkillSelectionManager: SkillManager 单例未找到，无法添加技能！");
+            // 玩家未拥有此技能，添加新技能
+            skillManager.AddSkill(skill);
+            
+            if (showDebugInfo)
+            {
+                Debug.Log($"SkillSelectionManager: 成功添加新技能到玩家 - {skill.skillName}");
+            }
+            
+            // 发布技能添加事件
+            GameEventBus.PublishSkillAddedToPlayer(skill);
         }
-        
-        // 发布技能添加事件
-        GameEventBus.PublishSkillAddedToPlayer(skill);
     }
     
     /// <summary>

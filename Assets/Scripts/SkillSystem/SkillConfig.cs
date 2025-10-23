@@ -35,48 +35,42 @@ public class SkillConfig : ScriptableObject
     // [Tooltip("技能图标")]
     // public Sprite skillIcon;
     
-    [BoxGroup("触发器配置")]
-    [LabelText("触发器配置")]
-    [Tooltip("什么时候触发技能（如：击杀敌人、碰撞墙壁等）")]
-    [Required]
-    public TriggerConfig triggerConfig = new TriggerConfig();
+    [BoxGroup("技能等级配置")]
+    [LabelText("技能等级列表")]
+    [Tooltip("技能的所有等级配置")]
+    [ListDrawerSettings(ShowIndexLabels = true, NumberOfItemsPerPage = 5)]
+    public List<SkillLevelConfig> skillLevels = new List<SkillLevelConfig>();
     
-    [BoxGroup("条件配置")]
-    [LabelText("条件配置")]
-    [Tooltip("触发条件（如：生命值满血、击杀数量等）")]
-    [ShowIf("@triggerConfig.triggerType != TriggerType.AlwaysTrue")]
-    [InfoBox("AlwaysTrue触发器不需要条件配置，会始终触发", InfoMessageType.Info, "@triggerConfig.triggerType == TriggerType.AlwaysTrue")]
-    [Required]
-    public ConditionConfig conditionConfig = new ConditionConfig();
+    /// <summary>
+    /// 自动分配等级编号
+    /// </summary>
+    [Button("自动分配等级编号")]
+    [BoxGroup("技能等级配置")]
+    public void AutoAssignLevelNumbers()
+    {
+        for (int i = 0; i < skillLevels.Count; i++)
+        {
+            skillLevels[i].level = i + 1; // 从1开始编号
+        }
+        Debug.Log($"技能 {skillName} 已自动分配等级编号: [{string.Join(", ", skillLevels.Select(l => l.level))}]");
+    }
     
-    [BoxGroup("效果配置")]
-    [LabelText("效果配置")]
-    [Tooltip("产生什么效果（如：伤害提升、恢复生命值等）")]
-    [Required]
-    public SkillEffectConfig effectConfig = new SkillEffectConfig();
-    
-    [BoxGroup("重置条件配置")]
-    [LabelText("重置条件配置")]
-    [Tooltip("什么时候可以再次触发技能（所有技能都需要）")]
-    [Required]
-    public ResetConditionConfig resetConditionConfig = new ResetConditionConfig();
-    
-    [BoxGroup("效果移除配置")]
-    [LabelText("效果移除配置")]
-    [Tooltip("持续效果何时移除（仅持续效果需要配置）")]
-    [ShowIf("@effectConfig.effectType == SkillEffectType.StatModifier")]
-    [InfoBox("只有持续效果（属性修改）才需要配置移除条件", InfoMessageType.Info, "@effectConfig.effectType == SkillEffectType.StatModifier")]
-    public EffectRemovalConfig effectRemovalConfig = new EffectRemovalConfig();
+    [BoxGroup("解锁条件")]
+    [LabelText("前置技能列表")]
+    [Tooltip("需要拥有哪些技能才能解锁此技能（手动输入技能名称）")]
+    [ListDrawerSettings(ShowIndexLabels = true)]
+    public List<string> requiredSkills = new List<string>();
     
     [BoxGroup("技能属性")]
     [LabelText("是否激活")]
-    [Tooltip("是否激活")]
+    [Tooltip("是否激活（控制整个技能是否可用）")]
     public bool isActive = true;
     
     /// <summary>
-    /// 创建技能实例
+    /// 创建技能实例（多等级版本）
     /// </summary>
-    public virtual SkillInstance CreateSkillInstance()
+    /// <param name="currentLevel">当前激活的等级，默认为最低可用等级</param>
+    public virtual SkillInstance CreateSkillInstance(int currentLevel = -1)
     {
         if (!isActive)
         {
@@ -84,44 +78,83 @@ public class SkillConfig : ScriptableObject
             return null;
         }
         
-        // 创建组件实例
-        var trigger = triggerConfig?.CreateTrigger();
-        var condition = conditionConfig?.CreateCondition();
-        var resetCondition = resetConditionConfig?.CreateResetCondition();
+        // 自动分配等级编号（确保等级编号正确）
+        AutoAssignLevelNumbers();
         
-        // 根据效果类型创建相应的移除条件
-        IEffectRemovalCondition effectRemovalCondition = null;
-        if (IsPropertyEffect())
+        // 如果未指定等级，使用最低可用等级
+        if (currentLevel == -1)
         {
-            effectRemovalCondition = effectRemovalConfig?.CreateEffectRemovalCondition();
+            var availableLevels = GetAvailableLevels();
+            if (availableLevels.Count == 0)
+            {
+                Debug.LogError($"技能 {skillName} 没有可用的等级配置");
+                return null;
+            }
+            currentLevel = availableLevels[0]; // 使用最低等级
         }
         
-        var effect = effectConfig?.CreateEffect(effectRemovalCondition);
-        
-        
-        if (trigger == null || condition == null || effect == null || resetCondition == null)
+        // 查找指定等级
+        var levelConfig = GetLevelConfig(currentLevel);
+        if (levelConfig == null)
         {
-            Debug.LogError($"技能 {skillName} 基础组件创建失败");
+            Debug.LogError($"技能 {skillName} 没有找到等级 {currentLevel} 的配置");
             return null;
         }
         
-        // 持续效果需要效果移除条件
-        if (IsPropertyEffect() && effectRemovalCondition == null)
+        // 创建等级实例
+        var levelInstance = levelConfig.CreateLevelInstance(skillName);
+        if (levelInstance == null)
         {
-            Debug.LogError($"技能 {skillName} 缺少效果移除配置");
+            Debug.LogError($"技能 {skillName} 等级 {currentLevel} 实例创建失败");
             return null;
         }
         
-        var skillInstance = new SkillInstance(this, trigger, condition, effect, resetCondition, effectRemovalCondition);
+        // 创建技能实例（包装等级实例）
+        var skillInstance = new SkillInstance(this, levelInstance, currentLevel);
         return skillInstance;
     }
     
     /// <summary>
-    /// 判断是否为持续效果（PropertyEffect）
+    /// 获取指定等级的配置
     /// </summary>
-    private bool IsPropertyEffect()
+    /// <param name="level">等级</param>
+    /// <returns>等级配置，如果不存在返回null</returns>
+    public SkillLevelConfig GetLevelConfig(int level)
     {
-        return effectConfig?.effectType == SkillEffectType.StatModifier;
+        if (skillLevels == null || skillLevels.Count == 0)
+        {
+            return null;
+        }
+        
+        return skillLevels.FirstOrDefault(l => l.level == level && l.isActive);
+    }
+    
+    /// <summary>
+    /// 获取最高可用等级
+    /// </summary>
+    /// <returns>最高等级，如果没有可用等级返回0</returns>
+    public int GetMaxLevel()
+    {
+        if (skillLevels == null || skillLevels.Count == 0)
+        {
+            return 0;
+        }
+        
+        return skillLevels.Where(l => l.isActive).Max(l => l.level);
+    }
+    
+    /// <summary>
+    /// 获取所有可用等级
+    /// </summary>
+    /// <returns>可用等级列表</returns>
+    public List<int> GetAvailableLevels()
+    {
+        if (skillLevels == null || skillLevels.Count == 0)
+        {
+            return new List<int>();
+        }
+        
+        return skillLevels.Where(l => l.isActive).Select(l => l.level).OrderBy(l => l).ToList();
     }
     
     /// <summary>
@@ -129,24 +162,26 @@ public class SkillConfig : ScriptableObject
     /// </summary>
     public virtual bool IsValid()
     {
-        bool basicValid = !string.IsNullOrEmpty(skillName) && 
-                         triggerConfig != null && 
-                         conditionConfig != null && 
-                         effectConfig != null;
-        
-        if (!basicValid) return false;
-        
-        // 检查重置条件配置
-        bool resetConditionValid = resetConditionConfig != null;
-        
-        // 检查效果移除配置（仅持续效果需要）
-        bool effectRemovalValid = true;
-        if (IsPropertyEffect())
+        // 检查基本信息
+        if (string.IsNullOrEmpty(skillName))
         {
-            effectRemovalValid = effectRemovalConfig != null;
+            return false;
         }
         
-        return resetConditionValid && effectRemovalValid;
+        // 检查是否有等级配置
+        if (skillLevels == null || skillLevels.Count == 0)
+        {
+            return false;
+        }
+        
+        // 检查至少有一个有效的等级
+        bool hasValidLevel = skillLevels.Any(level => level != null && level.IsValid() && level.isActive);
+        if (!hasValidLevel)
+        {
+            return false;
+        }
+        
+        return true;
     }
     
     /// <summary>
@@ -155,14 +190,17 @@ public class SkillConfig : ScriptableObject
     public virtual string GetDebugInfo()
     {
         string info = $"技能: {skillName}\n" +
-                     $"- 触发器: {triggerConfig?.GetDebugInfo()}\n" +
-                     $"- 条件: {conditionConfig?.GetDebugInfo()}\n" +
-                     $"- 效果: {effectConfig?.GetDebugInfo()}\n" +
-                     $"- 重置条件: {resetConditionConfig?.GetDebugInfo()}";
+                     $"- 激活: {isActive}\n" +
+                     $"- 等级数量: {skillLevels?.Count ?? 0}\n" +
+                     $"- 最高等级: {GetMaxLevel()}\n" +
+                     $"- 可用等级: [{string.Join(", ", GetAvailableLevels())}]";
         
-        if (IsPropertyEffect())
+        if (skillLevels != null)
         {
-            info += $"\n- 效果移除: {effectRemovalConfig?.GetDebugInfo()}";
+            foreach (var level in skillLevels.Where(l => l != null && l.isActive))
+            {
+                info += $"\n\n等级 {level.level}:\n{level.GetDebugInfo()}";
+            }
         }
         
         return info;
@@ -219,6 +257,8 @@ public class SkillConfig : ScriptableObject
     /// <returns>动态生成的描述文字</returns>
     public string GetDynamicDescription()
     {
+        // 暂时注释掉SkillDescriptionGenerator，等待阶段2完成后重新启用
+        /*
         // 使用反射调用静态方法，避免编译时依赖
         var method = System.Type.GetType("SkillDescriptionGenerator")?.GetMethod("GenerateDescription", 
             System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static);
@@ -227,6 +267,7 @@ public class SkillConfig : ScriptableObject
         {
             return method.Invoke(null, new object[] { this }) as string ?? description;
         }
+        */
         
         return description; // 回退到原始描述
     }
@@ -234,53 +275,90 @@ public class SkillConfig : ScriptableObject
 
 
 /// <summary>
-/// 技能实例 - 包含配置和运行时组件
+/// 技能实例 - 包含配置和运行时组件（多等级版本）
 /// </summary>
 public class SkillInstance
 {
     public SkillConfig config;
-    public ITrigger trigger;
-    public ICondition condition;
-    public IEffect effect;
-    
-    // 新的分离组件
-    public IResetCondition resetCondition;  // 所有技能都有
-    public IEffectRemovalCondition effectRemovalCondition; // 只有PropertyEffect有
+    public SkillLevelInstance currentLevelInstance;
+    public int currentLevel;
     
     /// <summary>
     /// 技能实例唯一ID
     /// </summary>
     public string InstanceId { get; private set; }
     
-    public SkillInstance(SkillConfig config, ITrigger trigger, ICondition condition, IEffect effect, 
-                        IResetCondition resetCondition, 
-                        IEffectRemovalCondition effectRemovalCondition = null)
+    public SkillInstance(SkillConfig config, SkillLevelInstance levelInstance, int level)
     {
         this.config = config;
-        this.trigger = trigger;
-        this.condition = condition;
-        this.effect = effect;
-        this.resetCondition = resetCondition;
-        this.effectRemovalCondition = effectRemovalCondition;
+        this.currentLevelInstance = levelInstance;
+        this.currentLevel = level;
         
         // 生成唯一实例ID
-        this.InstanceId = $"{config.skillName}_{System.Guid.NewGuid()}";
-        
-        // 初始化所有组件
-        this.trigger?.Initialize();
-        this.condition?.Initialize();
-        this.effect?.Initialize();
-        this.resetCondition?.Initialize();
-        this.effectRemovalCondition?.Initialize();
-        
-        // 设置重置条件的目标技能实例ID和依赖组件
-        this.resetCondition?.SetTargetSkillInstanceId(this.InstanceId);
-        
-        // 如果是值比较重置条件，设置依赖组件
-        if (this.resetCondition is ValueComparisonResetCondition valueComparisonResetCondition)
+        this.InstanceId = $"{config.skillName}_Lv{level}_{System.Guid.NewGuid()}";
+    }
+    
+    /// <summary>
+    /// 升级到指定等级
+    /// </summary>
+    /// <param name="newLevel">新等级</param>
+    /// <returns>是否升级成功</returns>
+    public bool UpgradeToLevel(int newLevel)
+    {
+        if (newLevel <= currentLevel)
         {
-            valueComparisonResetCondition.SetDependencies(this.condition, this.effect);
+            Debug.LogWarning($"技能 {config.skillName} 无法降级到等级 {newLevel}");
+            return false;
         }
+        
+        var newLevelConfig = config.GetLevelConfig(newLevel);
+        if (newLevelConfig == null)
+        {
+            Debug.LogError($"技能 {config.skillName} 没有找到等级 {newLevel} 的配置");
+            return false;
+        }
+        
+        // 重置当前等级实例
+        currentLevelInstance?.Reset();
+        
+        // 创建新等级实例
+        var newLevelInstance = newLevelConfig.CreateLevelInstance(config.skillName);
+        if (newLevelInstance == null)
+        {
+            Debug.LogError($"技能 {config.skillName} 等级 {newLevel} 实例创建失败");
+            return false;
+        }
+        
+        // 更新等级信息
+        currentLevelInstance = newLevelInstance;
+        currentLevel = newLevel;
+        
+        // 更新实例ID
+        InstanceId = $"{config.skillName}_Lv{newLevel}_{System.Guid.NewGuid()}";
+        
+        Debug.Log($"技能 {config.skillName} 升级到等级 {newLevel}");
+        return true;
+    }
+    
+    /// <summary>
+    /// 获取当前等级的下一个等级
+    /// </summary>
+    /// <returns>下一个等级，如果没有返回-1</returns>
+    public int GetNextLevel()
+    {
+        var availableLevels = config.GetAvailableLevels();
+        int nextLevel = availableLevels.FirstOrDefault(l => l > currentLevel);
+        
+        return nextLevel > 0 ? nextLevel : -1;
+    }
+    
+    /// <summary>
+    /// 检查是否可以升级
+    /// </summary>
+    /// <returns>是否可以升级</returns>
+    public bool CanUpgrade()
+    {
+        return GetNextLevel() > 0;
     }
     
     /// <summary>
@@ -288,11 +366,7 @@ public class SkillInstance
     /// </summary>
     public void Reset()
     {
-        trigger?.Reset();
-        condition?.Reset();
-        effect?.Reset();
-        resetCondition?.Reset();
-        effectRemovalCondition?.Reset();
+        currentLevelInstance?.Reset();
     }
     
     /// <summary>
@@ -300,46 +374,13 @@ public class SkillInstance
     /// </summary>
     public bool ProcessEvent(object eventData)
     {
-        // 第一步：检查触发器是否检测到事件
-        bool eventDetected = trigger.CheckEvent(eventData);
-        if (!eventDetected)
+        if (currentLevelInstance == null)
         {
+            Debug.LogError($"[SkillInstance] 技能 {config.skillName} 当前等级实例为空");
             return false;
         }
         
-        // 第二步：检查条件是否满足
-        bool conditionMet = condition.CheckCondition(eventData);
-        if (!conditionMet)
-        {
-            return false;
-        }
-        
-        // 第三步：执行效果
-        bool effectExecuted = effect.ExecuteEffect(eventData);
-        
-        if (effectExecuted)
-        {
-            Debug.Log($"[技能] {config.skillName} 触发成功！");
-            
-            // 第四步：发布技能执行完毕事件（带实例ID）
-            var skillEvent = new SkillExecutedEventData
-            {
-                SkillName = config.skillName,
-                SkillInstanceId = this.InstanceId,
-                OriginalEventData = eventData,
-                Success = true,
-                Timestamp = Time.time
-            };
-            
-            // 发布事件，让重置条件响应
-            PublishSkillExecutedEvent(skillEvent);
-        }
-        else
-        {
-            Debug.LogError($"[SkillInstance] ❌ 技能执行失败 - 技能: {config.skillName}");
-        }
-        
-        return effectExecuted;
+        return currentLevelInstance.ProcessEvent(eventData);
     }
     
     /// <summary>
@@ -348,18 +389,7 @@ public class SkillInstance
     /// <param name="eventData">技能执行完毕事件数据</param>
     public void HandleSkillExecutedEvent(object eventData)
     {
-        if (eventData is SkillExecutedEventData skillEvent)
-        {
-            // 只处理自己的事件
-            if (skillEvent.SkillInstanceId == this.InstanceId)
-            {
-                // 立即重置条件响应技能执行完毕事件
-                if (resetCondition?.ShouldReset(eventData) == true) {
-                    condition.Reset();         // 重置触发条件
-                    effect.SetCanExecute(true); // 重新允许执行
-                }
-            }
-        }
+        currentLevelInstance?.HandleSkillExecutedEvent(eventData);
     }
     
     /// <summary>
@@ -368,52 +398,6 @@ public class SkillInstance
     /// <param name="eventData">回合结束事件数据</param>
     public void HandlePhaseEndEvent(object eventData)
     {
-        // 重置条件满足时：重置触发条件和 canExecute
-        if (resetCondition != null)
-        {
-            // 检查重置条件是否需要特定类型的事件数据
-            bool shouldReset = false;
-            
-            // 如果是值比较重置条件，需要提供正确的数据
-            if (resetCondition is ValueComparisonResetCondition valueComparisonResetCondition)
-            {
-                // 检查事件是否与数据提取器类型相关
-                if (valueComparisonResetCondition.IsEventRelevant(eventData))
-                {
-                    shouldReset = resetCondition.ShouldReset(eventData);
-                }
-            }
-            else
-            {
-                // 其他类型的重置条件直接检查
-                shouldReset = resetCondition.ShouldReset(eventData);
-            }
-            
-            if (shouldReset)
-            {
-                condition.Reset();         // 重置触发条件
-                effect.SetCanExecute(true); // 重新允许执行
-            }
-        }
-        
-        // 移除条件满足时：只移除效果
-        if (effectRemovalCondition != null)
-        {
-            bool shouldRemove = effectRemovalCondition.ShouldRemoveEffect(eventData);
-            if (shouldRemove)
-            {
-                effect.Reset();  // 移除效果（不影响 canExecute）
-            }
-        }
-    }
-    
-    /// <summary>
-    /// 发布技能执行完毕事件
-    /// </summary>
-    /// <param name="skillEvent">技能执行完毕事件数据</param>
-    private void PublishSkillExecutedEvent(SkillExecutedEventData skillEvent)
-    {
-        // 发布事件，让重置条件响应
-        HandleSkillExecutedEvent(skillEvent);
+        currentLevelInstance?.HandlePhaseEndEvent(eventData);
     }
 }
