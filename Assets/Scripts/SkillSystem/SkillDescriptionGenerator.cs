@@ -77,6 +77,12 @@ public static class SkillDescriptionGenerator
             return "杀死{0}个敌人后掉落{1}";
         }
         
+        // 弱点攻击技能
+        if (IsWeakPointSkill(skill))
+        {
+            return "在敌人周围生成一个弱点，攻击弱点{0}";
+        }
+        
         // 默认模板（根据技能类型动态生成）
         return GenerateDefaultTemplate(skill);
     }
@@ -123,6 +129,11 @@ public static class SkillDescriptionGenerator
         {
             values.Add(GetRequiredCount(skill));      // {0} - 需要击杀数量
             values.Add(GetDropItemDescription(skill)); // {1} - 掉落物品描述
+        }
+        // 弱点攻击技能
+        else if (IsWeakPointSkill(skill))
+        {
+            values.Add(GetWeakPointDamageDescription(skill)); // {0} - 伤害描述
         }
         // 默认提取
         else
@@ -187,6 +198,14 @@ public static class SkillDescriptionGenerator
     private static bool IsDropItemSkill(SkillConfig skill)
     {
         return skill.effectConfig.effectType == SkillEffectType.DropItem;
+    }
+
+    /// <summary>
+    /// 判断是否为弱点攻击技能
+    /// </summary>
+    private static bool IsWeakPointSkill(SkillConfig skill)
+    {
+        return skill.effectConfig.effectType == SkillEffectType.WeakPoint;
     }
 
     #endregion
@@ -359,6 +378,44 @@ public static class SkillDescriptionGenerator
         
         // 默认显示物品名称
         return itemName;
+    }
+    
+    /// <summary>
+    /// 获取弱点攻击伤害描述
+    /// </summary>
+    private static string GetWeakPointDamageDescription(SkillConfig skill)
+    {
+        float multiplier = skill.effectConfig.weakPointDamageMultiplier;
+        if (multiplier > 1.0f)
+        {
+            return $"造成{multiplier:F1}倍伤害";
+        }
+        else if (multiplier < 1.0f)
+        {
+            return $"造成{multiplier:F1}倍伤害";
+        }
+        else
+        {
+            return "造成正常伤害";
+        }
+    }
+    
+    /// <summary>
+    /// 获取弱点攻击伤害倍率
+    /// </summary>
+    private static string GetWeakPointDamageMultiplier(SkillConfig skill)
+    {
+        float multiplier = skill.effectConfig.weakPointDamageMultiplier;
+        return $"{multiplier:F1}";
+    }
+    
+    /// <summary>
+    /// 获取弱点攻击判定半径
+    /// </summary>
+    private static string GetWeakPointRadius(SkillConfig skill)
+    {
+        float radius = skill.effectConfig.weakPointRadius;
+        return $"{radius:F1}";
     }
     
     /// <summary>

@@ -214,6 +214,36 @@ public class WaveConfigProvider : MonoBehaviour, SpawnConfigProvider<EnemySpawn>
     }
     
     /// <summary>
+    /// 获取初始敌人生成范围配置
+    /// </summary>
+    /// <returns>初始敌人生成范围配置</returns>
+    public SpawnRangeConfig GetInitialEnemySpawnRange()
+    {
+        if (levelConfig != null)
+        {
+            return levelConfig.initialEnemySpawnRange;
+        }
+        
+        Debug.LogWarning("[WaveConfigProvider] LevelConfig为空，返回默认范围配置");
+        return new SpawnRangeConfig();
+    }
+    
+    /// <summary>
+    /// 获取波次敌人生成范围配置
+    /// </summary>
+    /// <returns>波次敌人生成范围配置</returns>
+    public SpawnRangeConfig GetWaveEnemySpawnRange()
+    {
+        if (levelConfig != null)
+        {
+            return levelConfig.waveEnemySpawnRange;
+        }
+        
+        Debug.LogWarning("[WaveConfigProvider] LevelConfig为空，返回默认范围配置");
+        return new SpawnRangeConfig();
+    }
+    
+    /// <summary>
     /// 获取当前关卡配置
     /// </summary>
     /// <returns>当前关卡配置</returns>

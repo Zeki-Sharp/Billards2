@@ -12,9 +12,6 @@ public abstract class BaseSpawner<T> : MonoBehaviour
     [Header("生成设置")]
     [SerializeField] protected Transform spawnParent;
     
-    [Header("生成范围配置")]
-    [SerializeField] protected SpawnRangeConfig rangeConfig = new SpawnRangeConfig();
-    
     [Header("调试")]
     [SerializeField] protected bool enableDebugLog = true;
     
@@ -50,7 +47,7 @@ public abstract class BaseSpawner<T> : MonoBehaviour
     /// <param name="position">生成位置</param>
     /// <param name="spawnedObject">生成的对象（输出参数）</param>
     /// <returns>是否生成成功</returns>
-    public virtual bool TrySpawn(T data, Vector3 position, out GameObject spawnedObject)
+    public virtual bool TrySpawn(T data, Vector3 position, out GameObject spawnedObject, SpawnRangeConfig rangeConfig = null)
     {
         spawnedObject = null;
         
@@ -61,7 +58,7 @@ public abstract class BaseSpawner<T> : MonoBehaviour
         }
         
         // 验证位置
-        if (!ValidateSpawnPosition(position))
+        if (!ValidateSpawnPosition(position, rangeConfig))
         {
             if (enableDebugLog)
             {
@@ -95,7 +92,8 @@ public abstract class BaseSpawner<T> : MonoBehaviour
     /// </summary>
     /// <param name="data">生成数据</param>
     /// <param name="position">生成位置（可选，为null时使用范围配置）</param>
-    public virtual void Spawn(T data, Vector3? position = null)
+    /// <param name="rangeConfig">范围配置（可选）</param>
+    public virtual void Spawn(T data, Vector3? position = null, SpawnRangeConfig rangeConfig = null)
     {
         if (data == null)
         {
@@ -106,7 +104,7 @@ public abstract class BaseSpawner<T> : MonoBehaviour
         if (position.HasValue)
         {
             // 使用指定位置
-            if (!TrySpawn(data, position.Value, out GameObject spawnedObject))
+            if (!TrySpawn(data, position.Value, out GameObject spawnedObject, rangeConfig))
             {
                 Debug.LogError($"[{GetType().Name}] 指定位置生成失败: {position.Value}");
             }
@@ -118,9 +116,9 @@ public abstract class BaseSpawner<T> : MonoBehaviour
             
             for (int i = 0; i < maxRetries; i++)
             {
-                Vector3 spawnPosition = CalculateSpawnPosition();
+                Vector3 spawnPosition = CalculateSpawnPosition(rangeConfig);
                 
-                if (TrySpawn(data, spawnPosition, out GameObject spawnedObject))
+                if (TrySpawn(data, spawnPosition, out GameObject spawnedObject, rangeConfig))
                 {
                     return; // 成功生成，退出
                 }
@@ -165,22 +163,39 @@ public abstract class BaseSpawner<T> : MonoBehaviour
     /// <summary>
     /// 计算生成位置（抽象方法，子类实现）
     /// </summary>
+    /// <param name="rangeConfig">范围配置（可选）</param>
     /// <returns>生成位置</returns>
-    protected virtual Vector3 CalculateSpawnPosition()
+    protected virtual Vector3 CalculateSpawnPosition(SpawnRangeConfig rangeConfig = null)
     {
-        Vector3 spawnPosition = rangeConfig.GetRandomPosition();
-        return spawnPosition;
+        if (rangeConfig != null)
+        {
+            return rangeConfig.GetRandomPosition();
+        }
+        else
+        {
+            // 没有范围配置时，使用默认位置
+            return transform.position;
+        }
     }
     
     /// <summary>
     /// 验证生成位置
     /// </summary>
     /// <param name="position">位置</param>
+    /// <param name="rangeConfig">范围配置（可选）</param>
     /// <returns>是否有效</returns>
-    protected virtual bool ValidateSpawnPosition(Vector3 position)
+    protected virtual bool ValidateSpawnPosition(Vector3 position, SpawnRangeConfig rangeConfig = null)
     {
         // 基础验证：检查是否在范围内
-        return rangeConfig.IsPositionValid(position);
+        if (rangeConfig != null)
+        {
+            return rangeConfig.IsPositionValid(position);
+        }
+        else
+        {
+            // 没有范围配置时，总是返回true
+            return true;
+        }
     }
     
     /// <summary>
@@ -209,7 +224,8 @@ public abstract class BaseSpawner<T> : MonoBehaviour
     /// <param name="maxX">最大X</param>
     /// <param name="minY">最小Y</param>
     /// <param name="maxY">最大Y</param>
-    public void SetSpawnRange(float minX, float maxX, float minY, float maxY)
+    /// <param name="rangeConfig">范围配置</param>
+    public void SetSpawnRange(float minX, float maxX, float minY, float maxY, SpawnRangeConfig rangeConfig)
     {
         // 计算中心点和尺寸
         Vector3 center = new Vector3((minX + maxX) * 0.5f, (minY + maxY) * 0.5f, 0f);
@@ -227,7 +243,8 @@ public abstract class BaseSpawner<T> : MonoBehaviour
     /// 设置生成范围（圆形）
     /// </summary>
     /// <param name="radius">半径</param>
-    public void SetSpawnRange(float radius)
+    /// <param name="rangeConfig">范围配置</param>
+    public void SetSpawnRange(float radius, SpawnRangeConfig rangeConfig)
     {
         rangeConfig.SetWorldCircularRange(Vector3.zero, radius);
         

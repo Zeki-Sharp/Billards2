@@ -107,7 +107,8 @@ namespace Game.SpawnSystem.Triggers
             }
             
             // 调用EnemySpawner生成初始敌人
-            enemySpawner.GenerateEnemiesFromList(initialEnemies);
+            SpawnRangeConfig initialRangeConfig = configProvider.GetInitialEnemySpawnRange();
+            enemySpawner.GenerateEnemiesFromList(initialEnemies, initialRangeConfig);
             hasGeneratedInitialEnemies = true;
             
             if (showDebugInfo)
@@ -162,7 +163,8 @@ namespace Game.SpawnSystem.Triggers
             }
             
             // 调用EnemySpawner生成波次敌人
-            enemySpawner.GenerateEnemiesFromList(currentWaveEnemies);
+            SpawnRangeConfig waveRangeConfig = configProvider.GetWaveEnemySpawnRange();
+            enemySpawner.GenerateEnemiesFromList(currentWaveEnemies, waveRangeConfig);
             
             // 推进到下一波次
             configProvider.AdvanceToNextWave();

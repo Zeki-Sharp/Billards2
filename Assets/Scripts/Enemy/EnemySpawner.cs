@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Collections.Generic;
+using DeepSpaceLabs.SAM;
 
 /// <summary>
 /// 敌人生成器 - 专注于敌人生成执行
@@ -103,16 +104,27 @@ public class EnemySpawner : BaseSpawner<EnemyData>
     
     
     /// <summary>
+    /// 生成敌人（使用外部范围配置）
+    /// </summary>
+    /// <param name="enemyData">敌人数据</param>
+    /// <param name="rangeConfig">范围配置</param>
+    public void SpawnEnemy(EnemyData enemyData, SpawnRangeConfig rangeConfig)
+    {
+        Spawn(enemyData, null, rangeConfig);
+    }
+    
+    /// <summary>
     /// 向后兼容：批量生成敌人
     /// </summary>
     /// <param name="enemySpawns">敌人生成配置列表</param>
-    public void GenerateEnemiesFromList(List<EnemySpawn> enemySpawns)
+    /// <param name="rangeConfig">范围配置（可选）</param>
+    public void GenerateEnemiesFromList(List<EnemySpawn> enemySpawns, SpawnRangeConfig rangeConfig = null)
     {
         foreach (var enemySpawn in enemySpawns)
         {
             for (int i = 0; i < enemySpawn.count; i++)
             {
-                Spawn(enemySpawn.enemyData);
+                Spawn(enemySpawn.enemyData, null, rangeConfig);
             }
         }
         
