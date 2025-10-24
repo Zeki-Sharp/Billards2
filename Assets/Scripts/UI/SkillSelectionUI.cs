@@ -181,7 +181,7 @@ public class SkillSelectionUI : MonoBehaviour
         {
             skillButton1?.gameObject.SetActive(true);
             skillName1?.SetText(currentSkills[0].skillName);
-            skillDescription1?.SetText(GetSkillDescription(currentSkills[0]));
+            skillDescription1?.SetText(GetSkillDescription(currentSkills[0], 0)); // 传入索引
         }
         else
         {
@@ -195,7 +195,7 @@ public class SkillSelectionUI : MonoBehaviour
         {
             skillButton2?.gameObject.SetActive(true);
             skillName2?.SetText(currentSkills[1].skillName);
-            skillDescription2?.SetText(GetSkillDescription(currentSkills[1]));
+            skillDescription2?.SetText(GetSkillDescription(currentSkills[1], 1)); // 传入索引
         }
         else
         {
@@ -209,7 +209,7 @@ public class SkillSelectionUI : MonoBehaviour
         {
             skillButton3?.gameObject.SetActive(true);
             skillName3?.SetText(currentSkills[2].skillName);
-            skillDescription3?.SetText(GetSkillDescription(currentSkills[2]));
+            skillDescription3?.SetText(GetSkillDescription(currentSkills[2], 2)); // 传入索引
         }
         else
         {
@@ -223,28 +223,42 @@ public class SkillSelectionUI : MonoBehaviour
     /// 获取技能描述文本
     /// </summary>
     /// <param name="skill">技能配置</param>
+    /// <param name="skillIndex">技能在选择列表中的索引</param>
     /// <returns>技能描述文本</returns>
-    string GetSkillDescription(SkillConfig skill)
+    string GetSkillDescription(SkillConfig skill, int skillIndex)
     {
         if (skill == null)
             return "";
         
-        // 优先使用动态生成的描述
-        string dynamicDescription = skill.GetDynamicDescription();
-        if (!string.IsNullOrEmpty(dynamicDescription))
+        // 从 SkillSelectionManager 获取技能选项（包含目标等级）
+        if (skillSelectionManager != null)
         {
-            return dynamicDescription;
+            var option = skillSelectionManager.GetSkillOption(skillIndex);
+            if (option != null)
+            {
+                // 使用目标等级生成描述
+                string dynamicDescription = skill.GetDynamicDescription(option.targetLevel);
+                if (!string.IsNullOrEmpty(dynamicDescription))
+                {
+                    return dynamicDescription;
+                }
+            }
         }
         
-        // 回退到原始描述
+        // 回退到默认描述（等级1）
+        string fallbackDescription = skill.GetDynamicDescription(1);
+        if (!string.IsNullOrEmpty(fallbackDescription))
+        {
+            return fallbackDescription;
+        }
+        
+        // 最后回退到原始描述
         if (!string.IsNullOrEmpty(skill.description))
         {
             return skill.description;
         }
-        else
-        {
-            return "暂无描述";
-        }
+        
+        return "暂无描述";
     }
     
     /// <summary>

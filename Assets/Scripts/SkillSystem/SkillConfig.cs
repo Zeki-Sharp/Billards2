@@ -252,24 +252,23 @@ public class SkillConfig : ScriptableObject
 #endif
     
     /// <summary>
-    /// 获取动态生成的技能描述
+    /// 获取动态生成的技能描述（等级1）
     /// </summary>
     /// <returns>动态生成的描述文字</returns>
     public string GetDynamicDescription()
     {
-        // 暂时注释掉SkillDescriptionGenerator，等待阶段2完成后重新启用
-        /*
-        // 使用反射调用静态方法，避免编译时依赖
-        var method = System.Type.GetType("SkillDescriptionGenerator")?.GetMethod("GenerateDescription", 
-            System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static);
-        
-        if (method != null)
-        {
-            return method.Invoke(null, new object[] { this }) as string ?? description;
-        }
-        */
-        
-        return description; // 回退到原始描述
+        return GetDynamicDescription(1); // 默认使用等级1
+    }
+    
+    /// <summary>
+    /// 获取动态生成的技能描述（指定等级）
+    /// </summary>
+    /// <param name="targetLevel">目标等级</param>
+    /// <returns>动态生成的描述文字</returns>
+    public string GetDynamicDescription(int targetLevel)
+    {
+        // 使用新的技能描述生成器
+        return SkillDescriptionGenerator.GenerateDescription(this, targetLevel);
     }
 }
 

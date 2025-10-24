@@ -143,4 +143,4 @@ MonoBehaviour:
       maxValue: 1
       dataExtractorType: 0
   requiredSkills: []
-  isActive: 0
+  isActive: 1

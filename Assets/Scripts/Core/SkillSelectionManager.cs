@@ -44,6 +44,7 @@ public class SkillSelectionManager : MonoBehaviour
     // 状态管理
     private bool isSkillSelectionActive = false;
     private List<SkillConfig> currentSelection = new List<SkillConfig>();
+    private List<SkillSelectionOption> currentSelectionOptions = new List<SkillSelectionOption>(); // 保存选项（包含等级信息）
     
     void Awake()
     {
@@ -324,6 +325,7 @@ public class SkillSelectionManager : MonoBehaviour
     void GenerateRandomSkillSelection()
     {
         currentSelection.Clear();
+        currentSelectionOptions.Clear(); // 清空选项列表
         
         // 获取玩家已有的技能
         List<SkillConfig> playerSkills = GetPlayerExistingSkills();
@@ -388,6 +390,7 @@ public class SkillSelectionManager : MonoBehaviour
             
             // 添加到选择列表
             currentSelection.Add(availableOptions[i].skillConfig);
+            currentSelectionOptions.Add(availableOptions[i]); // 保存选项（包含等级信息）
         }
         
         if (showDebugInfo)
@@ -628,6 +631,31 @@ public class SkillSelectionManager : MonoBehaviour
     public List<SkillConfig> GetCurrentSelection()
     {
         return new List<SkillConfig>(currentSelection);
+    }
+    
+    /// <summary>
+    /// 根据索引获取技能选项（包含目标等级信息）
+    /// </summary>
+    /// <param name="index">技能索引（0-2）</param>
+    /// <returns>技能选项，如果索引无效返回 null</returns>
+    public SkillSelectionOption GetSkillOption(int index)
+    {
+        if (index >= 0 && index < currentSelectionOptions.Count)
+        {
+            return currentSelectionOptions[index];
+        }
+        return null;
+    }
+    
+    /// <summary>
+    /// 根据技能名获取技能选项（包含目标等级信息）
+    /// </summary>
+    /// <param name="skillName">技能名称</param>
+    /// <returns>技能选项，如果未找到返回 null</returns>
+    public SkillSelectionOption GetSkillOptionByName(string skillName)
+    {
+        return currentSelectionOptions.FirstOrDefault(option => 
+            option.skillConfig != null && option.skillConfig.skillName == skillName);
     }
     
     /// <summary>
