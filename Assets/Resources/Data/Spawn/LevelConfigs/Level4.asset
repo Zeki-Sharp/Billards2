@@ -10,7 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 97d8a4474f7840f4f9cdea28e0d2d80e, type: 3}
-  m_Name: Level1
+  m_Name: Level4
   m_EditorClassIdentifier: 
   levelName: "\u5173\u53611"
   description: "\u7B2C\u4E00\u5173"
@@ -20,7 +20,7 @@ MonoBehaviour:
   - enemyData: {fileID: 11400000, guid: ce82a34099b9d1f4899931eb09ed10ce, type: 2}
     count: 2
   - enemyData: {fileID: 11400000, guid: 2b3490ac9962fd84fbac65c5de60aa85, type: 2}
-    count: 1
+    count: 2
   initialEnemySpawnRange:
     coordinateSystem: 0
     rangeShape: 0
@@ -31,7 +31,21 @@ MonoBehaviour:
     relativeRadius: 2
     enablePositionOffset: 1
     offsetRange: 0.5
-  waves: []
+  waves:
+  - enemySpawns:
+    - enemyData: {fileID: 11400000, guid: 8d46072aeaab4c44fab958850bbe7872, type: 2}
+      count: 3
+  - enemySpawns:
+    - enemyData: {fileID: 0}
+      count: 0
+  - enemySpawns:
+    - enemyData: {fileID: 11400000, guid: ce82a34099b9d1f4899931eb09ed10ce, type: 2}
+      count: 2
+  - enemySpawns:
+    - enemyData: {fileID: 11400000, guid: ce82a34099b9d1f4899931eb09ed10ce, type: 2}
+      count: 1
+    - enemyData: {fileID: 11400000, guid: 8d46072aeaab4c44fab958850bbe7872, type: 2}
+      count: 2
   waveEnemySpawnRange:
     coordinateSystem: 0
     rangeShape: 0

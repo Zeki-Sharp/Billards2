@@ -110,12 +110,21 @@ public class ThornAttackBehavior : BaseAttackBehavior
     
     /// <summary>
     /// 清理攻击状态
-    /// 棘刺在移动阶段不清理，保持激活状态直到冷却
+    /// 移动阶段关闭陷阱模式，防止敌人移动时撞到玩家造成伤害
     /// </summary>
     public override void CleanupAttack(Transform enemyTransform, AttackRange attackRange)
     {
-        // 棘刺在移动阶段不清理，保持激活状态
-        Debug.Log($"ThornAttackBehavior: 移动阶段，棘刺保持激活");
+        // 获取 EnemyBehavior 组件
+        EnemyBehavior enemyBehavior = enemyTransform.GetComponent<EnemyBehavior>();
+        
+        // 在移动阶段关闭陷阱模式
+        // 这样敌人移动时撞到玩家不会造成陷阱伤害
+        // 刺的视觉状态保持不变，等到下一回合 Telegraph 阶段再更新
+        if (enemyBehavior != null)
+        {
+            enemyBehavior.SetTrapMode(false);
+            Debug.Log($"ThornAttackBehavior: 移动阶段，关闭陷阱模式（IsTrapMode = false）");
+        }
     }
     
     /// <summary>

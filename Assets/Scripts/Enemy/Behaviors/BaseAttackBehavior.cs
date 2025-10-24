@@ -70,10 +70,10 @@ public abstract class BaseAttackBehavior : IAttackBehavior
         // 只发布攻击事件，让 DamageProcessor 统一处理伤害应用
         if (enemyTransform != null)
         {
-            enemyTransform.gameObject.PublishAttack("Hit", enemyTransform.position, playerObject, damage);
+            enemyTransform.gameObject.PublishAttack("EnemyAttack", enemyTransform.position, playerObject, damage);
         }
         
-        Debug.Log($"BaseAttackBehavior: 发布攻击事件，伤害: {damage}");
+        Debug.Log($"BaseAttackBehavior: 发布攻击事件（类型：EnemyAttack），伤害: {damage}");
     }
     
     /// <summary>

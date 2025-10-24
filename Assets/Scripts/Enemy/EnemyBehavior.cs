@@ -425,9 +425,9 @@ public class EnemyBehavior : MonoBehaviour
         float damage = enemyData.damage;
         
         // 只发布攻击事件，让 DamageProcessor 统一处理伤害应用
-        gameObject.PublishAttack("Hit", hitPosition, playerObject, damage);
+        gameObject.PublishAttack("Trap", hitPosition, playerObject, damage);
         
-        Debug.Log($"EnemyBehavior {name}: 陷阱发布攻击事件，伤害: {damage}");
+        Debug.Log($"EnemyBehavior {name}: 陷阱发布攻击事件（类型：Trap），伤害: {damage}");
     }
     
     /// <summary>

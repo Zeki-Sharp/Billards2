@@ -358,43 +358,43 @@ public class PlayerCore : MonoBehaviour
             // 检查是否处于陷阱模式
             if (enemy.IsTrapMode)
             {
-                Debug.Log($"PlayerCore: 碰到陷阱模式的敌人 {collision.gameObject.name}");
-                HandleTrapCollision(collision);
+                // 陷阱模式：让敌人对玩家造成陷阱伤害
+                Debug.Log($"PlayerCore: 碰到陷阱模式的敌人 {collision.gameObject.name}，触发陷阱伤害");
+                Vector3 hitPosition = collision.contacts[0].point;
+                enemy.DealTrapDamageToPlayer(gameObject, hitPosition);
                 return; // 陷阱伤害玩家，玩家不攻击敌人
             }
-            else
+            
+            // 正常敌人，玩家可能攻击
+            Debug.Log($"PlayerCore: 碰到敌人 {collision.gameObject.name}");
+            
+            // 检查玩家状态，只在Moving状态处理碰撞
+            PlayerStateMachine playerStateMachine = FindFirstObjectByType<PlayerStateMachine>();
+            if (playerStateMachine != null)
             {
-                // 正常敌人，玩家攻击
-                Debug.Log($"PlayerCore: 碰到敌人 {collision.gameObject.name}");
+                Debug.Log($"PlayerCore: 当前玩家状态: {playerStateMachine.CurrentState}");
                 
-                // 检查玩家状态，只在Moving状态处理碰撞
-                PlayerStateMachine playerStateMachine = FindFirstObjectByType<PlayerStateMachine>();
-                if (playerStateMachine != null)
+                if (playerStateMachine.CurrentState == PlayerStateMachine.PlayerState.Moving)
                 {
-                    Debug.Log($"PlayerCore: 当前玩家状态: {playerStateMachine.CurrentState}");
-                    
-                    if (playerStateMachine.CurrentState == PlayerStateMachine.PlayerState.Moving)
+                    // Moving状态：委托给 AttackManager 处理
+                    if (attackManager != null)
                     {
-                        // Moving状态：委托给 AttackManager 处理
-                        if (attackManager != null)
-                        {
-                            attackManager.ProcessCollision(collision);
-                        }
-                        else
-                        {
-                            Debug.LogError("PlayerCore: AttackManager 未配置，无法处理碰撞攻击！");
-                        }
+                        attackManager.ProcessCollision(collision);
                     }
                     else
                     {
-                        // 在其他状态，不处理碰撞
-                        Debug.Log("PlayerCore: 不在Moving状态，不处理碰撞");
+                        Debug.LogError("PlayerCore: AttackManager 未配置，无法处理碰撞攻击！");
                     }
                 }
                 else
                 {
-                    Debug.LogWarning("PlayerCore: PlayerStateMachine 未找到！");
+                    // 在其他状态，不处理碰撞
+                    Debug.Log("PlayerCore: 不在Moving状态，不处理碰撞");
                 }
+            }
+            else
+            {
+                Debug.LogWarning("PlayerCore: PlayerStateMachine 未找到！");
             }
             return;
         }
@@ -413,37 +413,6 @@ public class PlayerCore : MonoBehaviour
                 ballPhysics.ApplyForce(wallBoostForce);
             }
         }
-    }
-    
-    /// <summary>
-    /// 处理陷阱碰撞（不受阶段限制）
-    /// </summary>
-    void HandleTrapCollision(Collision2D collision)
-    {
-        // 从陷阱找到父物体的 EnemyBehavior
-        EnemyBehavior enemy = collision.gameObject.GetComponentInParent<EnemyBehavior>();
-        if (enemy == null)
-        {
-            Debug.LogWarning($"PlayerCore: 陷阱 {collision.gameObject.name} 未找到 EnemyBehavior");
-            return;
-        }
-        
-        // 获取玩家对象（向上查找带 Player Tag 的）
-        GameObject playerObject = gameObject;
-        Transform current = transform;
-        while (current != null)
-        {
-            if (current.CompareTag("Player"))
-            {
-                playerObject = current.gameObject;
-                break;
-            }
-            current = current.parent;
-        }
-        
-        // 让敌人对玩家造成陷阱伤害（攻击者发布事件）
-        Vector3 hitPosition = collision.contacts[0].point;
-        enemy.DealTrapDamageToPlayer(playerObject, hitPosition);
     }
     
     
@@ -726,8 +695,27 @@ public class PlayerCore : MonoBehaviour
         // 检查自己是否是攻击目标
         if (processedData.OriginalData.Target == gameObject && processedData.FinalDamage > 0f)
         {
-            // 处理伤害
-            TakeDamage(processedData.FinalDamage);
+            // 根据攻击类型决定处理方式
+            string attackType = processedData.OriginalData.AttackType;
+            
+            if (attackType == "Trap")
+            {
+                // 陷阱伤害无视阶段限制（任何时候撞到都会扣血）
+                TakeDamageIgnorePhase(processedData.FinalDamage);
+                Debug.Log($"PlayerCore: 受到陷阱伤害 {processedData.FinalDamage}（类型：Trap，无视阶段）");
+            }
+            else if (attackType == "EnemyAttack")
+            {
+                // 敌人主动攻击，保持阶段检查（防止双向扣血）
+                TakeDamage(processedData.FinalDamage);
+                Debug.Log($"PlayerCore: 受到敌人攻击 {processedData.FinalDamage}（类型：EnemyAttack，有阶段检查）");
+            }
+            else
+            {
+                // 其他类型（如 "Hit"），保持阶段检查
+                TakeDamage(processedData.FinalDamage);
+                Debug.Log($"PlayerCore: 受到攻击 {processedData.FinalDamage}（类型：{attackType}，有阶段检查）");
+            }
         }
     }
     
