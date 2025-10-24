@@ -9260,7 +9260,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3c4333f109bb5af459406e60f828e8f6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  levelConfig: {fileID: 11400000, guid: c464f7857edb4584783532cd681f7f0f, type: 2}
+  levelConfig: {fileID: 11400000, guid: 352d89c211e3f27418c26210d5738d4c, type: 2}
   currentWaveIndex: 0
   showDebugInfo: 1
 --- !u!4 &1568426789

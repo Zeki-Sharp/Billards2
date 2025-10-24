@@ -60,6 +60,69 @@ MonoBehaviour:
         dropShape: 0
         positionOffset: {x: 0, y: 0, z: 0}
         coordinateSystemType: 0
+      weakPointDamageMultiplier: 1.2
+      weakPointRefreshOnHit: 1
+    resetConditionConfig:
+      logicType: 1
+      resetConditions:
+      - resetType: 0
+        comparisonType: 1
+        targetValue: 0.99
+        minValue: 0
+        maxValue: 1
+        dataExtractorType: 0
+    effectRemovalConfig:
+      removalType: 0
+      duration: 30
+      comparisonType: 2
+      targetValue: 0.5
+      minValue: 0
+      maxValue: 1
+      dataExtractorType: 0
+  - level: 2
+    isActive: 1
+    levelDescription: 
+    triggerConfig:
+      triggerType: 3
+      targetTag: Enemy
+      killTargetTag: Enemy
+      dataExtractorType: 0
+    conditionConfig:
+      logicType: 0
+      conditions:
+      - conditionType: 0
+        requiredCount: 2
+        timeWindow: 5
+        comparisonType: 0
+        targetValue: 1
+        minValue: 0
+        maxValue: 1
+        dataExtractorType: 0
+    effectConfig:
+      effectType: 3
+      targetStat: Damage
+      modifierValue: 2
+      modifierType: 2
+      allowStacking: 1
+      healAmount: 20
+      minTransitionTime: 1
+      maxTransitionTime: 5
+      transitionThreshold: 0.3
+      chargingToTransitionCurve:
+        serializedVersion: 2
+        m_Curve: []
+        m_PreInfinity: 2
+        m_PostInfinity: 2
+        m_RotationOrder: 4
+      weakPointMarkerPrefab: {fileID: 2061522790037590901, guid: 0b70a562923562241bcb4aed313b4c1d, type: 3}
+      weakPointRadius: 1
+      dropItemConfig: {fileID: 0}
+      dropChance: 1
+      dropRangeConfig:
+        dropRadius: 1
+        dropShape: 0
+        positionOffset: {x: 0, y: 0, z: 0}
+        coordinateSystemType: 0
       weakPointDamageMultiplier: 1.5
       weakPointRefreshOnHit: 1
     resetConditionConfig:

@@ -56,7 +56,7 @@ MonoBehaviour:
     startWithIdle: 0
     moveSpeed: 2
     moveDistance: 2
-    minDistance: 0
+    minDistance: 1.5
     triggerDistance: 3
   spawnWeight: 1
   spawnCost: 1

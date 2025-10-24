@@ -38,7 +38,7 @@ MonoBehaviour:
     effectConfig:
       effectType: 0
       targetStat: Damage
-      modifierValue: 5
+      modifierValue: 3
       modifierType: 0
       allowStacking: 1
       healAmount: 20
@@ -101,7 +101,7 @@ MonoBehaviour:
     effectConfig:
       effectType: 0
       targetStat: Damage
-      modifierValue: 10
+      modifierValue: 5
       modifierType: 0
       allowStacking: 1
       healAmount: 20

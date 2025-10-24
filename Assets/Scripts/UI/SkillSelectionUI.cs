@@ -180,7 +180,7 @@ public class SkillSelectionUI : MonoBehaviour
         if (currentSkills.Count > 0 && currentSkills[0] != null)
         {
             skillButton1?.gameObject.SetActive(true);
-            skillName1?.SetText(currentSkills[0].skillName);
+            skillName1?.SetText(GetSkillNameWithLevel(currentSkills[0], 0));
             skillDescription1?.SetText(GetSkillDescription(currentSkills[0], 0)); // 传入索引
         }
         else
@@ -194,7 +194,7 @@ public class SkillSelectionUI : MonoBehaviour
         if (currentSkills.Count > 1 && currentSkills[1] != null)
         {
             skillButton2?.gameObject.SetActive(true);
-            skillName2?.SetText(currentSkills[1].skillName);
+            skillName2?.SetText(GetSkillNameWithLevel(currentSkills[1], 1));
             skillDescription2?.SetText(GetSkillDescription(currentSkills[1], 1)); // 传入索引
         }
         else
@@ -208,7 +208,7 @@ public class SkillSelectionUI : MonoBehaviour
         if (currentSkills.Count > 2 && currentSkills[2] != null)
         {
             skillButton3?.gameObject.SetActive(true);
-            skillName3?.SetText(currentSkills[2].skillName);
+            skillName3?.SetText(GetSkillNameWithLevel(currentSkills[2], 2));
             skillDescription3?.SetText(GetSkillDescription(currentSkills[2], 2)); // 传入索引
         }
         else
@@ -217,6 +217,38 @@ public class SkillSelectionUI : MonoBehaviour
             skillName3?.SetText("");
             skillDescription3?.SetText("");
         }
+    }
+    
+    /// <summary>
+    /// 获取带等级标识的技能名称
+    /// </summary>
+    /// <param name="skill">技能配置</param>
+    /// <param name="skillIndex">技能在选择列表中的索引</param>
+    /// <returns>技能名称（如果有多个等级则带等级标识）</returns>
+    string GetSkillNameWithLevel(SkillConfig skill, int skillIndex)
+    {
+        if (skill == null)
+            return "";
+        
+        string skillName = skill.skillName;
+        
+        // 检查技能是否有多个等级
+        int maxLevel = skill.GetMaxLevel();
+        if (maxLevel > 1)
+        {
+            // 从 SkillSelectionManager 获取目标等级
+            if (skillSelectionManager != null)
+            {
+                var option = skillSelectionManager.GetSkillOption(skillIndex);
+                if (option != null)
+                {
+                    // 在技能名称后添加等级标识
+                    skillName = $"{skillName} lv.{option.targetLevel}";
+                }
+            }
+        }
+        
+        return skillName;
     }
     
     /// <summary>
