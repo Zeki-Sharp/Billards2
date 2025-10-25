@@ -7706,9 +7706,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 99fb07427277eeb4aa1f7dae44de0546, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  maxForce: 20
+  chargeMode: 1
+  showModeInfo: 1
+  maxForce: 30
   minForce: 1
-  maxPullDistance: 1.5
+  chargeTime: 2
+  maxPullDistance: 2
   minPullDistance: 0.5
   playerCore: {fileID: 3655923765959461568}
   targetCamera: {fileID: 0}

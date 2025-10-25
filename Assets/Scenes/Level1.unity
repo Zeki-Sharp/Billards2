@@ -11038,6 +11038,10 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7844486164170001436, guid: 2d86053af5e50c446a06f75cbdecb65b, type: 3}
+      propertyPath: maxForce
+      value: 25
+      objectReference: {fileID: 0}
+    - target: {fileID: 7844486164170001436, guid: 2d86053af5e50c446a06f75cbdecb65b, type: 3}
       propertyPath: targetCamera
       value: 
       objectReference: {fileID: 859979524}

@@ -273,6 +273,19 @@ public class SkillSelectionManager : MonoBehaviour
     /// <param name="levelConfig">关卡配置</param>
     void OnLevelCompleted(int levelIndex, LevelConfig levelConfig)
     {
+        // 检查是否是最后一关
+        if (levelManager != null && !levelManager.HasNextLevel())
+        {
+            if (showDebugInfo)
+            {
+                Debug.Log($"SkillSelectionManager: 关卡 {levelIndex + 1} 是最后一关，跳过技能选择，直接触发游戏完成");
+            }
+            // 最后一关不进行技能选择，直接触发游戏完成流程
+            // 通过调用 LoadNextLevel，它会检测到没有下一关并触发 GameCompleted
+            ProceedToNextLevel();
+            return;
+        }
+        
         if (showDebugInfo)
         {
             Debug.Log($"SkillSelectionManager: 关卡 {levelIndex + 1} 完成，准备启动技能选择");

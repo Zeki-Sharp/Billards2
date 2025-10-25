@@ -7,7 +7,7 @@ using UnityEngine;
 public class Wall : MonoBehaviour
 {
     [Header("撞墙特效设置")]
-    public float wallHitEffectCooldown = 0.5f; // 撞墙特效冷却时间（秒）
+    public float wallHitEffectCooldown = 0.1f; // 撞墙特效冷却时间（秒）
     public float minWallHitSpeed = 1.0f; // 最小撞墙速度阈值
     
     // 防抖字典：存储每个对象的最后撞墙时间

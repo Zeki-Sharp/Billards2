@@ -490,6 +490,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 1787785598}
     m_Modifications:
+    - target: {fileID: 2050217528864470944, guid: e719b1822f259c14cb3dd6f62d9c465d, type: 3}
+      propertyPath: showDebugInfo
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 3357877017394172215, guid: e719b1822f259c14cb3dd6f62d9c465d, type: 3}
       propertyPath: playerCore
       value: 
@@ -498,6 +502,10 @@ PrefabInstance:
       propertyPath: targetCamera
       value: 
       objectReference: {fileID: 859979524}
+    - target: {fileID: 3357877017394172215, guid: e719b1822f259c14cb3dd6f62d9c465d, type: 3}
+      propertyPath: showDebugInfo
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 5125386412533849888, guid: e719b1822f259c14cb3dd6f62d9c465d, type: 3}
       propertyPath: m_Name
       value: Launcher
@@ -540,6 +548,10 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5181106650949996532, guid: e719b1822f259c14cb3dd6f62d9c465d, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8175702448868890031, guid: e719b1822f259c14cb3dd6f62d9c465d, type: 3}
+      propertyPath: enableDistanceOffset
       value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
@@ -8492,7 +8504,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   activeSkills:
-  - {fileID: 11400000, guid: 29de59d171003c841b05a4b0bee1b081, type: 2}
+  - {fileID: 11400000, guid: 7398b80240c9a7e4bbb2f37d3adac042, type: 2}
   enableDebugLog: 1
 --- !u!4 &1357681023
 Transform:
@@ -11042,6 +11054,10 @@ PrefabInstance:
       propertyPath: targetCamera
       value: 
       objectReference: {fileID: 859979524}
+    - target: {fileID: 7844486164170001436, guid: 2d86053af5e50c446a06f75cbdecb65b, type: 3}
+      propertyPath: showDebugInfo
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 8772439200271523911, guid: 2d86053af5e50c446a06f75cbdecb65b, type: 3}
       propertyPath: managedReferences[3244891126871883917].TargetFeedbacks
       value: 

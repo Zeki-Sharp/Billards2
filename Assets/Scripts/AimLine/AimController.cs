@@ -257,25 +257,35 @@ public class AimController : MonoBehaviour
     
     
     /// <summary>
-    /// 更新瞄准方向（拉弓模式：从鼠标指向球）
+    /// 更新瞄准方向（根据蓄力模式）
     /// </summary>
     void UpdateAimDirection()
     {
         if (playerCore == null || cam == null) return;
         
-        // 直接使用New Input System更新瞄准方向
-        Vector2 mousePos = UnityEngine.InputSystem.Mouse.current.position.ReadValue();
-        Vector3 mouseScreenPos = new Vector3(mousePos.x, mousePos.y, 0f);
-        
-        // 转换为世界坐标
-        Vector3 mouseWorldPos = GetMouseWorldPosition(mouseScreenPos);
-        
-        // 计算瞄准方向 - 从球指向鼠标（发射方向）
-        Vector3 direction = mouseWorldPos - playerCore.transform.position;
-        
-        if (direction.magnitude > 0.1f) // 避免零向量
+        // 根据蓄力系统的模式获取瞄准方向
+        if (chargeSystem != null)
         {
-            aimDirection = direction.normalized;
+            // 使用ChargeSystem的GetLaunchDirection方法获取正确的发射方向
+            Vector2 direction = chargeSystem.GetLaunchDirection(playerCore.transform.position);
+            
+            if (direction.magnitude > 0.1f) // 避免零向量
+            {
+                aimDirection = direction.normalized;
+            }
+        }
+        else
+        {
+            // 如果没有ChargeSystem，使用默认逻辑（从球指向鼠标）
+            Vector2 mousePos = UnityEngine.InputSystem.Mouse.current.position.ReadValue();
+            Vector3 mouseScreenPos = new Vector3(mousePos.x, mousePos.y, 0f);
+            Vector3 mouseWorldPos = GetMouseWorldPosition(mouseScreenPos);
+            Vector3 direction = mouseWorldPos - playerCore.transform.position;
+            
+            if (direction.magnitude > 0.1f)
+            {
+                aimDirection = direction.normalized;
+            }
         }
     }
     

@@ -40,7 +40,7 @@ MonoBehaviour:
       targetStat: Damage
       modifierValue: 10
       modifierType: 0
-      allowStacking: 1
+      allowStacking: 0
       healAmount: 20
       minTransitionTime: 1
       maxTransitionTime: 5
@@ -94,7 +94,7 @@ MonoBehaviour:
         requiredCount: 2
         timeWindow: 5
         comparisonType: 0
-        targetValue: 0.8
+        targetValue: 0.7
         minValue: 0
         maxValue: 1
         dataExtractorType: 0
@@ -103,7 +103,7 @@ MonoBehaviour:
       targetStat: Damage
       modifierValue: 10
       modifierType: 0
-      allowStacking: 1
+      allowStacking: 0
       healAmount: 20
       minTransitionTime: 1
       maxTransitionTime: 5

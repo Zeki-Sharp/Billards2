@@ -290,10 +290,8 @@ public class PlayerCore : MonoBehaviour
         float chargingPower = chargeSystem.GetChargingPower();
         float currentForce = chargeSystem.GetCurrentForce();
         
-        // 计算发射方向（从角色指向鼠标）
-        Vector3 mouseWorldPos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-        mouseWorldPos.z = 0;
-        Vector2 direction = (mouseWorldPos - transform.position).normalized;
+        // 获取发射方向（根据当前蓄力模式）
+        Vector2 direction = chargeSystem.GetLaunchDirection(transform.position);
         
         // 使用蓄力系统的力度（直接使用蓄力系统计算的力度）
         float force = currentForce;
