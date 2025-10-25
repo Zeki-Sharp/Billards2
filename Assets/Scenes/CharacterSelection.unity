@@ -886,6 +886,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: GameUIPanel
       objectReference: {fileID: 0}
+    - target: {fileID: 6039317009098883744, guid: 8d1b8029e79b32847bca2556d6a6772d, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 6796715450767440190, guid: 8d1b8029e79b32847bca2556d6a6772d, type: 3}
       propertyPath: m_LocalPosition.x
       value: 377
