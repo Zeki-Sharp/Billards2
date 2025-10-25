@@ -72,6 +72,7 @@ public class GameManager : MonoBehaviour
     {
         GameEventBus.OnSkillSelectionStarted += HandleSkillSelectionStarted;
         GameEventBus.OnSkillSelectionCompleted += HandleSkillSelectionCompleted;
+        GameEventBus.OnGameCompleted += HandleGameCompleted;
     }
     
     /// <summary>
@@ -81,6 +82,7 @@ public class GameManager : MonoBehaviour
     {
         GameEventBus.OnSkillSelectionStarted -= HandleSkillSelectionStarted;
         GameEventBus.OnSkillSelectionCompleted -= HandleSkillSelectionCompleted;
+        GameEventBus.OnGameCompleted -= HandleGameCompleted;
     }
     
     void Update()
@@ -162,6 +164,9 @@ public class GameManager : MonoBehaviour
         
         isGameOver = true;
         isGameActive = false;
+        
+        // 暂停游戏（显示失败界面时需要）
+        PauseGame();
         
         if (showDebugInfo)
         {
@@ -246,13 +251,14 @@ public class GameManager : MonoBehaviour
     
     public void PauseGame()
     {
-        if (isGameOver) return;
-        
         isGamePaused = true;
         Time.timeScale = 0f;
         
         // 暂停所有 Rigidbody2D 的物理模拟
         PauseAllRigidbodies();
+        
+        // 停止所有敌人的协程和定时器
+        StopAllEnemyBehaviors();
         
         if (showDebugInfo)
         {
@@ -262,8 +268,6 @@ public class GameManager : MonoBehaviour
     
     public void ResumeGame()
     {
-        if (isGameOver) return;
-        
         isGamePaused = false;
         Time.timeScale = 1f;
         
@@ -324,6 +328,43 @@ public class GameManager : MonoBehaviour
         pausedRigidbodies.Clear();
     }
     
+    /// <summary>
+    /// 停止所有敌人的协程和定时器
+    /// </summary>
+    private void StopAllEnemyBehaviors()
+    {
+        // 停止所有敌人的协程
+        Enemy[] allEnemies = FindObjectsByType<Enemy>(FindObjectsSortMode.None);
+        int stoppedEnemyCount = 0;
+        foreach (var enemy in allEnemies)
+        {
+            if (enemy != null)
+            {
+                enemy.StopAllCoroutines();
+                stoppedEnemyCount++;
+            }
+        }
+        
+        // 停止EnemyController的Invoke定时器
+        EnemyController enemyController = FindFirstObjectByType<EnemyController>();
+        if (enemyController != null)
+        {
+            enemyController.CancelInvoke();
+        }
+        
+        // 停止EnemyPhaseController的Invoke定时器
+        EnemyPhaseController enemyPhaseController = FindFirstObjectByType<EnemyPhaseController>();
+        if (enemyPhaseController != null)
+        {
+            enemyPhaseController.CancelInvoke();
+        }
+        
+        if (showDebugInfo)
+        {
+            Debug.Log($"GameManager: 已停止 {stoppedEnemyCount} 个敌人的协程和定时器");
+        }
+    }
+    
     public void RestartGame()
     {
         // 重置游戏状态
@@ -368,6 +409,20 @@ public class GameManager : MonoBehaviour
         if (showDebugInfo)
         {
             Debug.Log("GameManager: 技能选择完成，游戏已恢复");
+        }
+    }
+    
+    /// <summary>
+    /// 处理游戏完成事件（所有关卡完成）
+    /// </summary>
+    void HandleGameCompleted()
+    {
+        // 暂停游戏（显示胜利界面时需要）
+        PauseGame();
+        
+        if (showDebugInfo)
+        {
+            Debug.Log("GameManager: 游戏完成，游戏已暂停");
         }
     }
     

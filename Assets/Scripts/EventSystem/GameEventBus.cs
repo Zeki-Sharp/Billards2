@@ -137,6 +137,11 @@ public static class GameEventBus
     /// </summary>
     public static event System.Action OnGameCompleted;
     
+    /// <summary>
+    /// 游戏重启事件（返回角色选择，重置所有状态）
+    /// </summary>
+    public static event System.Action OnGameRestart;
+    
     #endregion
     
     #region 关卡事件
@@ -361,6 +366,11 @@ public static class GameEventBus
     /// 发布游戏完成事件
     /// </summary>
     public static void PublishGameCompleted() => OnGameCompleted?.Invoke();
+    
+    /// <summary>
+    /// 发布游戏重启事件
+    /// </summary>
+    public static void PublishGameRestart() => OnGameRestart?.Invoke();
     
     /// <summary>
     /// 发布关卡开始事件

@@ -52,7 +52,7 @@ public class CharacterSelectionUI : MonoBehaviour
         selectionManager = GetComponent<CharacterSelectionManager>();
         if (selectionManager == null)
         {
-            selectionManager = FindObjectOfType<CharacterSelectionManager>();
+            selectionManager = FindFirstObjectByType<CharacterSelectionManager>();
         }
         
         if (selectionManager == null)

@@ -53,6 +53,9 @@ public class SkillSelectionManager : MonoBehaviour
         {
             Instance = this;
             DontDestroyOnLoad(gameObject); // 保持跨场景存在
+            
+            // 订阅游戏重启事件
+            GameEventBus.OnGameRestart += ResetState;
         }
         else
         {
@@ -69,6 +72,9 @@ public class SkillSelectionManager : MonoBehaviour
     
     void OnDestroy()
     {
+        // 取消订阅游戏重启事件
+        GameEventBus.OnGameRestart -= ResetState;
+        
         // 取消订阅事件
         GameEventBus.OnLevelCompleted -= OnLevelCompleted;
     }
@@ -619,6 +625,24 @@ public class SkillSelectionManager : MonoBehaviour
         else
         {
             Debug.LogError("SkillSelectionManager: LevelManager 未找到，无法进入下一关卡！");
+        }
+    }
+    
+    /// <summary>
+    /// 重置技能选择管理器状态（游戏重启时调用）
+    /// </summary>
+    public void ResetState()
+    {
+        // 复用现有的清空逻辑
+        currentSelection.Clear();
+        currentSelectionOptions.Clear();
+        
+        // 重置状态标志
+        isSkillSelectionActive = false;
+        
+        if (showDebugInfo)
+        {
+            Debug.Log("SkillSelectionManager: 重置完成 - 选择状态已清空");
         }
     }
     

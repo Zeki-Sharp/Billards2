@@ -7,12 +7,16 @@ using UnityEngine.SceneManagement;
 /// 胜利界面 - 显示游戏完成统计信息
 /// 
 /// 【核心职责】：
-/// - 订阅游戏完成事件（OnGameCompleted）
 /// - 显示总击杀敌人数和通过关卡数
 /// - 处理重新开始按钮点击
 /// - 返回角色选择场景
+/// 
+/// 【架构说明】：
+/// - 继承BasePanel，由UIController统一管理
+/// - 不自己订阅事件，由UIController触发显示
+/// - 不自己控制暂停，由UIController统一管理
 /// </summary>
-public class VictoryPanel : MonoBehaviour
+public class VictoryPanel : BasePanel
 {
     [Header("UI元素")]
     [SerializeField] private TextMeshProUGUI enemyCountText;     // 敌人数统计文本
@@ -22,32 +26,18 @@ public class VictoryPanel : MonoBehaviour
     [Header("场景配置")]
     [SerializeField] private string characterSelectionSceneName = "CharacterSelection"; // 角色选择场景名称
     
-    [Header("游戏暂停")]
-    [SerializeField] private bool pauseGameOnShow = true;        // 显示时是否暂停游戏
-    
-    [Header("调试")]
-    [SerializeField] private bool showDebugInfo = true;
-    
-    void Start()
-    {
-        InitializePanel();
-    }
-    
-    void OnDestroy()
-    {
-        UnsubscribeFromEvents();
-    }
+    #region BasePanel生命周期
     
     /// <summary>
-    /// 初始化面板
+    /// 面板初始化（BasePanel生命周期）
     /// </summary>
-    void InitializePanel()
+    public override void OnInit()
     {
-        // 设置初始状态为隐藏
-        gameObject.SetActive(false);
+        base.OnInit();
         
-        // 订阅游戏完成事件
-        SubscribeToEvents();
+        // 设置面板类型和配置（BasePanel中已有默认值，这里确保正确）
+        panelType = UIPanelType.Popup;
+        pauseGameOnShow = true; // 确保显示时暂停游戏
         
         // 设置按钮事件
         if (restartButton != null)
@@ -58,65 +48,30 @@ public class VictoryPanel : MonoBehaviour
         {
             Debug.LogWarning("VictoryPanel: Restart按钮未配置！");
         }
-        
-        if (showDebugInfo)
-        {
-            Debug.Log("VictoryPanel: 初始化完成");
-        }
     }
     
     /// <summary>
-    /// 订阅事件
+    /// 面板显示时调用（BasePanel生命周期）
     /// </summary>
-    void SubscribeToEvents()
+    public override void OnShow(UIPanelData data = null)
     {
-        GameEventBus.OnGameCompleted += OnGameCompleted;
-    }
-    
-    /// <summary>
-    /// 取消订阅事件
-    /// </summary>
-    void UnsubscribeFromEvents()
-    {
-        GameEventBus.OnGameCompleted -= OnGameCompleted;
-        
-        // 移除按钮事件
-        if (restartButton != null)
-        {
-            restartButton.onClick.RemoveListener(OnRestartButtonClicked);
-        }
-    }
-    
-    /// <summary>
-    /// 游戏完成事件处理
-    /// </summary>
-    void OnGameCompleted()
-    {
-        ShowVictoryPanel();
-    }
-    
-    /// <summary>
-    /// 显示胜利界面
-    /// </summary>
-    void ShowVictoryPanel()
-    {
-        // 激活面板
-        gameObject.SetActive(true);
+        base.OnShow(data);
         
         // 更新统计数据
         UpdateStatistics();
-        
-        // 暂停游戏（可选）
-        if (pauseGameOnShow)
-        {
-            Time.timeScale = 0f;
-        }
-        
-        if (showDebugInfo)
-        {
-            Debug.Log("VictoryPanel: 显示胜利界面");
-        }
     }
+    
+    /// <summary>
+    /// 面板隐藏时调用（BasePanel生命周期）
+    /// </summary>
+    public override void OnHide()
+    {
+        base.OnHide();
+        
+        // 清理逻辑（如果需要）
+    }
+    
+    #endregion
     
     /// <summary>
     /// 更新统计数据
@@ -170,14 +125,28 @@ public class VictoryPanel : MonoBehaviour
     {
         if (showDebugInfo)
         {
-            Debug.Log("VictoryPanel: 点击重新开始按钮");
+            Debug.Log("VictoryPanel: 点击重新开始按钮，触发游戏重启");
         }
         
-        // 恢复时间缩放
-        Time.timeScale = 1f;
+        // 先隐藏当前面板
+        if (UIController.Instance != null)
+        {
+            UIController.Instance.HidePanel(this);
+        }
+        else
+        {
+            OnHide();
+        }
         
-        // 清理所有运行时数据
+        // 发布游戏重启事件（让所有DontDestroyOnLoad管理器重置状态）
+        GameEventBus.PublishGameRestart();
+        
+        // 清理静态数据
         GameRuntimeData.ClearAllData();
+        SceneTransitionManager.ClearSelectedCharacter();
+        
+        // 恢复游戏状态（双保险，UIController.ResetState也会做）
+        Time.timeScale = 1f;
         
         // 加载角色选择场景
         LoadCharacterSelectionScene();
@@ -210,7 +179,7 @@ public class VictoryPanel : MonoBehaviour
     [ContextMenu("测试显示胜利界面")]
     void TestShowVictoryPanel()
     {
-        ShowVictoryPanel();
+        OnShow();
     }
     
     #endregion

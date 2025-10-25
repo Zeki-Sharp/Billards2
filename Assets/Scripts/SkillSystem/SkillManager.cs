@@ -40,6 +40,9 @@ public class SkillManager : MonoBehaviour
             Instance = this;
             DontDestroyOnLoad(gameObject); // 跨场景保留
             
+            // 订阅游戏重启事件
+            GameEventBus.OnGameRestart += ResetState;
+            
             if (enableDebugLog)
             {
                 Debug.Log("[SkillManager] 单例初始化完成，将跨场景保留");
@@ -74,6 +77,9 @@ public class SkillManager : MonoBehaviour
     
     void OnDestroy()
     {
+        // 取消订阅游戏重启事件
+        GameEventBus.OnGameRestart -= ResetState;
+        
         UnsubscribeFromEvents();
     }
     
@@ -437,6 +443,29 @@ public class SkillManager : MonoBehaviour
     public void ReloadSkills()
     {
         ReinitializeSkillInstances();
+    }
+    
+    /// <summary>
+    /// 重置技能管理器状态（游戏重启时调用）
+    /// </summary>
+    public void ResetState()
+    {
+        // 清空技能列表
+        activeSkills.Clear();
+        
+        // 复用现有的重新初始化方法（清空实例和掉落记录）
+        ReinitializeSkillInstances();
+        
+        // 清空技能状态管理器
+        if (skillStateManager != null)
+        {
+            // 暂时不处理，SkillStateManager会随场景销毁
+        }
+        
+        if (enableDebugLog)
+        {
+            Debug.Log("[SkillManager] 重置完成 - 所有技能已清空");
+        }
     }
     
     /// <summary>

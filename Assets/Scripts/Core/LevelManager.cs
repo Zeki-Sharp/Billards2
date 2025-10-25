@@ -48,6 +48,9 @@ public class LevelManager : MonoBehaviour
             Instance = this;
             DontDestroyOnLoad(gameObject); // 保持跨场景存在
             
+            // 订阅游戏重启事件
+            GameEventBus.OnGameRestart += ResetState;
+            
             if (showDebugInfo)
             {
                 Debug.Log("LevelManager: 设置为单例实例，将跨场景保留");
@@ -79,6 +82,9 @@ public class LevelManager : MonoBehaviour
     
     void OnDestroy()
     {
+        // 取消订阅游戏重启事件
+        GameEventBus.OnGameRestart -= ResetState;
+        
         // 取消订阅事件
         GameEventBus.OnDeath -= OnDeath;
         SceneManager.sceneLoaded -= OnSceneLoaded;
@@ -241,6 +247,30 @@ public class LevelManager : MonoBehaviour
     {
         totalEnemyCount = 0;
         killedEnemyCount = 0;
+    }
+    
+    /// <summary>
+    /// 重置关卡管理器状态（游戏重启时调用）
+    /// </summary>
+    public void ResetState()
+    {
+        // 重置关卡索引到第一关
+        currentLevelIndex = 0;
+        
+        // 复用现有的重置敌人计数方法
+        ResetEnemyCount();
+        
+        // 重置关卡状态标志
+        isLevelActive = false;
+        isLevelCompleted = false;
+        
+        // 清空关卡配置引用（会在下次场景加载时重新获取）
+        currentLevelConfig = null;
+        
+        if (showDebugInfo)
+        {
+            Debug.Log("LevelManager: 重置完成 - 关卡索引归零，敌人计数清空");
+        }
     }
     
     /// <summary>
