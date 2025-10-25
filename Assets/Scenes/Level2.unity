@@ -8306,16 +8306,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   spawnParent: {fileID: 1579586301}
-  rangeConfig:
-    coordinateSystem: 0
-    rangeShape: 0
-    worldCenter: {x: 0, y: 0, z: 0}
-    worldSize: {x: 18, y: 9}
-    worldRadius: 8
-    relativeSize: {x: 4, y: 4}
-    relativeRadius: 2
-    enablePositionOffset: 1
-    offsetRange: 0.5
   enableDebugLog: 1
   enemyParent: {fileID: 1579586301}
   showDebugInfo: 1
@@ -8434,16 +8424,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   spawnParent: {fileID: 369649107}
-  rangeConfig:
-    coordinateSystem: 0
-    rangeShape: 0
-    worldCenter: {x: 0, y: 0, z: 0}
-    worldSize: {x: 20, y: 10}
-    worldRadius: 8
-    relativeSize: {x: 4, y: 4}
-    relativeRadius: 2
-    enablePositionOffset: 1
-    offsetRange: 0.5
   enableDebugLog: 1
   itemParent: {fileID: 369649107}
   enableDropPositionOffset: 1
@@ -8622,8 +8602,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c87ee035e12f35e4ea7b74d34431d6fa, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  activeSkills:
-  - {fileID: 11400000, guid: 7398b80240c9a7e4bbb2f37d3adac042, type: 2}
+  activeSkills: []
   enableDebugLog: 1
 --- !u!4 &1357681023
 Transform:

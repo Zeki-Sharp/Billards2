@@ -12,74 +12,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: efc89a18d420d744da9894a9f7094350, type: 3}
   m_Name: "\u6EE1\u8840\u65F6\u4F24\u5BB3\u589E\u52A0"
   m_EditorClassIdentifier: 
-  skillName: "\u6EE1\u8840\u65F6\u4F24\u5BB3\u63D0\u5347"
+  skillName: "\u9AD8\u8840\u91CF\u4F24\u5BB3\u63D0\u5347"
   description: "\u5F53\u73A9\u5BB6\u4E3A\u6EE1\u8840\u65F6\u653B\u51FB\u529B\u63D0\u5347"
   skillTag: common
   skillLevels:
   - level: 1
-    isActive: 1
-    levelDescription: 
-    triggerConfig:
-      triggerType: 2
-      targetTag: Enemy
-      killTargetTag: Enemy
-      dataExtractorType: 0
-    conditionConfig:
-      logicType: 0
-      conditions:
-      - conditionType: 1
-        requiredCount: 2
-        timeWindow: 5
-        comparisonType: 0
-        targetValue: 1
-        minValue: 0
-        maxValue: 1
-        dataExtractorType: 0
-    effectConfig:
-      effectType: 0
-      targetStat: Damage
-      modifierValue: 5
-      modifierType: 0
-      allowStacking: 1
-      healAmount: 20
-      minTransitionTime: 1
-      maxTransitionTime: 5
-      transitionThreshold: 0.3
-      chargingToTransitionCurve:
-        serializedVersion: 2
-        m_Curve: []
-        m_PreInfinity: 2
-        m_PostInfinity: 2
-        m_RotationOrder: 4
-      weakPointMarkerPrefab: {fileID: 0}
-      weakPointRadius: 0.5
-      dropItemConfig: {fileID: 0}
-      dropChance: 1
-      dropRangeConfig:
-        dropRadius: 1
-        dropShape: 0
-        positionOffset: {x: 0, y: 0, z: 0}
-        coordinateSystemType: 0
-      weakPointDamageMultiplier: 1.5
-      weakPointRefreshOnHit: 1
-    resetConditionConfig:
-      logicType: 1
-      resetConditions:
-      - resetType: 2
-        comparisonType: 1
-        targetValue: 0.99
-        minValue: 0
-        maxValue: 1
-        dataExtractorType: 0
-    effectRemovalConfig:
-      removalType: 4
-      duration: 30
-      comparisonType: 2
-      targetValue: 0.99
-      minValue: 0
-      maxValue: 1
-      dataExtractorType: 0
-  - level: 2
     isActive: 1
     levelDescription: 
     triggerConfig:
@@ -139,6 +76,69 @@ MonoBehaviour:
       duration: 30
       comparisonType: 2
       targetValue: 0.99
+      minValue: 0
+      maxValue: 1
+      dataExtractorType: 0
+  - level: 2
+    isActive: 1
+    levelDescription: 
+    triggerConfig:
+      triggerType: 2
+      targetTag: Enemy
+      killTargetTag: Enemy
+      dataExtractorType: 0
+    conditionConfig:
+      logicType: 0
+      conditions:
+      - conditionType: 1
+        requiredCount: 2
+        timeWindow: 5
+        comparisonType: 0
+        targetValue: 0.8
+        minValue: 0
+        maxValue: 1
+        dataExtractorType: 0
+    effectConfig:
+      effectType: 0
+      targetStat: Damage
+      modifierValue: 10
+      modifierType: 0
+      allowStacking: 1
+      healAmount: 20
+      minTransitionTime: 1
+      maxTransitionTime: 5
+      transitionThreshold: 0.3
+      chargingToTransitionCurve:
+        serializedVersion: 2
+        m_Curve: []
+        m_PreInfinity: 2
+        m_PostInfinity: 2
+        m_RotationOrder: 4
+      weakPointMarkerPrefab: {fileID: 0}
+      weakPointRadius: 0.5
+      dropItemConfig: {fileID: 0}
+      dropChance: 1
+      dropRangeConfig:
+        dropRadius: 1
+        dropShape: 0
+        positionOffset: {x: 0, y: 0, z: 0}
+        coordinateSystemType: 0
+      weakPointDamageMultiplier: 1.5
+      weakPointRefreshOnHit: 1
+    resetConditionConfig:
+      logicType: 1
+      resetConditions:
+      - resetType: 2
+        comparisonType: 1
+        targetValue: 0.79
+        minValue: 0
+        maxValue: 1
+        dataExtractorType: 0
+    effectRemovalConfig:
+      removalType: 4
+      duration: 30
+      comparisonType: 2
+      targetValue: 0.79
       minValue: 0
       maxValue: 1
       dataExtractorType: 0

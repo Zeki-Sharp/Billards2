@@ -24,7 +24,8 @@ public class GameManager : MonoBehaviour
     [Header("调试")]
     [SerializeField] private bool showDebugInfo = true;
     
-    
+    // 暂停时记录被禁用的刚体
+    private System.Collections.Generic.List<Rigidbody2D> pausedRigidbodies = new System.Collections.Generic.List<Rigidbody2D>();
     
     void Awake()
     {
@@ -50,9 +51,36 @@ public class GameManager : MonoBehaviour
         Physics2D.gravity = Vector2.zero;
         Debug.Log($"GameManager: 构建版本重力设置确认 - {Physics2D.gravity}");
         
+        // 订阅事件
+        SubscribeToEvents();
+        
         // 游戏初始化由GameInitializer负责
         // 这里只做基本的游戏状态初始化
         InitializeGameState();
+    }
+    
+    void OnDestroy()
+    {
+        // 取消订阅事件
+        UnsubscribeFromEvents();
+    }
+    
+    /// <summary>
+    /// 订阅事件
+    /// </summary>
+    void SubscribeToEvents()
+    {
+        GameEventBus.OnSkillSelectionStarted += HandleSkillSelectionStarted;
+        GameEventBus.OnSkillSelectionCompleted += HandleSkillSelectionCompleted;
+    }
+    
+    /// <summary>
+    /// 取消订阅事件
+    /// </summary>
+    void UnsubscribeFromEvents()
+    {
+        GameEventBus.OnSkillSelectionStarted -= HandleSkillSelectionStarted;
+        GameEventBus.OnSkillSelectionCompleted -= HandleSkillSelectionCompleted;
     }
     
     void Update()
@@ -223,6 +251,9 @@ public class GameManager : MonoBehaviour
         isGamePaused = true;
         Time.timeScale = 0f;
         
+        // 暂停所有 Rigidbody2D 的物理模拟
+        PauseAllRigidbodies();
+        
         if (showDebugInfo)
         {
             Debug.Log("GameManager: 游戏暂停");
@@ -236,10 +267,61 @@ public class GameManager : MonoBehaviour
         isGamePaused = false;
         Time.timeScale = 1f;
         
+        // 恢复所有 Rigidbody2D 的物理模拟
+        ResumeAllRigidbodies();
+        
         if (showDebugInfo)
         {
             Debug.Log("GameManager: 游戏恢复");
         }
+    }
+    
+    /// <summary>
+    /// 暂停所有 Rigidbody2D 的物理模拟
+    /// </summary>
+    private void PauseAllRigidbodies()
+    {
+        pausedRigidbodies.Clear();
+        
+        Rigidbody2D[] allRigidbodies = FindObjectsByType<Rigidbody2D>(FindObjectsSortMode.None);
+        foreach (var rb in allRigidbodies)
+        {
+            if (rb != null && rb.simulated)
+            {
+                // 禁用物理模拟（这是 Unity 推荐的暂停物理的方式）
+                rb.simulated = false;
+                // 记录被暂停的刚体，以便恢复时只恢复这些
+                pausedRigidbodies.Add(rb);
+            }
+        }
+        
+        if (showDebugInfo)
+        {
+            Debug.Log($"GameManager: 已暂停 {pausedRigidbodies.Count} 个 Rigidbody2D 的物理模拟");
+        }
+    }
+    
+    /// <summary>
+    /// 恢复所有 Rigidbody2D 的物理模拟
+    /// </summary>
+    private void ResumeAllRigidbodies()
+    {
+        // 只恢复之前被暂停的刚体
+        foreach (var rb in pausedRigidbodies)
+        {
+            if (rb != null)
+            {
+                // 重新启用物理模拟
+                rb.simulated = true;
+            }
+        }
+        
+        if (showDebugInfo)
+        {
+            Debug.Log($"GameManager: 已恢复 {pausedRigidbodies.Count} 个 Rigidbody2D 的物理模拟");
+        }
+        
+        pausedRigidbodies.Clear();
     }
     
     public void RestartGame()
@@ -261,6 +343,35 @@ public class GameManager : MonoBehaviour
     
     #endregion
     
+    #region 事件处理
+    
+    /// <summary>
+    /// 处理技能选择开始事件
+    /// </summary>
+    void HandleSkillSelectionStarted(System.Collections.Generic.List<SkillConfig> skills)
+    {
+        PauseGame();
+        
+        if (showDebugInfo)
+        {
+            Debug.Log("GameManager: 技能选择开始，游戏已暂停");
+        }
+    }
+    
+    /// <summary>
+    /// 处理技能选择完成事件
+    /// </summary>
+    void HandleSkillSelectionCompleted()
+    {
+        ResumeGame();
+        
+        if (showDebugInfo)
+        {
+            Debug.Log("GameManager: 技能选择完成，游戏已恢复");
+        }
+    }
+    
+    #endregion
     
     #region 公共属性
     

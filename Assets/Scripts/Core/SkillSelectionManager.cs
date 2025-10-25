@@ -315,7 +315,7 @@ public class SkillSelectionManager : MonoBehaviour
             }
         }
         
-        // 发布技能选择开始事件
+        // 发布技能选择开始事件（GameManager 会监听此事件并暂停游戏）
         GameEventBus.PublishSkillSelectionStarted(currentSelection);
     }
     
@@ -595,7 +595,7 @@ public class SkillSelectionManager : MonoBehaviour
             Debug.Log("SkillSelectionManager: 技能选择完成");
         }
         
-        // 发布技能选择完成事件
+        // 发布技能选择完成事件（GameManager 会监听此事件并恢复游戏）
         GameEventBus.PublishSkillSelectionCompleted();
         
         // 通知关卡管理器进入下一关卡
