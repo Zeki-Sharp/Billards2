@@ -117,6 +117,10 @@ public class WeakPointManager : MonoBehaviour, IDamageModifier
         {
             Instance = this;
             DontDestroyOnLoad(gameObject);
+            
+            // 订阅游戏重启事件
+            GameEventBus.OnGameRestart += ResetState;
+            
             if (showDebugLog)
                 Debug.Log("[WeakPointManager] 单例创建成功");
             
@@ -128,6 +132,15 @@ public class WeakPointManager : MonoBehaviour, IDamageModifier
             Debug.LogWarning("[WeakPointManager] 检测到重复实例，销毁");
             Destroy(gameObject);
         }
+    }
+    
+    void OnDestroy()
+    {
+        // 取消订阅游戏重启事件
+        GameEventBus.OnGameRestart -= ResetState;
+        
+        // 取消订阅其他事件
+        UnsubscribeFromEvents();
     }
     
     /// <summary>
@@ -356,6 +369,26 @@ public class WeakPointManager : MonoBehaviour, IDamageModifier
         }
     }
     
+    /// <summary>
+    /// 重置弱点管理器状态（游戏重启时调用）
+    /// </summary>
+    public void ResetState()
+    {
+        // 复用现有的清理方法
+        CleanupAllWeakPoints();
+        
+        // 禁用弱点系统
+        isEnabled = false;
+        
+        // 清空配置
+        markerPrefab = null;
+        
+        if (showDebugLog)
+        {
+            Debug.Log("[WeakPointManager] 重置完成 - 所有弱点已清理，系统已禁用");
+        }
+    }
+    
     #endregion
     
     #region 事件系统
@@ -520,13 +553,5 @@ public class WeakPointManager : MonoBehaviour, IDamageModifier
     }
     
     #endregion
-    
-    void OnDestroy()
-    {
-        if (Instance == this)
-        {
-            Instance = null;
-        }
-    }
 }
 

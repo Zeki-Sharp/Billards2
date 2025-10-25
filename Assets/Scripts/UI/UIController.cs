@@ -93,6 +93,8 @@ public class UIController : MonoBehaviour
             }
             Destroy(gameObject);
         }
+
+        DontDestroyOnLoad(gameObject);
     }
     
     /// <summary>
