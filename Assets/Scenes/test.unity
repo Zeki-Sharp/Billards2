@@ -8492,7 +8492,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   activeSkills:
-  - {fileID: 11400000, guid: 0dc5258c6893dc240a6eb62403a50d99, type: 2}
+  - {fileID: 11400000, guid: 29de59d171003c841b05a4b0bee1b081, type: 2}
   enableDebugLog: 1
 --- !u!4 &1357681023
 Transform:

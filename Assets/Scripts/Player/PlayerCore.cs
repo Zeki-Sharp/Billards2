@@ -516,7 +516,10 @@ public class PlayerCore : MonoBehaviour
         float maxHealth = playerData.maxHealth;
         currentHealth = Mathf.Min(maxHealth, currentHealth + healAmount);
         
-        Debug.Log($"PlayerCore: 恢复完成，当前血量: {currentHealth}/{maxHealth}");
+        // ✅ 保存当前血量到静态数据
+        GameRuntimeData.SetCurrentHealth(currentHealth);
+        
+        Debug.Log($"PlayerCore: 恢复完成，当前血量: {currentHealth}/{maxHealth}，已保存到 GameRuntimeData");
         
         // 更新血条
         if (healthBar != null)
