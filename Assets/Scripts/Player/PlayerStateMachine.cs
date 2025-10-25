@@ -37,6 +37,8 @@ public class PlayerStateMachine : MonoBehaviour
     [Header("状态设置")]
     [SerializeField] private PlayerState initialState = PlayerState.Idle;
     [SerializeField] private bool showDebugInfo = true;
+    [SerializeField] [Tooltip("Moving状态超时时间（秒），防止力度过小时卡住")] 
+    private float movingStateTimeout = 0.2f;
     
     // 当前状态
     private PlayerState currentState;
@@ -44,6 +46,9 @@ public class PlayerStateMachine : MonoBehaviour
     // 组件引用
     private PlayerCore playerCore;
     private ChargeSystem chargeSystem;
+    
+    // Moving 状态相关
+    private float movingStateEnterTime = 0f; // 进入 Moving 状态的时间
     
     // 事件
     public System.Action<PlayerState, PlayerState> OnStateChanged;
@@ -126,7 +131,7 @@ public class PlayerStateMachine : MonoBehaviour
                 
                 break;
             case PlayerState.Moving:
-                
+                UpdateMovingState();
                 break;
             case PlayerState.MovingEnd:
                 // MovingEnd 状态由协程处理，不需要在 Update 中更新
@@ -170,7 +175,8 @@ public class PlayerStateMachine : MonoBehaviour
                 // 进入蓄力状态 - 现在由事件驱动，不需要直接调用
                 break;
             case PlayerState.Moving:
-                // 进入运动状态
+                // 进入运动状态，记录进入时间
+                movingStateEnterTime = Time.time;
                 break;
             case PlayerState.MovingEnd:
                 // 进入 MovingEnd 状态
@@ -193,6 +199,37 @@ public class PlayerStateMachine : MonoBehaviour
         if (playerCore != null && playerCore.IsPhysicsMoving() && !playerCore.IsMoving())
         {
             SwitchToState(PlayerState.Moving);
+        }
+    }
+    
+    /// <summary>
+    /// 更新运动状态
+    /// </summary>
+    void UpdateMovingState()
+    {
+        // 检查超时：如果进入 Moving 状态后一段时间，球仍未真正开始移动
+        // 说明力度太小，球"原地停止"，应该直接完成流程
+        float timeInMovingState = Time.time - movingStateEnterTime;
+        
+        if (timeInMovingState >= movingStateTimeout)
+        {
+            // 检查球是否真的在移动
+            bool isBallActuallyMoving = playerCore != null && playerCore.IsPhysicsMoving();
+            
+            if (!isBallActuallyMoving)
+            {
+                // 球在超时时间内没有真正开始移动，认为是"原地停止"
+                if (showDebugInfo)
+                {
+                    Debug.Log($"PlayerStateMachine: Moving状态超时 ({timeInMovingState:F2}s)，球未真正移动，视为原地停止，切换到MovingEnd");
+                }
+                
+                // 发布蓄力重置事件
+                GameEventBus.PublishChargingReset();
+                
+                // 直接切换到 MovingEnd 状态
+                SwitchToState(PlayerState.MovingEnd);
+            }
         }
     }
     
