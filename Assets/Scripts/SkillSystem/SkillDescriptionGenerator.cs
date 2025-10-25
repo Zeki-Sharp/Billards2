@@ -9,6 +9,10 @@ using System.Linq;
 /// </summary>
 public static class SkillDescriptionGenerator
 {
+    // 颜色常量
+    private const string GREEN_COLOR = "#4CAF50";  // 绿色 - 新数值/当前数值
+    private const string RED_COLOR = "#FF5252";    // 红色 - 旧数值
+    
     /// <summary>
     /// 智能格式化数值 - 整数不显示小数点，有小数则显示
     /// </summary>
@@ -23,6 +27,29 @@ public static class SkillDescriptionGenerator
         }
         // 有小数，显示小数（最多2位）
         return value.ToString("0.##");
+    }
+    
+    /// <summary>
+    /// 格式化数值并添加颜色标签
+    /// </summary>
+    /// <param name="value">要格式化的数值</param>
+    /// <param name="colorHex">颜色代码（如 #4CAF50）</param>
+    /// <returns>带颜色标签的格式化字符串</returns>
+    private static string FormatNumberWithColor(float value, string colorHex)
+    {
+        string number = FormatNumber(value);
+        return $"<color={colorHex}>{number}</color>";
+    }
+    
+    /// <summary>
+    /// 格式化整数并添加颜色标签
+    /// </summary>
+    /// <param name="value">要格式化的整数</param>
+    /// <param name="colorHex">颜色代码（如 #4CAF50）</param>
+    /// <returns>带颜色标签的格式化字符串</returns>
+    private static string FormatIntWithColor(int value, string colorHex)
+    {
+        return $"<color={colorHex}>{value}</color>";
     }
     
     /// <summary>
@@ -276,11 +303,13 @@ public static class SkillDescriptionGenerator
             int previousCount = GetRequiredCount(previous);
             if (currentCount != previousCount)
             {
-                return $"{currentCount}({previousCount})";
+                // 新数字绿色，括号里的旧数字红色
+                return $"{FormatIntWithColor(currentCount, GREEN_COLOR)}({FormatIntWithColor(previousCount, RED_COLOR)})";
             }
         }
         
-        return currentCount.ToString();
+        // 等级1或数字没变，只显示绿色数字
+        return FormatIntWithColor(currentCount, GREEN_COLOR);
     }
 
     /// <summary>
@@ -295,11 +324,13 @@ public static class SkillDescriptionGenerator
             float previousAmount = previous.effectConfig.healAmount;
             if (!Mathf.Approximately(currentAmount, previousAmount))
             {
-                return $"{FormatNumber(currentAmount)}({FormatNumber(previousAmount)})";
+                // 新数字绿色，括号里的旧数字红色
+                return $"{FormatNumberWithColor(currentAmount, GREEN_COLOR)}({FormatNumberWithColor(previousAmount, RED_COLOR)})";
             }
         }
         
-        return FormatNumber(currentAmount);
+        // 等级1或数字没变，只显示绿色数字
+        return FormatNumberWithColor(currentAmount, GREEN_COLOR);
     }
 
     /// <summary>
@@ -322,9 +353,9 @@ public static class SkillDescriptionGenerator
                     
                     if (currentPercentage != previousPercentage)
                     {
-                        return $"{statName}提升为{currentPercentage}%({previousPercentage}%)";
+                        return $"{statName}提升为{FormatIntWithColor(currentPercentage, GREEN_COLOR)}%({FormatIntWithColor(previousPercentage, RED_COLOR)}%)";
                     }
-                    return $"{statName}提升为{currentPercentage}%";
+                    return $"{statName}提升为{FormatIntWithColor(currentPercentage, GREEN_COLOR)}%";
                     
                 case StatModifierType.PercentAdd:
                     int currentAddPercentage = Mathf.RoundToInt(currentValue * 100);
@@ -332,16 +363,16 @@ public static class SkillDescriptionGenerator
                     
                     if (currentAddPercentage != previousAddPercentage)
                     {
-                        return $"{statName}提升{currentAddPercentage}%({previousAddPercentage}%)";
+                        return $"{statName}提升{FormatIntWithColor(currentAddPercentage, GREEN_COLOR)}%({FormatIntWithColor(previousAddPercentage, RED_COLOR)}%)";
                     }
-                    return $"{statName}提升{currentAddPercentage}%";
+                    return $"{statName}提升{FormatIntWithColor(currentAddPercentage, GREEN_COLOR)}%";
                     
                 case StatModifierType.Add:
                     if (!Mathf.Approximately(currentValue, previousValue))
                     {
-                        return $"{statName}提升{FormatNumber(currentValue)}({FormatNumber(previousValue)})";
+                        return $"{statName}提升{FormatNumberWithColor(currentValue, GREEN_COLOR)}({FormatNumberWithColor(previousValue, RED_COLOR)})";
                     }
-                    return $"{statName}提升{FormatNumber(currentValue)}";
+                    return $"{statName}提升{FormatNumberWithColor(currentValue, GREEN_COLOR)}";
             }
         }
         
@@ -380,11 +411,11 @@ public static class SkillDescriptionGenerator
             
             if (!Mathf.Approximately(currentMultiplier, previousMultiplier))
             {
-                return $"造成{FormatNumber(currentMultiplier)}({FormatNumber(previousMultiplier)})倍伤害";
+                return $"造成{FormatNumberWithColor(currentMultiplier, GREEN_COLOR)}({FormatNumberWithColor(previousMultiplier, RED_COLOR)})倍伤害";
             }
         }
         
-        return $"造成{FormatNumber(currentMultiplier)}倍伤害";
+        return $"造成{FormatNumberWithColor(currentMultiplier, GREEN_COLOR)}倍伤害";
     }
 
     /// <summary>
@@ -405,19 +436,19 @@ public static class SkillDescriptionGenerator
             
             if (minChanged && maxChanged)
             {
-                return $"{FormatNumber(currentMin)}-{FormatNumber(currentMax)}({FormatNumber(previousMin)}-{FormatNumber(previousMax)})";
+                return $"{FormatNumberWithColor(currentMin, GREEN_COLOR)}-{FormatNumberWithColor(currentMax, GREEN_COLOR)}({FormatNumberWithColor(previousMin, RED_COLOR)}-{FormatNumberWithColor(previousMax, RED_COLOR)})";
             }
             else if (minChanged)
             {
-                return $"{FormatNumber(currentMin)}({FormatNumber(previousMin)})-{FormatNumber(currentMax)}";
+                return $"{FormatNumberWithColor(currentMin, GREEN_COLOR)}({FormatNumberWithColor(previousMin, RED_COLOR)})-{FormatNumberWithColor(currentMax, GREEN_COLOR)}";
             }
             else if (maxChanged)
             {
-                return $"{FormatNumber(currentMin)}-{FormatNumber(currentMax)}({FormatNumber(previousMax)})";
+                return $"{FormatNumberWithColor(currentMin, GREEN_COLOR)}-{FormatNumberWithColor(currentMax, GREEN_COLOR)}({FormatNumberWithColor(previousMax, RED_COLOR)})";
             }
         }
         
-        return $"{FormatNumber(currentMin)}-{FormatNumber(currentMax)}";
+        return $"{FormatNumberWithColor(currentMin, GREEN_COLOR)}-{FormatNumberWithColor(currentMax, GREEN_COLOR)}";
     }
 
     #endregion
@@ -504,7 +535,7 @@ public static class SkillDescriptionGenerator
     private static string FormatHealthPercentage(float value)
     {
         int percentage = Mathf.RoundToInt(value * 100);
-        return $"{percentage}%";
+        return $"{FormatIntWithColor(percentage, GREEN_COLOR)}%";
     }
 
     /// <summary>
@@ -529,7 +560,7 @@ public static class SkillDescriptionGenerator
             {
                 if (firstLevel.effectConfig.effectType == SkillEffectType.Heal)
                 {
-                    return $"恢复{FormatNumber(firstLevel.effectConfig.healAmount)}点生命值的{itemName}";
+                    return $"恢复{FormatNumberWithColor(firstLevel.effectConfig.healAmount, GREEN_COLOR)}点生命值的{itemName}";
                 }
                 else if (firstLevel.effectConfig.effectType == SkillEffectType.StatModifier)
                 {
@@ -554,14 +585,14 @@ public static class SkillDescriptionGenerator
         {
             case StatModifierType.PercentMult:
                 int percentage = Mathf.RoundToInt(value * 100);
-                return $"{statName}提升为{percentage}%";
+                return $"{statName}提升为{FormatIntWithColor(percentage, GREEN_COLOR)}%";
                 
             case StatModifierType.PercentAdd:
                 int addPercentage = Mathf.RoundToInt(value * 100);
-                return $"{statName}提升{addPercentage}%";
+                return $"{statName}提升{FormatIntWithColor(addPercentage, GREEN_COLOR)}%";
                 
             case StatModifierType.Add:
-                return $"{statName}提升{FormatNumber(value)}";
+                return $"{statName}提升{FormatNumberWithColor(value, GREEN_COLOR)}";
                 
             default:
                 return $"{statName}提升";

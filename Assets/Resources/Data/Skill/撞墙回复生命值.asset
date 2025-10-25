@@ -41,7 +41,7 @@ MonoBehaviour:
       modifierValue: 2
       modifierType: 2
       allowStacking: 1
-      healAmount: 10
+      healAmount: 5
       minTransitionTime: 1
       maxTransitionTime: 5
       transitionThreshold: 0.3
@@ -97,7 +97,7 @@ MonoBehaviour:
       logicType: 0
       conditions:
       - conditionType: 0
-        requiredCount: 1
+        requiredCount: 2
         timeWindow: 5
         comparisonType: 0
         targetValue: 1
@@ -110,7 +110,7 @@ MonoBehaviour:
       modifierValue: 2
       modifierType: 2
       allowStacking: 1
-      healAmount: 5
+      healAmount: 10
       minTransitionTime: 1
       maxTransitionTime: 5
       transitionThreshold: 0.3
