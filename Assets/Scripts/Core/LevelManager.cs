@@ -257,6 +257,9 @@ public class LevelManager : MonoBehaviour
         {
             killedEnemyCount++;
             
+            // 同步更新总击杀数到GameRuntimeData
+            GameRuntimeData.AddEnemyKill();
+            
             if (showDebugInfo)
             {
                 Debug.Log($"LevelManager: 敌人死亡 {killedEnemyCount}/{totalEnemyCount} - {deathData.DeadObject?.name}");

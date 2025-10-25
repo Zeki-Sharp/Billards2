@@ -2,10 +2,11 @@ using UnityEngine;
 
 /// <summary>
 /// 游戏运行时数据管理器 - 静态类
-/// 负责管理跨场景的临时属性数据，替代 PlayerStateManager 的功能
+/// 负责管理跨场景的临时属性数据和游戏统计数据
 /// 
 /// 【核心职责】：
 /// - 保存当前血量、最大血量、伤害值、攻击范围等临时属性
+/// - 管理游戏统计数据（总击杀敌人数等）
 /// - 提供跨场景数据保留功能
 /// - 作为各系统获取最终属性值的统一数据源
 /// 
@@ -23,6 +24,9 @@ public static class GameRuntimeData
     private static float maxHealth = -1f;            // 最大生命值
     private static float damage = -1f;               // 伤害值（碰撞/范围）
     private static float attackRange = -1f;         // 攻击范围（仅范围攻击角色）
+    
+    // 游戏统计数据
+    private static int totalEnemyKills = 0;          // 总击杀敌人数（跨所有关卡）
     
     // 初始化标志
     private static bool hasInitialized = false;
@@ -45,6 +49,7 @@ public static class GameRuntimeData
             maxHealth = -1f;
             damage = -1f;
             attackRange = -1f;
+            totalEnemyKills = 0;
             hasInitialized = true;
             
             if (enableDebugLog)
@@ -200,6 +205,45 @@ public static class GameRuntimeData
     
     #endregion
     
+    #region 游戏统计数据管理
+    
+    /// <summary>
+    /// 增加敌人击杀数
+    /// </summary>
+    public static void AddEnemyKill()
+    {
+        totalEnemyKills++;
+        
+        if (enableDebugLog)
+        {
+            Debug.Log($"[GameRuntimeData] 击杀敌人 +1，总击杀数: {totalEnemyKills}");
+        }
+    }
+    
+    /// <summary>
+    /// 获取总击杀敌人数
+    /// </summary>
+    /// <returns>总击杀敌人数</returns>
+    public static int GetTotalEnemyKills()
+    {
+        return totalEnemyKills;
+    }
+    
+    /// <summary>
+    /// 重置总击杀数（用于游戏重新开始）
+    /// </summary>
+    public static void ResetTotalEnemyKills()
+    {
+        totalEnemyKills = 0;
+        
+        if (enableDebugLog)
+        {
+            Debug.Log("[GameRuntimeData] 总击杀数已重置");
+        }
+    }
+    
+    #endregion
+    
     #region 数据管理
     
     /// <summary>
@@ -211,6 +255,7 @@ public static class GameRuntimeData
         maxHealth = -1f;
         damage = -1f;
         attackRange = -1f;
+        totalEnemyKills = 0;
         hasInitialized = false;
         
         if (enableDebugLog)
@@ -243,6 +288,7 @@ public static class GameRuntimeData
                $"- 最大生命值: {(HasMaxHealthData() ? maxHealth.ToString() : "未设置")}\n" +
                $"- 伤害值: {(HasDamageData() ? damage.ToString() : "未设置")}\n" +
                $"- 攻击范围: {(HasAttackRangeData() ? attackRange.ToString() : "未设置")}\n" +
+               $"- 总击杀敌人数: {totalEnemyKills}\n" +
                $"- 已初始化: {hasInitialized}";
     }
     
