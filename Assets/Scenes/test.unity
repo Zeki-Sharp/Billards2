@@ -8491,7 +8491,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c87ee035e12f35e4ea7b74d34431d6fa, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  activeSkills: []
+  activeSkills:
+  - {fileID: 11400000, guid: 0dc5258c6893dc240a6eb62403a50d99, type: 2}
   enableDebugLog: 1
 --- !u!4 &1357681023
 Transform:
@@ -9412,7 +9413,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3c4333f109bb5af459406e60f828e8f6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  levelConfig: {fileID: 11400000, guid: ba504b0d527f12a4a8e42a143cc0222f, type: 2}
+  levelConfig: {fileID: 11400000, guid: 05eb439dfe81352449b2160c4e3ecb0d, type: 2}
   currentWaveIndex: 0
   showDebugInfo: 1
 --- !u!4 &1568426789

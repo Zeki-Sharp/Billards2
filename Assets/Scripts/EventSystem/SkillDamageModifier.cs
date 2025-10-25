@@ -55,6 +55,26 @@ public class SkillDamageModifier : IDamageModifier
         if (attackData.Attacker == null || !attackData.Attacker.CompareTag("Player"))
             return false;
         
+        // 只处理攻击敌人的情况
+        if (attackData.Target == null)
+        {
+            if (showDebugLog)
+            {
+                Debug.Log($"[SkillDamageModifier] {modifierName} 攻击目标为空，跳过");
+            }
+            return false;
+        }
+        
+        // 检查目标是否为敌人
+        if (!attackData.Target.CompareTag("Enemy"))
+        {
+            if (showDebugLog)
+            {
+                Debug.Log($"[SkillDamageModifier] {modifierName} 目标不是敌人（{attackData.Target.tag}），跳过");
+            }
+            return false;
+        }
+        
         // 修改伤害值
         float originalDamage = attackData.Damage;
         
