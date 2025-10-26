@@ -10,7 +10,7 @@ public class BallPhysics : MonoBehaviour
     public bool isSimulationMode = false;
     
     private Rigidbody2D rb;
-    private CircleCollider2D ballCollider;
+    private Collider2D ballCollider;  // 改为通用Collider2D，支持Circle/Box/Polygon等
     private PhysicsMaterial2D material;
     private bool isInitialized = false;
     
@@ -73,32 +73,26 @@ public class BallPhysics : MonoBehaviour
         rb.angularDamping = 0f; // 不需要角阻尼，因为禁用了旋转
         rb.freezeRotation = true;
         
-        // 设置碰撞器
-        ballCollider = GetComponent<CircleCollider2D>();
+        // 设置碰撞器（支持任意Collider2D类型）
+        ballCollider = GetComponent<Collider2D>();
         if (ballCollider == null)
         {
-            // 检查对象上是否已经有任何Collider2D
-            Collider2D existingCollider = GetComponent<Collider2D>();
-            if (existingCollider == null)
-            {
-                // 如果没有任何碰撞器，才添加CircleCollider2D
-                ballCollider = gameObject.AddComponent<CircleCollider2D>();
-            }
-            else
-            {
-                Debug.LogWarning($"对象 {gameObject.name} 上已存在其他类型的碰撞器 ({existingCollider.GetType().Name})，未添加 CircleCollider2D");
-            }
+            // 如果没有任何碰撞器，默认添加CircleCollider2D
+            ballCollider = gameObject.AddComponent<CircleCollider2D>();
+            Debug.Log($"BallPhysics: {gameObject.name} 没有碰撞器，已添加 CircleCollider2D");
+        }
+        else
+        {
+            Debug.Log($"BallPhysics: {gameObject.name} 检测到碰撞器类型: {ballCollider.GetType().Name}");
         }
         
-        // 只有当ballCollider不为null时才设置其属性
+        // 设置碰撞器属性
         if (ballCollider != null)
         {
-            // 不要修改CircleCollider2D的半径，只读取
             ballCollider.isTrigger = false;
-            
         }
         
-        // 创建物理材质（只有当ballCollider存在时才设置）
+        // 创建并应用物理材质（支持所有Collider2D类型）
         if (ballCollider != null)
         {
             material = new PhysicsMaterial2D("BallMaterial");
@@ -390,14 +384,40 @@ public class BallPhysics : MonoBehaviour
     
     /// <summary>
     /// 获取球体的实际半径（考虑缩放）
+    /// 注：此方法主要用于旧的手动轨迹预测，新的物理模拟系统不需要
     /// </summary>
     public float GetRadius()
     {
-        if (ballCollider != null)
+        if (ballCollider == null)
         {
-            return ballCollider.radius * Mathf.Max(transform.lossyScale.x, transform.lossyScale.y);
+            return 0.5f; // 默认值
         }
-        return 0.5f; // 默认值
+        
+        // 根据不同Collider类型返回近似半径
+        if (ballCollider is CircleCollider2D circleCollider)
+        {
+            return circleCollider.radius * Mathf.Max(transform.lossyScale.x, transform.lossyScale.y);
+        }
+        else if (ballCollider is BoxCollider2D boxCollider)
+        {
+            // Box的近似半径：取宽高的平均值的一半
+            float avgSize = (boxCollider.size.x + boxCollider.size.y) / 2f;
+            return avgSize * 0.5f * Mathf.Max(transform.lossyScale.x, transform.lossyScale.y);
+        }
+        else if (ballCollider is PolygonCollider2D polygonCollider)
+        {
+            // Polygon的近似半径：基于bounds
+            Bounds bounds = polygonCollider.bounds;
+            float avgExtent = (bounds.extents.x + bounds.extents.y) / 2f;
+            return avgExtent;
+        }
+        else
+        {
+            // 其他类型：基于bounds
+            Bounds bounds = ballCollider.bounds;
+            float avgExtent = (bounds.extents.x + bounds.extents.y) / 2f;
+            return avgExtent;
+        }
     }
     
     #region 模拟模式专用方法
