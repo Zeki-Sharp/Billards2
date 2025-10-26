@@ -82,7 +82,6 @@ public class BallPhysics : MonoBehaviour
             // 不要修改CircleCollider2D的半径，只读取
             ballCollider.isTrigger = false;
             
-            // 半径由Collider决定，不需要存储到ballData
         }
         
         // 创建物理材质（只有当ballCollider存在时才设置）
@@ -159,44 +158,48 @@ public class BallPhysics : MonoBehaviour
         }
     }
     
-    void UpdateDynamicPhysics()
+    /// <summary>
+    /// 计算动态物理参数（纯函数，无副作用）
+    /// </summary>
+    /// <param name="currentTime">当前时间</param>
+    /// <param name="currentSpeed">当前速度</param>
+    /// <returns>计算得到的弹性系数和阻尼值</returns>
+    private (float bounciness, float damping) CalculateDynamicPhysics(float currentTime, float currentSpeed)
     {
-        // 检查更新间隔
-        if (Time.time - lastUpdateTime < ballData.updateInterval)
-        {
-            return;
-        }
-        
-        float currentSpeed = rb.linearVelocity.magnitude;
         float normalizedSpeed = Mathf.Clamp01(currentSpeed / ballData.maxSpeed);
         
         // 计算动态弹性系数
-        float targetBounciness = ballData.speedToBounciness.Evaluate(normalizedSpeed);
-        targetBounciness = Mathf.Lerp(ballData.minBounciness, ballData.maxBounciness, targetBounciness);
+        float bounciness = ballData.speedToBounciness.Evaluate(normalizedSpeed);
+        bounciness = Mathf.Lerp(ballData.minBounciness, ballData.maxBounciness, bounciness);
         
         // 计算动态阻尼
-        float targetDamping = ballData.speedToDamping.Evaluate(normalizedSpeed);
-        targetDamping = Mathf.Lerp(ballData.minDamping, ballData.maxDamping, targetDamping);
+        float damping = ballData.speedToDamping.Evaluate(normalizedSpeed);
+        damping = Mathf.Lerp(ballData.minDamping, ballData.maxDamping, damping);
         
         // 添加时间阻尼
         if (ballData.enableTimeDamping && isMoving)
         {
-            float timeSinceStart = Time.time - ballStartTime;
+            float timeSinceStart = currentTime - ballStartTime;
             if (timeSinceStart > ballData.timeDampingStartTime)
             {
                 float timeDamping = Mathf.Min(
                     ballData.timeDampingRate * (timeSinceStart - ballData.timeDampingStartTime),
                     ballData.maxTimeDamping
                 );
-                targetDamping += timeDamping;
-                
-                // if (enableDebugLog)
-                // {
-                //     Debug.Log($"BallPhysics: 时间阻尼 - 运动时长: {timeSinceStart:F2}s, 时间阻尼: {timeDamping:F2}, 总阻尼: {targetDamping:F2}");
-                // }
+                damping += timeDamping;
             }
         }
         
+        return (bounciness, damping);
+    }
+    
+    /// <summary>
+    /// 应用动态物理参数到物理组件
+    /// </summary>
+    /// <param name="targetBounciness">目标弹性系数</param>
+    /// <param name="targetDamping">目标阻尼值</param>
+    private void ApplyDynamicPhysics(float targetBounciness, float targetDamping)
+    {
         // 检查参数变化是否超过阈值
         bool bouncinessChanged = Mathf.Abs(targetBounciness - lastBounciness) > ballData.updateThreshold;
         bool dampingChanged = Mathf.Abs(targetDamping - lastDamping) > ballData.updateThreshold;
@@ -214,12 +217,26 @@ public class BallPhysics : MonoBehaviour
             rb.linearDamping = targetDamping;
             lastDamping = targetDamping;
         }
+    }
+    
+    void UpdateDynamicPhysics()
+    {
+        // 检查更新间隔
+        if (Time.time - lastUpdateTime < ballData.updateInterval)
+        {
+            return;
+        }
+        
+        float currentSpeed = rb.linearVelocity.magnitude;
+        
+        // 计算动态物理参数
+        var (targetBounciness, targetDamping) = CalculateDynamicPhysics(Time.time, currentSpeed);
+        
+        // 应用参数到物理组件
+        ApplyDynamicPhysics(targetBounciness, targetDamping);
         
         // 更新缓存时间
-        if (bouncinessChanged || dampingChanged)
-        {
-            lastUpdateTime = Time.time;
-        }
+        lastUpdateTime = Time.time;
     }
     
     void OnCollisionEnter2D(Collision2D collision)
@@ -361,3 +378,4 @@ public class BallPhysics : MonoBehaviour
         return 0.5f; // 默认值
     }
 }
+

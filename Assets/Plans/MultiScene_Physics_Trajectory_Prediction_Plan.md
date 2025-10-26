@@ -91,6 +91,26 @@ physicsScene.Simulate(Time.fixedDeltaTime);
 **推荐方案**：复制BallPhysics组件到影子场景，自动同步所有动态参数  
 **备选方案**：手动同步物理参数（不推荐，维护成本高）
 
+#### ⚠️ 4. 处理Dynamic物体的休眠机制
+
+**核心问题**：当两个Dynamic Rigidbody2D碰撞时，如果其中一个初始速度为0，Unity会将其标记为"休眠"状态以优化性能，导致碰撞检测失效（球会直接穿透）
+
+**解决方案**：
+
+| 物体类型 | 影子场景设置 | 原因 |
+|---------|------------|------|
+| 被击打的球（玩家球） | Dynamic | 需要模拟完整运动轨迹 |
+| 静止的球（敌人球） | Dynamic + WakeUp + NeverSleep | 碰撞前保持静止，碰撞后真实物理响应 |
+| 台边/障碍物 | Static/Kinematic | 固定不动 |
+
+**关键理解**：
+- WakeUp() 只让物体参与碰撞检测，不会改变其速度
+- velocity = 0 的Dynamic物体不会自己移动
+- 碰撞前所有静止球保持原位（瞄准线稳定）
+- 碰撞后物理响应完全真实（球会被撞飞）
+
+**备选简化方案**：将静止的球设为Kinematic（碰撞后不会移动，适合障碍物场景）
+
 ### 2.3 性能优化策略
 
 **脏标记系统**：
@@ -178,11 +198,18 @@ TrajectoryPredictor.PredictTrajectory()
    - 静态边界（"Wall"）：只提供碰撞边界
 3. 只复制物理组件（Rigidbody2D、Collider2D、PhysicsMaterial2D）
 4. 使用 SceneManager.MoveGameObjectToScene() 移动
+5. ⚠️ **关键处理**：复制敌人球后设置：
+   - 保持 bodyType = Dynamic（确保碰撞后物理响应真实）
+   - 设置 velocity = Vector2.zero（初始静止）
+   - 调用 WakeUp() + sleepMode = NeverSleep（防止休眠导致碰撞检测失效）
 
 **验收**：
 - [ ] 台边成功复制，球能反弹
 - [ ] 反弹角度与主场景一致
 - [ ] 其他球也能正确复制
+- [ ] 玩家球能正确碰撞敌人球（不会穿透）
+- [ ] 碰撞前敌人球保持静止（瞄准线稳定）
+- [ ] 碰撞后敌人球按真实物理响应
 
 **Unity配置**：
 - ⚠️ 使用现有Tag，无需新增：Player、Enemy、Wall
@@ -366,6 +393,7 @@ replicator.AddStaticObjectTag("Obstacle");
 |------|-----|------|
 | 多场景物理版本兼容 | 中 | 先验证当前Unity版本支持 |
 | BallPhysics依赖主场景 | 中 | 重构使其场景无关 |
+| Dynamic物体休眠导致碰撞失效 | 高 | 对静止球使用WakeUp()+NeverSleep |
 | 长轨迹性能问题 | 低 | 限制最大步数+脏标记 |
 | 物理参数同步 | 中 | 统一使用Project Settings |
 
