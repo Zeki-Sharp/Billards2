@@ -104,11 +104,15 @@ public class SimulationObjectReplicator : MonoBehaviour
     /// </summary>
     public void ClearReplicatedObjects()
     {
+        int destroyedCount = 0;
         foreach (var kvp in replicatedObjects)
         {
             if (kvp.Value != null)
             {
-                Destroy(kvp.Value);
+                // ⚠️ 使用DestroyImmediate立即销毁，避免旧对象残留
+                // 在编辑器模式和模拟场景中使用DestroyImmediate是安全的
+                DestroyImmediate(kvp.Value);
+                destroyedCount++;
             }
         }
         
@@ -118,7 +122,7 @@ public class SimulationObjectReplicator : MonoBehaviour
         
         if (showDebugLog)
         {
-            Debug.Log("SimulationObjectReplicator: 已清空所有复制对象");
+            Debug.Log($"SimulationObjectReplicator: 已清空 {destroyedCount} 个复制对象（立即销毁）");
         }
     }
     
@@ -159,14 +163,24 @@ public class SimulationObjectReplicator : MonoBehaviour
     /// </summary>
     private void ReplicateDynamicObjects(string tag)
     {
-        GameObject[] objects = GameObject.FindGameObjectsWithTag(tag);
+        GameObject[] allObjects = GameObject.FindGameObjectsWithTag(tag);
+        
+        // 过滤：只复制主场景中的对象，排除影子场景中的对象
+        List<GameObject> objectsToReplicate = new List<GameObject>();
+        foreach (GameObject obj in allObjects)
+        {
+            if (obj.scene != simulationScene)
+            {
+                objectsToReplicate.Add(obj);
+            }
+        }
         
         if (showDebugLog)
         {
-            Debug.Log($"SimulationObjectReplicator: 找到 {objects.Length} 个 [{tag}] 对象");
+            Debug.Log($"SimulationObjectReplicator: 找到 {objectsToReplicate.Count} 个 [{tag}] 对象（过滤前:{allObjects.Length}）");
         }
         
-        foreach (GameObject original in objects)
+        foreach (GameObject original in objectsToReplicate)
         {
             GameObject replicated = ReplicateDynamicObject(original);
             if (replicated != null)
@@ -185,16 +199,28 @@ public class SimulationObjectReplicator : MonoBehaviour
         // 创建新对象
         GameObject replicated = new GameObject($"Sim_{original.name}");
         
-        // 复制Transform
+        // 复制基础属性
+        replicated.layer = original.layer;  // 复制Layer
+        replicated.tag = original.tag;  // 复制Tag
+        
+        // 复制Transform（使用世界坐标，避免父子层级影响）
         replicated.transform.position = original.transform.position;
         replicated.transform.rotation = original.transform.rotation;
-        replicated.transform.localScale = original.transform.localScale;
+        // ⚠️ 使用lossyScale（世界缩放）而不是localScale，确保子对象的实际大小正确
+        replicated.transform.localScale = original.transform.lossyScale;
+        
+        if (showDebugLog)
+        {
+            Debug.Log($"  [Transform] {original.name}: localScale={original.transform.localScale}, lossyScale={original.transform.lossyScale} → 复制为 {replicated.transform.localScale}");
+        }
         
         // 复制Rigidbody2D
         Rigidbody2D originalRb = original.GetComponent<Rigidbody2D>();
+        Rigidbody2D replicatedRb = null;
+        
         if (originalRb != null)
         {
-            Rigidbody2D replicatedRb = replicated.AddComponent<Rigidbody2D>();
+            replicatedRb = replicated.AddComponent<Rigidbody2D>();
             CopyRigidbody2DProperties(originalRb, replicatedRb);
         }
         else
@@ -209,6 +235,13 @@ public class SimulationObjectReplicator : MonoBehaviour
         if (originalCollider != null)
         {
             CopyCollider2D(originalCollider, replicated);
+            
+            // ⚠️ 模拟场景中必须启用Collider进行碰撞检测（无论主场景中是否启用）
+            Collider2D replicatedCollider = replicated.GetComponent<Collider2D>();
+            if (replicatedCollider != null)
+            {
+                replicatedCollider.enabled = true;
+            }
         }
         else
         {
@@ -230,7 +263,8 @@ public class SimulationObjectReplicator : MonoBehaviour
         SceneManager.MoveGameObjectToScene(replicated, simulationScene);
         
         // 配置动态物体（根据Tag区分Player和Enemy）
-        ConfigureDynamicObject(replicated, originalRb, original.tag);
+        // ⚠️ 使用复制后的Rigidbody2D，而不是原对象的
+        ConfigureDynamicObject(replicated, replicatedRb, original.tag);
         
         if (showDebugLog)
         {
@@ -253,10 +287,23 @@ public class SimulationObjectReplicator : MonoBehaviour
         to.constraints = from.constraints;
         to.freezeRotation = from.freezeRotation;
         
+        // ⚠️ 关键：复制碰撞检测模式和插值设置，确保物理行为一致
+        to.collisionDetectionMode = from.collisionDetectionMode;  // Continuous vs Discrete
+        to.interpolation = from.interpolation;                    // None/Interpolate/Extrapolate
+        to.sleepMode = from.sleepMode;                            // 休眠模式
+        
         // 物理材质
         if (replicatePhysicsMaterial && from.sharedMaterial != null)
         {
             to.sharedMaterial = from.sharedMaterial;
+        }
+        
+        if (showDebugLog)
+        {
+            Debug.Log($"  [Rigidbody] {from.name}: " +
+                      $"collisionDetectionMode={to.collisionDetectionMode}, " +
+                      $"interpolation={to.interpolation}, " +
+                      $"sleepMode={to.sleepMode}");
         }
     }
     
@@ -326,6 +373,10 @@ public class SimulationObjectReplicator : MonoBehaviour
         // 启用模拟模式
         replicated.isSimulationMode = true;
         
+        // ⚠️ 关键：手动调用InitializePhysics()初始化物理组件
+        // 因为影子场景中的对象Start()不会被调用
+        replicated.InitializePhysics();
+        
         // 初始化模拟状态
         replicated.InitializeSimulationState();
     }
@@ -359,7 +410,7 @@ public class SimulationObjectReplicator : MonoBehaviour
             
             if (showDebugLog)
             {
-                Debug.Log($"    配置为敌人球（静止球+防休眠）");
+                Debug.Log($"    配置为敌人球（静止球+防休眠）- sleeping={rb.IsSleeping()}, sleepMode={rb.sleepMode}");
             }
         }
     }
@@ -373,14 +424,24 @@ public class SimulationObjectReplicator : MonoBehaviour
     /// </summary>
     private void ReplicateStaticObjects(string tag)
     {
-        GameObject[] objects = GameObject.FindGameObjectsWithTag(tag);
+        GameObject[] allObjects = GameObject.FindGameObjectsWithTag(tag);
+        
+        // 过滤：只复制主场景中的对象，排除影子场景中的对象
+        List<GameObject> objectsToReplicate = new List<GameObject>();
+        foreach (GameObject obj in allObjects)
+        {
+            if (obj.scene != simulationScene)
+            {
+                objectsToReplicate.Add(obj);
+            }
+        }
         
         if (showDebugLog)
         {
-            Debug.Log($"SimulationObjectReplicator: 找到 {objects.Length} 个 [{tag}] 对象");
+            Debug.Log($"SimulationObjectReplicator: 找到 {objectsToReplicate.Count} 个 [{tag}] 对象（过滤前:{allObjects.Length}）");
         }
         
-        foreach (GameObject original in objects)
+        foreach (GameObject original in objectsToReplicate)
         {
             GameObject replicated = ReplicateStaticObject(original);
             if (replicated != null)
@@ -399,16 +460,33 @@ public class SimulationObjectReplicator : MonoBehaviour
         // 创建新对象
         GameObject replicated = new GameObject($"Sim_{original.name}");
         
-        // 复制Transform
+        // 复制基础属性
+        replicated.layer = original.layer;  // 复制Layer
+        replicated.tag = original.tag;  // 复制Tag
+        
+        // 复制Transform（使用世界坐标，避免父子层级影响）
         replicated.transform.position = original.transform.position;
         replicated.transform.rotation = original.transform.rotation;
-        replicated.transform.localScale = original.transform.localScale;
+        // ⚠️ 使用lossyScale（世界缩放）而不是localScale，确保子对象的实际大小正确
+        replicated.transform.localScale = original.transform.lossyScale;
+        
+        if (showDebugLog)
+        {
+            Debug.Log($"  [Transform] {original.name}: localScale={original.transform.localScale}, lossyScale={original.transform.lossyScale} → 复制为 {replicated.transform.localScale}");
+        }
         
         // 复制Collider2D（静态边界只需要碰撞器）
         Collider2D originalCollider = original.GetComponent<Collider2D>();
         if (originalCollider != null)
         {
             CopyCollider2D(originalCollider, replicated);
+            
+            // ⚠️ 模拟场景中必须启用Collider进行碰撞检测（无论主场景中是否启用）
+            Collider2D replicatedCollider = replicated.GetComponent<Collider2D>();
+            if (replicatedCollider != null)
+            {
+                replicatedCollider.enabled = true;
+            }
         }
         else
         {

@@ -506,9 +506,29 @@ PrefabInstance:
       propertyPath: showDebugInfo
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 3357877017394172215, guid: e719b1822f259c14cb3dd6f62d9c465d, type: 3}
+      propertyPath: maxDisplayDistance
+      value: 10
+      objectReference: {fileID: 0}
+    - target: {fileID: 3357877017394172215, guid: e719b1822f259c14cb3dd6f62d9c465d, type: 3}
+      propertyPath: trajectoryPredictor
+      value: 
+      objectReference: {fileID: 1131972189}
+    - target: {fileID: 3357877017394172215, guid: e719b1822f259c14cb3dd6f62d9c465d, type: 3}
+      propertyPath: maxDisplayCollisions
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 5125386412533849888, guid: e719b1822f259c14cb3dd6f62d9c465d, type: 3}
       propertyPath: m_Name
       value: Launcher
+      objectReference: {fileID: 0}
+    - target: {fileID: 5125386412533849888, guid: e719b1822f259c14cb3dd6f62d9c465d, type: 3}
+      propertyPath: m_Layer
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5125386412533849888, guid: e719b1822f259c14cb3dd6f62d9c465d, type: 3}
+      propertyPath: m_TagString
+      value: Untagged
       objectReference: {fileID: 0}
     - target: {fileID: 5181106650949996532, guid: e719b1822f259c14cb3dd6f62d9c465d, type: 3}
       propertyPath: m_LocalPosition.x
@@ -524,7 +544,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5181106650949996532, guid: e719b1822f259c14cb3dd6f62d9c465d, type: 3}
       propertyPath: m_LocalRotation.w
-      value: 1
+      value: 0.9999964
       objectReference: {fileID: 0}
     - target: {fileID: 5181106650949996532, guid: e719b1822f259c14cb3dd6f62d9c465d, type: 3}
       propertyPath: m_LocalRotation.x
@@ -532,7 +552,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5181106650949996532, guid: e719b1822f259c14cb3dd6f62d9c465d, type: 3}
       propertyPath: m_LocalRotation.y
-      value: -0
+      value: -0.002674445
       objectReference: {fileID: 0}
     - target: {fileID: 5181106650949996532, guid: e719b1822f259c14cb3dd6f62d9c465d, type: 3}
       propertyPath: m_LocalRotation.z
@@ -544,7 +564,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5181106650949996532, guid: e719b1822f259c14cb3dd6f62d9c465d, type: 3}
       propertyPath: m_LocalEulerAnglesHint.y
-      value: 0
+      value: -0.306
       objectReference: {fileID: 0}
     - target: {fileID: 5181106650949996532, guid: e719b1822f259c14cb3dd6f62d9c465d, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
@@ -553,6 +573,10 @@ PrefabInstance:
     - target: {fileID: 8175702448868890031, guid: e719b1822f259c14cb3dd6f62d9c465d, type: 3}
       propertyPath: enableDistanceOffset
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8943938372370279972, guid: e719b1822f259c14cb3dd6f62d9c465d, type: 3}
+      propertyPath: indicatorSize
+      value: 0.8
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -564,6 +588,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 5125386412533849888, guid: e719b1822f259c14cb3dd6f62d9c465d, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1131972188}
+    - targetCorrespondingSourceObject: {fileID: 5125386412533849888, guid: e719b1822f259c14cb3dd6f62d9c465d, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1131972189}
   m_SourcePrefab: {fileID: 100100000, guid: e719b1822f259c14cb3dd6f62d9c465d, type: 3}
 --- !u!1 &369649106
 GameObject:
@@ -8376,6 +8403,25 @@ MonoBehaviour:
   replicateBallPhysics: 1
   replicatePhysicsMaterial: 1
   showDebugLog: 1
+--- !u!114 &1131972189
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1131972180}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a7dfb21a214388441a57e58e0f78bf6f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  maxSimulationSteps: 500
+  sampleDistance: 0.02
+  maxTrajectoryPoints: 1000
+  simulationManager: {fileID: 1131972187}
+  objectReplicator: {fileID: 1131972188}
+  showDebugLog: 1
+  showStepLog: 1
 --- !u!1 &1183834682 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 2481185359877173278, guid: 2d86053af5e50c446a06f75cbdecb65b, type: 3}
@@ -11094,6 +11140,10 @@ PrefabInstance:
     - target: {fileID: 5182198335736264703, guid: 2d86053af5e50c446a06f75cbdecb65b, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7844486164170001436, guid: 2d86053af5e50c446a06f75cbdecb65b, type: 3}
+      propertyPath: maxForce
+      value: 25
       objectReference: {fileID: 0}
     - target: {fileID: 7844486164170001436, guid: 2d86053af5e50c446a06f75cbdecb65b, type: 3}
       propertyPath: targetCamera

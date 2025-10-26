@@ -31,15 +31,18 @@ public class AimController : MonoBehaviour
     [Header("相机设置")]
     public Camera targetCamera; // 目标相机，如果为空则使用主相机
     
-    [Header("反射计算器")]
-    public AimLineReflectionCalculator reflectionCalculator; // 反射计算器引用
+    [Header("轨迹计算")]
+    public TrajectoryPredictor trajectoryPredictor; // 轨迹预测器（物理模拟系统）
     
     [Header("渲染器")]
     public AimLineRenderer aimLineRenderer; // 瞄准线渲染器引用
     
-    [Header("距离预测设置")]
-    [Tooltip("是否启用距离预测和落点显示")]
-    public bool enableDistancePrediction = true;
+    [Header("显示限制")]
+    [Tooltip("瞄准线最大显示距离（米），超出此距离的轨迹将被截断并渐隐")]
+    [SerializeField] private float maxDisplayDistance = 8f;
+    
+    [Tooltip("最多显示的碰撞次数，超过此次数后截断轨迹（0表示无限制）")]
+    [SerializeField] private int maxDisplayCollisions = 2;
     
     [Header("调试设置")]
     [SerializeField] private bool showDebugInfo = true; // 是否显示调试信息
@@ -49,11 +52,9 @@ public class AimController : MonoBehaviour
     private bool isVisible = false; // 是否显示瞄准线
     private Vector2 aimDirection;
     
-    // 距离预测相关
-    private MovementDistancePredictor distancePredictor;
+    // 组件引用
     private AimLineLandingPointManager landingPointManager;
     private ChargeSystem chargeSystem;
-    private float lastPredictedDistance = 0f;
     
     void Start()
     {
@@ -103,9 +104,8 @@ public class AimController : MonoBehaviour
         
         
         // 初始化组件
-        InitializeReflectionCalculator();
         InitializeRenderer();
-        InitializeDistancePrediction();
+        InitializeComponents();
         
         if (showDebugInfo)
         {
@@ -120,28 +120,6 @@ public class AimController : MonoBehaviour
         InitializeRenderer();
     }
     
-    
-    void InitializeReflectionCalculator()
-    {
-        // 如果没有设置反射计算器，尝试自动查找
-        if (reflectionCalculator == null)
-        {
-            reflectionCalculator = GetComponent<AimLineReflectionCalculator>();
-            if (reflectionCalculator == null)
-            {
-                reflectionCalculator = gameObject.AddComponent<AimLineReflectionCalculator>();
-            }
-        }
-        
-        if (reflectionCalculator != null && showDebugInfo)
-        {
-            Debug.Log("AimController: 反射计算器初始化完成");
-        }
-        else
-        {
-            Debug.LogWarning("AimController: 反射计算器初始化失败");
-        }
-    }
     
     
     void InitializeRenderer()
@@ -167,26 +145,10 @@ public class AimController : MonoBehaviour
     }
     
     /// <summary>
-    /// 初始化距离预测组件
+    /// 初始化必要组件
     /// </summary>
-    void InitializeDistancePrediction()
+    void InitializeComponents()
     {
-        if (!enableDistancePrediction)
-        {
-            if (showDebugInfo)
-            {
-                Debug.Log("AimController: 距离预测已禁用");
-            }
-            return;
-        }
-        
-        // 获取距离预测器组件
-        distancePredictor = GetComponent<MovementDistancePredictor>();
-        if (distancePredictor == null)
-        {
-            Debug.LogWarning("AimController: 找不到MovementDistancePredictor组件，距离预测功能将不可用");
-        }
-        
         // 获取落点管理器组件
         landingPointManager = GetComponent<AimLineLandingPointManager>();
         if (landingPointManager == null)
@@ -206,55 +168,103 @@ public class AimController : MonoBehaviour
         
         if (showDebugInfo)
         {
-            Debug.Log($"AimController: 距离预测初始化完成 - 预测器: {(distancePredictor != null ? "已找到" : "未找到")}, 落点管理器: {(landingPointManager != null ? "已找到" : "未找到")}, 蓄力系统: {(chargeSystem != null ? "已找到" : "未找到")}");
+            Debug.Log($"AimController: 组件初始化完成 - 落点管理器: {(landingPointManager != null ? "已找到" : "未找到")}, 蓄力系统: {(chargeSystem != null ? "已找到" : "未找到")}");
         }
     }
     
     /// <summary>
-    /// 更新移动距离预测
+    /// 计算路径总长度
     /// </summary>
-    void UpdateMovementPrediction()
+    float CalculatePathLength(List<Vector3> pathPoints)
     {
-        if (!enableDistancePrediction || distancePredictor == null || chargeSystem == null)
+        if (pathPoints == null || pathPoints.Count < 2)
         {
-            return;
+            return 0f;
         }
         
-        // 获取当前力度并转换为速度
-        float currentForce = chargeSystem.GetCurrentForce();
-        // 力度转换为速度：假设力度直接对应速度（需要根据实际物理调整）
-        float initialVelocity = currentForce;
-        
-        // 获取球的物理数据
-        BallData ballData = null;
-        if (playerCore != null)
+        float totalLength = 0f;
+        for (int i = 1; i < pathPoints.Count; i++)
         {
-            BallPhysics ballPhysics = playerCore.GetComponent<BallPhysics>();
-            if (ballPhysics != null)
-            {
-                ballData = ballPhysics.ballData;
-            }
+            totalLength += Vector3.Distance(pathPoints[i - 1], pathPoints[i]);
         }
         
-        if (ballData == null)
-        {
-            if (showDebugInfo)
-            {
-                Debug.LogWarning("AimController: 无法获取BallData，跳过距离预测");
-            }
-            return;
-        }
-        
-        // 预测移动距离
-        float predictedDistance = distancePredictor.PredictMovementDistance(initialVelocity, ballData);
-        lastPredictedDistance = predictedDistance;
-        
-        if (showDebugInfo)
-        {
-            Debug.Log($"[AimController] 距离预测 - 力度: {currentForce:F2}, 预测距离: {predictedDistance:F2}, BallData阻尼: {(ballData != null ? ballData.linearDamping.ToString("F3") : "null")}");
-        }
+        return totalLength;
     }
     
+    /// <summary>
+    /// 计算截断距离（考虑最大距离和最大碰撞次数）
+    /// </summary>
+    float CalculateTruncationDistance(List<Vector3> pathPoints, List<Vector3> collisionPoints, float maxDistance, int maxCollisions)
+    {
+        float truncationDistance = maxDistance;
+        
+        // 如果设置了碰撞次数限制
+        if (maxCollisions > 0 && collisionPoints != null && collisionPoints.Count > maxCollisions)
+        {
+            // 找到第N次碰撞在路径上的累积距离
+            Vector3 limitCollision = collisionPoints[maxCollisions];  // 第N+1次碰撞（索引从0开始）
+            
+            float distanceToCollision = 0f;
+            for (int i = 1; i < pathPoints.Count; i++)
+            {
+                distanceToCollision += Vector3.Distance(pathPoints[i - 1], pathPoints[i]);
+                
+                // 找到这个碰撞点的位置
+                if (Vector3.Distance(pathPoints[i], limitCollision) < 0.05f)
+                {
+                    // 使用两个限制中较小的那个
+                    truncationDistance = Mathf.Min(truncationDistance, distanceToCollision);
+                    break;
+                }
+            }
+            
+            if (showDebugInfo)
+            {
+                Debug.Log($"[AimController] 碰撞次数截断: {collisionPoints.Count}次 > {maxCollisions}次限制, 截断距离: {distanceToCollision:F2}m");
+            }
+        }
+        
+        return truncationDistance;
+    }
+    
+    /// <summary>
+    /// 过滤显示范围内的碰撞点
+    /// </summary>
+    List<Vector3> FilterCollisionsInRange(List<Vector3> collisionPoints, List<Vector3> pathPoints, float maxDistance)
+    {
+        if (collisionPoints == null || collisionPoints.Count == 0)
+        {
+            return new List<Vector3>();
+        }
+        
+        List<Vector3> visibleCollisions = new List<Vector3>();
+        
+        // 遍历每个碰撞点，找到它在路径上的累积距离
+        for (int i = 0; i < collisionPoints.Count; i++)
+        {
+            Vector3 collision = collisionPoints[i];
+            
+            // 计算此碰撞点在路径上的累积距离
+            float collisionDistance = 0f;
+            for (int j = 1; j < pathPoints.Count; j++)
+            {
+                collisionDistance += Vector3.Distance(pathPoints[j - 1], pathPoints[j]);
+                
+                // 找到碰撞点在路径上的位置（容差 0.05m）
+                if (Vector3.Distance(pathPoints[j], collision) < 0.05f)
+                {
+                    // 如果碰撞点在显示范围内，添加到可见列表
+                    if (collisionDistance <= maxDistance)
+                    {
+                        visibleCollisions.Add(collision);
+                    }
+                    break;
+                }
+            }
+        }
+        
+        return visibleCollisions;
+    }
     
     /// <summary>
     /// 更新瞄准方向（根据蓄力模式）
@@ -397,85 +407,94 @@ public class AimController : MonoBehaviour
         
         Vector3 startPos = playerCore.transform.position;
         
-        // 使用反射计算器计算路径
-        if (reflectionCalculator != null)
+        // 使用物理模拟系统计算轨迹
+        if (trajectoryPredictor == null)
         {
-            // 获取白球半径（从BallData获取，已包含实际的世界空间半径）
-            float ballRadius = DEFAULT_BALL_RADIUS; // 默认半径
-            if (playerCore != null)
+            aimLineRenderer.ClearAllLines();
+            if (showDebugInfo)
             {
-                BallPhysics ballPhysics = playerCore.GetComponent<BallPhysics>();
-                if (ballPhysics != null)
-                {
-                    ballRadius = ballPhysics.GetRadius();
-                }
+                Debug.LogWarning("AimController: TrajectoryPredictor 未配置！");
             }
+            return;
+        }
+        
+        // 计算初始速度 = 方向 * 力度
+        float currentForce = 0f;
+        if (chargeSystem != null)
+        {
+            currentForce = chargeSystem.GetCurrentForce();
+        }
+        
+        Vector2 initialVelocity = aimDirection * currentForce;
+        List<Vector3> pathPoints = trajectoryPredictor.PredictTrajectory(startPos, initialVelocity);
+        List<Vector3> collisionPoints = trajectoryPredictor.GetCollisionPoints();
+        
+        // 渲染轨迹
+        if (pathPoints != null && pathPoints.Count > 0)
+        {
+            // 计算轨迹总长度
+            float totalLength = CalculatePathLength(pathPoints);
             
-            List<Vector3> pathPoints = reflectionCalculator.CalculateReflectionPath(startPos, aimDirection, ballRadius);
+            // ✅ 计算截断距离（考虑距离限制和碰撞次数限制）
+            float truncationDistance = CalculateTruncationDistance(
+                pathPoints, 
+                collisionPoints, 
+                maxDisplayDistance, 
+                maxDisplayCollisions
+            );
             
-            // 更新距离预测
-            UpdateMovementPrediction();
+            // 判断是否需要截断
+            bool needTruncate = totalLength > truncationDistance || 
+                               (maxDisplayCollisions > 0 && collisionPoints != null && collisionPoints.Count > maxDisplayCollisions);
             
-            // 根据距离预测决定是否显示落点并截断瞄准线
-            if (enableDistancePrediction && distancePredictor != null && landingPointManager != null)
+            if (needTruncate)
             {
-                // 计算瞄准线总长度
-                float aimLineLength = aimLineRenderer.GetPathTotalLength(pathPoints);
+                // ⚠️ 需要截断轨迹
+                List<Vector3> displayPath = aimLineRenderer.TruncatePathAtDistance(pathPoints, truncationDistance);
+                
+                // 过滤碰撞点：只显示在截断范围内的
+                List<Vector3> visibleCollisions = FilterCollisionsInRange(collisionPoints, pathPoints, truncationDistance);
+                
+                // 渲染截断后的轨迹（末端自动渐隐）
+                aimLineRenderer.RenderSegmentedAimLine(displayPath, visibleCollisions);
+                
+                // ❌ 隐藏落点（实际落点超出显示范围）
+                if (landingPointManager != null)
+                {
+                    landingPointManager.HideLandingPoint();
+                }
                 
                 if (showDebugInfo)
                 {
-                    Debug.Log($"[AimController] 落点判断 - 预测距离: {lastPredictedDistance:F2}, 瞄准线长度: {aimLineLength:F2}, 条件: {lastPredictedDistance <= aimLineLength && lastPredictedDistance > 0}");
-                }
-                
-                // 判断是否显示落点（去掉各种限制，只保留基本条件）
-                if (lastPredictedDistance <= aimLineLength && lastPredictedDistance > 0)
-                {
-                    // 截断路径到预测距离并渲染
-                    List<Vector3> truncatedPath = aimLineRenderer.TruncatePathAtDistance(pathPoints, lastPredictedDistance);
-                    aimLineRenderer.RenderSegmentedAimLine(truncatedPath);
-                    
-                    // 显示落点在截断位置
-                    if (truncatedPath.Count > 0)
-                    {
-                        Vector3 landingPosition = truncatedPath[truncatedPath.Count - 1];
-                        landingPointManager.ShowLandingPoint(landingPosition);
-                        
-                        if (showDebugInfo)
-                        {
-                            Debug.Log($"[AimController] 显示落点 - 位置: {landingPosition}");
-                        }
-                    }
-                }
-                else
-                {
-                    // 显示完整瞄准线，隐藏落点
-                    aimLineRenderer.RenderSegmentedAimLine(pathPoints);
-                    landingPointManager.HideLandingPoint();
-                    
-                    if (showDebugInfo)
-                    {
-                        Debug.Log($"[AimController] 隐藏落点 - 预测距离: {lastPredictedDistance:F2}, 瞄准线长度: {aimLineLength:F2}");
-                    }
+                    string reason = totalLength > maxDisplayDistance ? "距离限制" : "碰撞次数限制";
+                    Debug.Log($"[AimController] 轨迹截断({reason}): 总长{totalLength:F2}m, 截断距离{truncationDistance:F2}m, 碰撞: {collisionPoints.Count} → {visibleCollisions.Count}");
                 }
             }
             else
             {
-                // 距离预测未启用或组件缺失，使用原始逻辑
-                aimLineRenderer.RenderSegmentedAimLine(pathPoints);
+                // ✅ 完整轨迹在显示范围内
+                aimLineRenderer.RenderSegmentedAimLine(pathPoints, collisionPoints);
                 
-                if (showDebugInfo)
+                // ✅ 直接从轨迹终点获取精确落点
+                if (landingPointManager != null)
                 {
-                    Debug.Log($"[AimController] 距离预测未启用 - enableDistancePrediction: {enableDistancePrediction}, distancePredictor: {(distancePredictor != null)}, landingPointManager: {(landingPointManager != null)}");
+                    Vector3 landingPoint = pathPoints[pathPoints.Count - 1];
+                    landingPointManager.ShowLandingPoint(landingPoint);
+                    
+                    if (showDebugInfo)
+                    {
+                        Debug.Log($"[AimController] 显示完整轨迹({totalLength:F2}m), 碰撞{collisionPoints.Count}次");
+                    }
                 }
             }
         }
         else
         {
-            // 反射计算器未初始化时，不显示瞄准线
+            // 轨迹预测失败，不显示瞄准线
             aimLineRenderer.ClearAllLines();
-            if (showDebugInfo)
+            if (landingPointManager != null)
             {
-                Debug.LogWarning("AimController: 反射计算器未初始化，无法显示瞄准线");
+                landingPointManager.HideLandingPoint();
             }
         }
     }
@@ -497,38 +516,6 @@ public class AimController : MonoBehaviour
     }
     
     /// <summary>
-    /// 获取当前预测的移动距离
-    /// </summary>
-    /// <returns>预测距离</returns>
-    public float GetPredictedDistance()
-    {
-        return lastPredictedDistance;
-    }
-    
-    /// <summary>
-    /// 设置是否启用距离预测
-    /// </summary>
-    /// <param name="enable">是否启用</param>
-    public void SetDistancePredictionEnabled(bool enable)
-    {
-        enableDistancePrediction = enable;
-        
-        if (!enable && landingPointManager != null)
-        {
-            landingPointManager.HideLandingPoint();
-        }
-    }
-    
-    /// <summary>
-    /// 获取距离预测器组件
-    /// </summary>
-    /// <returns>距离预测器</returns>
-    public MovementDistancePredictor GetDistancePredictor()
-    {
-        return distancePredictor;
-    }
-    
-    /// <summary>
     /// 获取落点管理器组件
     /// </summary>
     /// <returns>落点管理器</returns>
@@ -536,25 +523,6 @@ public class AimController : MonoBehaviour
     {
         return landingPointManager;
     }
-    
-    
-    // 反射相关方法
-    
-    public AimLineReflectionCalculator GetReflectionCalculator()
-    {
-        return reflectionCalculator;
-    }
-    
-    
-    public string GetReflectionStats()
-    {
-        if (reflectionCalculator != null)
-        {
-            return reflectionCalculator.GetReflectionStats();
-        }
-        return "反射计算器未初始化";
-    }
-    
     // 渲染器相关方法
     public AimLineRenderer GetRenderer()
     {

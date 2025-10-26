@@ -23,6 +23,9 @@ public class AimLineRenderer : MonoBehaviour
     [SerializeField] private int defaultSortingOrder = 10;
     [SerializeField] private int defaultCapVertices = 8;
     
+    [Tooltip("转角圆滑顶点数（0=尖角，5=适中，10=完全圆滑）")]
+    [SerializeField] private int defaultCornerVertices = 5;
+    
     [Header("碰撞指示器设置")]
     [SerializeField] private Sprite collisionIndicatorSprite; // 碰撞指示器图片
     [SerializeField] private float indicatorSize = 0.3f; // 指示器大小
@@ -41,10 +44,6 @@ public class AimLineRenderer : MonoBehaviour
     private List<GameObject> collisionIndicators = new List<GameObject>();
     private GameObject lineContainer;
     private GameObject indicatorContainer;
-    
-    // 常量定义
-    private const float MIN_ANGLE_THRESHOLD = 0.01f;
-    private const float BACKOFF_MULTIPLIER = 0.5f;
     
     void Start()
     {
@@ -106,10 +105,11 @@ public class AimLineRenderer : MonoBehaviour
     
     
     /// <summary>
-    /// 渲染分段反射瞄准线
+    /// 渲染轨迹瞄准线（物理模拟系统）
     /// </summary>
-    /// <param name="pathPoints">路径点列表</param>
-    public void RenderSegmentedAimLine(List<Vector3> pathPoints)
+    /// <param name="pathPoints">路径点列表（用于画线）</param>
+    /// <param name="collisionPoints">碰撞点列表（用于画指示器）</param>
+    public void RenderSegmentedAimLine(List<Vector3> pathPoints, List<Vector3> collisionPoints)
     {
         if (pathPoints == null || pathPoints.Count <= 1)
         {
@@ -117,72 +117,57 @@ public class AimLineRenderer : MonoBehaviour
             return;
         }
         
-        
         // 清除旧的分段线段和指示器
         ClearSegmentLines();
         ClearCollisionIndicators();
         
-        // 获取线条宽度
-        float lineWidth = defaultLineWidth;
-        
-        // 根据路径点数创建分段
-        int segmentCount = pathPoints.Count - 1;
-        
-        // 渲染所有段
-        int renderSegmentCount = segmentCount;
-        
-        for (int i = 0; i < renderSegmentCount; i++)
-        {
-            // 创建分段线段
-            LineRenderer segmentLine = CreateSegmentLine(i);
-            segmentLines.Add(segmentLine);
-            
-            // 计算起点和终点
-            Vector3 startPoint = pathPoints[i];
-            Vector3 endPoint = pathPoints[i + 1];
-            
-            // 计算回退（避免线段重叠）
-            if (i > 0)
-            {
-                Vector3 prevPoint = pathPoints[i - 1];
-                float backoff = CalculateBackoff(prevPoint, pathPoints[i], endPoint, lineWidth);
-                Vector3 direction = (pathPoints[i] - prevPoint).normalized;
-                startPoint = pathPoints[i] - direction * backoff;
-            }
-            
-            if (i < segmentCount - 1)
-            {
-                Vector3 nextPoint = pathPoints[i + 2];
-                float backoff = CalculateBackoff(pathPoints[i], pathPoints[i + 1], nextPoint, lineWidth);
-                Vector3 direction = (pathPoints[i + 1] - pathPoints[i]).normalized;
-                endPoint = pathPoints[i + 1] - direction * backoff;
-            }
-            
-            // 设置分段线段的起点和终点
-            segmentLine.SetPosition(0, startPoint);
-            segmentLine.SetPosition(1, endPoint);
-            
-            // 应用材质效果
-            if (materialController != null)
-            {
-                float segmentLength = Vector3.Distance(startPoint, endPoint);
-                
-                // 判断是否应该渐隐 - 总是最后一段渐隐
-                bool shouldFade = (i == renderSegmentCount - 1);
-                
-                materialController.UpdateSegmentMaterial(segmentLine, segmentLength, shouldFade);
-            }
-        }
+        // ✅ 使用单个 LineRenderer 绘制平滑轨迹
+        RenderSmoothTrajectory(pathPoints);
         
         // 渲染碰撞指示器
-        if (showCollisionIndicators)
+        if (showCollisionIndicators && collisionPoints != null && collisionPoints.Count > 0)
         {
-            RenderCollisionIndicators(pathPoints);
+            RenderCollisionIndicatorsFromList(collisionPoints);
         }
         
         if (showDebugInfo)
         {
-            Debug.Log($"AimLineRenderer: 渲染分段瞄准线 - 段数: {segmentCount}, 路径点: {pathPoints.Count}");
+            Debug.Log($"AimLineRenderer: 渲染轨迹 - 路径点: {pathPoints.Count}, 碰撞点: {(collisionPoints != null ? collisionPoints.Count : 0)}");
+        }
+    }
+    
+    /// <summary>
+    /// 渲染平滑轨迹（新系统：使用单个 LineRenderer）
+    /// </summary>
+    void RenderSmoothTrajectory(List<Vector3> pathPoints)
+    {
+        if (pathPoints == null || pathPoints.Count < 2)
+        {
+            return;
+        }
+        
+        // 创建单个 LineRenderer
+        LineRenderer trajectoryLine = CreateSegmentLine(0);
+        segmentLines.Add(trajectoryLine);
+        
+        // 设置所有路径点
+        trajectoryLine.positionCount = pathPoints.Count;
+        trajectoryLine.SetPositions(pathPoints.ToArray());
+        
+        // 应用材质效果（末端渐隐）
+        if (materialController != null)
+        {
+            float totalLength = 0f;
+            for (int i = 1; i < pathPoints.Count; i++)
+            {
+                totalLength += Vector3.Distance(pathPoints[i-1], pathPoints[i]);
+            }
+            materialController.UpdateSegmentMaterial(trajectoryLine, totalLength, true);
+        }
+        
+        if (showDebugInfo)
+        {
+            Debug.Log($"AimLineRenderer: 渲染平滑轨迹 - 点数: {pathPoints.Count}");
         }
     }
     
@@ -194,34 +179,6 @@ public class AimLineRenderer : MonoBehaviour
         // 清除分段线段和指示器
         ClearSegmentLines();
         ClearCollisionIndicators();
-    }
-    
-    /// <summary>
-    /// 渲染带长度限制的分段瞄准线
-    /// </summary>
-    /// <param name="pathPoints">完整路径点列表</param>
-    /// <param name="maxDistance">最大显示距离</param>
-    /// <returns>实际渲染的路径点列表</returns>
-    public List<Vector3> RenderSegmentedAimLineWithLengthLimit(List<Vector3> pathPoints, float maxDistance)
-    {
-        if (pathPoints == null || pathPoints.Count <= 1)
-        {
-            ClearAllLines();
-            return new List<Vector3>();
-        }
-        
-        // 计算截断后的路径点
-        List<Vector3> truncatedPoints = CalculateTruncatedPath(pathPoints, maxDistance);
-        
-        // 渲染截断后的瞄准线
-        RenderSegmentedAimLine(truncatedPoints);
-        
-        if (showDebugInfo)
-        {
-            Debug.Log($"[AimLineRenderer] 渲染长度限制瞄准线 - 原始点数: {pathPoints.Count}, 截断后点数: {truncatedPoints.Count}, 最大距离: {maxDistance}");
-        }
-        
-        return truncatedPoints;
     }
     
     /// <summary>
@@ -364,6 +321,7 @@ public class AimLineRenderer : MonoBehaviour
         lineRenderer.sortingOrder = defaultSortingOrder;
         lineRenderer.useWorldSpace = true;
         lineRenderer.numCapVertices = defaultCapVertices;
+        lineRenderer.numCornerVertices = defaultCornerVertices;  // ✅ 转角圆滑处理
         lineRenderer.alignment = LineAlignment.TransformZ;
     }
     
@@ -400,18 +358,23 @@ public class AimLineRenderer : MonoBehaviour
     /// <summary>
     /// 渲染碰撞指示器
     /// </summary>
-    /// <param name="pathPoints">路径点列表</param>
-    void RenderCollisionIndicators(List<Vector3> pathPoints)
+    /// <param name="collisionPoints">碰撞点列表</param>
+    void RenderCollisionIndicatorsFromList(List<Vector3> collisionPoints)
     {
-        if (pathPoints == null || pathPoints.Count <= 2)
+        if (collisionPoints == null || collisionPoints.Count == 0)
         {
-            return; // 只有起点和终点，没有碰撞点
+            return;
         }
         
-        // 除了起点和终点，其他点都是碰撞点
-        for (int i = 1; i < pathPoints.Count - 1; i++)
+        // 为每个碰撞点创建指示器
+        for (int i = 0; i < collisionPoints.Count; i++)
         {
-            CreateCollisionIndicator(pathPoints[i], i - 1);
+            CreateCollisionIndicator(collisionPoints[i], i);
+        }
+        
+        if (showDebugInfo)
+        {
+            Debug.Log($"AimLineRenderer: 渲染碰撞指示器 - 数量: {collisionPoints.Count}");
         }
     }
     
@@ -471,31 +434,6 @@ public class AimLineRenderer : MonoBehaviour
         
         return Sprite.Create(texture, new Rect(0, 0, 32, 32), new Vector2(0.5f, 0.5f));
     }
-    
-    /// <summary>
-    /// 计算端点回退距离
-    /// </summary>
-    float CalculateBackoff(Vector3 point1, Vector3 point2, Vector3 point3, float lineWidth)
-    {
-        // 计算两条线段的方向向量
-        Vector3 dir1 = (point2 - point1).normalized;
-        Vector3 dir2 = (point3 - point2).normalized;
-        
-        // 计算夹角（弧度）
-        float angle = Vector3.Angle(dir1, dir2) * Mathf.Deg2Rad;
-        
-        // 避免除零错误
-        if (angle < MIN_ANGLE_THRESHOLD)
-        {
-            return 0f;
-        }
-        
-        // 使用公式：backoff = 0.5 * width / tan(angle/2)
-        float backoff = BACKOFF_MULTIPLIER * lineWidth / Mathf.Tan(angle * BACKOFF_MULTIPLIER);
-        
-        return backoff;
-    }
-    
     /// <summary>
     /// 设置材质控制器引用
     /// </summary>

@@ -52,7 +52,10 @@ public class BallPhysics : MonoBehaviour
         }
     }
     
-    void InitializePhysics()
+    /// <summary>
+    /// 初始化物理组件（公共方法，供影子场景手动调用）
+    /// </summary>
+    public void InitializePhysics()
     {
         if (ballData == null)
         {
