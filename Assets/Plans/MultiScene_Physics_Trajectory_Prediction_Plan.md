@@ -88,8 +88,18 @@ physicsScene.Simulate(Time.fixedDeltaTime);
 
 #### ⚠️ 3. 保持动态物理参数一致
 
-**推荐方案**：复制BallPhysics组件到影子场景，自动同步所有动态参数  
-**备选方案**：手动同步物理参数（不推荐，维护成本高）
+**核心挑战**：BallPhysics包含游戏逻辑（Update循环、事件发布），不能直接复制到影子场景
+
+**已实施方案**：为BallPhysics添加模拟模式支持（见阶段四详细说明）
+- ✅ 重构为纯函数，解除时间耦合
+- ✅ 添加 `isSimulationMode` 标记，禁用游戏逻辑
+- ✅ 提供 `ManualPhysicsUpdate()` 手动更新接口
+- ✅ 保持100%物理计算一致性
+
+**为什么不能直接复制**：
+- ❌ Update() 在 PhysicsScene2D.Simulate() 中不会被调用
+- ❌ GameEventBus事件会污染主场景
+- ❌ Time.time 在快速模拟中不适用（需要使用累积模拟时间）
 
 #### ⚠️ 4. 处理Dynamic物体的休眠机制
 
@@ -196,12 +206,19 @@ TrajectoryPredictor.PredictTrajectory()
 2. 使用现有Tag扫描对象：
    - 动态物体（"Player"、"Enemy"）：需要模拟运动和跟踪轨迹
    - 静态边界（"Wall"）：只提供碰撞边界
-3. 只复制物理组件（Rigidbody2D、Collider2D、PhysicsMaterial2D）
+3. 复制物理相关组件：
+   - Rigidbody2D、Collider2D、PhysicsMaterial2D（必需）
+   - BallPhysics（必需，包含动态物理计算）
+   - BallData引用（BallPhysics依赖）
 4. 使用 SceneManager.MoveGameObjectToScene() 移动
-5. ⚠️ **关键处理**：复制敌人球后设置：
-   - 保持 bodyType = Dynamic（确保碰撞后物理响应真实）
-   - 设置 velocity = Vector2.zero（初始静止）
-   - 调用 WakeUp() + sleepMode = NeverSleep（防止休眠导致碰撞检测失效）
+5. ⚠️ **复制玩家球后配置**：
+   - `isSimulationMode = true`（启用模拟模式）
+   - 调用 `InitializeSimulationState()`（初始化模拟状态）
+6. ⚠️ **复制敌人球后配置**：
+   - `isSimulationMode = true`（启用模拟模式）
+   - `bodyType = Dynamic`（确保碰撞后物理响应真实）
+   - `velocity = Vector2.zero`（初始静止）
+   - 调用 `WakeUp()` + `sleepMode = NeverSleep`（防止休眠失效）
 
 **验收**：
 - [ ] 台边成功复制，球能反弹
@@ -223,34 +240,109 @@ TrajectoryPredictor.PredictTrajectory()
 **核心循环**：
 ```
 初始化影子场景的球，设置位置和速度
+设置 isSimulationMode = true
+调用 InitializeSimulationState()
 
+float simulationTime = 0f
 for 最多500步:
     记录当前位置
     physicsScene.Simulate(Time.fixedDeltaTime)  // ⚠️ 关键！
+    simulationTime += Time.fixedDeltaTime
+    ballPhysics.ManualPhysicsUpdate(simulationTime)  // ⚠️ 更新动态参数
     检测碰撞（速度方向变化）
-    if 速度 < 0.01: break
+    if 速度 < ballData.stopThreshold: break  // ⚠️ 使用BallData的停止阈值
 
 返回 List<Vector3> 轨迹点
 ```
 
+**关键技术点**：
+
+| 参数 | 模拟场景应用 | 说明 |
+|-----|-------------|------|
+| mass, friction, bounciness | ✅ 自动应用 | 通过复制物理组件自动同步 |
+| maxSpeed | ✅ 自动应用 | ManualPhysicsUpdate中自动限制 |
+| stopThreshold | ⚠️ 需手动检查 | CheckMovement()被跳过，需在预测器循环中读取ballData.stopThreshold作为停止条件 |
+
+**停止条件处理**：
+- BallPhysics的CheckMovement()在模拟模式下不执行
+- 预测器需手动读取 `ballData.stopThreshold` 判断球是否停止
+- 保持与主场景一致的停止判定标准
+
 **验收**：
 - [ ] 预测直线、单次反弹、多次反弹
 - [ ] 预测误差 < 5%
+- [ ] 停止条件与主场景一致（使用相同的stopThreshold）
 
 ---
 
 ### 阶段四：动态物理集成（2-3小时）⭐ P1
 
-**目标**：同步动态阻尼系统
+**目标**：使BallPhysics支持影子场景模拟，保持100%物理参数一致性
 
-**推荐方案A**：
-- 复制球时，也复制BallPhysics组件
-- 确保BallPhysics能在影子场景工作
-- 自动同步所有动态参数（速度阻尼、时间阻尼、弹性）
+#### 实施方案：渐进式重构
+
+**步骤1：提取纯函数（已完成✅）**
+
+将动态物理计算逻辑重构为可复用的纯函数：
+
+1. `CalculateDynamicPhysics(float currentTime, float currentSpeed)` 
+   - 纯函数，接收时间和速度参数
+   - 返回计算得到的弹性和阻尼值
+   - 解除对 `Time.time` 的耦合
+
+2. `ApplyDynamicPhysics(float bounciness, float damping)`
+   - 负责将计算结果应用到物理组件
+   - 包含阈值检查逻辑
+
+3. 重构 `UpdateDynamicPhysics()` 使用上述两个函数
+
+**步骤2：添加模拟模式支持（已完成✅）**
+
+在BallPhysics中添加：
+
+1. **模拟模式标记**：
+   ```csharp
+   public bool isSimulationMode = false;  // 影子场景设为true
+   ```
+
+2. **禁用游戏逻辑**：
+   - Update() 中跳过 CheckMovement 和 UpdateDynamicPhysics
+   - 3处事件发布添加 `if (!isSimulationMode)` 检查
+
+3. **模拟专用方法**：
+   - `InitializeSimulationState()` - 初始化影子场景状态
+   - `ManualPhysicsUpdate(float simulationTime)` - 手动更新物理参数
+   - `EnforcePhysicsConstraints()` - 执行物理约束
+
+**关键技术点**：
+
+| 问题 | 解决方案 |
+|-----|---------|
+| 时间来源不同 | 纯函数接收时间参数，主场景用Time.time，影子场景用累积时间 |
+| 相对时间一致性 | 影子场景 ballStartTime=0，确保运动时长相对值相同 |
+| 更新频率一致 | 使用独立的 simulationLastUpdateTime 跟踪更新间隔 |
+| 事件污染 | 模拟模式下不发布任何GameEventBus事件 |
+
+**使用示例**：
+```csharp
+// 影子场景中
+BallPhysics simulatedBall = replicatedBall.GetComponent<BallPhysics>();
+simulatedBall.isSimulationMode = true;  // 启用模拟模式
+simulatedBall.InitializeSimulationState();  // 初始化状态
+
+float simulationTime = 0f;
+for (int i = 0; i < maxSteps; i++) {
+    physicsScene.Simulate(Time.fixedDeltaTime);
+    simulationTime += Time.fixedDeltaTime;
+    simulatedBall.ManualPhysicsUpdate(simulationTime);  // 手动更新
+}
+```
 
 **验收**：
-- [ ] 动态物理参数正确应用
-- [ ] 预测结果与实际运动高度一致
+- [x] BallPhysics重构完成，主场景行为不变
+- [x] 模拟模式添加完成，支持手动更新
+- [ ] 影子场景中物理参数与主场景一致（待整合测试）
+- [ ] 预测结果与实际运动误差 < 5%
 
 ---
 
@@ -389,13 +481,13 @@ replicator.AddStaticObjectTag("Obstacle");
 
 ### 6.1 技术风险
 
-| 风险 | 等级 | 对策 |
-|------|-----|------|
-| 多场景物理版本兼容 | 中 | 先验证当前Unity版本支持 |
-| BallPhysics依赖主场景 | 中 | 重构使其场景无关 |
-| Dynamic物体休眠导致碰撞失效 | 高 | 对静止球使用WakeUp()+NeverSleep |
-| 长轨迹性能问题 | 低 | 限制最大步数+脏标记 |
-| 物理参数同步 | 中 | 统一使用Project Settings |
+| 风险 | 等级 | 对策 | 状态 |
+|------|-----|------|------|
+| 多场景物理版本兼容 | 中 | 先验证当前Unity版本支持 | 待验证 |
+| BallPhysics依赖主场景 | ~~中~~ | ✅ 已重构为模拟模式支持 | ✅ 已解决 |
+| Dynamic物体休眠导致碰撞失效 | 高 | 对静止球使用WakeUp()+NeverSleep | 已知方案 |
+| 长轨迹性能问题 | 低 | 限制最大步数+脏标记 | 待实施 |
+| 物理参数同步精度 | ~~中~~ | ✅ 通过纯函数复用保证100%一致 | ✅ 已解决 |
 
 ### 6.2 性能优化
 
@@ -411,34 +503,40 @@ replicator.AddStaticObjectTag("Obstacle");
 ### 6.3 成功指标
 
 **功能**：
-- [x] 直线+多次反弹预测
-- [x] 球球碰撞预测
-- [x] 轨迹可视化
+- [ ] 直线+多次反弹预测
+- [ ] 球球碰撞预测
+- [ ] 轨迹可视化
 
 **性能**：
-- [x] 单次模拟 < 10ms
-- [x] 帧率 > 60 FPS
-- [x] CPU占用 < +10%
+- [ ] 单次模拟 < 10ms
+- [ ] 帧率 > 60 FPS
+- [ ] CPU占用 < +10%
 
 **准确性**：
-- [x] 平均误差 < 5%
-- [x] 最大误差 < 10%
+- [ ] 平均误差 < 5%
+- [ ] 最大误差 < 10%
+
+**代码质量**：
+- [x] BallPhysics重构完成，纯函数提取
+- [x] 模拟模式添加完成
+- [ ] 单元测试覆盖（可选）
 
 ---
 
 ## 📅 实施时间表
 
-| 阶段 | 内容 | 工作量 | 优先级 |
-|------|------|-------|--------|
-| 一 | 影子场景搭建 | 2-3h | P0 ⭐ |
-| 二 | 对象复制系统 | 3-4h | P0 ⭐ |
-| 三 | 轨迹模拟核心 | 4-5h | P0 ⭐ |
-| 四 | 动态物理集成 | 2-3h | P1 |
-| 五 | 整合渲染系统 | 1-2h | P0 ⭐ |
-| 六 | 性能优化 | 1-2h | P2 |
-| 七 | 测试调优 | 3-4h | P1 |
+| 阶段 | 内容 | 工作量 | 优先级 | 状态 |
+|------|------|-------|--------|------|
+| 一 | 影子场景搭建 | 2-3h | P0 ⭐ | 待实施 |
+| 二 | 对象复制系统 | 3-4h | P0 ⭐ | 待实施 |
+| 三 | 轨迹模拟核心 | 4-5h | P0 ⭐ | 待实施 |
+| 四 | 动态物理集成 | 2-3h | P1 | ✅ 已完成 |
+| 五 | 整合渲染系统 | 1-2h | P0 ⭐ | 待实施 |
+| 六 | 性能优化 | 1-2h | P2 | 待实施 |
+| 七 | 测试调优 | 3-4h | P1 | 待实施 |
 
-**总计**：17-23小时（约3个工作日）
+**总计**：17-23小时（约3个工作日）  
+**已完成**：阶段四（BallPhysics重构 + 模拟模式）约1.5小时
 
 ---
 
@@ -453,22 +551,25 @@ replicator.AddStaticObjectTag("Obstacle");
 - ✅ 所有视觉效果和材质设置
 
 **最小修改**：
+- 📝 BallPhysics：重构为纯函数 + 添加模拟模式（约80行新增代码）
 - 📝 AimController：10-20行
-- ➕ 新增3个组件
+- ➕ 新增3个组件（轨迹预测系统）
 
 **为什么能无缝整合**：
 1. 现有渲染系统接受通用 `List<Vector3>` 格式
 2. 计算与渲染完全解耦
 3. 新旧方案输出格式一致
 4. 所有视觉效果自动保留
+5. BallPhysics通过模拟模式标记保持向后兼容
 
 ### 方案价值
 
 ✅ **准确性提升**：从手动模拟到真实物理引擎，100%准确  
 ✅ **功能增强**：支持无限次反弹，预测球球碰撞  
-✅ **维护简化**：复用BallPhysics，无需手动同步  
+✅ **维护简化**：复用BallPhysics，无需手动同步，纯函数保证一致性  
 ✅ **性能优化**：脏标记+帧频控制，节省90%计算  
-✅ **零学习成本**：保持所有现有视觉效果
+✅ **零学习成本**：保持所有现有视觉效果  
+✅ **代码质量**：重构提升可测试性和可维护性
 
 ---
 

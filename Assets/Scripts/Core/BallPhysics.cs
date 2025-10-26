@@ -5,6 +5,10 @@ public class BallPhysics : MonoBehaviour
     [Header("物理数据")]
     public BallData ballData;
     
+    [Header("模拟设置")]
+    [Tooltip("是否为影子场景模拟模式（禁用Update和事件发布）")]
+    public bool isSimulationMode = false;
+    
     private Rigidbody2D rb;
     private CircleCollider2D ballCollider;
     private PhysicsMaterial2D material;
@@ -19,6 +23,9 @@ public class BallPhysics : MonoBehaviour
     private float ballStartTime = 0f;
     private bool isMoving = false;
     
+    // 模拟模式专用时间追踪
+    private float simulationLastUpdateTime = 0f;
+    
     // 反弹方向检测
     private Vector2 lastReflectionDirection = Vector2.zero;
     
@@ -31,7 +38,14 @@ public class BallPhysics : MonoBehaviour
     
     void Update()
     {
-        if (isInitialized)
+        // 物理相关逻辑已移至FixedUpdate，与物理引擎同步
+    }
+    
+    void FixedUpdate()
+    {
+        // 模拟模式下不执行（由手动调用控制）
+        // 所有物理相关逻辑在FixedUpdate中执行，与物理引擎完全同步
+        if (isInitialized && !isSimulationMode)
         {
             CheckMovement();
             UpdateDynamicPhysics();
@@ -118,10 +132,13 @@ public class BallPhysics : MonoBehaviour
             if (!isMoving)
             {
                 isMoving = true;
-                ballStartTime = Time.time;
+                ballStartTime = Time.fixedTime;
                 Debug.Log($"BallPhysics: 球开始运动，记录时间 {ballStartTime:F2}");
-                // 发布到GameEventBus
-                GameEventBus.PublishBallStarted(this);
+                // 发布到GameEventBus（模拟模式下不发布）
+                if (!isSimulationMode)
+                {
+                    GameEventBus.PublishBallStarted(this);
+                }
             }
         }
         else
@@ -130,11 +147,14 @@ public class BallPhysics : MonoBehaviour
             if (isMoving)
             {
                 isMoving = false;
-                float movementDuration = Time.time - ballStartTime;
+                float movementDuration = Time.fixedTime - ballStartTime;
                 Debug.Log($"BallPhysics: 球停止运动，运动时长 {movementDuration:F2} 秒");
                 
-                // 发布球停止事件（只在状态变化时发布一次）
-                GameEventBus.PublishBallStopped(this);
+                // 发布球停止事件（模拟模式下不发布）
+                if (!isSimulationMode)
+                {
+                    GameEventBus.PublishBallStopped(this);
+                }
             }
             
             // 如果速度低于停止阈值，强制停止
@@ -222,7 +242,7 @@ public class BallPhysics : MonoBehaviour
     void UpdateDynamicPhysics()
     {
         // 检查更新间隔
-        if (Time.time - lastUpdateTime < ballData.updateInterval)
+        if (Time.fixedTime - lastUpdateTime < ballData.updateInterval)
         {
             return;
         }
@@ -230,13 +250,13 @@ public class BallPhysics : MonoBehaviour
         float currentSpeed = rb.linearVelocity.magnitude;
         
         // 计算动态物理参数
-        var (targetBounciness, targetDamping) = CalculateDynamicPhysics(Time.time, currentSpeed);
+        var (targetBounciness, targetDamping) = CalculateDynamicPhysics(Time.fixedTime, currentSpeed);
         
         // 应用参数到物理组件
         ApplyDynamicPhysics(targetBounciness, targetDamping);
         
         // 更新缓存时间
-        lastUpdateTime = Time.time;
+        lastUpdateTime = Time.fixedTime;
     }
     
     void OnCollisionEnter2D(Collision2D collision)
@@ -244,9 +264,11 @@ public class BallPhysics : MonoBehaviour
         BallPhysics otherBall = collision.gameObject.GetComponent<BallPhysics>();
         if (otherBall != null)
         {
-            // 触发球体碰撞事件
-            // 发布到GameEventBus
-            GameEventBus.PublishBallCollision(this, otherBall);
+            // 触发球体碰撞事件（模拟模式下不发布）
+            if (!isSimulationMode)
+            {
+                GameEventBus.PublishBallCollision(this, otherBall);
+            }
         }
         
         // 处理墙面碰撞的角度修正
@@ -324,7 +346,7 @@ public class BallPhysics : MonoBehaviour
         // 重置动态参数缓存，避免动态系统干扰
         lastBounciness = ballData.bounceDamping;
         lastDamping = ballData.linearDamping;
-        lastUpdateTime = Time.time;
+        lastUpdateTime = Time.fixedTime;
         
         // 重置时间阻尼状态
         isMoving = false;
@@ -377,5 +399,87 @@ public class BallPhysics : MonoBehaviour
         }
         return 0.5f; // 默认值
     }
+    
+    #region 模拟模式专用方法
+    
+    /// <summary>
+    /// 初始化模拟状态（用于影子场景）
+    /// 设置初始状态，使物理参数计算从0开始
+    /// </summary>
+    public void InitializeSimulationState()
+    {
+        if (!isSimulationMode)
+        {
+            Debug.LogWarning("InitializeSimulationState 应该在 isSimulationMode = true 时调用");
+        }
+        
+        // 重置时间追踪
+        ballStartTime = 0f;
+        simulationLastUpdateTime = 0f;
+        
+        // 设置为运动状态（因为即将开始模拟）
+        isMoving = true;
+        
+        // 重置动态参数缓存
+        lastBounciness = ballData.bounceDamping;
+        lastDamping = ballData.linearDamping;
+        
+        Debug.Log($"BallPhysics: 初始化模拟状态完成");
+    }
+    
+    /// <summary>
+    /// 手动更新物理参数（用于影子场景模拟）
+    /// 保持与主场景相同的更新频率和计算逻辑
+    /// </summary>
+    /// <param name="simulationTime">当前累积的模拟时间（秒）</param>
+    public void ManualPhysicsUpdate(float simulationTime)
+    {
+        if (!isInitialized) return;
+        
+        // 检查更新间隔（与主场景保持一致）
+        if (simulationTime - simulationLastUpdateTime < ballData.updateInterval)
+        {
+            // 即使不更新参数，也要执行物理约束
+            EnforcePhysicsConstraints();
+            return;
+        }
+        
+        float currentSpeed = rb.linearVelocity.magnitude;
+        
+        // 使用相同的计算逻辑（复用纯函数）
+        var (targetBounciness, targetDamping) = CalculateDynamicPhysics(simulationTime, currentSpeed);
+        
+        // 应用参数到物理组件
+        ApplyDynamicPhysics(targetBounciness, targetDamping);
+        
+        // 更新模拟时间戳
+        simulationLastUpdateTime = simulationTime;
+        
+        // 执行物理约束
+        EnforcePhysicsConstraints();
+    }
+    
+    /// <summary>
+    /// 执行物理约束（速度限制、禁止旋转）
+    /// </summary>
+    private void EnforcePhysicsConstraints()
+    {
+        if (rb == null) return;
+        
+        // 限制最大速度
+        float currentSpeed = rb.linearVelocity.magnitude;
+        if (currentSpeed > ballData.maxSpeed)
+        {
+            rb.linearVelocity = rb.linearVelocity.normalized * ballData.maxSpeed;
+        }
+        
+        // 确保球不会旋转
+        if (rb.angularVelocity != 0f)
+        {
+            rb.angularVelocity = 0f;
+        }
+    }
+    
+    #endregion
 }
 
