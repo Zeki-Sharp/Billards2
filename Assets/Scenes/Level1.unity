@@ -490,6 +490,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 1787785598}
     m_Modifications:
+    - target: {fileID: 2050217528864470944, guid: e719b1822f259c14cb3dd6f62d9c465d, type: 3}
+      propertyPath: minDisplayDistance
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 3357877017394172215, guid: e719b1822f259c14cb3dd6f62d9c465d, type: 3}
       propertyPath: playerCore
       value: 

@@ -490,10 +490,6 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 1787785598}
     m_Modifications:
-    - target: {fileID: 2050217528864470944, guid: e719b1822f259c14cb3dd6f62d9c465d, type: 3}
-      propertyPath: showDebugInfo
-      value: 0
-      objectReference: {fileID: 0}
     - target: {fileID: 3357877017394172215, guid: e719b1822f259c14cb3dd6f62d9c465d, type: 3}
       propertyPath: playerCore
       value: 
@@ -502,33 +498,9 @@ PrefabInstance:
       propertyPath: targetCamera
       value: 
       objectReference: {fileID: 859979524}
-    - target: {fileID: 3357877017394172215, guid: e719b1822f259c14cb3dd6f62d9c465d, type: 3}
-      propertyPath: showDebugInfo
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 3357877017394172215, guid: e719b1822f259c14cb3dd6f62d9c465d, type: 3}
-      propertyPath: maxDisplayDistance
-      value: 10
-      objectReference: {fileID: 0}
-    - target: {fileID: 3357877017394172215, guid: e719b1822f259c14cb3dd6f62d9c465d, type: 3}
-      propertyPath: trajectoryPredictor
-      value: 
-      objectReference: {fileID: 1131972189}
-    - target: {fileID: 3357877017394172215, guid: e719b1822f259c14cb3dd6f62d9c465d, type: 3}
-      propertyPath: maxDisplayCollisions
-      value: 1
-      objectReference: {fileID: 0}
     - target: {fileID: 5125386412533849888, guid: e719b1822f259c14cb3dd6f62d9c465d, type: 3}
       propertyPath: m_Name
       value: Launcher
-      objectReference: {fileID: 0}
-    - target: {fileID: 5125386412533849888, guid: e719b1822f259c14cb3dd6f62d9c465d, type: 3}
-      propertyPath: m_Layer
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5125386412533849888, guid: e719b1822f259c14cb3dd6f62d9c465d, type: 3}
-      propertyPath: m_TagString
-      value: Untagged
       objectReference: {fileID: 0}
     - target: {fileID: 5181106650949996532, guid: e719b1822f259c14cb3dd6f62d9c465d, type: 3}
       propertyPath: m_LocalPosition.x
@@ -570,27 +542,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 8175702448868890031, guid: e719b1822f259c14cb3dd6f62d9c465d, type: 3}
-      propertyPath: enableDistanceOffset
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 8943938372370279972, guid: e719b1822f259c14cb3dd6f62d9c465d, type: 3}
-      propertyPath: indicatorSize
-      value: 0.8
-      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents:
-    - targetCorrespondingSourceObject: {fileID: 5125386412533849888, guid: e719b1822f259c14cb3dd6f62d9c465d, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 1131972187}
-    - targetCorrespondingSourceObject: {fileID: 5125386412533849888, guid: e719b1822f259c14cb3dd6f62d9c465d, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 1131972188}
-    - targetCorrespondingSourceObject: {fileID: 5125386412533849888, guid: e719b1822f259c14cb3dd6f62d9c465d, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 1131972189}
+    m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: e719b1822f259c14cb3dd6f62d9c465d, type: 3}
 --- !u!1 &369649106
 GameObject:
@@ -8363,65 +8318,6 @@ MonoBehaviour:
   enableDropPositionOffset: 1
   dropOffsetRange: 0.5
   offsetMode: 0
---- !u!1 &1131972180 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 5125386412533849888, guid: e719b1822f259c14cb3dd6f62d9c465d, type: 3}
-  m_PrefabInstance: {fileID: 348694347}
-  m_PrefabAsset: {fileID: 0}
---- !u!114 &1131972187
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1131972180}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 72f4b418bbeee8b4fbf2825ec40fc4ee, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  simulationSceneName: TrajectorySimulationScene
-  createOnAwake: 1
-  showDebugLog: 1
---- !u!114 &1131972188
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1131972180}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7c83bee196abec0458a32cd488a34d2b, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  dynamicObjectTags:
-  - Player
-  - Enemy
-  staticObjectTags:
-  - Wall
-  replicateBallPhysics: 1
-  replicatePhysicsMaterial: 1
-  showDebugLog: 1
---- !u!114 &1131972189
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1131972180}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a7dfb21a214388441a57e58e0f78bf6f, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  maxSimulationSteps: 500
-  sampleDistance: 0.02
-  maxTrajectoryPoints: 1000
-  simulationManager: {fileID: 1131972187}
-  objectReplicator: {fileID: 1131972188}
-  showDebugLog: 1
-  showStepLog: 1
 --- !u!1 &1183834682 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 2481185359877173278, guid: 2d86053af5e50c446a06f75cbdecb65b, type: 3}

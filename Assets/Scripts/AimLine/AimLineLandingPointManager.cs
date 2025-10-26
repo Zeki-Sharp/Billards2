@@ -35,12 +35,6 @@ public class AimLineLandingPointManager : MonoBehaviour
     [Tooltip("是否显示落点")]
     public bool showLandingPoint = true;
     
-    [Tooltip("最小显示距离（小于此距离不显示落点）")]
-    public float minDisplayDistance = 0.5f;
-    
-    [Tooltip("最大显示距离（超过此距离不显示落点）")]
-    public float maxDisplayDistance = 10f;
-    
     [Header("攻击范围圆形设置")]
     [Tooltip("是否显示攻击范围圆形")]
     public bool showAttackRangeCircle = true;
@@ -145,14 +139,6 @@ public class AimLineLandingPointManager : MonoBehaviour
     {
         if (!showLandingPoint)
         {
-            return;
-        }
-        
-        // 检查距离范围
-        float distance = Vector3.Distance(position, transform.position);
-        if (distance < minDisplayDistance || distance > maxDisplayDistance)
-        {
-            HideLandingPoint();
             return;
         }
         
@@ -356,24 +342,6 @@ public class AimLineLandingPointManager : MonoBehaviour
     public void SetLandingPointColor(Color color)
     {
         landingPointColor = color;
-    }
-    
-    /// <summary>
-    /// 设置最小显示距离
-    /// </summary>
-    /// <param name="distance">最小距离</param>
-    public void SetMinDisplayDistance(float distance)
-    {
-        minDisplayDistance = Mathf.Max(0f, distance);
-    }
-    
-    /// <summary>
-    /// 设置最大显示距离
-    /// </summary>
-    /// <param name="distance">最大距离</param>
-    public void SetMaxDisplayDistance(float distance)
-    {
-        maxDisplayDistance = Mathf.Max(minDisplayDistance, distance);
     }
     
     /// <summary>
