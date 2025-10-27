@@ -51,38 +51,9 @@ public class GameManager : MonoBehaviour
         Physics2D.gravity = Vector2.zero;
         Debug.Log($"GameManager: 构建版本重力设置确认 - {Physics2D.gravity}");
         
-        // 订阅事件
-        SubscribeToEvents();
-        
         // 游戏初始化由GameInitializer负责
         // 这里只做基本的游戏状态初始化
         InitializeGameState();
-    }
-    
-    void OnDestroy()
-    {
-        // 取消订阅事件
-        UnsubscribeFromEvents();
-    }
-    
-    /// <summary>
-    /// 订阅事件
-    /// </summary>
-    void SubscribeToEvents()
-    {
-        GameEventBus.OnSkillSelectionStarted += HandleSkillSelectionStarted;
-        GameEventBus.OnSkillSelectionCompleted += HandleSkillSelectionCompleted;
-        GameEventBus.OnGameCompleted += HandleGameCompleted;
-    }
-    
-    /// <summary>
-    /// 取消订阅事件
-    /// </summary>
-    void UnsubscribeFromEvents()
-    {
-        GameEventBus.OnSkillSelectionStarted -= HandleSkillSelectionStarted;
-        GameEventBus.OnSkillSelectionCompleted -= HandleSkillSelectionCompleted;
-        GameEventBus.OnGameCompleted -= HandleGameCompleted;
     }
     
     void Update()
@@ -179,73 +150,6 @@ public class GameManager : MonoBehaviour
     
     #endregion
     
-    #region 游戏数据管理
-    
-    public void AddScore(int points)
-    {
-        if (isGameOver) return;
-        
-        score += points;
-        GameEventBus.PublishScoreChanged(score);
-        
-        if (showDebugInfo)
-        {
-            Debug.Log($"GameManager: 获得分数 {points}, 总分: {score}");
-        }
-    }
-    
-    /// <summary>
-    /// 受到伤害 - 委托给PlayerCore处理
-    /// </summary>
-    public void TakeDamage(int damage)
-    {
-        if (isGameOver) return;
-        
-        PlayerCore playerCore = FindFirstObjectByType<PlayerCore>();
-        if (playerCore != null)
-        {
-            playerCore.TakeDamage(damage);
-        }
-        
-        if (showDebugInfo)
-        {
-            Debug.Log($"GameManager: 委托PlayerCore处理伤害 {damage}");
-        }
-    }
-    
-    /// <summary>
-    /// 恢复生命 - 委托给PlayerCore处理
-    /// </summary>
-    public void Heal(int healAmount)
-    {
-        if (isGameOver) return;
-        
-        PlayerCore playerCore = FindFirstObjectByType<PlayerCore>();
-        if (playerCore != null)
-        {
-            playerCore.Heal(healAmount);
-        }
-        
-        if (showDebugInfo)
-        {
-            Debug.Log($"GameManager: 委托PlayerCore处理恢复 {healAmount}");
-        }
-    }
-    
-    public void NextWave()
-    {
-        if (isGameOver) return;
-        
-        currentWave++;
-        GameEventBus.PublishWaveChanged(currentWave);
-        
-        if (showDebugInfo)
-        {
-            Debug.Log($"GameManager: 进入下一波次 {currentWave}");
-        }
-    }
-    
-    #endregion
     
     #region 游戏控制
     
@@ -365,67 +269,6 @@ public class GameManager : MonoBehaviour
         }
     }
     
-    public void RestartGame()
-    {
-        // 重置游戏状态
-        isGameOver = false;
-        isGamePaused = false;
-        isGameActive = true;
-        Time.timeScale = 1f;
-        
-        // 重新初始化游戏数据
-        InitializeGameState();
-        
-        if (showDebugInfo)
-        {
-            Debug.Log("GameManager: 游戏重启");
-        }
-    }
-    
-    #endregion
-    
-    #region 事件处理
-    
-    /// <summary>
-    /// 处理技能选择开始事件
-    /// </summary>
-    void HandleSkillSelectionStarted(System.Collections.Generic.List<SkillConfig> skills)
-    {
-        PauseGame();
-        
-        if (showDebugInfo)
-        {
-            Debug.Log("GameManager: 技能选择开始，游戏已暂停");
-        }
-    }
-    
-    /// <summary>
-    /// 处理技能选择完成事件
-    /// </summary>
-    void HandleSkillSelectionCompleted()
-    {
-        ResumeGame();
-        
-        if (showDebugInfo)
-        {
-            Debug.Log("GameManager: 技能选择完成，游戏已恢复");
-        }
-    }
-    
-    /// <summary>
-    /// 处理游戏完成事件（所有关卡完成）
-    /// </summary>
-    void HandleGameCompleted()
-    {
-        // 暂停游戏（显示胜利界面时需要）
-        PauseGame();
-        
-        if (showDebugInfo)
-        {
-            Debug.Log("GameManager: 游戏完成，游戏已暂停");
-        }
-    }
-    
     #endregion
     
     #region 公共属性
@@ -433,9 +276,6 @@ public class GameManager : MonoBehaviour
     public bool IsGameActive => isGameActive;
     public bool IsGamePaused => isGamePaused;
     public bool IsGameOver => isGameOver;
-    public int Score => score;
-    public int CurrentWave => currentWave;
-    public int MaxWaves => maxWaves;
     
     #endregion
 }

@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.EventSystems;
 
 /// <summary>
 /// 玩家输入处理器 - 统一处理所有玩家输入检测和分发
@@ -166,6 +167,16 @@ public class PlayerInputHandler : MonoBehaviour
         // 处理蓄力输入（只在Normal子阶段允许）
         if (isChargePressed && permissionManager.CanChargeInCurrentSubPhase())
         {
+            // 检查鼠标是否在UI上（关键！）
+            if (IsPointerOverUI())
+            {
+                if (showDebugInfo)
+                {
+                    Debug.Log("PlayerInputHandler: 鼠标在UI上，忽略蓄力输入");
+                }
+                return; // 在UI上点击，不开始蓄力
+            }
+            
             if (showDebugInfo)
             {
                 Debug.Log("PlayerInputHandler: 检测到蓄力输入，发布蓄力开始事件");
@@ -187,6 +198,25 @@ public class PlayerInputHandler : MonoBehaviour
         }
     }
     
+    
+    #endregion
+    
+    #region UI检测
+    
+    /// <summary>
+    /// 检测鼠标是否在UI上
+    /// </summary>
+    bool IsPointerOverUI()
+    {
+        // 检查EventSystem是否存在
+        if (EventSystem.current == null)
+        {
+            return false;
+        }
+        
+        // PC端：检测鼠标是否在UI上
+        return EventSystem.current.IsPointerOverGameObject();
+    }
     
     #endregion
     

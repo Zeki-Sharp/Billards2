@@ -237,6 +237,17 @@ public class UIController : MonoBehaviour
         // 显示面板
         panel.OnShow(data);
         
+        // 根据配置暂停游戏
+        if (panel.PauseGameOnShow && GameManager.Instance != null)
+        {
+            GameManager.Instance.PauseGame();
+            
+            if (showDebugInfo)
+            {
+                Debug.Log($"UIController: 面板 {panel.GetType().Name} 需要暂停游戏");
+            }
+        }
+        
         if (showDebugInfo)
         {
             Debug.Log($"UIController: 显示面板 - {panel.GetType().Name}");
@@ -254,6 +265,17 @@ public class UIController : MonoBehaviour
         
         // 隐藏面板
         panel.OnHide();
+        
+        // 根据配置恢复游戏
+        if (panel.PauseGameOnShow && GameManager.Instance != null)
+        {
+            GameManager.Instance.ResumeGame();
+            
+            if (showDebugInfo)
+            {
+                Debug.Log($"UIController: 面板 {panel.GetType().Name} 隐藏，恢复游戏");
+            }
+        }
         
         // 更新当前面板追踪
         if (currentPopupPanel == panel)

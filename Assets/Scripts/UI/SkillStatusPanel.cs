@@ -38,7 +38,7 @@ public class SkillStatusPanel : BasePanel
         
         // 设置面板类型
         panelType = UIPanelType.Popup;
-        pauseGameOnShow = false; // 不暂停游戏，允许查看技能
+        pauseGameOnShow = true; // 暂停游戏，方便查看技能
         
         // 设置关闭按钮事件
         if (closeButton != null)
