@@ -24,7 +24,7 @@ public class UIController : MonoBehaviour
     public static UIController Instance { get; private set; }
     
     [Header("预放置面板")]
-    [SerializeField] private GameUIPanel gameUIPanel;
+    [SerializeField] private TopBarController topBarController;
     [SerializeField] private SkillSelectionUI skillSelectionUI;
     
     [Header("Canvas容器")]
@@ -138,10 +138,10 @@ public class UIController : MonoBehaviour
     /// </summary>
     void InitializePreloadedPanels()
     {
-        // 查找GameUIPanel
-        if (gameUIPanel == null)
+        // 查找TopBar
+        if (topBarController == null)
         {
-            gameUIPanel = FindFirstObjectByType<GameUIPanel>();
+            topBarController = FindFirstObjectByType<TopBarController>();
         }
         
         // 查找SkillSelectionUI
@@ -152,7 +152,7 @@ public class UIController : MonoBehaviour
         
         if (showDebugInfo)
         {
-            Debug.Log($"UIController: 预放置面板初始化 - GameUIPanel: {gameUIPanel != null}, SkillSelectionUI: {skillSelectionUI != null}");
+            Debug.Log($"UIController: 预放置面板初始化 - TopBar: {topBarController != null}, SkillSelectionUI: {skillSelectionUI != null}");
         }
     }
     
@@ -407,9 +407,9 @@ public class UIController : MonoBehaviour
     #region 公共属性
     
     /// <summary>
-    /// 获取GameUIPanel引用
+    /// 获取TopBar引用
     /// </summary>
-    public GameUIPanel GameUIPanel => gameUIPanel;
+    public TopBarController TopBar => topBarController;
     
     /// <summary>
     /// 获取SkillSelectionUI引用
