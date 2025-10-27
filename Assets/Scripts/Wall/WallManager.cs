@@ -280,6 +280,12 @@ public class WallManager : MonoBehaviour
     /// </summary>
     void RegisterEffects()
     {
+        if (EffectManager.Instance == null)
+        {
+            Debug.LogWarning("WallManager: EffectManager.Instance 为空，跳过特效注册");
+            return;
+        }
+        
         foreach (var effect in effects)
         {
             if (effect.IsValid())
@@ -294,7 +300,10 @@ public class WallManager : MonoBehaviour
     /// </summary>
     void UnregisterEffects()
     {
-        EffectManager.Instance.UnregisterEffect(gameObject);
+        if (EffectManager.Instance != null)
+        {
+            EffectManager.Instance.UnregisterEffect(gameObject);
+        }
     }
     
     #endregion

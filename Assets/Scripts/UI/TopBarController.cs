@@ -18,6 +18,9 @@ public class TopBarController : MonoBehaviour
     [SerializeField] private TextMeshProUGUI currentHealthText;
     [SerializeField] private TextMeshProUGUI totalHealthText;
     
+    [Header("技能按钮")]
+    [SerializeField] private UnityEngine.UI.Button skillButton;
+    
     [Header("显示控制")]
     [SerializeField] private CanvasGroup canvasGroup;
     
@@ -41,6 +44,9 @@ public class TopBarController : MonoBehaviour
         // 订阅事件
         SubscribeToEvents();
         
+        // 设置按钮事件
+        SetupButtonEvents();
+        
         if (showDebugInfo)
         {
             Debug.Log("TopBarController: 初始化完成，初始状态：隐藏");
@@ -50,6 +56,12 @@ public class TopBarController : MonoBehaviour
     void OnDestroy()
     {
         UnsubscribeFromEvents();
+        
+        // 移除按钮事件
+        if (skillButton != null)
+        {
+            skillButton.onClick.RemoveListener(OnSkillButtonClicked);
+        }
     }
     
     #region 事件订阅
@@ -155,6 +167,53 @@ public class TopBarController : MonoBehaviour
     
     #endregion
     
+    #region 按钮事件
+    
+    /// <summary>
+    /// 设置按钮事件
+    /// </summary>
+    void SetupButtonEvents()
+    {
+        if (skillButton != null)
+        {
+            skillButton.onClick.AddListener(OnSkillButtonClicked);
+            
+            if (showDebugInfo)
+            {
+                Debug.Log("TopBarController: 技能按钮事件已设置");
+            }
+        }
+        else
+        {
+            Debug.LogWarning("TopBarController: 技能按钮未配置！");
+        }
+    }
+    
+    /// <summary>
+    /// 技能按钮点击事件
+    /// </summary>
+    void OnSkillButtonClicked()
+    {
+        if (showDebugInfo)
+        {
+            Debug.Log("TopBarController: 技能按钮被点击");
+        }
+        
+        // 通过UIController显示技能状态面板
+        if (UIController.Instance != null)
+        {
+            // 暂时打印日志，稍后实现SkillStatusPanel
+            Debug.Log("TopBarController: 准备打开技能状态面板（待实现）");
+            // UIController.Instance.ShowPanel("SkillStatusPanel");
+        }
+        else
+        {
+            Debug.LogError("TopBarController: UIController.Instance 为空！");
+        }
+    }
+    
+    #endregion
+    
     #region 显示控制
     
     /// <summary>
@@ -221,7 +280,8 @@ public class TopBarController : MonoBehaviour
                  $"Canvas Group: {(canvasGroup != null ? "已配置" : "未配置")}\n" +
                  $"Health Bar Fill: {(healthBarFill != null ? "已配置" : "未配置")}\n" +
                  $"Current Health Text: {(currentHealthText != null ? "已配置" : "未配置")}\n" +
-                 $"Total Health Text: {(totalHealthText != null ? "已配置" : "未配置")}");
+                 $"Total Health Text: {(totalHealthText != null ? "已配置" : "未配置")}\n" +
+                 $"Skill Button: {(skillButton != null ? "已配置" : "未配置")}");
     }
     
     #endregion
