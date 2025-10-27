@@ -208,7 +208,8 @@ public class SkillConfig : ScriptableObject
     
 #if UNITY_EDITOR
     /// <summary>
-    /// 获取所有可用的技能标签
+    /// 获取所有可用的技能标签（编辑器专用）
+    /// 使用AssetDatabase查找项目中的角色数据
     /// </summary>
     private IEnumerable<string> GetAvailableTags()
     {
@@ -218,31 +219,39 @@ public class SkillConfig : ScriptableObject
         tags.Add("default");
         tags.Add("common");
         
-        // 尝试从 Resources 加载角色选择数据
-        var characterSelectionData = UnityEngine.Resources.Load<CharacterSelectionData>("Data/CharacterSelectionData");
-        if (characterSelectionData != null && characterSelectionData.availableCharacters != null)
+        // 使用AssetDatabase查找CharacterSelectionData
+        string[] characterDataGuids = UnityEditor.AssetDatabase.FindAssets("t:CharacterSelectionData");
+        if (characterDataGuids.Length > 0)
         {
-            // 添加所有角色名称
-            foreach (var character in characterSelectionData.availableCharacters)
+            // 找到第一个CharacterSelectionData
+            string path = UnityEditor.AssetDatabase.GUIDToAssetPath(characterDataGuids[0]);
+            var characterSelectionData = UnityEditor.AssetDatabase.LoadAssetAtPath<CharacterSelectionData>(path);
+            
+            if (characterSelectionData != null && characterSelectionData.availableCharacters != null)
             {
-                if (character != null && !string.IsNullOrEmpty(character.playerName))
+                // 添加所有角色名称
+                foreach (var character in characterSelectionData.availableCharacters)
                 {
-                    tags.Add(character.playerName);
+                    if (character != null && !string.IsNullOrEmpty(character.playerName))
+                    {
+                        tags.Add(character.playerName);
+                    }
                 }
             }
         }
-        else
+        
+        // 如果上面没找到角色，尝试查找所有PlayerData
+        if (tags.Count <= 2) // 只有default和common
         {
-            // 如果无法加载角色选择数据，尝试从 Resources/Data/Player 目录加载所有 PlayerData
-            var allPlayerData = UnityEngine.Resources.LoadAll<PlayerData>("Data/Player");
-            if (allPlayerData != null && allPlayerData.Length > 0)
+            string[] playerDataGuids = UnityEditor.AssetDatabase.FindAssets("t:PlayerData");
+            foreach (string guid in playerDataGuids)
             {
-                foreach (var playerData in allPlayerData)
+                string path = UnityEditor.AssetDatabase.GUIDToAssetPath(guid);
+                var playerData = UnityEditor.AssetDatabase.LoadAssetAtPath<PlayerData>(path);
+                
+                if (playerData != null && !string.IsNullOrEmpty(playerData.playerName))
                 {
-                    if (playerData != null && !string.IsNullOrEmpty(playerData.playerName))
-                    {
-                        tags.Add(playerData.playerName);
-                    }
+                    tags.Add(playerData.playerName);
                 }
             }
         }

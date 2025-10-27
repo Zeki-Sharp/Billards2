@@ -28,10 +28,11 @@ public class SkillSelectionManager : MonoBehaviour
     public static SkillSelectionManager Instance { get; private set; }
     
     [Header("技能库配置")]
-    [SerializeField] private bool autoDiscoverSkills = true; // 是否自动发现技能
+    [Tooltip("技能数据库 - 包含所有可用技能的配置")]
+    [SerializeField] private SkillDatabase skillDatabase;
     [SerializeField] private int skillSelectionCount = 3; // 每次选择的技能数量
     
-    // 自动发现的技能列表（运行时填充）
+    // 可用技能列表（运行时填充）
     private List<SkillConfig> allAvailableSkills = new List<SkillConfig>();
     
     [Header("调试")]
@@ -88,11 +89,8 @@ public class SkillSelectionManager : MonoBehaviour
         skillManager = SkillManager.GetOrCreateInstance(); // 使用单例，如果不存在则创建
         levelManager = FindFirstObjectByType<LevelManager>();
         
-        // 自动发现技能配置
-        if (autoDiscoverSkills)
-        {
-            DiscoverAllSkills();
-        }
+        // 从数据库加载技能配置
+        LoadSkillsFromDatabase();
         
         // 订阅事件
         GameEventBus.OnLevelCompleted += OnLevelCompleted;
@@ -105,11 +103,18 @@ public class SkillSelectionManager : MonoBehaviour
     }
     
     /// <summary>
-    /// 自动发现所有技能配置
+    /// 从技能数据库加载技能配置
     /// </summary>
-    void DiscoverAllSkills()
+    void LoadSkillsFromDatabase()
     {
         allAvailableSkills.Clear();
+        
+        // 检查数据库引用
+        if (skillDatabase == null)
+        {
+            Debug.LogError("SkillSelectionManager: 技能数据库未配置！请在Inspector中分配SkillDatabase资源。");
+            return;
+        }
         
         // 获取当前角色名称
         string currentCharacterName = GetCurrentCharacterName();
@@ -119,82 +124,25 @@ public class SkillSelectionManager : MonoBehaviour
             Debug.Log($"SkillSelectionManager: 当前角色名称 = '{currentCharacterName}'");
         }
         
-        // 使用 Resources.LoadAll 从 Resources 文件夹加载所有 SkillConfig 资产
-        SkillConfig[] allSkills = Resources.LoadAll<SkillConfig>("");
+        // 从数据库获取适合当前角色的技能
+        List<SkillConfig> availableSkills = skillDatabase.GetSkillsForCharacter(currentCharacterName);
         
         if (showDebugInfo)
         {
-            Debug.Log($"SkillSelectionManager: Resources.LoadAll 找到 {allSkills.Length} 个 SkillConfig 资产");
+            Debug.Log($"SkillSelectionManager: 从数据库找到 {availableSkills.Count} 个适合角色 '{currentCharacterName}' 的技能");
         }
         
-        foreach (var skill in allSkills)
+        // 添加到可用技能列表
+        allAvailableSkills.AddRange(availableSkills);
+        
+        if (allAvailableSkills.Count == 0)
         {
-            if (showDebugInfo)
-            {
-                Debug.Log($"检查技能: 资产名={skill?.name}, 对象={skill != null}, 有效={skill?.IsValid()}, 名称='{skill?.skillName}', Tag='{skill?.skillTag}'");
-            }
-            
-            // 检查技能是否为 null
-            if (skill == null)
-            {
-                if (showDebugInfo)
-                {
-                    Debug.Log($"  → 被过滤：技能对象为 null");
-                }
-                continue;
-            }
-            
-            // 检查技能是否有效
-            if (!skill.IsValid())
-            {
-                if (showDebugInfo)
-                {
-                    Debug.Log($"  → 被过滤：技能无效 (IsValid() = false)");
-                }
-                continue;
-            }
-            
-            // 检查技能名称是否为空
-            if (string.IsNullOrEmpty(skill.skillName))
-            {
-                if (showDebugInfo)
-                {
-                    Debug.Log($"  → 被过滤：技能名称为空");
-                }
-                continue;
-            }
-            
-            // 检查技能标签是否匹配当前角色或通用标签
-            if (!IsSkillAvailableForCurrentCharacter(skill, currentCharacterName))
-            {
-                if (showDebugInfo)
-                {
-                    Debug.Log($"  → 被过滤：技能标签 '{skill.skillTag}' 不匹配当前角色 '{currentCharacterName}'");
-                }
-                continue;
-            }
-            
-            // 检查是否重复
-            if (allAvailableSkills.Contains(skill))
-            {
-                if (showDebugInfo)
-                {
-                    Debug.Log($"  → 被过滤：技能已存在 (重复)");
-                }
-                continue;
-            }
-            
-            // 添加到列表
-            allAvailableSkills.Add(skill);
-            if (showDebugInfo)
-            {
-                Debug.Log($"  → 添加成功：{skill.skillName} (Tag: {skill.skillTag})");
-            }
+            Debug.LogWarning($"SkillSelectionManager: 没有找到适合角色 '{currentCharacterName}' 的技能！");
         }
         
         if (showDebugInfo)
         {
-            Debug.Log($"SkillSelectionManager: 最终发现 {allAvailableSkills.Count} 个有效技能配置");
+            Debug.Log($"SkillSelectionManager: 最终加载 {allAvailableSkills.Count} 个有效技能配置");
             foreach (var skill in allAvailableSkills)
             {
                 Debug.Log($"  - {skill.skillName} (Tag: {skill.skillTag})");
@@ -223,48 +171,6 @@ public class SkillSelectionManager : MonoBehaviour
         return "";
     }
     
-    /// <summary>
-    /// 检查技能是否对当前角色可用
-    /// </summary>
-    /// <param name="skill">要检查的技能</param>
-    /// <param name="characterName">当前角色名称</param>
-    /// <returns>如果技能可用返回 true，否则返回 false</returns>
-    bool IsSkillAvailableForCurrentCharacter(SkillConfig skill, string characterName)
-    {
-        if (skill == null)
-        {
-            return false;
-        }
-        
-        string skillTag = skill.skillTag;
-        
-        // 如果技能没有设置标签，默认为 "default"
-        if (string.IsNullOrEmpty(skillTag))
-        {
-            skillTag = "default";
-        }
-        
-        // 通用技能对所有角色可用
-        if (skillTag.Equals("common", System.StringComparison.OrdinalIgnoreCase))
-        {
-            return true;
-        }
-        
-        // 默认技能对所有角色可用（兼容旧技能）
-        if (skillTag.Equals("default", System.StringComparison.OrdinalIgnoreCase))
-        {
-            return false;
-        }
-        
-        // 角色专属技能
-        if (!string.IsNullOrEmpty(characterName) && 
-            skillTag.Equals(characterName, System.StringComparison.OrdinalIgnoreCase))
-        {
-            return true;
-        }
-        
-        return false;
-    }
     
     /// <summary>
     /// 关卡完成事件处理
@@ -718,18 +624,11 @@ public class SkillSelectionManager : MonoBehaviour
     /// </summary>
     public void RefreshSkillLibrary()
     {
-        if (autoDiscoverSkills)
+        LoadSkillsFromDatabase();
+        
+        if (showDebugInfo)
         {
-            DiscoverAllSkills();
-            
-            if (showDebugInfo)
-            {
-                Debug.Log($"SkillSelectionManager: 手动刷新技能库完成，发现 {allAvailableSkills.Count} 个技能");
-            }
-        }
-        else
-        {
-            Debug.LogWarning("SkillSelectionManager: 自动发现技能已禁用，无法刷新技能库");
+            Debug.Log($"SkillSelectionManager: 手动刷新技能库完成，加载 {allAvailableSkills.Count} 个技能");
         }
     }
     
@@ -770,7 +669,7 @@ public class SkillSelectionManager : MonoBehaviour
     void ShowSkillLibraryInfo()
     {
         Debug.Log($"SkillSelectionManager 技能库信息:\n" +
-                  $"自动发现技能: {autoDiscoverSkills}\n" +
+                  $"技能数据库: {(skillDatabase != null ? skillDatabase.name : "未配置")}\n" +
                   $"技能库总数: {GetAvailableSkillCount()}\n" +
                   $"技能选择数量: {skillSelectionCount}\n" +
                   $"技能选择激活: {isSkillSelectionActive}");

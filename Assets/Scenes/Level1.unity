@@ -9369,7 +9369,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9eb8b3e10f1c8534fa2853e4d5402b59, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  autoDiscoverSkills: 1
+  skillDatabase: {fileID: 11400000, guid: cf11cd4759660654dba50464d053c6fc, type: 2}
   skillSelectionCount: 3
   showDebugInfo: 1
 --- !u!4 &1462007128
