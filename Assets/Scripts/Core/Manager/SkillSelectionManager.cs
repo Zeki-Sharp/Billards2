@@ -532,18 +532,33 @@ public class SkillSelectionManager : MonoBehaviour
     /// </summary>
     void ProceedToNextLevel()
     {
-        if (levelManager != null)
+        // 检查是否来自地图系统
+        if (GameRuntimeData.IsFromMapSystem())
         {
+            // 来自地图系统：返回地图场景
             if (showDebugInfo)
             {
-                Debug.Log("SkillSelectionManager: 技能选择完成，通知 LevelManager 加载下一关卡场景");
+                Debug.Log("SkillSelectionManager: 技能选择完成，返回地图场景");
             }
             
-            levelManager.LoadNextLevel();
+            UnityEngine.SceneManagement.SceneManager.LoadScene("MapScene");
         }
         else
         {
-            Debug.LogError("SkillSelectionManager: LevelManager 未找到，无法进入下一关卡！");
+            // 不是来自地图系统：使用原有逻辑（向后兼容）
+            if (levelManager != null)
+            {
+                if (showDebugInfo)
+                {
+                    Debug.Log("SkillSelectionManager: 技能选择完成，通知 LevelManager 加载下一关卡场景");
+                }
+                
+                levelManager.LoadNextLevel();
+            }
+            else
+            {
+                Debug.LogError("SkillSelectionManager: LevelManager 未找到，无法进入下一关卡！");
+            }
         }
     }
     

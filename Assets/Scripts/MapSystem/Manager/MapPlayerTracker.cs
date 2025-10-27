@@ -2,6 +2,7 @@
 using System.Linq;
 using DG.Tweening;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 namespace Map
 {
@@ -63,28 +64,67 @@ namespace Map
         {
             // we have access to blueprint name here as well
             Debug.Log("Entering node: " + mapNode.Node.blueprintName + " of type: " + mapNode.Node.nodeType);
-            // load appropriate scene with context based on nodeType:
-            // or show appropriate GUI over the map: 
-            // if you choose to show GUI in some of these cases, do not forget to set "Locked" in MapPlayerTracker back to false
+            
+            // 根据节点类型处理
             switch (mapNode.Node.nodeType)
             {
                 case NodeType.MinorEnemy:
-                    break;
                 case NodeType.EliteEnemy:
-                    break;
-                case NodeType.RestSite:
-                    break;
-                case NodeType.Treasure:
-                    break;
-                case NodeType.Store:
-                    break;
                 case NodeType.Boss:
+                    // 战斗类节点：加载对应的战斗场景
+                    LoadCombatScene(mapNode);
                     break;
+                    
+                case NodeType.RestSite:
+                    // 休息节点：显示休息UI（暂未实现）
+                    Debug.Log("RestSite节点：功能暂未实现");
+                    Instance.Locked = false; // 解锁地图
+                    break;
+                    
+                case NodeType.Treasure:
+                    // 宝箱节点：显示宝箱UI（暂未实现）
+                    Debug.Log("Treasure节点：功能暂未实现");
+                    Instance.Locked = false; // 解锁地图
+                    break;
+                    
+                case NodeType.Store:
+                    // 商店节点：显示商店UI（暂未实现）
+                    Debug.Log("Store节点：功能暂未实现");
+                    Instance.Locked = false; // 解锁地图
+                    break;
+                    
                 case NodeType.Mystery:
+                    // 神秘节点：显示事件UI（暂未实现）
+                    Debug.Log("Mystery节点：功能暂未实现");
+                    Instance.Locked = false; // 解锁地图
                     break;
+                    
                 default:
                     throw new ArgumentOutOfRangeException();
             }
+        }
+        
+        /// <summary>
+        /// 加载战斗场景
+        /// </summary>
+        /// <param name="mapNode">地图节点</param>
+        private static void LoadCombatScene(MapNode mapNode)
+        {
+            // 获取节点层级（y坐标）
+            int layer = mapNode.Node.point.y;
+            
+            // 根据层级确定场景名称
+            // Layer 0 → Level1, Layer 1 → Level2, ..., Layer 4 → Level5
+            string sceneName = $"Level{layer + 1}";
+            
+            Debug.Log($"MapPlayerTracker: 加载战斗场景 - {sceneName} (Layer {layer}, NodeType: {mapNode.Node.nodeType})");
+            
+            // 保存地图系统数据到GameRuntimeData
+            GameRuntimeData.SetFromMapSystem(true);
+            GameRuntimeData.SetCurrentMapLayer(layer);
+            
+            // 加载战斗场景
+            SceneManager.LoadScene(sceneName);
         }
 
         private void PlayWarningThatNodeCannotBeAccessed()

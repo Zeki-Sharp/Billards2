@@ -28,6 +28,10 @@ public static class GameRuntimeData
     // 游戏统计数据
     private static int totalEnemyKills = 0;          // 总击杀敌人数（跨所有关卡）
     
+    // 地图系统数据
+    private static bool isFromMapSystem = false;     // 是否来自地图系统
+    private static int currentMapLayer = -1;         // 当前地图层级
+    
     // 初始化标志
     private static bool hasInitialized = false;
     
@@ -244,6 +248,78 @@ public static class GameRuntimeData
     
     #endregion
     
+    #region 地图系统数据管理
+    
+    /// <summary>
+    /// 设置是否来自地图系统
+    /// </summary>
+    /// <param name="value">是否来自地图系统</param>
+    public static void SetFromMapSystem(bool value)
+    {
+        isFromMapSystem = value;
+        
+        if (enableDebugLog)
+        {
+            Debug.Log($"[GameRuntimeData] 设置来自地图系统: {value}");
+        }
+    }
+    
+    /// <summary>
+    /// 检查是否来自地图系统
+    /// </summary>
+    /// <returns>是否来自地图系统</returns>
+    public static bool IsFromMapSystem()
+    {
+        return isFromMapSystem;
+    }
+    
+    /// <summary>
+    /// 清除"来自地图系统"标记
+    /// </summary>
+    public static void ClearFromMapSystem()
+    {
+        isFromMapSystem = false;
+        
+        if (enableDebugLog)
+        {
+            Debug.Log("[GameRuntimeData] 清除来自地图系统标记");
+        }
+    }
+    
+    /// <summary>
+    /// 设置当前地图层级
+    /// </summary>
+    /// <param name="layer">层级索引</param>
+    public static void SetCurrentMapLayer(int layer)
+    {
+        currentMapLayer = layer;
+        
+        if (enableDebugLog)
+        {
+            Debug.Log($"[GameRuntimeData] 设置当前地图层级: {layer}");
+        }
+    }
+    
+    /// <summary>
+    /// 获取当前地图层级
+    /// </summary>
+    /// <returns>层级索引</returns>
+    public static int GetCurrentMapLayer()
+    {
+        return currentMapLayer;
+    }
+    
+    /// <summary>
+    /// 检查是否有地图层级数据
+    /// </summary>
+    /// <returns>是否有数据</returns>
+    public static bool HasMapLayerData()
+    {
+        return currentMapLayer >= 0;
+    }
+    
+    #endregion
+    
     #region 数据管理
     
     /// <summary>
@@ -256,6 +332,8 @@ public static class GameRuntimeData
         damage = -1f;
         attackRange = -1f;
         totalEnemyKills = 0;
+        isFromMapSystem = false;
+        currentMapLayer = -1;
         hasInitialized = false;
         
         if (enableDebugLog)
@@ -289,6 +367,8 @@ public static class GameRuntimeData
                $"- 伤害值: {(HasDamageData() ? damage.ToString() : "未设置")}\n" +
                $"- 攻击范围: {(HasAttackRangeData() ? attackRange.ToString() : "未设置")}\n" +
                $"- 总击杀敌人数: {totalEnemyKills}\n" +
+               $"- 来自地图系统: {isFromMapSystem}\n" +
+               $"- 当前地图层级: {(HasMapLayerData() ? currentMapLayer.ToString() : "未设置")}\n" +
                $"- 已初始化: {hasInitialized}";
     }
     

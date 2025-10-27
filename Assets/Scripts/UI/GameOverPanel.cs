@@ -81,40 +81,23 @@ public class GameOverPanel : BasePanel
         // 获取总击杀数
         int totalKills = GameRuntimeData.GetTotalEnemyKills();
         
-        // 获取通过关卡数
-        int levelsPassed = 0;
-        if (LevelManager.Instance != null)
-        {
-            // 当前关卡索引 = 通过的关卡数（失败时还未完成当前关卡）
-            levelsPassed = LevelManager.Instance.GetCurrentLevelIndex();
-        }
-        else
-        {
-            Debug.LogWarning("GameOverPanel: LevelManager.Instance 为空，无法获取关卡数！");
-        }
+        // 获取通过的地图层级数
+        int layersPassed = GameRuntimeData.GetCurrentMapLayer();
         
         // 更新UI文本
         if (enemyCountText != null)
         {
             enemyCountText.text = $"消灭敌人数: {totalKills}";
         }
-        else
-        {
-            Debug.LogWarning("GameOverPanel: 敌人数统计文本未配置！");
-        }
         
         if (levelCountText != null)
         {
-            levelCountText.text = $"通过关卡数: {levelsPassed}";
-        }
-        else
-        {
-            Debug.LogWarning("GameOverPanel: 关卡数统计文本未配置！");
+            levelCountText.text = $"通过地图层级: {layersPassed}";
         }
         
         if (showDebugInfo)
         {
-            Debug.Log($"GameOverPanel: 统计数据更新 - 击杀: {totalKills}, 关卡: {levelsPassed}");
+            Debug.Log($"GameOverPanel: 统计数据更新 - 击杀: {totalKills}, 层级: {layersPassed}");
         }
     }
     

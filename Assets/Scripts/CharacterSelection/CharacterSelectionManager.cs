@@ -264,30 +264,20 @@ public class CharacterSelectionManager : MonoBehaviour
     }
     
     /// <summary>
-    /// 加载Level1场景
+    /// 加载地图场景（使用地图系统）
     /// </summary>
     void LoadLevel1Scene()
     {
         if (showDebugInfo)
         {
-            Debug.Log($"CharacterSelectionManager: 准备加载Level1场景，选中角色: {selectedCharacter.playerName}");
+            Debug.Log($"CharacterSelectionManager: 准备加载地图场景，选中角色: {selectedCharacter.playerName}");
         }
         
-        // 获取SceneTransitionManager实例
-        SceneTransitionManager transitionManager = SceneTransitionManager.Instance;
+        // 清除地图系统标记（确保MapSceneController识别为首次进入）
+        GameRuntimeData.ClearFromMapSystem();
         
-        if (transitionManager != null)
-        {
-            // 使用SceneTransitionManager加载场景
-            transitionManager.LoadLevel1();
-        }
-        else
-        {
-            Debug.LogError("CharacterSelectionManager: 未找到SceneTransitionManager实例！");
-            
-            // 备用方案：直接加载场景（不推荐，但作为fallback）
-            UnityEngine.SceneManagement.SceneManager.LoadSceneAsync("Level1");
-        }
+        // 加载MapScene（MapSceneController会处理新地图生成）
+        UnityEngine.SceneManagement.SceneManager.LoadScene("MapScene");
     }
     
     /// <summary>
