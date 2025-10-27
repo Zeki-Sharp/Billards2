@@ -74,11 +74,35 @@ public class SkillItem : MonoBehaviour
             return;
         }
         
+        // 获取动态描述（使用当前等级）
+        string description = GetDynamicDescription(skillInstance);
+        
         SetSkillData(
             skillInstance.config.skillName,
             skillInstance.currentLevel,
-            skillInstance.config.description
+            description
         );
+    }
+    
+    /// <summary>
+    /// 获取技能的动态描述
+    /// </summary>
+    string GetDynamicDescription(SkillInstance skillInstance)
+    {
+        // 优先使用动态描述（包含等级参数替换）
+        string dynamicDescription = skillInstance.config.GetDynamicDescription(skillInstance.currentLevel);
+        if (!string.IsNullOrEmpty(dynamicDescription))
+        {
+            return dynamicDescription;
+        }
+        
+        // 回退到静态描述
+        if (!string.IsNullOrEmpty(skillInstance.config.description))
+        {
+            return skillInstance.config.description;
+        }
+        
+        return "暂无描述";
     }
     
     /// <summary>

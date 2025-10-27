@@ -27,6 +27,9 @@ public class GameManager : MonoBehaviour
     // 暂停时记录被禁用的刚体
     private System.Collections.Generic.List<Rigidbody2D> pausedRigidbodies = new System.Collections.Generic.List<Rigidbody2D>();
     
+    // 暂停请求计数器（用于处理多个面板同时暂停的情况）
+    private int pauseRequestCount = 0;
+    
     void Awake()
     {
         // 单例模式：确保只有一个GameManager实例
@@ -155,32 +158,62 @@ public class GameManager : MonoBehaviour
     
     public void PauseGame()
     {
-        isGamePaused = true;
-        Time.timeScale = 0f;
-        
-        // 暂停所有 Rigidbody2D 的物理模拟
-        PauseAllRigidbodies();
-        
-        // 停止所有敌人的协程和定时器
-        StopAllEnemyBehaviors();
+        pauseRequestCount++;
         
         if (showDebugInfo)
         {
-            Debug.Log("GameManager: 游戏暂停");
+            Debug.Log($"GameManager: 暂停请求 +1，当前计数: {pauseRequestCount}");
+        }
+        
+        // 只有第一次暂停请求时才真正暂停游戏
+        if (pauseRequestCount == 1)
+        {
+            isGamePaused = true;
+            Time.timeScale = 0f;
+            
+            // 暂停所有 Rigidbody2D 的物理模拟
+            PauseAllRigidbodies();
+            
+            if (showDebugInfo)
+            {
+                Debug.Log("GameManager: 游戏已暂停（真实暂停）");
+            }
         }
     }
     
     public void ResumeGame()
     {
-        isGamePaused = false;
-        Time.timeScale = 1f;
-        
-        // 恢复所有 Rigidbody2D 的物理模拟
-        ResumeAllRigidbodies();
-        
-        if (showDebugInfo)
+        if (pauseRequestCount > 0)
         {
-            Debug.Log("GameManager: 游戏恢复");
+            pauseRequestCount--;
+            
+            if (showDebugInfo)
+            {
+                Debug.Log($"GameManager: 恢复请求 -1，当前计数: {pauseRequestCount}");
+            }
+        }
+        else
+        {
+            if (showDebugInfo)
+            {
+                Debug.LogWarning("GameManager: 恢复请求被忽略，计数已经是0（可能多次调用了ResumeGame）");
+            }
+            return;
+        }
+        
+        // 只有计数归零时才真正恢复游戏
+        if (pauseRequestCount == 0)
+        {
+            isGamePaused = false;
+            Time.timeScale = 1f;
+            
+            // 恢复所有 Rigidbody2D 的物理模拟
+            ResumeAllRigidbodies();
+            
+            if (showDebugInfo)
+            {
+                Debug.Log("GameManager: 游戏已恢复（真实恢复）");
+            }
         }
     }
     
@@ -276,6 +309,30 @@ public class GameManager : MonoBehaviour
     public bool IsGameActive => isGameActive;
     public bool IsGamePaused => isGamePaused;
     public bool IsGameOver => isGameOver;
+    
+    #endregion
+    
+    #region 调试方法
+    
+    [ContextMenu("显示暂停状态")]
+    void ShowPauseStatus()
+    {
+        Debug.Log($"GameManager 暂停状态:\n" +
+                  $"暂停请求计数: {pauseRequestCount}\n" +
+                  $"isGamePaused: {isGamePaused}\n" +
+                  $"Time.timeScale: {Time.timeScale}\n" +
+                  $"暂停的刚体数: {pausedRigidbodies.Count}");
+    }
+    
+    [ContextMenu("强制重置暂停状态")]
+    void ForceResetPauseState()
+    {
+        Debug.LogWarning("GameManager: 强制重置暂停状态！");
+        pauseRequestCount = 0;
+        isGamePaused = false;
+        Time.timeScale = 1f;
+        ResumeAllRigidbodies();
+    }
     
     #endregion
 }

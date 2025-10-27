@@ -21,8 +21,6 @@ public class SkillStatusPanel : BasePanel
     [SerializeField] private Button closeButton;
     [SerializeField] private TextMeshProUGUI skillCountText;
     
-    [Header("调试")]
-    [SerializeField] private new bool showDebugInfo = true;
     
     // 当前显示的技能项列表
     private List<SkillItem> currentSkillItems = new List<SkillItem>();

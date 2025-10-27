@@ -60,8 +60,8 @@ public class ChargeSystem : MonoBehaviour
     private Vector2 bowPullDirection = Vector2.zero; // 拉弓方向（从起始位置指向当前位置）
     private Vector2 launchDirection = Vector2.zero; // 发射方向（拉弓方向的反向）
     
-    // 时停特效状态
-    private bool timestopEffectTriggered = false; // 是否已触发时停入场特效
+    // 时停特效状态（暂未使用）
+    // private bool timestopEffectTriggered = false; // 是否已触发时停入场特效
     
     
     void Start()
@@ -110,7 +110,7 @@ public class ChargeSystem : MonoBehaviour
         chargingStartTime = Time.time;
         chargingPower = 0f;
         currentForce = minForce;
-        timestopEffectTriggered = false; // 重置时停特效状态
+        // timestopEffectTriggered = false; // 重置时停特效状态（暂未使用）
         
         // 拉弓模式：记录开始位置（球的位置作为拉弓中心）
         if (chargeMode == ChargeMode.BowPull)

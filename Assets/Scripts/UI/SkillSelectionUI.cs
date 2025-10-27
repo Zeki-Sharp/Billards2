@@ -12,10 +12,8 @@ using System.Collections.Generic;
 /// - 处理技能选择点击事件
 /// - 与 SkillSelectionManager 交互
 /// </summary>
-public class SkillSelectionUI : MonoBehaviour
+public class SkillSelectionUI : BasePanel
 {
-    [Header("UI面板")]
-    [SerializeField] private GameObject skillSelectionPanel; // 技能选择面板
     
     [Header("技能按钮")]
     [SerializeField] private Button skillButton1; // 技能按钮1
@@ -32,8 +30,6 @@ public class SkillSelectionUI : MonoBehaviour
     [SerializeField] private TextMeshProUGUI skillDescription2; // 技能描述2
     [SerializeField] private TextMeshProUGUI skillDescription3; // 技能描述3
     
-    [Header("调试")]
-    [SerializeField] private bool showDebugInfo = true;
     
     // 组件引用
     private SkillSelectionManager skillSelectionManager;
@@ -41,18 +37,59 @@ public class SkillSelectionUI : MonoBehaviour
     // 当前显示的技能列表
     private List<SkillConfig> currentSkills = new List<SkillConfig>();
     
-    // UI状态
-    private bool isUIActive = false;
+    #region BasePanel生命周期
     
-    void Start()
+    /// <summary>
+    /// 面板初始化
+    /// </summary>
+    public override void OnInit()
     {
+        base.OnInit(); // BasePanel会调用SetVisible(false)隐藏面板
+        
+        // 设置面板类型
+        panelType = UIPanelType.FullScreen;
+        pauseGameOnShow = true; // 技能选择时暂停游戏
+        
         InitializeUI();
+        
+        if (showDebugInfo)
+        {
+            Debug.Log("SkillSelectionUI: OnInit完成，面板已隐藏");
+        }
+    }
+    
+    /// <summary>
+    /// 面板显示时调用（由 UIController.ShowPanel 触发）
+    /// </summary>
+    public override void OnShow(UIPanelData data = null)
+    {
+        base.OnShow(data);
+        
+        if (showDebugInfo)
+        {
+            Debug.Log("SkillSelectionUI: 面板显示，游戏已暂停（由 UIController 处理）");
+        }
+    }
+    
+    /// <summary>
+    /// 面板隐藏时调用（由 UIController.HidePanel 触发）
+    /// </summary>
+    public override void OnHide()
+    {
+        base.OnHide();
+        
+        if (showDebugInfo)
+        {
+            Debug.Log("SkillSelectionUI: 面板隐藏，游戏已恢复（由 UIController 处理）");
+        }
     }
     
     void OnDestroy()
     {
         UnsubscribeFromEvents();
     }
+    
+    #endregion
     
     /// <summary>
     /// 初始化UI
@@ -66,9 +103,6 @@ public class SkillSelectionUI : MonoBehaviour
         {
             Debug.LogWarning("SkillSelectionUI: SkillSelectionManager.Instance 为空，将在需要时重新查找");
         }
-        
-        // 设置初始状态
-        HideUI();
         
         // 订阅事件
         SubscribeToEvents();
@@ -121,7 +155,22 @@ public class SkillSelectionUI : MonoBehaviour
             Debug.Log($"SkillSelectionUI: 收到技能选择开始事件，技能数量: {availableSkills.Count}");
         }
         
-        ShowSkillSelection(availableSkills);
+        // 准备技能数据
+        currentSkills.Clear();
+        currentSkills.AddRange(availableSkills);
+        
+        // 更新技能显示
+        UpdateSkillDisplay();
+        
+        // 通过 UIController 统一显示（会自动暂停游戏）
+        if (UIController.Instance != null)
+        {
+            UIController.Instance.ShowPanel(this);
+        }
+        else
+        {
+            Debug.LogError("SkillSelectionUI: UIController.Instance 为空！");
+        }
     }
     
     /// <summary>
@@ -134,47 +183,20 @@ public class SkillSelectionUI : MonoBehaviour
             Debug.Log("SkillSelectionUI: 收到技能选择完成事件");
         }
         
-        HideUI();
-    }
-    
-    /// <summary>
-    /// 显示技能选择界面
-    /// </summary>
-    /// <param name="availableSkills">可选择的技能列表</param>
-    void ShowSkillSelection(List<SkillConfig> availableSkills)
-    {
+        // 清理技能数据
         currentSkills.Clear();
-        currentSkills.AddRange(availableSkills);
-        isUIActive = true;
         
-        // 显示UI面板
-        skillSelectionPanel?.SetActive(true);
-        
-        // 更新技能显示
-        UpdateSkillDisplay();
-        
-        if (showDebugInfo)
+        // 通过 UIController 统一隐藏（会自动恢复游戏）
+        if (UIController.Instance != null)
         {
-            Debug.Log($"SkillSelectionUI: 显示技能选择界面，技能数量: {availableSkills.Count}");
+            UIController.Instance.HidePanel(this);
+        }
+        else
+        {
+            Debug.LogError("SkillSelectionUI: UIController.Instance 为空！");
         }
     }
     
-    /// <summary>
-    /// 隐藏UI界面
-    /// </summary>
-    void HideUI()
-    {
-        isUIActive = false;
-        currentSkills.Clear();
-        
-        // 隐藏UI面板
-        skillSelectionPanel?.SetActive(false);
-        
-        if (showDebugInfo)
-        {
-            Debug.Log("SkillSelectionUI: 隐藏技能选择界面");
-        }
-    }
     
     /// <summary>
     /// 更新技能显示
@@ -304,7 +326,7 @@ public class SkillSelectionUI : MonoBehaviour
     /// <param name="skillIndex">技能索引</param>
     void OnSkillButtonClicked(int skillIndex)
     {
-        if (!isUIActive || skillIndex >= currentSkills.Count || currentSkills[skillIndex] == null)
+        if (!IsVisible || skillIndex >= currentSkills.Count || currentSkills[skillIndex] == null)
             return;
         
         SkillConfig selectedSkill = currentSkills[skillIndex];
@@ -353,20 +375,32 @@ public class SkillSelectionUI : MonoBehaviour
             return;
         }
         
-        ShowSkillSelection(testSkills);
+        // 准备技能数据
+        currentSkills.Clear();
+        currentSkills.AddRange(testSkills);
+        UpdateSkillDisplay();
+        
+        // 通过 UIController 显示
+        if (UIController.Instance != null)
+        {
+            UIController.Instance.ShowPanel(this);
+        }
     }
     
     [ContextMenu("隐藏技能选择")]
     void TestHideSkillSelection()
     {
-        HideUI();
+        if (UIController.Instance != null)
+        {
+            UIController.Instance.HidePanel(this);
+        }
     }
     
     [ContextMenu("显示UI状态")]
     void ShowUIStatus()
     {
         Debug.Log($"SkillSelectionUI 状态:\n" +
-                  $"UI激活: {isUIActive}\n" +
+                  $"UI激活: {IsVisible}\n" +
                   $"当前技能数量: {currentSkills.Count}\n" +
                   $"SkillSelectionManager: {(skillSelectionManager != null ? "已连接" : "未连接")}");
     }

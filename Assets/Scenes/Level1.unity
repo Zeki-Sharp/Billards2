@@ -5819,13 +5819,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 27b701b03471ef64292458037b5373b2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  gameUIPanel: {fileID: 0}
+  topBarController: {fileID: 0}
   skillSelectionUI: {fileID: 0}
   hudCanvas: {fileID: 0}
   fullScreenCanvas: {fileID: 0}
   popupCanvas: {fileID: 0}
   victoryPanelPath: UI/Popups/VictoryPanel
   gameOverPanelPath: UI/Popups/GameOverPanel
+  skillStatusPanelPath: UI/Popups/SkillStatusPanel
   showDebugInfo: 1
 --- !u!4 &590523341
 Transform:

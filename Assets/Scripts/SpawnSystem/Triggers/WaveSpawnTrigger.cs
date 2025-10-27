@@ -27,7 +27,7 @@ namespace Game.SpawnSystem.Triggers
         
         // 状态管理
         private bool hasGeneratedInitialEnemies = false;
-        private bool isFirstWave = true;
+        // private bool isFirstWave = true; // 未使用，已注释
         
         void Start()
         {
@@ -184,7 +184,7 @@ namespace Game.SpawnSystem.Triggers
         public void ResetTriggerState()
         {
             hasGeneratedInitialEnemies = false;
-            isFirstWave = true;
+            // isFirstWave = true; // 未使用，已注释
             
             if (configProvider != null)
             {

@@ -13,6 +13,7 @@ using UnityEngine;
 /// - 面板只负责UI显示和更新
 /// - 不主动订阅游戏事件（由UIController管理）
 /// - 通过UIController显示/隐藏
+/// - 使用CanvasGroup控制可见性，GameObject始终激活
 /// </summary>
 public abstract class BasePanel : MonoBehaviour
 {
@@ -27,6 +28,9 @@ public abstract class BasePanel : MonoBehaviour
     private bool isInitialized = false;
     private bool isVisible = false;
     
+    // CanvasGroup组件（用于控制可见性）
+    protected CanvasGroup canvasGroup;
+    
     #region 生命周期方法
     
     /// <summary>
@@ -37,6 +41,25 @@ public abstract class BasePanel : MonoBehaviour
     {
         if (isInitialized)
             return;
+        
+        // 确保有CanvasGroup组件
+        if (canvasGroup == null)
+        {
+            canvasGroup = GetComponent<CanvasGroup>();
+            if (canvasGroup == null)
+            {
+                canvasGroup = gameObject.AddComponent<CanvasGroup>();
+            }
+        }
+        
+        // 确保GameObject激活（脚本需要持续运行）
+        if (!gameObject.activeSelf)
+        {
+            gameObject.SetActive(true);
+        }
+        
+        // 初始状态：隐藏面板
+        SetVisible(false);
         
         isInitialized = true;
         
@@ -59,9 +82,8 @@ public abstract class BasePanel : MonoBehaviour
             OnInit();
         }
         
-        // 显示面板
-        gameObject.SetActive(true);
-        isVisible = true;
+        // 显示面板（使用CanvasGroup控制可见性）
+        SetVisible(true);
         
         if (showDebugInfo)
         {
@@ -75,9 +97,8 @@ public abstract class BasePanel : MonoBehaviour
     /// </summary>
     public virtual void OnHide()
     {
-        // 隐藏面板
-        gameObject.SetActive(false);
-        isVisible = false;
+        // 隐藏面板（使用CanvasGroup控制可见性）
+        SetVisible(false);
         
         if (showDebugInfo)
         {
@@ -93,6 +114,42 @@ public abstract class BasePanel : MonoBehaviour
     public virtual void OnUpdate(UIPanelData data)
     {
         // 子类实现具体的更新逻辑
+    }
+    
+    #endregion
+    
+    #region 私有方法
+    
+    /// <summary>
+    /// 设置面板可见性（使用CanvasGroup）
+    /// </summary>
+    void SetVisible(bool visible)
+    {
+        // 确保CanvasGroup存在
+        if (canvasGroup == null)
+        {
+            if (showDebugInfo)
+            {
+                Debug.LogWarning($"{GetType().Name}: CanvasGroup为空，无法设置可见性");
+            }
+            return;
+        }
+        
+        // 控制可见性和交互
+        if (visible)
+        {
+            canvasGroup.alpha = 1f;
+            canvasGroup.interactable = true;
+            canvasGroup.blocksRaycasts = true;
+        }
+        else
+        {
+            canvasGroup.alpha = 0f;
+            canvasGroup.interactable = false;
+            canvasGroup.blocksRaycasts = false;
+        }
+        
+        isVisible = visible;
     }
     
     #endregion

@@ -139,7 +139,7 @@ public class UIController : MonoBehaviour
     /// </summary>
     void InitializePreloadedPanels()
     {
-        // 查找TopBar
+        // 查找TopBar（不是BasePanel，有自己的Awake/Start）
         if (topBarController == null)
         {
             topBarController = FindFirstObjectByType<TopBarController>();
@@ -149,6 +149,12 @@ public class UIController : MonoBehaviour
         if (skillSelectionUI == null)
         {
             skillSelectionUI = FindFirstObjectByType<SkillSelectionUI>();
+        }
+        
+        // 初始化SkillSelectionUI（继承BasePanel，需要手动初始化）
+        if (skillSelectionUI != null)
+        {
+            skillSelectionUI.OnInit();
         }
         
         if (showDebugInfo)
@@ -231,14 +237,22 @@ public class UIController : MonoBehaviour
             return;
         }
         
+        // 检查是否已经显示（避免重复暂停）
+        bool wasVisible = panel.IsVisible;
+        
+        if (wasVisible && showDebugInfo)
+        {
+            Debug.LogWarning($"UIController: 面板 {panel.GetType().Name} 已经显示，跳过暂停游戏");
+        }
+        
         // 处理面板互斥
         HandlePanelExclusivity(panel);
         
         // 显示面板
         panel.OnShow(data);
         
-        // 根据配置暂停游戏
-        if (panel.PauseGameOnShow && GameManager.Instance != null)
+        // 只有在面板从隐藏变为显示时才暂停游戏
+        if (!wasVisible && panel.PauseGameOnShow && GameManager.Instance != null)
         {
             GameManager.Instance.PauseGame();
             
@@ -260,13 +274,20 @@ public class UIController : MonoBehaviour
     /// <param name="panel">要隐藏的面板</param>
     public void HidePanel(BasePanel panel)
     {
-        if (panel == null || !panel.IsVisible)
+        if (panel == null)
             return;
         
-        // 隐藏面板
-        panel.OnHide();
+        // 检查是否已经隐藏（避免重复处理）
+        if (!panel.IsVisible)
+        {
+            if (showDebugInfo)
+            {
+                Debug.LogWarning($"UIController: 面板 {panel.GetType().Name} 已经隐藏，跳过");
+            }
+            return;
+        }
         
-        // 根据配置恢复游戏
+        // 先根据配置恢复游戏（在 OnHide 设置 IsVisible = false 之前）
         if (panel.PauseGameOnShow && GameManager.Instance != null)
         {
             GameManager.Instance.ResumeGame();
@@ -276,6 +297,9 @@ public class UIController : MonoBehaviour
                 Debug.Log($"UIController: 面板 {panel.GetType().Name} 隐藏，恢复游戏");
             }
         }
+        
+        // 隐藏面板（会设置 IsVisible = false）
+        panel.OnHide();
         
         // 更新当前面板追踪
         if (currentPopupPanel == panel)
@@ -396,8 +420,8 @@ public class UIController : MonoBehaviour
         }
         
         // 初始化并缓存
+        // OnInit() 会通过 CanvasGroup 隐藏面板，不需要 SetActive(false)
         panel.OnInit();
-        panel.gameObject.SetActive(false); // 初始隐藏
         loadedPanels[path] = panel;
         
         if (showDebugInfo)
