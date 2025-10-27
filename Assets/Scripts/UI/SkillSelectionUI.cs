@@ -59,8 +59,13 @@ public class SkillSelectionUI : MonoBehaviour
     /// </summary>
     void InitializeUI()
     {
-        // 获取组件引用
-        skillSelectionManager = FindFirstObjectByType<SkillSelectionManager>();
+        // 获取组件引用 - 使用单例
+        skillSelectionManager = SkillSelectionManager.Instance;
+        
+        if (skillSelectionManager == null)
+        {
+            Debug.LogWarning("SkillSelectionUI: SkillSelectionManager.Instance 为空，将在需要时重新查找");
+        }
         
         // 设置初始状态
         HideUI();
@@ -309,14 +314,19 @@ public class SkillSelectionUI : MonoBehaviour
             Debug.Log($"SkillSelectionUI: 选择技能 - {selectedSkill.skillName}");
         }
         
-        // 通知 SkillSelectionManager
+        // 通知 SkillSelectionManager - 使用单例，双重保险
+        if (skillSelectionManager == null)
+        {
+            skillSelectionManager = SkillSelectionManager.Instance;
+        }
+        
         if (skillSelectionManager != null)
         {
             skillSelectionManager.OnSkillSelected(selectedSkill);
         }
         else
         {
-            Debug.LogError("SkillSelectionUI: SkillSelectionManager 未找到！");
+            Debug.LogError("SkillSelectionUI: SkillSelectionManager 未找到！Instance也为null！");
         }
     }
     
