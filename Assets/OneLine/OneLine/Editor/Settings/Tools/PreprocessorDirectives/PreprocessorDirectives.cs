@@ -26,13 +26,18 @@ namespace OneLine.Settings {
         }
 
         public void DefineForCurrentBuildTarget() {
-            BuildTargetGroup target = EditorUserBuildSettings.selectedBuildTargetGroup;
-            if (target == BuildTargetGroup.Unknown) {
+            BuildTargetGroup targetGroup = EditorUserBuildSettings.selectedBuildTargetGroup;
+            if (targetGroup == BuildTargetGroup.Unknown) {
                 Debug.LogError("OneLine Settings Error: can not determine current BuildTargetGroup");
                 return;
             }
 
-            var currentDefines = PlayerSettings.GetScriptingDefineSymbolsForGroup(target);
+            // 使用新的API
+            UnityEditor.Build.NamedBuildTarget target = UnityEditor.Build.NamedBuildTarget.FromBuildTargetGroup(targetGroup);
+            
+            PlayerSettings.GetScriptingDefineSymbols(target, out string[] currentDefinesArray);
+            var currentDefines = string.Join(";", currentDefinesArray);
+            
             var resultDefines = new List<string>();
             foreach (var define in currentDefines.Split(';')) {
                 if (!string.IsNullOrEmpty(define)) {
@@ -49,7 +54,7 @@ namespace OneLine.Settings {
                 }
             }
 
-            PlayerSettings.SetScriptingDefineSymbolsForGroup(target, string.Join(";", resultDefines.ToArray()));
+            PlayerSettings.SetScriptingDefineSymbols(target, resultDefines.ToArray());
         }
     }
 }

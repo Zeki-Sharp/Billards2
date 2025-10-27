@@ -486,6 +486,14 @@ public class SkillManager : MonoBehaviour
     }
     
     /// <summary>
+    /// 获取所有技能实例
+    /// </summary>
+    public List<SkillInstance> GetAllActiveSkills()
+    {
+        return new List<SkillInstance>(skillInstances.Values);
+    }
+    
+    /// <summary>
     /// 获取所有DropItem类型技能名称（用于掉落系统）
     /// </summary>
     public HashSet<string> GetDropItemSkillNames()

@@ -196,15 +196,13 @@ public class TopBarController : MonoBehaviour
     {
         if (showDebugInfo)
         {
-            Debug.Log("TopBarController: 技能按钮被点击");
+            Debug.Log("TopBarController: 技能按钮被点击，打开技能状态面板");
         }
         
         // 通过UIController显示技能状态面板
         if (UIController.Instance != null)
         {
-            // 暂时打印日志，稍后实现SkillStatusPanel
-            Debug.Log("TopBarController: 准备打开技能状态面板（待实现）");
-            // UIController.Instance.ShowPanel("SkillStatusPanel");
+            UIController.Instance.ShowSkillStatusPanel();
         }
         else
         {

@@ -35,6 +35,7 @@ public class UIController : MonoBehaviour
     [Header("动态加载配置")]
     [SerializeField] private string victoryPanelPath = "UI/Popups/VictoryPanel";
     [SerializeField] private string gameOverPanelPath = "UI/Popups/GameOverPanel";
+    [SerializeField] private string skillStatusPanelPath = "UI/Popups/SkillStatusPanel";
     
     [Header("调试")]
     [SerializeField] private bool showDebugInfo = true;
@@ -323,6 +324,18 @@ public class UIController : MonoBehaviour
         if (gameOverPanel != null)
         {
             ShowPanel(gameOverPanel);
+        }
+    }
+    
+    /// <summary>
+    /// 显示技能状态面板
+    /// </summary>
+    public void ShowSkillStatusPanel()
+    {
+        BasePanel skillStatusPanel = LoadPanel(skillStatusPanelPath, popupCanvas);
+        if (skillStatusPanel != null)
+        {
+            ShowPanel(skillStatusPanel);
         }
     }
     
