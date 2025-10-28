@@ -36,6 +36,7 @@ public class UIController : MonoBehaviour
     [SerializeField] private string victoryPanelPath = "UI/Popups/VictoryPanel";
     [SerializeField] private string gameOverPanelPath = "UI/Popups/GameOverPanel";
     [SerializeField] private string skillStatusPanelPath = "UI/Popups/SkillStatusPanel";
+    [SerializeField] private string settingsPanelPath = "UI/Popups/SettingsPanel";
     
     [Header("调试")]
     [SerializeField] private bool showDebugInfo = true;
@@ -56,6 +57,15 @@ public class UIController : MonoBehaviour
     {
         InitializeUI();
         SubscribeToEvents();
+    }
+    
+    void Update()
+    {
+        // 监听 ESC 键打开/关闭设置面板
+        if (Input.GetKeyDown(KeyCode.Escape))
+        {
+            TogglePanel(settingsPanelPath, popupCanvas);
+        }
     }
     
     void OnDestroy()
@@ -382,6 +392,65 @@ public class UIController : MonoBehaviour
         if (skillStatusPanel != null)
         {
             ShowPanel(skillStatusPanel);
+        }
+    }
+    
+    /// <summary>
+    /// 显示设置面板
+    /// </summary>
+    public void ShowSettingsPanel()
+    {
+        BasePanel settingsPanel = LoadPanel(settingsPanelPath, popupCanvas);
+        if (settingsPanel != null)
+        {
+            ShowPanel(settingsPanel);
+        }
+    }
+    
+    /// <summary>
+    /// 切换面板显示/隐藏（通用方法）
+    /// </summary>
+    /// <param name="panelPath">面板资源路径</param>
+    /// <param name="parentCanvas">父Canvas</param>
+    public void TogglePanel(string panelPath, Canvas parentCanvas)
+    {
+        // 如果面板已加载，检查是否可见
+        if (loadedPanels.TryGetValue(panelPath, out BasePanel panel))
+        {
+            if (panel.IsVisible)
+            {
+                // 如果可见，隐藏它
+                HidePanel(panel);
+                
+                if (showDebugInfo)
+                {
+                    Debug.Log($"UIController: 隐藏面板 - {panelPath}");
+                }
+            }
+            else
+            {
+                // 如果不可见，显示它
+                ShowPanel(panel);
+                
+                if (showDebugInfo)
+                {
+                    Debug.Log($"UIController: 显示面板 - {panelPath}");
+                }
+            }
+        }
+        else
+        {
+            // 如果还没加载过，加载并显示
+            BasePanel loadedPanel = LoadPanel(panelPath, parentCanvas);
+            if (loadedPanel != null)
+            {
+                ShowPanel(loadedPanel);
+                
+                if (showDebugInfo)
+                {
+                    Debug.Log($"UIController: 首次加载并显示面板 - {panelPath}");
+                }
+            }
         }
     }
     

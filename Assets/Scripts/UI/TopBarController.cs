@@ -18,8 +18,9 @@ public class TopBarController : MonoBehaviour
     [SerializeField] private TextMeshProUGUI currentHealthText;
     [SerializeField] private TextMeshProUGUI totalHealthText;
     
-    [Header("技能按钮")]
-    [SerializeField] private UnityEngine.UI.Button skillButton;
+    [Header("按钮")]
+    [SerializeField] private UnityEngine.UI.Button skillButton;      // 技能按钮（书本图标）
+    [SerializeField] private UnityEngine.UI.Button settingsButton;   // 设置按钮（齿轮图标）
     
     [Header("显示控制")]
     [SerializeField] private CanvasGroup canvasGroup;
@@ -61,6 +62,11 @@ public class TopBarController : MonoBehaviour
         if (skillButton != null)
         {
             skillButton.onClick.RemoveListener(OnSkillButtonClicked);
+        }
+        
+        if (settingsButton != null)
+        {
+            settingsButton.onClick.RemoveListener(OnSettingsButtonClicked);
         }
     }
     
@@ -105,6 +111,10 @@ public class TopBarController : MonoBehaviour
             Debug.Log($"TopBarController: 角色选择完成，显示TopBar - {character.playerName}");
         }
         
+        // 初始化血量显示为满血（角色刚选择，血量为满）
+        float maxHealth = character != null ? character.maxHealth : 100f;
+        UpdateHealthDisplay(maxHealth, maxHealth);
+        
         // 显示TopBar
         SetVisible(true);
     }
@@ -116,7 +126,23 @@ public class TopBarController : MonoBehaviour
     {
         if (showDebugInfo)
         {
-            Debug.Log("TopBarController: 游戏重启，隐藏TopBar");
+            Debug.Log("TopBarController: 游戏重启，隐藏TopBar并重置血量显示");
+        }
+        
+        // 重置血量显示为空（避免显示旧数据）
+        if (healthBarFill != null)
+        {
+            healthBarFill.fillAmount = 1f; // 重置为满血状态
+        }
+        
+        if (currentHealthText != null)
+        {
+            currentHealthText.text = "0";
+        }
+        
+        if (totalHealthText != null)
+        {
+            totalHealthText.text = "0";
         }
         
         // 隐藏TopBar
@@ -174,6 +200,7 @@ public class TopBarController : MonoBehaviour
     /// </summary>
     void SetupButtonEvents()
     {
+        // 设置技能按钮
         if (skillButton != null)
         {
             skillButton.onClick.AddListener(OnSkillButtonClicked);
@@ -186,6 +213,21 @@ public class TopBarController : MonoBehaviour
         else
         {
             Debug.LogWarning("TopBarController: 技能按钮未配置！");
+        }
+        
+        // 设置设置按钮
+        if (settingsButton != null)
+        {
+            settingsButton.onClick.AddListener(OnSettingsButtonClicked);
+            
+            if (showDebugInfo)
+            {
+                Debug.Log("TopBarController: 设置按钮事件已设置");
+            }
+        }
+        else
+        {
+            Debug.LogWarning("TopBarController: 设置按钮未配置！");
         }
     }
     
@@ -203,6 +245,27 @@ public class TopBarController : MonoBehaviour
         if (UIController.Instance != null)
         {
             UIController.Instance.ShowSkillStatusPanel();
+        }
+        else
+        {
+            Debug.LogError("TopBarController: UIController.Instance 为空！");
+        }
+    }
+    
+    /// <summary>
+    /// 设置按钮点击事件
+    /// </summary>
+    void OnSettingsButtonClicked()
+    {
+        if (showDebugInfo)
+        {
+            Debug.Log("TopBarController: 设置按钮被点击，打开设置面板");
+        }
+        
+        // 通过UIController显示设置面板
+        if (UIController.Instance != null)
+        {
+            UIController.Instance.ShowSettingsPanel();
         }
         else
         {

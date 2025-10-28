@@ -327,6 +327,7 @@ public static class GameRuntimeData
     /// </summary>
     public static void ClearAllData()
     {
+        // 清理内存数据
         currentHealth = -1f;
         maxHealth = -1f;
         damage = -1f;
@@ -335,6 +336,18 @@ public static class GameRuntimeData
         isFromMapSystem = false;
         currentMapLayer = -1;
         hasInitialized = false;
+        
+        // 清理 PlayerPrefs 中保存的地图数据
+        if (PlayerPrefs.HasKey("Map"))
+        {
+            PlayerPrefs.DeleteKey("Map");
+            PlayerPrefs.Save();
+            
+            if (enableDebugLog)
+            {
+                Debug.Log("[GameRuntimeData] 已清理 PlayerPrefs 中的地图数据");
+            }
+        }
         
         if (enableDebugLog)
         {

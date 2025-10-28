@@ -243,17 +243,6 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0, y: 0}
---- !u!114 &667477021 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 6762894588540440823, guid: e742b081d32e6fd45b3aee1dfab12ec6, type: 3}
-  m_PrefabInstance: {fileID: 2056407284181519252}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fdc4b1f78328b584ab75cde44481e3c1, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!224 &737301689 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 2781766955409632584, guid: a5df6d7f680596340b0c0f463602dbaf, type: 3}
@@ -430,6 +419,17 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1478200926 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 677144861704396112, guid: e742b081d32e6fd45b3aee1dfab12ec6, type: 3}
+  m_PrefabInstance: {fileID: 2056407284181519252}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!224 &1738410109 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 8084716891869683436, guid: a5df6d7f680596340b0c0f463602dbaf, type: 3}
@@ -716,7 +716,7 @@ PrefabInstance:
     - target: {fileID: 2716630895527429698, guid: e742b081d32e6fd45b3aee1dfab12ec6, type: 3}
       propertyPath: topBarController
       value: 
-      objectReference: {fileID: 667477021}
+      objectReference: {fileID: 0}
     - target: {fileID: 3001226978829604883, guid: e742b081d32e6fd45b3aee1dfab12ec6, type: 3}
       propertyPath: m_IsActive
       value: 1
@@ -773,6 +773,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 6762894588540440823, guid: e742b081d32e6fd45b3aee1dfab12ec6, type: 3}
+      propertyPath: settingsButton
+      value: 
+      objectReference: {fileID: 1478200926}
     - target: {fileID: 6762894588540440823, guid: e742b081d32e6fd45b3aee1dfab12ec6, type: 3}
       propertyPath: totalHealthText
       value: 
