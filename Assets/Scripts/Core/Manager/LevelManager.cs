@@ -379,10 +379,9 @@ public class LevelManager : MonoBehaviour
         }
         
         // 发布游戏完成事件
+        // UIController会监听此事件并显示VictoryPanel
+        // VictoryPanel的Restart按钮会处理返回角色选择的逻辑
         GameEventBus.PublishGameCompleted();
-        
-        // 返回主菜单或显示通关界面
-        ReturnToMainMenu();
     }
     
     /// <summary>
@@ -407,6 +406,21 @@ public class LevelManager : MonoBehaviour
         if (showDebugInfo)
         {
             Debug.Log($"LevelManager: 场景加载完成 - {scene.name}");
+        }
+        
+        // 从GameRuntimeData同步当前地图层级到currentLevelIndex
+        // MapPlayerTracker在加载战斗场景时会设置GameRuntimeData的当前层级
+        if (GameRuntimeData.IsFromMapSystem())
+        {
+            int mapLayer = GameRuntimeData.GetCurrentMapLayer();
+            if (currentLevelIndex != mapLayer)
+            {
+                if (showDebugInfo)
+                {
+                    Debug.Log($"LevelManager: 同步地图层级 - 从 {currentLevelIndex} 更新到 {mapLayer}");
+                }
+                currentLevelIndex = mapLayer;
+            }
         }
         
         // 重新查找新场景中的WaveConfigProvider
