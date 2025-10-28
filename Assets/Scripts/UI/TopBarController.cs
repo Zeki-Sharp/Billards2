@@ -13,6 +13,9 @@ using TMPro;
 /// </summary>
 public class TopBarController : MonoBehaviour
 {
+    [Header("角色信息")]
+    [SerializeField] private Image playerPortrait;  // 角色头像
+    
     [Header("血条UI元素")]
     [SerializeField] private Image healthBarFill;
     [SerializeField] private TextMeshProUGUI currentHealthText;
@@ -111,6 +114,9 @@ public class TopBarController : MonoBehaviour
             Debug.Log($"TopBarController: 角色选择完成，显示TopBar - {character.playerName}");
         }
         
+        // 更新角色头像
+        UpdatePlayerPortrait(character);
+        
         // 初始化血量显示为满血（角色刚选择，血量为满）
         float maxHealth = character != null ? character.maxHealth : 100f;
         UpdateHealthDisplay(maxHealth, maxHealth);
@@ -126,7 +132,14 @@ public class TopBarController : MonoBehaviour
     {
         if (showDebugInfo)
         {
-            Debug.Log("TopBarController: 游戏重启，隐藏TopBar并重置血量显示");
+            Debug.Log("TopBarController: 游戏重启，隐藏TopBar并重置显示");
+        }
+        
+        // 重置角色头像
+        if (playerPortrait != null)
+        {
+            playerPortrait.sprite = null;
+            playerPortrait.enabled = false;
         }
         
         // 重置血量显示为空（避免显示旧数据）
@@ -155,6 +168,40 @@ public class TopBarController : MonoBehaviour
     void OnHealthChanged(HealthStateData healthData)
     {
         UpdateHealthDisplay(healthData.CurrentHealth, healthData.MaxHealth);
+    }
+    
+    #endregion
+    
+    #region 角色信息显示
+    
+    /// <summary>
+    /// 更新角色头像
+    /// </summary>
+    void UpdatePlayerPortrait(PlayerData character)
+    {
+        if (playerPortrait != null && character != null)
+        {
+            if (character.playerIcon != null)
+            {
+                playerPortrait.sprite = character.playerIcon;
+                playerPortrait.enabled = true;
+                playerPortrait.gameObject.SetActive(true);
+                
+                if (showDebugInfo)
+                {
+                    Debug.Log($"TopBarController: 角色头像已更新 - {character.playerName}");
+                }
+            }
+            else
+            {
+                playerPortrait.enabled = false;
+                Debug.LogWarning($"TopBarController: 角色 {character.playerName} 没有配置头像");
+            }
+        }
+        else if (playerPortrait == null)
+        {
+            Debug.LogWarning("TopBarController: playerPortrait 未配置！请在 Inspector 中拖入头像 Image 组件");
+        }
     }
     
     #endregion
@@ -339,10 +386,12 @@ public class TopBarController : MonoBehaviour
         Debug.Log($"TopBarController 状态:\n" +
                  $"可见: {isVisible}\n" +
                  $"Canvas Group: {(canvasGroup != null ? "已配置" : "未配置")}\n" +
+                 $"Player Portrait: {(playerPortrait != null ? "已配置" : "未配置")}\n" +
                  $"Health Bar Fill: {(healthBarFill != null ? "已配置" : "未配置")}\n" +
                  $"Current Health Text: {(currentHealthText != null ? "已配置" : "未配置")}\n" +
                  $"Total Health Text: {(totalHealthText != null ? "已配置" : "未配置")}\n" +
-                 $"Skill Button: {(skillButton != null ? "已配置" : "未配置")}");
+                 $"Skill Button: {(skillButton != null ? "已配置" : "未配置")}\n" +
+                 $"Settings Button: {(settingsButton != null ? "已配置" : "未配置")}");
     }
     
     #endregion

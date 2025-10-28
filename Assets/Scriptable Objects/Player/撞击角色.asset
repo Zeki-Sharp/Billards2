@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   playerName: "\u649E\u51FB\u89D2\u8272"
   playerPrefab: {fileID: 3251294568684493535, guid: 2d86053af5e50c446a06f75cbdecb65b, type: 3}
-  playerIcon: {fileID: 0}
+  playerIcon: {fileID: 8861807583729448495, guid: 943ed9a96a0bc0c4599dae896cf2ef36, type: 3}
   characterDescription: "\u901A\u8FC7\u76F4\u63A5\u649E\u51FB\u654C\u4EBA\u9020\u6210\u4F24\u5BB3"
   ballData: {fileID: 11400000, guid: 5753a6296cab86e45ba7c2b9bfd00e6e, type: 2}
   baseMaxHealth: 100
