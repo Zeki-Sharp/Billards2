@@ -52,23 +52,28 @@ public class SkillDatabase : ScriptableObject
         {
             if (showDebugInfo)
             {
-                Debug.LogWarning("[SkillDatabase] 角色名称为空，返回所有技能");
+                Debug.LogWarning("[SkillDatabase] 角色名称为空，返回通用技能");
             }
-            return GetAllSkills();
+            // 角色名称为空时，只返回 common 标签的技能
+            return allSkills
+                .Where(skill => skill != null && 
+                               skill.IsValid() && 
+                               skill.skillTag == "common")
+                .ToList();
         }
         
+        // 【修复】只允许角色专属技能和通用技能
         var filteredSkills = allSkills
             .Where(skill => skill != null && 
                            skill.IsValid() && 
                            (skill.skillTag == characterName ||      // 角色专属技能
-                            skill.skillTag == "common" ||           // 通用技能
-                            skill.skillTag == "default" ||          // 默认技能
-                            string.IsNullOrEmpty(skill.skillTag)))  // 未设置标签的技能
+                            skill.skillTag == "common"))            // 通用技能
             .ToList();
         
         if (showDebugInfo)
         {
             Debug.Log($"[SkillDatabase] 为角色 '{characterName}' 找到 {filteredSkills.Count} 个技能");
+            Debug.Log($"[SkillDatabase] 过滤条件: skillTag == '{characterName}' OR skillTag == 'common'");
         }
         
         return filteredSkills;

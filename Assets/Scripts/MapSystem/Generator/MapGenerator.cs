@@ -258,33 +258,34 @@ namespace Map
                 horizontalDistance = Mathf.Abs(toCol - rightCol);
                 if (rightCol < config.GridWidth && horizontalDistance <= verticalDistance)
                     candidateCols.Add(rightCol);
-
-                // 【修复】检查候选列表是否为空，如果为空则智能选择方向
-                int candidateCol;
-                if (candidateCols.Count > 0)
-                {
-                    int randomCandidateIndex = Random.Range(0, candidateCols.Count);
-                    candidateCol = candidateCols[randomCandidateIndex];
-                }
-                else
-                {
-                    // 后备方案：强制向目标方向移动
-                    if (toCol > lastNodeCol && lastNodeCol + 1 < config.GridWidth)
-                    {
-                        candidateCol = lastNodeCol + 1;  // 向右移动
-                        Debug.LogWarning($"[MapGenerator] Path() 在行 {row} 没有合适候选，强制向右移动：{lastNodeCol} → {candidateCol}");
-                    }
-                    else if (toCol < lastNodeCol && lastNodeCol - 1 >= 0)
-                    {
-                        candidateCol = lastNodeCol - 1;  // 向左移动
-                        Debug.LogWarning($"[MapGenerator] Path() 在行 {row} 没有合适候选，强制向左移动：{lastNodeCol} → {candidateCol}");
-                    }
-                    else
-                    {
-                        candidateCol = lastNodeCol;  // 保持当前列
-                        Debug.LogWarning($"[MapGenerator] Path() 在行 {row} 没有合适候选，保持当前列：{lastNodeCol}");
-                    }
-                }
+                int randomCandidateIndex = Random.Range(0, candidateCols.Count);
+                int candidateCol = candidateCols[randomCandidateIndex];
+                // // 【修复】检查候选列表是否为空，如果为空则智能选择方向
+                // int candidateCol;
+                // if (candidateCols.Count > 0)
+                // {
+                //     int randomCandidateIndex = Random.Range(0, candidateCols.Count);
+                //     candidateCol = candidateCols[randomCandidateIndex];
+                // }
+                // else
+                // {
+                //     // 后备方案：强制向目标方向移动
+                //     if (toCol > lastNodeCol && lastNodeCol + 1 < config.GridWidth)
+                //     {
+                //         candidateCol = lastNodeCol + 1;  // 向右移动
+                //         Debug.LogWarning($"[MapGenerator] Path() 在行 {row} 没有合适候选，强制向右移动：{lastNodeCol} → {candidateCol}");
+                //     }
+                //     else if (toCol < lastNodeCol && lastNodeCol - 1 >= 0)
+                //     {
+                //         candidateCol = lastNodeCol - 1;  // 向左移动
+                //         Debug.LogWarning($"[MapGenerator] Path() 在行 {row} 没有合适候选，强制向左移动：{lastNodeCol} → {candidateCol}");
+                //     }
+                //     else
+                //     {
+                //         candidateCol = lastNodeCol;  // 保持当前列
+                //         Debug.LogWarning($"[MapGenerator] Path() 在行 {row} 没有合适候选，保持当前列：{lastNodeCol}");
+                //     }
+                // }
                 
                 Vector2Int nextPoint = new Vector2Int(candidateCol, row);
 
