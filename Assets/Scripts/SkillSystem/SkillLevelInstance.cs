@@ -88,7 +88,7 @@ public class SkillLevelInstance
         
         if (effectExecuted)
         {
-            Debug.Log($"[技能等级] {parentSkillName} Lv{config.level} 触发成功！");
+            Debug.Log($"✓ [技能] {parentSkillName} Lv{config.level} 触发成功！");
             
             // 第四步：发布技能执行完毕事件（带实例ID）
             var skillEvent = new SkillExecutedEventData
@@ -105,7 +105,7 @@ public class SkillLevelInstance
         }
         else
         {
-            Debug.LogError($"[SkillLevelInstance] ❌ 技能等级执行失败 - 技能: {parentSkillName} Lv{config.level}");
+            Debug.LogError($"[SkillLevelInstance] ❌ 技能执行失败 - {parentSkillName} Lv{config.level}");
         }
         
         return effectExecuted;

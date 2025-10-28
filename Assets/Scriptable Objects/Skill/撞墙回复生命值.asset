@@ -140,6 +140,12 @@ MonoBehaviour:
         minValue: 0
         maxValue: 1
         dataExtractorType: 0
+      - resetType: 1
+        comparisonType: 1
+        targetValue: 0.99
+        minValue: 0
+        maxValue: 1
+        dataExtractorType: 0
     effectRemovalConfig:
       removalType: 0
       duration: 30

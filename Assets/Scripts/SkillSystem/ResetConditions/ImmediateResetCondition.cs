@@ -48,20 +48,9 @@ public class ImmediateResetCondition : IResetCondition
         if (eventData is SkillExecutedEventData skillEvent)
         {
             // 只响应对应技能实例的事件
-            if (skillEvent.SkillInstanceId == targetSkillInstanceId)
-            {
-                Debug.Log($"[{ConditionName}] 响应技能 {skillEvent.SkillName} 执行完毕事件，立即重置");
-                return true;
-            }
-            else
-            {
-                Debug.Log($"[{ConditionName}] 忽略其他技能的事件 - 目标: {targetSkillInstanceId}, 事件来源: {skillEvent.SkillInstanceId}");
-                return false;
-            }
+            return skillEvent.SkillInstanceId == targetSkillInstanceId;
         }
         
-        // 其他事件类型不响应
-        Debug.Log($"[{ConditionName}] 忽略非技能执行完毕事件: {eventData?.GetType().Name}");
         return false;
     }
 

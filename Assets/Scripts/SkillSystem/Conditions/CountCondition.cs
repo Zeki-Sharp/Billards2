@@ -42,6 +42,8 @@ public class CountCondition : ICondition
         currentCount++;
         bool conditionMet = currentCount >= requiredCount;
         
+        Debug.Log($"<color=cyan>[CountCondition] 计数更新 - 当前: {currentCount}/{requiredCount}, 条件满足: {conditionMet}</color>");
+        
         return conditionMet;
     }
     
@@ -50,6 +52,7 @@ public class CountCondition : ICondition
     /// </summary>
     public void Reset()
     {
+        Debug.Log($"<color=yellow>[CountCondition] 重置计数器 - 从 {currentCount} 重置为 0</color>");
         currentCount = 0;
     }
     

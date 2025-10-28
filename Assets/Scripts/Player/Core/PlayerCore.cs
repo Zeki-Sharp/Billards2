@@ -183,17 +183,20 @@ public class PlayerCore : MonoBehaviour
         // 初始化血量（检查是否有保存的数据）
         float maxHealth = playerData != null ? playerData.maxHealth : 100f;
         
+        // 调试：输出 GameRuntimeData 完整状态
+        Debug.Log($"[PlayerCore] 初始化血量前，GameRuntimeData 状态:\n{GameRuntimeData.GetDebugInfo()}");
+        
         // ✅ 从静态数据恢复血量
         if (GameRuntimeData.HasCurrentHealthData())
         {
             currentHealth = GameRuntimeData.GetCurrentHealth();
-            Debug.Log($"[PlayerCore] 从 GameRuntimeData 恢复血量: {currentHealth}/{maxHealth}");
+            Debug.Log($"[PlayerCore] ✅ 从 GameRuntimeData 恢复血量: {currentHealth}/{maxHealth}");
         }
         else
         {
             // 没有保存数据时，正常初始化
             currentHealth = maxHealth; // 初始化为满血
-            Debug.Log($"[PlayerCore] 使用默认满血: {currentHealth}/{maxHealth}");
+            Debug.Log($"[PlayerCore] ⚠️ 没有保存数据，使用默认满血: {currentHealth}/{maxHealth}");
         }
         
         // ✅ 恢复最大血量（如果有技能修改）

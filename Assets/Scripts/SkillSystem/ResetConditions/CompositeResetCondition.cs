@@ -56,26 +56,19 @@ public class CompositeResetCondition : IResetCondition
     {
         if (resetConditions.Count == 0)
         {
-            Debug.LogWarning($"[{ConditionName}] 没有重置条件，默认返回false");
             return false;
         }
-        
-        bool result;
         
         if (logicType == ResetLogicType.And)
         {
             // AND 逻辑：所有重置条件都必须满足
-            result = resetConditions.All(resetCondition => resetCondition.ShouldReset(eventData));
-            Debug.Log($"[{ConditionName}] AND 逻辑检查: {result} (需要所有 {resetConditions.Count} 个重置条件都满足)");
+            return resetConditions.All(resetCondition => resetCondition.ShouldReset(eventData));
         }
         else
         {
             // OR 逻辑：任一重置条件满足即可
-            result = resetConditions.Any(resetCondition => resetCondition.ShouldReset(eventData));
-            Debug.Log($"[{ConditionName}] OR 逻辑检查: {result} (需要任一 {resetConditions.Count} 个重置条件满足)");
+            return resetConditions.Any(resetCondition => resetCondition.ShouldReset(eventData));
         }
-        
-        return result;
     }
     
     /// <summary>

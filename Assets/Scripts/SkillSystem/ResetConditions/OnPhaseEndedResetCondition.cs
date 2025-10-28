@@ -26,23 +26,13 @@ public class OnPhaseEndedResetCondition : IResetCondition
         // 检查事件类型是否为回合结束事件
         if (eventData is GameFlowStateChangedData stateData)
         {
-            bool shouldReset = stateData.NewState == GameFlowState.PlayerPhaseEnd;
-            if (shouldReset)
-            {
-                Debug.Log($"[{ConditionName}] 检测到回合结束事件，应该重置触发条件");
-            }
-            return shouldReset;
+            return stateData.NewState == GameFlowState.PlayerPhaseEnd;
         }
         
         // 检查是否为GameFlowState枚举类型
         if (eventData is GameFlowState gameFlowState)
         {
-            bool shouldReset = gameFlowState == GameFlowState.PlayerPhaseEnd;
-            if (shouldReset)
-            {
-                Debug.Log($"[{ConditionName}] 检测到回合结束状态，应该重置触发条件");
-            }
-            return shouldReset;
+            return gameFlowState == GameFlowState.PlayerPhaseEnd;
         }
         
         return false;

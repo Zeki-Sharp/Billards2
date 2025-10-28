@@ -37,10 +37,18 @@ public class CollisionTrigger : ITrigger
         // 检查事件数据类型
         if (eventData is AttackData attackData)
         {
+            // 【关键修复1】检查是否在玩家回合
+            var gameFlowController = GameFlowController.Instance;
+            bool isPlayerPhase = gameFlowController != null && gameFlowController.IsPlayerPhase;
+            
+            // 【关键修复2】检查攻击者是否是玩家
+            bool isPlayerAttacker = attackData.Attacker != null && attackData.Attacker.CompareTag("Player");
+            
             // 检查目标标签是否匹配
             bool tagMatches = string.IsNullOrEmpty(targetTag) || attackData.TargetTag == targetTag;
             
-            if (tagMatches)
+            // 只有当在玩家回合、攻击者是玩家且目标标签匹配时才触发
+            if (isPlayerPhase && isPlayerAttacker && tagMatches)
             {
                 return true;
             }

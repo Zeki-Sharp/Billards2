@@ -5815,13 +5815,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 27b701b03471ef64292458037b5373b2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  gameUIPanel: {fileID: 627852901}
+  topBarController: {fileID: 0}
   skillSelectionUI: {fileID: 0}
   hudCanvas: {fileID: 0}
   fullScreenCanvas: {fileID: 0}
   popupCanvas: {fileID: 0}
   victoryPanelPath: UI/Popups/VictoryPanel
   gameOverPanelPath: UI/Popups/GameOverPanel
+  skillStatusPanelPath: UI/Popups/SkillStatusPanel
   showDebugInfo: 1
 --- !u!4 &590523341
 Transform:
@@ -5843,17 +5844,6 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 1362388125337236367, guid: 8d1b8029e79b32847bca2556d6a6772d, type: 3}
   m_PrefabInstance: {fileID: 5000217683689486514}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &627852901 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 3195589572723333799, guid: 8d1b8029e79b32847bca2556d6a6772d, type: 3}
-  m_PrefabInstance: {fileID: 5000217683689486514}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fdc4b1f78328b584ab75cde44481e3c1, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!1 &660658135
 GameObject:
   m_ObjectHideFlags: 0
@@ -8491,7 +8481,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c87ee035e12f35e4ea7b74d34431d6fa, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  activeSkills: []
+  activeSkills:
+  - {fileID: 11400000, guid: 20ef6b51707253b4bbf5e4ff06cc86a6, type: 2}
   enableDebugLog: 1
 --- !u!4 &1357681023
 Transform:
@@ -9365,7 +9356,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9eb8b3e10f1c8534fa2853e4d5402b59, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  autoDiscoverSkills: 1
+  skillDatabase: {fileID: 0}
   skillSelectionCount: 3
   showDebugInfo: 1
 --- !u!4 &1462007128
