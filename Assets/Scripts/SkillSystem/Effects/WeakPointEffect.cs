@@ -95,7 +95,7 @@ public class WeakPointEffect : IEffect
     /// <summary>
     /// 重置效果（技能被移除时调用）
     /// </summary>
-    public void Reset()
+    public void RemoveEffect()
     {
         Debug.Log($"[{EffectName}] 清理弱点系统");
         

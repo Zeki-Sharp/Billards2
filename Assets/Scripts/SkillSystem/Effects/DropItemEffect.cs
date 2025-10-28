@@ -153,7 +153,7 @@ public class DropItemEffect : IEffect
     /// <summary>
     /// 重置效果状态
     /// </summary>
-    public void Reset()
+    public void RemoveEffect()
     {
         // 掉落效果是瞬时效果，不需要重置状态
     }

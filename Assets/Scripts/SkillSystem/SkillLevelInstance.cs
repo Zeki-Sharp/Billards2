@@ -50,6 +50,12 @@ public class SkillLevelInstance
         {
             valueComparisonResetCondition.SetDependencies(this.condition, this.effect);
         }
+        
+        // 如果是值比较效果移除条件，设置效果引用
+        if (this.effectRemovalCondition is ValueComparisonEffectRemovalCondition valueComparisonEffectRemovalCondition)
+        {
+            valueComparisonEffectRemovalCondition.SetDependencies(this.effect);
+        }
     }
     
     /// <summary>
@@ -59,7 +65,7 @@ public class SkillLevelInstance
     {
         trigger?.Reset();
         condition?.Reset();
-        effect?.Reset();
+        effect?.RemoveEffect();  // 移除效果（删除修改器）
         resetCondition?.Reset();
         effectRemovalCondition?.Reset();
     }
@@ -171,7 +177,7 @@ public class SkillLevelInstance
             bool shouldRemove = effectRemovalCondition.ShouldRemoveEffect(eventData);
             if (shouldRemove)
             {
-                effect.Reset();  // 移除效果（不影响 canExecute）
+                effect.RemoveEffect();  // 移除效果（删除修改器，不影响 canExecute）
             }
         }
     }

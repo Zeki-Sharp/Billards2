@@ -129,8 +129,8 @@ MonoBehaviour:
       logicType: 1
       resetConditions:
       - resetType: 2
-        comparisonType: 1
-        targetValue: 0.79
+        comparisonType: 2
+        targetValue: 0.69
         minValue: 0
         maxValue: 1
         dataExtractorType: 0
@@ -138,7 +138,7 @@ MonoBehaviour:
       removalType: 4
       duration: 30
       comparisonType: 2
-      targetValue: 0.79
+      targetValue: 0.69
       minValue: 0
       maxValue: 1
       dataExtractorType: 0

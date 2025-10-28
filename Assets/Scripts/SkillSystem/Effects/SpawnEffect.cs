@@ -43,7 +43,7 @@ public class SpawnEffect : IEffect
     /// <summary>
     /// 重置效果状态（空实现）
     /// </summary>
-    public void Reset()
+    public void RemoveEffect()
     {
         Debug.Log($"[{EffectName}] 重置效果 - 空占位符");
     }

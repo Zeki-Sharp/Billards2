@@ -25,9 +25,10 @@ public interface IEffect
     bool ExecuteEffect(object eventData);
     
     /// <summary>
-    /// 重置效果状态
+    /// 移除效果（删除所有修改器，重置 hasTriggered 标志）
+    /// 注意：不影响 canExecute，由 ResetCondition 控制
     /// </summary>
-    void Reset();
+    void RemoveEffect();
     
     /// <summary>
     /// 是否允许执行（完全由重置条件控制）

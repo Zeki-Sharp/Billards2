@@ -4,12 +4,11 @@ using UnityEngine;
 /// 值比较效果移除条件
 /// 基于数值比较来决定是否移除效果
 /// </summary>
-public class ValueComparisonEffectRemovalCondition : IEffectRemovalCondition
+public class ValueComparisonEffectRemovalCondition : BaseValueMonitorCondition, IEffectRemovalCondition
 {
     public string ConditionName => "ValueComparisonEffectRemovalCondition";
     
-    private ValueComparisonCondition valueCondition;
-    private DataExtractorType dataExtractorType;
+    private IEffect effect;
     
     /// <summary>
     /// 构造函数
@@ -19,11 +18,8 @@ public class ValueComparisonEffectRemovalCondition : IEffectRemovalCondition
     /// <param name="valueExtractor">值提取器</param>
     /// <param name="dataExtractorType">数据提取器类型</param>
     public ValueComparisonEffectRemovalCondition(ComparisonType comparisonType, float targetValue, System.Func<object, float> valueExtractor, DataExtractorType dataExtractorType)
+        : base(comparisonType, targetValue, valueExtractor, dataExtractorType)
     {
-        valueCondition = new ValueComparisonCondition();
-        valueCondition.SetComparison(comparisonType, targetValue);
-        valueCondition.SetValueExtractor(valueExtractor);
-        this.dataExtractorType = dataExtractorType;
     }
     
     /// <summary>
@@ -34,11 +30,8 @@ public class ValueComparisonEffectRemovalCondition : IEffectRemovalCondition
     /// <param name="valueExtractor">值提取器</param>
     /// <param name="dataExtractorType">数据提取器类型</param>
     public ValueComparisonEffectRemovalCondition(float minValue, float maxValue, System.Func<object, float> valueExtractor, DataExtractorType dataExtractorType)
+        : base(minValue, maxValue, valueExtractor, dataExtractorType)
     {
-        valueCondition = new ValueComparisonCondition();
-        valueCondition.SetRange(minValue, maxValue);
-        valueCondition.SetValueExtractor(valueExtractor);
-        this.dataExtractorType = dataExtractorType;
     }
     
     /// <summary>
@@ -46,7 +39,7 @@ public class ValueComparisonEffectRemovalCondition : IEffectRemovalCondition
     /// </summary>
     public void Initialize()
     {
-        valueCondition?.Initialize();
+        StartMonitoring();  // 调用基类方法开始监听
     }
     
     /// <summary>
@@ -56,13 +49,7 @@ public class ValueComparisonEffectRemovalCondition : IEffectRemovalCondition
     /// <returns>是否应该移除效果</returns>
     public bool ShouldRemoveEffect(object eventData)
     {
-        if (valueCondition == null)
-        {
-            Debug.LogWarning($"[{ConditionName}] 值比较条件未设置");
-            return false;
-        }
-        
-        bool shouldRemove = valueCondition.CheckCondition(eventData);
+        bool shouldRemove = CheckCondition(eventData);  // 调用基类方法
         
         if (shouldRemove)
         {
@@ -77,31 +64,36 @@ public class ValueComparisonEffectRemovalCondition : IEffectRemovalCondition
     /// </summary>
     public void Reset()
     {
-        valueCondition?.Reset();
+        StopMonitoring();  // 调用基类方法停止监听
+        Debug.Log($"[{ConditionName}] 已停止监听");
     }
     
     /// <summary>
-    /// 检查事件是否与数据提取器类型相关
+    /// 设置效果引用（用于实时移除效果）
     /// </summary>
-    /// <param name="eventData">事件数据</param>
-    /// <returns>是否相关</returns>
-    public bool IsEventRelevant(object eventData)
+    /// <param name="effect">效果引用</param>
+    public void SetDependencies(IEffect effect)
     {
-        switch (dataExtractorType)
+        this.effect = effect;
+        Debug.Log($"[{ConditionName}] 设置依赖组件 - 效果: {effect?.EffectName}");
+    }
+    
+    /// <summary>
+    /// 条件满足时的回调 - 实现基类抽象方法
+    /// EffectRemovalCondition 的特定处理：移除效果（删除修改器）
+    /// </summary>
+    protected override void OnConditionMet(object eventData)
+    {
+        // 移除效果
+        effect?.RemoveEffect();
+        
+        if (eventData is HealthStateData healthData)
         {
-            case DataExtractorType.Health:
-                return eventData is HealthStateData;
-            case DataExtractorType.Attack:
-                return eventData is AttackData;
-            case DataExtractorType.Defense:
-                return eventData is AttackData; // 防御通常与攻击事件相关
-            case DataExtractorType.Speed:
-                return false; // 速度变化事件暂未实现
-            case DataExtractorType.Mana:
-                return false; // 法力变化事件暂未实现
-            default:
-                Debug.LogWarning($"[{ConditionName}] 未知的数据提取器类型: {dataExtractorType}");
-                return false;
+            Debug.Log($"[{ConditionName}] 生命值变化触发效果移除 - 当前生命值: {healthData.HealthPercentage:P1}");
+        }
+        else
+        {
+            Debug.Log($"[{ConditionName}] 条件满足，已移除效果");
         }
     }
 }

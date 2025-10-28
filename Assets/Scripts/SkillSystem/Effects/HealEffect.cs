@@ -104,7 +104,7 @@ public class HealEffect : IEffect
     /// <summary>
     /// 重置效果状态
     /// </summary>
-    public void Reset()
+    public void RemoveEffect()
     {
         // 治疗是瞬时效果，无需重置
     }

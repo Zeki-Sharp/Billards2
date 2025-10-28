@@ -5,12 +5,10 @@ using UnityEngine;
 /// 基于数值比较来决定是否重置技能触发条件和效果状态
 /// 用于实现"当某个条件满足时重置技能"的逻辑
 /// </summary>
-public class ValueComparisonResetCondition : IResetCondition
+public class ValueComparisonResetCondition : BaseValueMonitorCondition, IResetCondition
 {
     public string ConditionName => "ValueComparisonResetCondition";
     
-    private ValueComparisonCondition valueCondition;
-    private DataExtractorType dataExtractorType;
     private ICondition condition;
     private IEffect effect;
     private string targetSkillInstanceId;
@@ -23,11 +21,8 @@ public class ValueComparisonResetCondition : IResetCondition
     /// <param name="valueExtractor">值提取器</param>
     /// <param name="dataExtractorType">数据提取器类型</param>
     public ValueComparisonResetCondition(ComparisonType comparisonType, float targetValue, System.Func<object, float> valueExtractor, DataExtractorType dataExtractorType)
+        : base(comparisonType, targetValue, valueExtractor, dataExtractorType)
     {
-        valueCondition = new ValueComparisonCondition();
-        valueCondition.SetComparison(comparisonType, targetValue);
-        valueCondition.SetValueExtractor(valueExtractor);
-        this.dataExtractorType = dataExtractorType;
     }
     
     /// <summary>
@@ -38,11 +33,8 @@ public class ValueComparisonResetCondition : IResetCondition
     /// <param name="valueExtractor">值提取器</param>
     /// <param name="dataExtractorType">数据提取器类型</param>
     public ValueComparisonResetCondition(float minValue, float maxValue, System.Func<object, float> valueExtractor, DataExtractorType dataExtractorType)
+        : base(minValue, maxValue, valueExtractor, dataExtractorType)
     {
-        valueCondition = new ValueComparisonCondition();
-        valueCondition.SetRange(minValue, maxValue);
-        valueCondition.SetValueExtractor(valueExtractor);
-        this.dataExtractorType = dataExtractorType;
     }
     
     /// <summary>
@@ -50,13 +42,7 @@ public class ValueComparisonResetCondition : IResetCondition
     /// </summary>
     public void Initialize()
     {
-        valueCondition?.Initialize();
-        
-        // 根据数据提取器类型订阅相应的事件
-        if (dataExtractorType == DataExtractorType.Health) {
-            GameEventBus.OnHealthChanged += OnHealthChanged;
-        }
-        // 其他数据类型可以后续添加
+        StartMonitoring();  // 调用基类方法开始监听
     }
     
     /// <summary>
@@ -66,13 +52,7 @@ public class ValueComparisonResetCondition : IResetCondition
     /// <returns>是否应该重置触发条件</returns>
     public bool ShouldReset(object eventData)
     {
-        if (valueCondition == null)
-        {
-            Debug.LogWarning($"[{ConditionName}] 值比较条件未设置");
-            return false;
-        }
-        
-        bool shouldReset = valueCondition.CheckCondition(eventData);
+        bool shouldReset = CheckCondition(eventData);  // 调用基类方法
         
         if (shouldReset)
         {
@@ -87,13 +67,8 @@ public class ValueComparisonResetCondition : IResetCondition
     /// </summary>
     public void Reset()
     {
-        // 取消订阅事件
-        if (dataExtractorType == DataExtractorType.Health) {
-            GameEventBus.OnHealthChanged -= OnHealthChanged;
-            Debug.Log($"[{ConditionName}] 取消订阅生命值变化事件");
-        }
-        
-        valueCondition?.Reset();
+        StopMonitoring();  // 调用基类方法停止监听
+        Debug.Log($"[{ConditionName}] 已停止监听");
     }
     
     /// <summary>
@@ -119,42 +94,22 @@ public class ValueComparisonResetCondition : IResetCondition
     }
     
     /// <summary>
-    /// 处理生命值变化事件
+    /// 条件满足时的回调 - 实现基类抽象方法
+    /// ResetCondition 的特定处理：重置触发条件 + 设置 canExecute
     /// </summary>
-    /// <param name="healthData">生命值数据</param>
-    private void OnHealthChanged(HealthStateData healthData)
+    protected override void OnConditionMet(object eventData)
     {
-        // 检查是否应该重置
-        if (ShouldReset(healthData)) {
-            // 重置触发条件和 canExecute
-            condition?.Reset();
-            effect?.SetCanExecute(true);
+        // 重置触发条件和 canExecute
+        condition?.Reset();
+        effect?.SetCanExecute(true);
+        
+        if (eventData is HealthStateData healthData)
+        {
             Debug.Log($"[{ConditionName}] 生命值变化触发重置 - 当前生命值: {healthData.HealthPercentage:P1}, 技能实例ID: {targetSkillInstanceId}");
         }
-    }
-    
-    /// <summary>
-    /// 检查事件是否与数据提取器类型相关
-    /// </summary>
-    /// <param name="eventData">事件数据</param>
-    /// <returns>是否相关</returns>
-    public bool IsEventRelevant(object eventData)
-    {
-        switch (dataExtractorType)
+        else
         {
-            case DataExtractorType.Health:
-                return eventData is HealthStateData;
-            case DataExtractorType.Attack:
-                return eventData is AttackData;
-            case DataExtractorType.Defense:
-                return eventData is AttackData; // 防御通常与攻击事件相关
-            case DataExtractorType.Speed:
-                return false; // 速度变化事件暂未实现
-            case DataExtractorType.Mana:
-                return false; // 法力变化事件暂未实现
-            default:
-                Debug.LogWarning($"[{ConditionName}] 未知的数据提取器类型: {dataExtractorType}");
-                return false;
+            Debug.Log($"[{ConditionName}] 条件满足，已重置触发条件");
         }
     }
 }

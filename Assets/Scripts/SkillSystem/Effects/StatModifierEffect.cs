@@ -332,9 +332,10 @@ public class StatModifierEffect : IEffect
     }
     
     /// <summary>
-    /// 重置效果状态（删除所有修改器）
+    /// 移除效果（删除所有修改器，重置 hasTriggered 标志）
+    /// 注意：不重置 canExecute，因为它完全由重置条件控制
     /// </summary>
-    public void Reset()
+    public void RemoveEffect()
     {
         Debug.Log($"[{EffectName}] 重置效果，删除所有修改器，当前数量: {appliedModifiers.Count}");
         

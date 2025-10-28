@@ -82,7 +82,7 @@ public class TransitionEffect : IEffect
     /// <summary>
     /// 重置效果状态
     /// </summary>
-    public void Reset()
+    public void RemoveEffect()
     {
         // TransitionEffect 作为参数设置器，不需要复杂的状态管理
         Debug.Log($"[{EffectName}] 重置效果状态");
