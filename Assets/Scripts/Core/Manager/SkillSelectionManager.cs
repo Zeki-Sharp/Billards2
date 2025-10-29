@@ -22,7 +22,11 @@ public class SkillSelectionOption
 /// - 处理技能选择事件
 /// - 将选中技能添加到玩家技能列表
 /// - 通知关卡管理器进入下一关卡
+/// 
+/// 【执行顺序】：LEVEL 层 (-30)
+/// 【依赖】：SYSTEM 层 (SkillManager)
 /// </summary>
+[DefaultExecutionOrder(ManagerExecutionOrder.LEVEL)]
 public class SkillSelectionManager : SingletonManager<SkillSelectionManager>
 {
     
@@ -53,13 +57,13 @@ public class SkillSelectionManager : SingletonManager<SkillSelectionManager>
     
     protected override void OnManagerCreated()
     {
-        // 订阅游戏重启事件
         GameEventBus.OnGameRestart += ResetState;
+        GameEventBus.OnLevelCompleted += OnLevelCompleted;
+        LoadSkillsFromDatabase();
     }
     
     protected override void OnManagerDestroyed()
     {
-        // 取消订阅
         GameEventBus.OnGameRestart -= ResetState;
         GameEventBus.OnLevelCompleted -= OnLevelCompleted;
     }
@@ -68,23 +72,8 @@ public class SkillSelectionManager : SingletonManager<SkillSelectionManager>
     
     void Start()
     {
-        InitializeSkillSelectionManager();
-    }
-    
-    /// <summary>
-    /// 初始化技能选择管理器
-    /// </summary>
-    void InitializeSkillSelectionManager()
-    {
-        // 获取组件引用
-        skillManager = SkillManager.GetOrCreateInstance(); // 使用单例，如果不存在则创建
-        levelManager = FindFirstObjectByType<LevelManager>();
-        
-        // 从数据库加载技能配置
-        LoadSkillsFromDatabase();
-        
-        // 订阅事件
-        GameEventBus.OnLevelCompleted += OnLevelCompleted;
+        skillManager = SkillManager.Instance;
+        levelManager = LevelManager.Instance;
         
         if (showDebugInfo)
         {

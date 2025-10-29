@@ -9,7 +9,11 @@ using System;
 /// - 管理场景之间的切换
 /// - 传递选中的角色数据到游戏场景
 /// - 提供统一的场景加载接口
+/// 
+/// 【执行顺序】：LEVEL 层 (-30)
+/// 【依赖】：SYSTEM 层
 /// </summary>
+[DefaultExecutionOrder(ManagerExecutionOrder.LEVEL)]
 public class SceneTransitionManager : SingletonManager<SceneTransitionManager>
 {
     
@@ -31,7 +35,7 @@ public class SceneTransitionManager : SingletonManager<SceneTransitionManager>
     {
         if (showDebugInfo)
         {
-            Debug.Log("SceneTransitionManager: 单例创建成功，将跨场景保留");
+            Debug.Log("SceneTransitionManager: 单例创建成功（LEVEL 层），将跨场景保留");
         }
     }
     

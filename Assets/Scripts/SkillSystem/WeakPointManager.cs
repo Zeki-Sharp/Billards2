@@ -5,7 +5,12 @@ using System.Collections.Generic;
 /// 弱点管理器 - 管理所有敌人的弱点系统
 /// 单例 MonoBehaviour，负责弱点的生成、判定、刷新和清理
 /// 实现 IDamageModifier 接口，作为高优先级伤害修改器
+/// 
+/// 【执行顺序】：SYSTEM 层 (-50)
+/// 【依赖】：GameManager (CORE 层)
+/// 【初始化】：OnManagerCreated 中启用系统和订阅事件
 /// </summary>
+[DefaultExecutionOrder(ManagerExecutionOrder.SYSTEM)]
 public class WeakPointManager : SingletonManager<WeakPointManager>, IDamageModifier
 {
     
@@ -117,14 +122,14 @@ public class WeakPointManager : SingletonManager<WeakPointManager>, IDamageModif
     
     protected override void OnManagerCreated()
     {
-        // 订阅游戏重启事件
+        // ✅ Manager 自身初始化
         GameEventBus.OnGameRestart += ResetState;
         
-        if (showDebugLog)
-            Debug.Log("[WeakPointManager] 单例创建成功");
-        
-        // 自动启用弱点系统，确保 DamageProcessor 能找到
+        // ✅ 自动启用弱点系统，确保 DamageProcessor 能找到
         Enable();
+        
+        if (showDebugLog)
+            Debug.Log("[WeakPointManager] 单例创建成功（SYSTEM 层）");
     }
     
     protected override void OnManagerDestroyed()
@@ -212,11 +217,11 @@ public class WeakPointManager : SingletonManager<WeakPointManager>, IDamageModif
         
         int enemiesAddedCount = 0;
         
-        // 方案1：通过 EnemyController 获取
-        EnemyController enemyController = FindFirstObjectByType<EnemyController>();
-        if (enemyController != null)
+        // 方案1：通过 EnemyManager 单例获取
+        EnemyManager enemyManager = EnemyManager.Instance;
+        if (enemyManager != null)
         {
-            foreach (Enemy enemy in enemyController.AllEnemies)
+            foreach (Enemy enemy in enemyManager.AllEnemies)
             {
                 if (enemy != null && !weakPoints.ContainsKey(enemy))
                 {

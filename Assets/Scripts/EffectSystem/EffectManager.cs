@@ -37,12 +37,15 @@ namespace DeepSpaceLabs.SAM
     /// 特效管理器 - 统一的特效管理系统
     /// 基于注册机制，监听游戏事件，管理所有特效的注册和播放
     /// 支持枚举类型安全的特效键名，提供统一的特效播放接口
+    /// 
+    /// 【执行顺序】：SYSTEM 层 (-50)
+    /// 【依赖】：GameManager (CORE 层)
+    /// 【初始化】：OnManagerCreated 中初始化，Start 中注册全局特效
     /// </summary>
-    public class EffectManager : MonoBehaviour
+    [DefaultExecutionOrder(ManagerExecutionOrder.SYSTEM)]
+    public class EffectManager : SingletonManager<EffectManager>
 {
-        #region 单例模式
-        
-    public static EffectManager Instance { get; private set; }
+        #region 配置与状态
     
     [Header("特效系统说明")]
     [TextArea(4, 6)]
@@ -60,25 +63,40 @@ namespace DeepSpaceLabs.SAM
     public List<EffectConfig> globalEffects = new List<EffectConfig>();
     
     
-    void Awake()
+    #region SingletonManager 重写
+    
+    protected override bool PersistAcrossScenes => false;
+    protected override bool EnableDebugLog => enableDebugLog;
+    
+    protected override void OnManagerCreated()
     {
-        // 单例模式
-        if (Instance == null)
-        {
-            Instance = this;
-            effectObjMMPlayerMap = new Dictionary<GameObject, Dictionary<string, MMF_Player>>();
-        }
-        else
-        {
-            Destroy(gameObject);
-            return;
-        }
+        // ✅ 初始化特效字典
+        effectObjMMPlayerMap = new Dictionary<GameObject, Dictionary<string, MMF_Player>>();
         
+        // ✅ 订阅事件（从 OnEnable 移到这里，确保只订阅一次）
+        GameEventBus.OnEffect += OnEffectEvent;
+        GameEventBus.OnAttack += OnAttackEvent;
+        GameEventBus.OnDeath += OnDeathEvent;
+        
+        if (enableDebugLog)
+        {
+            Debug.Log("[EffectManager] 单例创建成功（SYSTEM 层）");
+        }
     }
+    
+    protected override void OnManagerDestroyed()
+    {
+        // ✅ 取消订阅事件
+        GameEventBus.OnEffect -= OnEffectEvent;
+        GameEventBus.OnAttack -= OnAttackEvent;
+        GameEventBus.OnDeath -= OnDeathEvent;
+    }
+    
+    #endregion
     
     void Start()
     {
-        // 注册全局特效到EffectManager自己
+        // ✅ 注册全局特效（依赖场景加载，保留在 Start）
         RegisterGlobalEffects();
     }
     
@@ -100,25 +118,8 @@ namespace DeepSpaceLabs.SAM
         }
     }
     
-    void OnEnable()
-    {
-        // 订阅统一事件系统的特效事件
-        GameEventBus.OnEffect += OnEffectEvent;
-        
-        // 订阅游戏逻辑事件
-        GameEventBus.OnAttack += OnAttackEvent;
-        GameEventBus.OnDeath += OnDeathEvent;
-    }
-    
-    void OnDisable()
-    {
-        // 取消订阅统一事件系统的特效事件
-        GameEventBus.OnEffect -= OnEffectEvent;
-        
-        // 取消订阅游戏逻辑事件
-        GameEventBus.OnAttack -= OnAttackEvent;
-        GameEventBus.OnDeath -= OnDeathEvent;
-    }
+    // ✅ 事件订阅已移到 OnManagerCreated/OnManagerDestroyed
+    // 移除 OnEnable/OnDisable，避免重复订阅
         
         #endregion
         

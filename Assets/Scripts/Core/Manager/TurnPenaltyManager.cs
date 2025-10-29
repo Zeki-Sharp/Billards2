@@ -14,7 +14,12 @@ using UnityEngine;
 /// - 配置驱动：从 LevelConfig 读取惩罚参数
 /// - 单一职责：只负责回合计数和惩罚逻辑
 /// - 松耦合：通过 PlayerCore 的公共接口施加伤害
+/// 
+/// 【执行顺序】：SYSTEM 层 (-50)
+/// 【依赖】：GameManager (CORE 层)
+/// 【初始化】：OnManagerCreated 中订阅事件，Start 中初始化关卡
 /// </summary>
+[DefaultExecutionOrder(ManagerExecutionOrder.SYSTEM)]
 public class TurnPenaltyManager : SingletonManager<TurnPenaltyManager>
 {
     
@@ -43,9 +48,13 @@ public class TurnPenaltyManager : SingletonManager<TurnPenaltyManager>
     
     protected override void OnManagerCreated()
     {
+        // ✅ Manager 自身初始化（事件订阅）
+        GameEventBus.OnPlayerPlayingPhaseStarted += OnPlayerTurnStarted;
+        GameEventBus.OnLevelStarted += OnLevelStarted;
+        
         if (showDebugInfo)
         {
-            Debug.Log("TurnPenaltyManager: 单例创建成功，将跨场景保留");
+            Debug.Log("TurnPenaltyManager: 单例创建成功（SYSTEM 层），将跨场景保留");
         }
     }
     
@@ -60,16 +69,12 @@ public class TurnPenaltyManager : SingletonManager<TurnPenaltyManager>
     
     void Start()
     {
-        // 订阅事件
-        GameEventBus.OnPlayerPlayingPhaseStarted += OnPlayerTurnStarted;
-        GameEventBus.OnLevelStarted += OnLevelStarted;
-        
-        // 初始化当前关卡
+        // ✅ 场景相关初始化
         InitializeCurrentLevel();
         
         if (showDebugInfo)
         {
-            Debug.Log("TurnPenaltyManager: 初始化完成，已订阅事件");
+            Debug.Log("TurnPenaltyManager: 初始化完成");
         }
     }
     
@@ -108,7 +113,7 @@ public class TurnPenaltyManager : SingletonManager<TurnPenaltyManager>
         // 如果没有通过事件设置配置，尝试从 LevelManager 获取
         if (currentLevelConfig == null)
         {
-            LevelManager levelManager = FindFirstObjectByType<LevelManager>();
+            LevelManager levelManager = LevelManager.Instance;
             if (levelManager != null)
             {
                 currentLevelConfig = levelManager.GetCurrentLevelConfig();

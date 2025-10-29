@@ -19,7 +19,7 @@ public class EnemySpawner : BaseSpawner<EnemyData>
     [SerializeField] private bool showDebugInfo = true;
     
     // 组件引用
-    private EnemyController enemyController;
+    private EnemyManager enemyManager;
     
     protected override void Start()
     {
@@ -32,11 +32,11 @@ public class EnemySpawner : BaseSpawner<EnemyData>
     /// </summary>
     void InitializeSpawner()
     {
-        // 查找 EnemyController
-        enemyController = FindFirstObjectByType<EnemyController>();
-        if (enemyController == null)
+        // 直接访问单例
+        enemyManager = EnemyManager.Instance;
+        if (enemyManager == null)
         {
-            Debug.LogError("EnemySpawner: 未找到 EnemyController！");
+            Debug.LogError("EnemySpawner: 未找到 EnemyManager！");
         }
         
         // 如果没有设置父对象，使用当前对象
@@ -90,9 +90,9 @@ public class EnemySpawner : BaseSpawner<EnemyData>
             enemy.SetEnemyData(data);
             
             // 注册到预告列表（新生成的敌人先进入预告阶段）
-            if (enemyController != null)
+            if (enemyManager != null)
             {
-                enemyController.RegisterTelegraphingEnemy(enemy);
+                enemyManager.RegisterTelegraphingEnemy(enemy);
             }
             
         }

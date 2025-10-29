@@ -3,7 +3,12 @@ using UnityEngine;
 /// <summary>
 /// 游戏总管理器 - 负责游戏整体管理、胜负判断和生命周期
 /// 从原有的阶段管理器重构为游戏总控制器
+/// 
+/// 【执行顺序】：CORE 层 (-100)，最先执行
+/// 【依赖】：无依赖
+/// 【初始化】：OnManagerCreated 中初始化游戏状态
 /// </summary>
+[DefaultExecutionOrder(ManagerExecutionOrder.CORE)]
 public class GameManager : SingletonManager<GameManager>
 {
     
@@ -38,28 +43,27 @@ public class GameManager : SingletonManager<GameManager>
     {
         base.Awake(); // 必须先调用基类
         
-        // 设置全局物理参数（单例特殊逻辑）
+        //设置全局物理参数
         Physics2D.gravity = Vector2.zero;
-        Debug.Log("GameManager: 已禁用全局重力");
+        
+        if (EnableDebugLog)
+        {
+            Debug.Log("GameManager: 已禁用全局重力");
+        }
     }
     
     protected override void OnManagerCreated()
     {
-        // GameManager 初始化逻辑在 Start 中
+        // 初始化游戏状态
+        InitializeGameState();
+        
+        if (EnableDebugLog)
+        {
+            Debug.Log("GameManager: 初始化完成（CORE 层）");
+        }
     }
     
     #endregion
-    
-    void Start()
-    {
-        // 确保物理设置在Start中再次应用（防止构建时被覆盖）
-        Physics2D.gravity = Vector2.zero;
-        Debug.Log($"GameManager: 构建版本重力设置确认 - {Physics2D.gravity}");
-        
-        // 游戏初始化由GameInitializer负责
-        // 这里只做基本的游戏状态初始化
-        InitializeGameState();
-    }
     
     void Update()
     {
@@ -284,15 +288,15 @@ public class GameManager : SingletonManager<GameManager>
             }
         }
         
-        // 停止EnemyController的Invoke定时器
-        EnemyController enemyController = FindFirstObjectByType<EnemyController>();
-        if (enemyController != null)
+        // 停止 EnemyManager 的Invoke定时器
+        EnemyManager enemyManager = EnemyManager.Instance;
+        if (enemyManager != null)
         {
-            enemyController.CancelInvoke();
+            enemyManager.CancelInvoke();
         }
         
         // 停止EnemyPhaseController的Invoke定时器
-        EnemyPhaseController enemyPhaseController = FindFirstObjectByType<EnemyPhaseController>();
+        EnemyPhaseController enemyPhaseController = EnemyPhaseController.Instance;
         if (enemyPhaseController != null)
         {
             enemyPhaseController.CancelInvoke();

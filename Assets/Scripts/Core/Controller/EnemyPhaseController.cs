@@ -34,7 +34,7 @@ public class EnemyPhaseController : SingletonManager<EnemyPhaseController>
     private int currentEnemyPhaseIndex = 0;
     
     // 组件引用
-    private EnemyController enemyController;
+    private EnemyManager enemyManager;
     
     // 阶段切换事件
     public static System.Action<EnemyPhase> OnPhaseStart;
@@ -58,9 +58,9 @@ public class EnemyPhaseController : SingletonManager<EnemyPhaseController>
         CancelInvoke(); // 取消所有定时器
         
         // 取消事件订阅
-        if (enemyController != null)
+        if (enemyManager != null)
         {
-            enemyController.OnPhaseCanSwitch -= OnEnemyPhaseCanSwitch;
+            enemyManager.OnPhaseCanSwitch -= OnEnemyPhaseCanSwitch;
         }
     }
     
@@ -77,16 +77,16 @@ public class EnemyPhaseController : SingletonManager<EnemyPhaseController>
     /// </summary>
     void InitializeController()
     {
-        // 查找 EnemyController
-        enemyController = FindFirstObjectByType<EnemyController>();
-        if (enemyController == null)
+        // 直接访问单例
+        enemyManager = EnemyManager.Instance;
+        if (enemyManager == null)
         {
-            Debug.LogError("EnemyPhaseController: 未找到 EnemyController！");
+            Debug.LogError("EnemyPhaseController: 未找到 EnemyManager！");
         }
         else
         {
-            // 订阅 EnemyController 的阶段切换事件
-            enemyController.OnPhaseCanSwitch += OnEnemyPhaseCanSwitch;
+            // 订阅 EnemyManager 的阶段切换事件
+            enemyManager.OnPhaseCanSwitch += OnEnemyPhaseCanSwitch;
         }
         
         if (showDebugInfo)
@@ -161,13 +161,13 @@ public class EnemyPhaseController : SingletonManager<EnemyPhaseController>
         OnPhaseStart?.Invoke(phase);
         
         // 执行具体阶段逻辑
-        if (enemyController != null)
+        if (enemyManager != null)
         {
-            enemyController.ExecutePhase(phase);
+            enemyManager.ExecutePhase(phase);
         }
         else
         {
-            Debug.LogWarning("EnemyPhaseController: enemyController 为空！");
+            Debug.LogWarning("EnemyPhaseController: enemyManager 为空！");
         }
         
         // 不再使用定时器，由 EnemyController 通知阶段完成
@@ -183,9 +183,9 @@ public class EnemyPhaseController : SingletonManager<EnemyPhaseController>
         currentEnemyPhase = phase;
         OnPhaseStart?.Invoke(phase);
         
-        if (enemyController != null)
+        if (enemyManager != null)
         {
-            enemyController.ExecutePhase(phase);
+            enemyManager.ExecutePhase(phase);
         }
     }
     

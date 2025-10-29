@@ -5,7 +5,12 @@ using UnityEngine;
 /// 技能管理器 - 管理所有技能配置和运行时状态
 /// 替代 TestSkillChain，提供可配置的技能系统
 /// 使用单例模式，跨场景保留技能数据
+/// 
+/// 【执行顺序】：SYSTEM 层 (-50)，早于 Controller 层
+/// 【依赖】：GameManager (CORE 层)
+/// 【初始化】：OnManagerCreated 中订阅事件，Start 中初始化场景相关对象
 /// </summary>
+[DefaultExecutionOrder(ManagerExecutionOrder.SYSTEM)]
 public class SkillManager : SingletonManager<SkillManager>
 {
     [Header("技能配置")]
@@ -36,12 +41,13 @@ public class SkillManager : SingletonManager<SkillManager>
     
     protected override void OnManagerCreated()
     {
-        // 订阅游戏重启事件
+        // ✅ Manager 自身初始化（事件订阅）
         GameEventBus.OnGameRestart += ResetState;
+        SubscribeToEvents();
         
         if (enableDebugLog)
         {
-            Debug.Log("[SkillManager] 单例创建成功，将跨场景保留");
+            Debug.Log("[SkillManager] 单例创建成功（SYSTEM 层），将跨场景保留");
         }
     }
     
@@ -59,7 +65,7 @@ public class SkillManager : SingletonManager<SkillManager>
     
     void Start()
     {
-        // 查找技能状态管理器
+        // ✅ 场景相关初始化（需要查找场景对象）
         skillStateManager = FindFirstObjectByType<SkillStateManager>();
         if (skillStateManager == null)
         {
@@ -68,8 +74,6 @@ public class SkillManager : SingletonManager<SkillManager>
         
         // ✅ 重新初始化技能实例（保持技能配置，重建实例）
         ReinitializeSkillInstances();
-        
-        SubscribeToEvents();
     }
     
     #endregion

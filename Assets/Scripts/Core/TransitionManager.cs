@@ -227,7 +227,7 @@ public class TransitionManager : MonoBehaviour
     private bool HasTransitionSkill()
     {
         // 检查技能管理器中是否有 Transition 技能
-        SkillManager skillManager = FindFirstObjectByType<SkillManager>();
+        SkillManager skillManager = SkillManager.Instance;
         if (skillManager == null)
         {
             if (showDebugInfo)

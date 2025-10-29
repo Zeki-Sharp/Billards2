@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 
 /// <summary>
-/// 敌人控制器 - 管理敌人列表和阶段转换条件
+/// 敌人管理器 - 管理所有敌人实例和阶段执行
 /// 
 /// 【核心职责】：
 /// - 管理所有敌人实例列表
@@ -12,8 +12,12 @@ using System.Linq;
 /// - 协调 EnemySpawner 生成敌人
 /// - 向所有敌人发送阶段执行指令
 /// - 向 EnemyPhaseController 报告阶段完成
+/// 
+/// 【执行顺序】：CONTROLLER 层 (0)
+/// 【依赖】：SYSTEM 层
 /// </summary>
-public class EnemyController : MonoBehaviour
+[DefaultExecutionOrder(ManagerExecutionOrder.CONTROLLER)]
+public class EnemyManager : SingletonManager<EnemyManager>
 {
     [Header("敌人管理")]
     [SerializeField] private List<Enemy> telegraphingEnemies = new List<Enemy>(); // 预告阶段的敌人
@@ -37,50 +41,51 @@ public class EnemyController : MonoBehaviour
     [SerializeField] private bool showDebugInfo = true;
     
     // 阶段转换事件
-    public System.Action<EnemyPhase> OnPhaseCanSwitch; // 阶段可以切换事件
+    public System.Action<EnemyPhase> OnPhaseCanSwitch;
     
     // 公共属性
-    public List<Enemy> TelegraphingEnemies => telegraphingEnemies.Where(e => e != null).ToList(); // 预告阶段敌人列表
-    public List<Enemy> ActiveEnemies => activeEnemies.Where(e => e != null).ToList(); // 激活敌人列表
-    public List<Enemy> AllEnemies => TelegraphingEnemies.Concat(ActiveEnemies).ToList(); // 所有敌人列表
-    public int TelegraphingEnemyCount => telegraphingEnemies.Count(e => e != null); // 预告阶段敌人数量
-    public int ActiveEnemyCount => activeEnemies.Count(e => e != null); // 激活敌人数量
-    public int TotalEnemyCount => TelegraphingEnemyCount + ActiveEnemyCount; // 总敌人数量
+    public List<Enemy> TelegraphingEnemies => telegraphingEnemies.Where(e => e != null).ToList();
+    public List<Enemy> ActiveEnemies => activeEnemies.Where(e => e != null).ToList();
+    public List<Enemy> AllEnemies => TelegraphingEnemies.Concat(ActiveEnemies).ToList();
+    public int TelegraphingEnemyCount => telegraphingEnemies.Count(e => e != null);
+    public int ActiveEnemyCount => activeEnemies.Count(e => e != null);
+    public int TotalEnemyCount => TelegraphingEnemyCount + ActiveEnemyCount;
     
-    void Start()
+    #region SingletonManager 重写
+    
+    protected override bool PersistAcrossScenes => false;
+    protected override bool EnableDebugLog => showDebugInfo;
+    
+    protected override void OnManagerCreated()
     {
-        InitializeController();
-        ScanAndRegisterExistingEnemies();
+        if (showDebugInfo)
+        {
+            Debug.Log("EnemyManager: 单例创建成功（CONTROLLER 层）");
+        }
     }
     
-    void OnDestroy()
+    protected override void OnManagerDestroyed()
     {
-        // 取消所有定时器
         CancelInvoke();
     }
     
-    /// <summary>
-    /// 初始化控制器
-    /// </summary>
-    void InitializeController()
+    #endregion
+    
+    void Start()
     {
-        // 查找 EnemySpawner
         enemySpawner = FindFirstObjectByType<EnemySpawner>();
-        if (enemySpawner == null)
-        {
-            Debug.LogWarning("EnemyController: 未找到 EnemySpawner");
-        }
-        
-        // 查找 WaveSpawnTrigger
         waveSpawnTrigger = FindFirstObjectByType<Game.SpawnSystem.Triggers.WaveSpawnTrigger>();
+        
         if (waveSpawnTrigger == null)
         {
-            Debug.LogError("EnemyController: 未找到 WaveSpawnTrigger！");
+            Debug.LogError("EnemyManager: 未找到 WaveSpawnTrigger！");
         }
+        
+        ScanAndRegisterExistingEnemies();
         
         if (showDebugInfo)
         {
-            Debug.Log("EnemyController: 初始化完成");
+            Debug.Log("EnemyManager: 初始化完成");
         }
     }
     
@@ -98,7 +103,7 @@ public class EnemyController : MonoBehaviour
         
         if (showDebugInfo)
         {
-            Debug.Log($"EnemyController: 扫描到 {existingEnemies.Length} 个现有敌人，已加入激活列表");
+            Debug.Log($"EnemyManager: 扫描到 {existingEnemies.Length} 个现有敌人，已加入激活列表");
         }
     }
     
@@ -112,7 +117,7 @@ public class EnemyController : MonoBehaviour
             telegraphingEnemies.Add(enemy);
             if (showDebugInfo)
             {
-                Debug.Log($"EnemyController: 注册预告阶段敌人 {enemy.name}");
+                Debug.Log($"EnemyManager: 注册预告阶段敌人 {enemy.name}");
             }
         }
     }
@@ -138,7 +143,7 @@ public class EnemyController : MonoBehaviour
             
             if (showDebugInfo)
             {
-                Debug.Log($"EnemyController: 注册激活敌人 {enemy.name}");
+                Debug.Log($"EnemyManager: 注册激活敌人 {enemy.name}");
             }
         }
     }
@@ -168,7 +173,7 @@ public class EnemyController : MonoBehaviour
             
             if (removed && showDebugInfo)
             {
-                Debug.Log($"EnemyController: 注销敌人 {enemy.name}");
+                Debug.Log($"EnemyManager: 注销敌人 {enemy.name}");
             }
         }
     }
@@ -189,7 +194,7 @@ public class EnemyController : MonoBehaviour
             
             if (showDebugInfo)
             {
-                Debug.Log($"EnemyController: 敌人 {enemy.name} 从预告阶段转移到激活阶段");
+                Debug.Log($"EnemyManager: 敌人 {enemy.name} 从预告阶段转移到激活阶段");
             }
         }
     }
@@ -203,7 +208,7 @@ public class EnemyController : MonoBehaviour
         
         if (showDebugInfo)
         {
-            Debug.Log($"EnemyController: 执行阶段 {phase}");
+            Debug.Log($"EnemyManager: 执行阶段 {phase}");
         }
         
         // 根据阶段执行不同逻辑
@@ -229,7 +234,7 @@ public class EnemyController : MonoBehaviour
                 // 移动阶段使用回调，不启动定时器
                 break;
             default:
-                Debug.LogWarning($"EnemyController: 未知阶段 {phase}");
+                Debug.LogWarning($"EnemyManager: 未知阶段 {phase}");
                 break;
         }
     }
@@ -241,7 +246,7 @@ public class EnemyController : MonoBehaviour
     {
         if (showDebugInfo)
         {
-            Debug.Log($"EnemyController: 阶段 {currentExecutingPhase} 完成，可以切换到下一个阶段");
+            Debug.Log($"EnemyManager: 阶段 {currentExecutingPhase} 完成，可以切换到下一个阶段");
         }
         
         OnPhaseCanSwitch?.Invoke(currentExecutingPhase);
@@ -254,7 +259,7 @@ public class EnemyController : MonoBehaviour
     {
         if (showDebugInfo)
         {
-            Debug.Log("EnemyController: 执行预告阶段");
+            Debug.Log("EnemyManager: 执行预告阶段");
         }
         
         // 1. 生成新敌人（如果需要）并加入预告列表
@@ -267,7 +272,7 @@ public class EnemyController : MonoBehaviour
         else if (enemySpawner != null)
         {
             // 警告：没有配置WaveSpawnTrigger，无法生成敌人
-            Debug.LogError("EnemyController: 未配置WaveSpawnTrigger，无法生成敌人！请配置WaveSpawnTrigger组件。");
+            Debug.LogError("EnemyManager: 未配置WaveSpawnTrigger，无法生成敌人！请配置WaveSpawnTrigger组件。");
         }
         
         // 2. 对预告阶段的敌人执行预告（新生成的敌人）
@@ -291,7 +296,7 @@ public class EnemyController : MonoBehaviour
         
         if (showDebugInfo)
         {
-            Debug.Log($"EnemyController: 预告阶段完成 - 预告敌人: {telegraphingEnemies.Count}, 更新范围敌人: {activeEnemies.Count}");
+            Debug.Log($"EnemyManager: 预告阶段完成 - 预告敌人: {telegraphingEnemies.Count}, 更新范围敌人: {activeEnemies.Count}");
         }
     }
     
@@ -302,7 +307,7 @@ public class EnemyController : MonoBehaviour
     {
         if (showDebugInfo)
         {
-            Debug.Log("EnemyController: 执行生成阶段");
+            Debug.Log("EnemyManager: 执行生成阶段");
         }
         
         // 对预告阶段的敌人执行生成，生成后转移到激活列表
@@ -330,7 +335,7 @@ public class EnemyController : MonoBehaviour
     {
         if (showDebugInfo)
         {
-            Debug.Log("EnemyController: 执行攻击阶段");
+            Debug.Log("EnemyManager: 执行攻击阶段");
         }
         
         // 只对已激活的敌人执行攻击
@@ -347,7 +352,7 @@ public class EnemyController : MonoBehaviour
         
         if (showDebugInfo)
         {
-            Debug.Log($"EnemyController: 攻击阶段执行完成，{activeEnemies.Count} 个已激活敌人参与攻击");
+            Debug.Log($"EnemyManager: 攻击阶段执行完成，{activeEnemies.Count} 个已激活敌人参与攻击");
         }
     }
     
@@ -358,7 +363,7 @@ public class EnemyController : MonoBehaviour
     {
         if (showDebugInfo)
         {
-            Debug.Log("EnemyController: 执行移动阶段");
+            Debug.Log("EnemyManager: 执行移动阶段");
         }
         
         // 重置移动完成计数
@@ -370,7 +375,7 @@ public class EnemyController : MonoBehaviour
             // 如果没有激活的敌人，直接切换到下一个阶段
             if (showDebugInfo)
             {
-                Debug.Log("EnemyController: 没有激活的敌人，直接切换阶段");
+                Debug.Log("EnemyManager: 没有激活的敌人，直接切换阶段");
             }
             NotifyPhaseCanSwitch();
             return;

@@ -10,7 +10,11 @@ using System.Collections.Generic;
 /// - 检测关卡完成条件（敌人计数）
 /// - 处理关卡切换逻辑
 /// - 集成到现有的事件系统
+/// 
+/// 【执行顺序】：LEVEL 层 (-30)
+/// 【依赖】：SYSTEM 层
 /// </summary>
+[DefaultExecutionOrder(ManagerExecutionOrder.LEVEL)]
 public class LevelManager : SingletonManager<LevelManager>
 {
     
@@ -40,18 +44,18 @@ public class LevelManager : SingletonManager<LevelManager>
     
     protected override void OnManagerCreated()
     {
-        // 订阅游戏重启事件
         GameEventBus.OnGameRestart += ResetState;
+        GameEventBus.OnDeath += OnDeath;
+        SceneManager.sceneLoaded += OnSceneLoaded;
         
         if (showDebugInfo)
         {
-            Debug.Log("LevelManager: 单例创建成功，将跨场景保留");
+            Debug.Log("LevelManager: 单例创建成功（LEVEL 层），将跨场景保留");
         }
     }
     
     protected override void OnManagerDestroyed()
     {
-        // 取消订阅
         GameEventBus.OnGameRestart -= ResetState;
         GameEventBus.OnDeath -= OnDeath;
         SceneManager.sceneLoaded -= OnSceneLoaded;
@@ -61,28 +65,9 @@ public class LevelManager : SingletonManager<LevelManager>
     
     void Start()
     {
-        InitializeLevelManager();
-        
-        // 订阅场景加载完成事件
-        SceneManager.sceneLoaded += OnSceneLoaded;
-        
-        // 初始场景加载
-        LoadCurrentSceneLevel();
-    }
-    
-    /// <summary>
-    /// 初始化关卡管理器
-    /// </summary>
-    void InitializeLevelManager()
-    {
-        // 获取组件引用
         waveConfigProvider = FindFirstObjectByType<WaveConfigProvider>();
-        
-        // 订阅事件
-        GameEventBus.OnDeath += OnDeath;
-        
-        // 初始化敌人计数
         ResetEnemyCount();
+        LoadCurrentSceneLevel();
         
         if (showDebugInfo)
         {
