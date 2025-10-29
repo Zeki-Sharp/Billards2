@@ -32,10 +32,6 @@ public class Enemy : MonoBehaviour
     [Tooltip("敌人特效配置列表，在 Inspector 中直接拖拽 MMF_Player 组件")]
     public List<EffectConfig> effects = new List<EffectConfig>();
     
-    
-
-    
-    
     void Start()
     {
         // 获取行为组件

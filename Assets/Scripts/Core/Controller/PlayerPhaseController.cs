@@ -11,6 +11,7 @@ using MoreMountains.Tools;
 /// - 与 EnemyPhaseController 保持架构对称（都是流程编排器）
 /// 
 /// 【阶段定义】：
+/// - None: 未开始，初始状态（在 StartPlayerPhase 调用前）
 /// - PhaseStart: 回合开始，重置状态
 /// - Playing: 游玩中，委托给 PlayerStateMachine（Idle → Charging → Moving → MovingEnd）
 /// - PhaseEnd: 回合结束，清理并切换到敌人回合
@@ -33,6 +34,7 @@ public class PlayerPhaseController : SingletonManager<PlayerPhaseController>
     /// </summary>
     public enum PlayerPhase
     {
+        None,           // 未开始：初始状态
         PhaseStart,     // 回合开始：重置状态
         Playing,        // 游玩中：委托给 PlayerStateMachine
         PhaseEnd        // 回合结束：清理、切换到敌人回合
@@ -43,7 +45,7 @@ public class PlayerPhaseController : SingletonManager<PlayerPhaseController>
     [SerializeField] private bool showDebugInfo = true;
     
     // 当前阶段
-    private PlayerPhase currentPhase = PlayerPhase.PhaseStart;
+    private PlayerPhase currentPhase = PlayerPhase.None;
     
     // 组件引用
     private PlayerStateMachine playerStateMachine;
@@ -61,10 +63,7 @@ public class PlayerPhaseController : SingletonManager<PlayerPhaseController>
     
     protected override void OnManagerCreated()
     {
-        if (showDebugInfo)
-        {
-            Debug.Log("PlayerPhaseController: 单例创建成功（CONTROLLER 层）");
-        }
+        // 单例创建完成
     }
     
     #endregion
@@ -76,11 +75,6 @@ public class PlayerPhaseController : SingletonManager<PlayerPhaseController>
         if (playerStateMachine != null)
         {
             playerStateMachine.OnPlayingComplete += OnPlayingComplete;
-            
-            if (showDebugInfo)
-            {
-                Debug.Log("PlayerPhaseController: 初始化完成，已订阅 OnPlayingComplete 事件");
-            }
         }
         else
         {
@@ -103,27 +97,12 @@ public class PlayerPhaseController : SingletonManager<PlayerPhaseController>
     /// </summary>
     public void StartPlayerPhase()
     {
-        if (showDebugInfo)
-        {
-            Debug.Log("PlayerPhaseController: 开始玩家阶段");
-        }
-        
-        // 确保PlayerStateMachine引用正确
         if (playerStateMachine == null)
         {
-            playerStateMachine = FindFirstObjectByType<PlayerStateMachine>();
-            if (playerStateMachine != null)
-            {
-                playerStateMachine.OnPlayingComplete += OnPlayingComplete;
-            }
-            else
-            {
-                Debug.LogError("PlayerPhaseController: 在StartPlayerPhase时仍未找到PlayerStateMachine！");
-                return;
-            }
+            Debug.LogError("PlayerPhaseController: PlayerStateMachine 未初始化！");
+            return;
         }
         
-        // 从 PhaseStart 开始
         SwitchToPhase(PlayerPhase.PhaseStart);
     }
     
@@ -159,6 +138,10 @@ public class PlayerPhaseController : SingletonManager<PlayerPhaseController>
     {
         switch (phase)
         {
+            case PlayerPhase.None:
+                // None 状态不需要处理，只是初始状态
+                break;
+                
             case PlayerPhase.PhaseStart:
                 ExecutePhaseStart();
                 break;
@@ -178,11 +161,7 @@ public class PlayerPhaseController : SingletonManager<PlayerPhaseController>
     /// </summary>
     void ExitPhase(PlayerPhase phase)
     {
-        // 清理阶段特定逻辑
-        if (showDebugInfo)
-        {
-            Debug.Log($"PlayerPhaseController: 退出阶段 {phase}");
-        }
+        // 清理阶段特定逻辑（如果需要）
     }
     
     /// <summary>
@@ -190,13 +169,7 @@ public class PlayerPhaseController : SingletonManager<PlayerPhaseController>
     /// </summary>
     void ExecutePhaseStart()
     {
-        if (showDebugInfo)
-        {
-            Debug.Log("PlayerPhaseController: 执行 PhaseStart - 重置状态");
-        }
-        
         // 重置玩家状态（如果需要）
-        // 目前自动进入 Playing 阶段
         SwitchToPhase(PlayerPhase.Playing);
     }
     
@@ -205,30 +178,15 @@ public class PlayerPhaseController : SingletonManager<PlayerPhaseController>
     /// </summary>
     void ExecutePlaying()
     {
-        if (showDebugInfo)
-        {
-            Debug.Log("PlayerPhaseController: 执行 Playing - 委托给 PlayerStateMachine");
-        }
-        
-        // 调用 PlayerStateMachine 开始游玩
         if (playerStateMachine != null)
         {
             playerStateMachine.StartPlaying();
-            
-            // 发布 Playing 阶段开始事件（PlayerStateMachine 已准备好，状态为 Idle）
             GameEventBus.PublishPlayerPlayingPhaseStarted();
-            
-            if (showDebugInfo)
-            {
-                Debug.Log("PlayerPhaseController: 已发布 PlayerPlayingPhaseStarted 事件");
-            }
         }
         else
         {
             Debug.LogError("PlayerPhaseController: PlayerStateMachine 为 null！");
         }
-        
-        // 等待 PlayerStateMachine.OnPlayingComplete 事件
     }
     
     /// <summary>
@@ -236,11 +194,6 @@ public class PlayerPhaseController : SingletonManager<PlayerPhaseController>
     /// </summary>
     void OnPlayingComplete()
     {
-        if (showDebugInfo)
-        {
-            Debug.Log("PlayerPhaseController: Playing 阶段完成，进入 PhaseEnd");
-        }
-        
         SwitchToPhase(PlayerPhase.PhaseEnd);
     }
     
@@ -249,14 +202,7 @@ public class PlayerPhaseController : SingletonManager<PlayerPhaseController>
     /// </summary>
     void ExecutePhaseEnd()
     {
-        if (showDebugInfo)
-        {
-            Debug.Log("PlayerPhaseController: 执行 PhaseEnd - 清理并切换到敌人回合");
-        }
-        
-        // 清理临时状态
-        
-        // 通知 GameFlowController 玩家阶段完成
+        // 清理临时状态（如果需要）
         OnPlayerPhaseComplete?.Invoke();
     }
 }

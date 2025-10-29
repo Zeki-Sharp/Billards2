@@ -100,6 +100,7 @@ public struct BallStoppedData
 /// </summary>
 public enum GameFlowState
 {
+    None,           // 未开始（初始状态）
     PlayerPhase,    // 玩家阶段
     PlayerPhaseEnd, // 玩家阶段结束
     EnemyPhase,     // 敌人阶段

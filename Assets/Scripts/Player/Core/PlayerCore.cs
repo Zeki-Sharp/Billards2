@@ -208,8 +208,8 @@ public class PlayerCore : MonoBehaviour
         
         InitializeHealthBar(currentHealth);
         
-        // 延迟发布初始血量事件，确保 SkillManager 已经订阅
-        StartCoroutine(DelayedPublishInitialHealth());
+        // 发布初始血量事件（SkillManager 在 SYSTEM 层已初始化，无需延迟）
+        PublishInitialHealth();
         
         // 确保球体在初始化后完全停止
         if (ballPhysics != null)
@@ -601,15 +601,12 @@ public class PlayerCore : MonoBehaviour
     
     
     /// <summary>
-    /// 延迟发布初始血量事件，确保 SkillManager 已经订阅
+    /// 发布初始血量事件
     /// </summary>
-    private System.Collections.IEnumerator DelayedPublishInitialHealth()
+    private void PublishInitialHealth()
     {
-        // 等待一帧，确保所有 Start() 方法都执行完毕
-        yield return null;
-        
         float maxHealth = playerData != null ? playerData.maxHealth : 100f;
-        Debug.Log($"[PlayerCore] 延迟发布初始血量事件: {currentHealth}/{maxHealth}");
+        Debug.Log($"[PlayerCore] 发布初始血量事件: {currentHealth}/{maxHealth}");
         
         GameEventBus.PublishHealthChanged(new HealthStateData
         {

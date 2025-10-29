@@ -54,10 +54,7 @@ public class EnemyPhaseController : SingletonManager<EnemyPhaseController>
     
     protected override void OnManagerCreated()
     {
-        if (showDebugInfo)
-        {
-            Debug.Log("EnemyPhaseController: 单例创建成功（CONTROLLER 层）");
-        }
+        // 单例创建完成
     }
     
     protected override void OnManagerDestroyed()
@@ -84,11 +81,6 @@ public class EnemyPhaseController : SingletonManager<EnemyPhaseController>
         {
             enemyManager.OnPhaseCanSwitch += OnEnemyPhaseCanSwitch;
         }
-        
-        if (showDebugInfo)
-        {
-            Debug.Log("EnemyPhaseController: 初始化完成");
-        }
     }
     
     /// <summary>
@@ -96,12 +88,6 @@ public class EnemyPhaseController : SingletonManager<EnemyPhaseController>
     /// </summary>
     void OnEnemyPhaseCanSwitch(EnemyPhase completedPhase)
     {
-        if (showDebugInfo)
-        {
-            Debug.Log($"EnemyPhaseController: 收到阶段完成通知 - {completedPhase}");
-        }
-        
-        // 进入下一个阶段
         currentEnemyPhaseIndex++;
         ExecuteNextEnemyPhase();
     }
@@ -111,17 +97,8 @@ public class EnemyPhaseController : SingletonManager<EnemyPhaseController>
     /// </summary>
     public void StartEnemyPhase()
     {
-        CancelInvoke(); // 确保取消所有之前的定时器
-        
-        if (showDebugInfo)
-        {
-            Debug.Log("=== 敌人阶段开始 (由 GameFlowController 触发) ===");
-        }
-        
-        // 重置阶段索引
+        CancelInvoke();
         currentEnemyPhaseIndex = 0;
-        
-        // 开始执行第一个敌人阶段
         ExecuteNextEnemyPhase();
     }
     

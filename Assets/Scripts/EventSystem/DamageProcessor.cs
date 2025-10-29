@@ -5,10 +5,13 @@ using System.Linq;
 /// <summary>
 /// 伤害处理器 - 统一处理所有攻击伤害
 /// 按优先级顺序调用各个伤害修改器，然后发布处理完成的伤害数据
+/// 
+/// 【执行顺序】：SYSTEM 层 (-50)
+/// 【依赖】：无（自动注册场景中的 IDamageModifier）
 /// </summary>
-public class DamageProcessor : MonoBehaviour
+[DefaultExecutionOrder(ManagerExecutionOrder.SYSTEM)]
+public class DamageProcessor : SingletonManager<DamageProcessor>
 {
-    public static DamageProcessor Instance { get; private set; }
     
     #region 配置
     
@@ -20,59 +23,34 @@ public class DamageProcessor : MonoBehaviour
     
     #region 私有字段
     
-    /// <summary>
-    /// 注册的伤害修改器列表
-    /// </summary>
     private List<IDamageModifier> damageModifiers = new List<IDamageModifier>();
-    
-    /// <summary>
-    /// 处理统计信息
-    /// </summary>
     private int totalProcessedCount = 0;
     private int modifiedCount = 0;
     
     #endregion
     
-    #region Unity 生命周期
+    #region SingletonManager 重写
     
-    void Awake()
-    {
-        // 设置单例
-        if (Instance == null)
-        {
-            Instance = this;
-            //DontDestroyOnLoad(gameObject);
-            if (enableDebugLog)
-                Debug.Log("[DamageProcessor] 单例创建成功");
-        }
-        else
-        {
-            Debug.LogWarning("[DamageProcessor] 检测到重复实例，销毁");
-            Destroy(gameObject);
-        }
-    }
+    protected override bool PersistAcrossScenes => false;
+    protected override bool EnableDebugLog => enableDebugLog;
     
-    void Start()
+    protected override void OnManagerCreated()
     {
-        // 延迟一帧查找，确保所有 Awake 都执行完毕
-        StartCoroutine(DelayedRegistration());
-        
-        // 订阅攻击事件
         GameEventBus.OnAttack += ProcessAttackDamage;
     }
     
-    /// <summary>
-    /// 延迟注册伤害修改器
-    /// </summary>
-    System.Collections.IEnumerator DelayedRegistration()
+    protected override void OnManagerDestroyed()
     {
-        yield return null; // 等待一帧，确保所有 Awake 都执行完毕
-        
-        // 自动注册场景中的伤害修改器
+        GameEventBus.OnAttack -= ProcessAttackDamage;
+    }
+    
+    #endregion
+    
+    void Start()
+    {
         RegisterDamageModifiers();
         
-        // 总是显示初始化信息，帮助调试
-        Debug.Log($"[DamageProcessor] 初始化完成，注册了 {damageModifiers.Count} 个伤害修改器");
+        Debug.Log($"[DamageProcessor] 初始化完成（SYSTEM 层），注册了 {damageModifiers.Count} 个伤害修改器");
         
         if (damageModifiers.Count == 0)
         {
@@ -83,14 +61,6 @@ public class DamageProcessor : MonoBehaviour
             Debug.Log($"[DamageProcessor] 已注册的修改器：{string.Join(", ", damageModifiers.Select(m => m.ModifierName))}");
         }
     }
-    
-    void OnDestroy()
-    {
-        // 取消订阅攻击事件
-        GameEventBus.OnAttack -= ProcessAttackDamage;
-    }
-    
-    #endregion
     
     #region 伤害修改器管理
     

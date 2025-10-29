@@ -15,6 +15,7 @@ using UnityEngine;
 /// - 配置化设计，易于扩展
 /// - 可独立测试
 /// </summary>
+/// 
 public class ChargeSystem : MonoBehaviour
 {
     /// <summary>

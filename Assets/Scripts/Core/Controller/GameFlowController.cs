@@ -26,7 +26,7 @@ public class GameFlowController : SingletonManager<GameFlowController>
     [SerializeField] private bool showDebugInfo = true;
     
     // 当前状态
-    private GameFlowState currentState = GameFlowState.PlayerPhase;
+    private GameFlowState currentState = GameFlowState.None;
     
     // 阶段控制器引用
     private PlayerPhaseController playerPhaseController;
@@ -43,10 +43,7 @@ public class GameFlowController : SingletonManager<GameFlowController>
     
     protected override void OnManagerCreated()
     {
-        if (showDebugInfo)
-        {
-            Debug.Log("GameFlowController: 单例创建成功（CONTROLLER 层）");
-        }
+        // 单例创建完成
     }
     
     protected override void OnManagerDestroyed()
@@ -64,6 +61,8 @@ public class GameFlowController : SingletonManager<GameFlowController>
         SubscribeToEvents();
         
         OnGameStart?.Invoke();
+        
+        // 直接启动游戏流程
         SwitchToPlayerPhase();
     }
     
@@ -115,17 +114,13 @@ public class GameFlowController : SingletonManager<GameFlowController>
     {
         if (currentState == GameFlowState.PlayerPhase) return;
         
-        // 先发布敌人阶段结束事件
-        GameEventBus.PublishGameFlowStateChanged(GameFlowState.EnemyPhaseEnd);
-        
-        currentState = GameFlowState.PlayerPhase;
-        
-        if (showDebugInfo)
+        // 先发布敌人阶段结束事件（如果不是首次启动）
+        if (currentState != GameFlowState.None)
         {
-            Debug.Log("GameFlowController: 敌人阶段完成，切换到玩家阶段");
+            GameEventBus.PublishGameFlowStateChanged(GameFlowState.EnemyPhaseEnd);
         }
         
-        // 发布游戏流程状态变化事件
+        currentState = GameFlowState.PlayerPhase;
         GameEventBus.PublishGameFlowStateChanged(GameFlowState.PlayerPhase);
         
         // 启动玩家阶段
@@ -148,17 +143,8 @@ public class GameFlowController : SingletonManager<GameFlowController>
     {
         if (currentState == GameFlowState.EnemyPhase) return;
         
-        // 先发布玩家阶段结束事件
         GameEventBus.PublishGameFlowStateChanged(GameFlowState.PlayerPhaseEnd);
-        
         currentState = GameFlowState.EnemyPhase;
-        
-        if (showDebugInfo)
-        {
-            Debug.Log("GameFlowController: 玩家阶段完成，切换到敌人阶段");
-        }
-        
-        // 发布游戏流程状态变化事件
         GameEventBus.PublishGameFlowStateChanged(GameFlowState.EnemyPhase);
         
         // 启动敌人阶段
