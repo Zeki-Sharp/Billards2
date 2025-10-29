@@ -21,9 +21,8 @@ using MoreMountains.Tools;
 /// - 通过 OnPlayingComplete 事件接收完成通知
 /// - 所有 Phase 都是必然流程，可选能力属于技能系统
 /// </summary>
-public class PlayerPhaseController : MonoBehaviour
+public class PlayerPhaseController : SingletonManager<PlayerPhaseController>
 {
-    public static PlayerPhaseController Instance { get; private set; }
     
     /// <summary>
     /// 玩家阶段枚举（重构版 - 只保留必然流程）
@@ -52,18 +51,16 @@ public class PlayerPhaseController : MonoBehaviour
     // 公共属性
     public PlayerPhase CurrentPhase => currentPhase;
     
-    void Awake()
+    #region SingletonManager 重写
+    
+    protected override bool PersistAcrossScenes => false;
+    
+    protected override void OnManagerCreated()
     {
-        if (Instance == null)
-        {
-            Instance = this;
-            //DontDestroyOnLoad(gameObject);
-        }
-        else
-        {
-            Destroy(gameObject);
-        }
+        // PlayerPhaseController 初始化逻辑在延迟协程中
     }
+    
+    #endregion
     
     void Start()
     {
@@ -100,8 +97,10 @@ public class PlayerPhaseController : MonoBehaviour
         }
     }
     
-    void OnDestroy()
+    protected override void OnDestroy()
     {
+        base.OnDestroy();
+        
         if (playerStateMachine != null)
         {
             playerStateMachine.OnPlayingComplete -= OnPlayingComplete;

@@ -66,7 +66,7 @@ namespace DeepSpaceLabs.SAM
         if (Instance == null)
         {
             Instance = this;
-                effectObjMMPlayerMap = new Dictionary<GameObject, Dictionary<string, MMF_Player>>();
+            effectObjMMPlayerMap = new Dictionary<GameObject, Dictionary<string, MMF_Player>>();
         }
         else
         {
@@ -544,8 +544,8 @@ namespace DeepSpaceLabs.SAM
             Debug.LogWarning("EffectManager: 死亡事件中没有死亡对象");
         }
     }
-        
-        #endregion
-        
+    
+    #endregion
+    
     }
 }

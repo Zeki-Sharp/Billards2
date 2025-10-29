@@ -4,9 +4,8 @@ using UnityEngine;
 /// 游戏总管理器 - 负责游戏整体管理、胜负判断和生命周期
 /// 从原有的阶段管理器重构为游戏总控制器
 /// </summary>
-public class GameManager : MonoBehaviour
+public class GameManager : SingletonManager<GameManager>
 {
-    public static GameManager Instance { get; private set; }
     
     [Header("游戏状态")]
     [SerializeField] private bool isGameActive = true;
@@ -30,23 +29,26 @@ public class GameManager : MonoBehaviour
     // 暂停请求计数器（用于处理多个面板同时暂停的情况）
     private int pauseRequestCount = 0;
     
-    void Awake()
+    #region SingletonManager 重写
+    
+    protected override bool PersistAcrossScenes => false;
+    protected override bool EnableDebugLog => showDebugInfo;
+    
+    protected override void Awake()
     {
-        // 单例模式：确保只有一个GameManager实例
-        if (Instance == null)
-        {
-            Instance = this;
-            // 设置全局物理参数
-            Physics2D.gravity = Vector2.zero; // 禁用重力，台球不受重力影响
-            Debug.Log("GameManager: 已禁用全局重力");
-        }
-        else
-        {
-            Debug.LogWarning("发现多个GameManager实例，销毁重复的实例");
-            Destroy(gameObject);
-            return;
-        }
+        base.Awake(); // 必须先调用基类
+        
+        // 设置全局物理参数（单例特殊逻辑）
+        Physics2D.gravity = Vector2.zero;
+        Debug.Log("GameManager: 已禁用全局重力");
     }
+    
+    protected override void OnManagerCreated()
+    {
+        // GameManager 初始化逻辑在 Start 中
+    }
+    
+    #endregion
     
     void Start()
     {

@@ -23,9 +23,8 @@ public class SkillSelectionOption
 /// - 将选中技能添加到玩家技能列表
 /// - 通知关卡管理器进入下一关卡
 /// </summary>
-public class SkillSelectionManager : MonoBehaviour
+public class SkillSelectionManager : SingletonManager<SkillSelectionManager>
 {
-    public static SkillSelectionManager Instance { get; private set; }
     
     [Header("技能库配置")]
     [Tooltip("技能数据库 - 包含所有可用技能的配置")]
@@ -47,37 +46,29 @@ public class SkillSelectionManager : MonoBehaviour
     private List<SkillConfig> currentSelection = new List<SkillConfig>();
     private List<SkillSelectionOption> currentSelectionOptions = new List<SkillSelectionOption>(); // 保存选项（包含等级信息）
     
-    void Awake()
+    #region SingletonManager 重写
+    
+    protected override bool PersistAcrossScenes => true;
+    protected override bool EnableDebugLog => showDebugInfo;
+    
+    protected override void OnManagerCreated()
     {
-        // 单例模式
-        if (Instance == null)
-        {
-            Instance = this;
-            DontDestroyOnLoad(gameObject); // 保持跨场景存在
-            
-            // 订阅游戏重启事件
-            GameEventBus.OnGameRestart += ResetState;
-        }
-        else
-        {
-            Debug.LogWarning("发现多个SkillSelectionManager实例，销毁重复的实例");
-            Destroy(gameObject);
-            return;
-        }
+        // 订阅游戏重启事件
+        GameEventBus.OnGameRestart += ResetState;
     }
+    
+    protected override void OnManagerDestroyed()
+    {
+        // 取消订阅
+        GameEventBus.OnGameRestart -= ResetState;
+        GameEventBus.OnLevelCompleted -= OnLevelCompleted;
+    }
+    
+    #endregion
     
     void Start()
     {
         InitializeSkillSelectionManager();
-    }
-    
-    void OnDestroy()
-    {
-        // 取消订阅游戏重启事件
-        GameEventBus.OnGameRestart -= ResetState;
-        
-        // 取消订阅事件
-        GameEventBus.OnLevelCompleted -= OnLevelCompleted;
     }
     
     /// <summary>

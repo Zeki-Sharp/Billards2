@@ -6,9 +6,8 @@ using System.Collections.Generic;
 /// 单例 MonoBehaviour，负责弱点的生成、判定、刷新和清理
 /// 实现 IDamageModifier 接口，作为高优先级伤害修改器
 /// </summary>
-public class WeakPointManager : MonoBehaviour, IDamageModifier
+public class WeakPointManager : SingletonManager<WeakPointManager>, IDamageModifier
 {
-    public static WeakPointManager Instance { get; private set; }
     
     // 配置参数
     private GameObject markerPrefab;
@@ -111,30 +110,24 @@ public class WeakPointManager : MonoBehaviour, IDamageModifier
     
     #endregion
     
-    void Awake()
+    #region SingletonManager 重写
+    
+    protected override bool PersistAcrossScenes => true;
+    protected override bool EnableDebugLog => showDebugLog;
+    
+    protected override void OnManagerCreated()
     {
-        if (Instance == null)
-        {
-            Instance = this;
-            DontDestroyOnLoad(gameObject);
-            
-            // 订阅游戏重启事件
-            GameEventBus.OnGameRestart += ResetState;
-            
-            if (showDebugLog)
-                Debug.Log("[WeakPointManager] 单例创建成功");
-            
-            // 自动启用弱点系统，确保 DamageProcessor 能找到
-            Enable();
-        }
-        else
-        {
-            Debug.LogWarning("[WeakPointManager] 检测到重复实例，销毁");
-            Destroy(gameObject);
-        }
+        // 订阅游戏重启事件
+        GameEventBus.OnGameRestart += ResetState;
+        
+        if (showDebugLog)
+            Debug.Log("[WeakPointManager] 单例创建成功");
+        
+        // 自动启用弱点系统，确保 DamageProcessor 能找到
+        Enable();
     }
     
-    void OnDestroy()
+    protected override void OnManagerDestroyed()
     {
         // 取消订阅游戏重启事件
         GameEventBus.OnGameRestart -= ResetState;
@@ -143,17 +136,7 @@ public class WeakPointManager : MonoBehaviour, IDamageModifier
         UnsubscribeFromEvents();
     }
     
-    /// <summary>
-    /// 获取或创建管理器实例
-    /// </summary>
-    public static WeakPointManager GetOrCreateInstance()
-    {
-        if (Instance != null)
-            return Instance;
-        
-        GameObject managerObj = new GameObject("WeakPointManager");
-        return managerObj.AddComponent<WeakPointManager>();
-    }
+    #endregion
     
     /// <summary>
     /// 配置管理器参数

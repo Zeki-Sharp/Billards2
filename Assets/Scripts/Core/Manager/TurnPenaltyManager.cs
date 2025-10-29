@@ -15,9 +15,8 @@ using UnityEngine;
 /// - 单一职责：只负责回合计数和惩罚逻辑
 /// - 松耦合：通过 PlayerCore 的公共接口施加伤害
 /// </summary>
-public class TurnPenaltyManager : MonoBehaviour
+public class TurnPenaltyManager : SingletonManager<TurnPenaltyManager>
 {
-    public static TurnPenaltyManager Instance { get; private set; }
     
     [Header("组件引用")]
     [SerializeField] [Tooltip("玩家核心组件引用")]
@@ -37,29 +36,27 @@ public class TurnPenaltyManager : MonoBehaviour
     // 累计惩罚伤害（用于递增伤害计算）
     private float accumulatedPenaltyDamage = 0f;
     
-    void Awake()
+    #region SingletonManager 重写
+    
+    protected override bool PersistAcrossScenes => true;
+    protected override bool EnableDebugLog => showDebugInfo;
+    
+    protected override void OnManagerCreated()
     {
-        // 单例模式 + 跨场景持久化
-        if (Instance == null)
+        if (showDebugInfo)
         {
-            Instance = this;
-            DontDestroyOnLoad(gameObject);
-            
-            if (showDebugInfo)
-            {
-                Debug.Log("TurnPenaltyManager: 初始化为跨场景单例");
-            }
-        }
-        else
-        {
-            if (showDebugInfo)
-            {
-                Debug.Log("TurnPenaltyManager: 发现重复实例，销毁");
-            }
-            Destroy(gameObject);
-            return;
+            Debug.Log("TurnPenaltyManager: 单例创建成功，将跨场景保留");
         }
     }
+    
+    protected override void OnManagerDestroyed()
+    {
+        // 取消订阅事件
+        GameEventBus.OnPlayerPlayingPhaseStarted -= OnPlayerTurnStarted;
+        GameEventBus.OnLevelStarted -= OnLevelStarted;
+    }
+    
+    #endregion
     
     void Start()
     {
@@ -74,13 +71,6 @@ public class TurnPenaltyManager : MonoBehaviour
         {
             Debug.Log("TurnPenaltyManager: 初始化完成，已订阅事件");
         }
-    }
-    
-    void OnDestroy()
-    {
-        // 取消订阅事件
-        GameEventBus.OnPlayerPlayingPhaseStarted -= OnPlayerTurnStarted;
-        GameEventBus.OnLevelStarted -= OnLevelStarted;
     }
     
     /// <summary>

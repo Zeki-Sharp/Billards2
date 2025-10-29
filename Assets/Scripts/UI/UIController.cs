@@ -19,9 +19,8 @@ using System.Collections.Generic;
 /// - 单例模式：全局唯一实例
 /// - 中介者模式：协调各面板交互
 /// </summary>
-public class UIController : MonoBehaviour
+public class UIController : SingletonManager<UIController>
 {
-    public static UIController Instance { get; private set; }
     
     [Header("预放置面板")]
     [SerializeField] private TopBarController topBarController;
@@ -48,10 +47,31 @@ public class UIController : MonoBehaviour
     private BasePanel currentPopupPanel = null;
     private BasePanel currentFullScreenPanel = null;
     
-    void Awake()
+    #region SingletonManager 重写
+    
+    protected override bool PersistAcrossScenes => true;
+    protected override bool EnableDebugLog => showDebugInfo;
+    
+    protected override void OnManagerCreated()
     {
-        InitializeSingleton();
+        // 订阅游戏重启事件
+        GameEventBus.OnGameRestart += ResetState;
+        
+        if (showDebugInfo)
+        {
+            Debug.Log("UIController: 单例创建成功，将跨场景保留");
+        }
     }
+    
+    protected override void OnManagerDestroyed()
+    {
+        // 取消订阅游戏重启事件
+        GameEventBus.OnGameRestart -= ResetState;
+        
+        UnsubscribeFromEvents();
+    }
+    
+    #endregion
     
     void Start()
     {
@@ -68,45 +88,7 @@ public class UIController : MonoBehaviour
         }
     }
     
-    void OnDestroy()
-    {
-        // 取消订阅游戏重启事件
-        GameEventBus.OnGameRestart -= ResetState;
-        
-        UnsubscribeFromEvents();
-    }
-    
-    #region 单例和初始化
-    
-    /// <summary>
-    /// 初始化单例
-    /// </summary>
-    void InitializeSingleton()
-    {
-        if (Instance == null)
-        {
-            Instance = this;
-            DontDestroyOnLoad(gameObject);
-            
-            // 订阅游戏重启事件
-            GameEventBus.OnGameRestart += ResetState;
-            
-            if (showDebugInfo)
-            {
-                Debug.Log("UIController: 单例创建，设置为DontDestroyOnLoad");
-            }
-        }
-        else
-        {
-            if (showDebugInfo)
-            {
-                Debug.LogWarning("UIController: 发现重复实例，销毁当前对象");
-            }
-            Destroy(gameObject);
-        }
-
-        DontDestroyOnLoad(gameObject);
-    }
+    #region 初始化
     
     /// <summary>
     /// 初始化UI系统

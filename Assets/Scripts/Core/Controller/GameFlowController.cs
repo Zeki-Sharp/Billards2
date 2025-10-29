@@ -14,9 +14,8 @@ using MoreMountains.Tools;
 /// - 通过事件系统与阶段控制器通信
 /// - 保持架构的对称性和清晰性
 /// </summary>
-public class GameFlowController : MonoBehaviour
+public class GameFlowController : SingletonManager<GameFlowController>
 {
-    public static GameFlowController Instance { get; private set; }
     
     
     [Header("调试")]
@@ -33,20 +32,22 @@ public class GameFlowController : MonoBehaviour
     public System.Action<GameFlowState> OnStateChanged;
     public System.Action OnGameStart;
     
-    void Awake()
+    #region SingletonManager 重写
+    
+    protected override bool PersistAcrossScenes => false;
+    protected override bool EnableDebugLog => showDebugInfo;
+    
+    protected override void OnManagerCreated()
     {
-        // 单例模式
-        if (Instance == null)
-        {
-            Instance = this;
-        }
-        else
-        {
-            Debug.LogWarning("发现多个GameFlowController实例，销毁重复的实例");
-            Destroy(gameObject);
-            return;
-        }
+        // GameFlowController 初始化逻辑在延迟协程中
     }
+    
+    protected override void OnManagerDestroyed()
+    {
+        UnsubscribeFromEvents();
+    }
+    
+    #endregion
     
     void Start()
     {
@@ -67,11 +68,6 @@ public class GameFlowController : MonoBehaviour
         
         // 自动启动玩家阶段
         SwitchToPlayerPhase();
-    }
-    
-    void OnDestroy()
-    {
-        UnsubscribeFromEvents();
     }
     
     void InitializeControllers()

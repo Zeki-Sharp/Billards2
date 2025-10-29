@@ -8,9 +8,8 @@ using MoreMountains.Feedbacks;
 /// 负责全局伤害数字的生成、回收和对象池管理
 /// 监听攻击事件系统，当有伤害值时显示伤害数字
 /// </summary>
-public class DamageTextManager : MonoBehaviour
+public class DamageTextManager : SingletonManager<DamageTextManager>
 {
-    public static DamageTextManager Instance { get; private set; }
     
     [Header("配置")]
     [Tooltip("伤害数字配置")]
@@ -52,20 +51,27 @@ public class DamageTextManager : MonoBehaviour
     // Canvas 管理
     private Canvas damageTextCanvas;
     
-    void Awake()
+    #region SingletonManager 重写
+    
+    /// <summary>
+    /// 配置：不跨场景保留（场景级别的管理器）
+    /// </summary>
+    protected override bool PersistAcrossScenes => false;
+    
+    /// <summary>
+    /// 配置：启用调试日志
+    /// </summary>
+    protected override bool EnableDebugLog => enableDebugLog;
+    
+    /// <summary>
+    /// Manager 创建时调用（替代原来的 Awake + InitializeManager）
+    /// </summary>
+    protected override void OnManagerCreated()
     {
-        // 单例模式
-        if (Instance == null)
-        {
-            Instance = this;
-            //DontDestroyOnLoad(gameObject);
-            InitializeManager();
-        }
-        else
-        {
-            Destroy(gameObject);
-        }
+        InitializeManager();
     }
+    
+    #endregion
     
     void OnEnable()
     {
@@ -315,9 +321,4 @@ public class DamageTextManager : MonoBehaviour
     }
     
     // GetPoolStatus 方法已删除，不再使用对象池
-    
-    void OnDestroy()
-    {
-        // 不再需要清理，对象由MMF自动销毁
-    }
 }

@@ -11,9 +11,8 @@ using System.Collections.Generic;
 /// - 处理关卡切换逻辑
 /// - 集成到现有的事件系统
 /// </summary>
-public class LevelManager : MonoBehaviour
+public class LevelManager : SingletonManager<LevelManager>
 {
-    public static LevelManager Instance { get; private set; }
     
     [Header("关卡配置")]
     [SerializeField] private string[] sceneNames;  // 场景名称数组（按关卡顺序）
@@ -34,40 +33,31 @@ public class LevelManager : MonoBehaviour
     private bool isLevelActive = false;
     private bool isLevelCompleted = false;
     
-    void Awake()
+    #region SingletonManager 重写
+    
+    protected override bool PersistAcrossScenes => true;
+    protected override bool EnableDebugLog => showDebugInfo;
+    
+    protected override void OnManagerCreated()
     {
+        // 订阅游戏重启事件
+        GameEventBus.OnGameRestart += ResetState;
+        
         if (showDebugInfo)
         {
-            Debug.Log($"LevelManager.Awake() 被调用 - 当前场景: {UnityEngine.SceneManagement.SceneManager.GetActiveScene().name}");
-            Debug.Log($"LevelManager.Awake() - Instance当前值: {Instance}");
-        }
-        
-        // 单例模式
-        if (Instance == null)
-        {
-            Instance = this;
-            DontDestroyOnLoad(gameObject); // 保持跨场景存在
-            
-            // 订阅游戏重启事件
-            GameEventBus.OnGameRestart += ResetState;
-            
-            if (showDebugInfo)
-            {
-                Debug.Log("LevelManager: 设置为单例实例，将跨场景保留");
-            }
-        }
-        else
-        {
-            if (showDebugInfo)
-            {
-                Debug.LogWarning($"LevelManager: 发现重复实例！当前场景: {UnityEngine.SceneManagement.SceneManager.GetActiveScene().name}");
-                Debug.LogWarning($"LevelManager: 现有实例在场景: {Instance.gameObject.scene.name}");
-                Debug.LogWarning("LevelManager: 销毁当前重复实例");
-            }
-            Destroy(gameObject);
-            return;
+            Debug.Log("LevelManager: 单例创建成功，将跨场景保留");
         }
     }
+    
+    protected override void OnManagerDestroyed()
+    {
+        // 取消订阅
+        GameEventBus.OnGameRestart -= ResetState;
+        GameEventBus.OnDeath -= OnDeath;
+        SceneManager.sceneLoaded -= OnSceneLoaded;
+    }
+    
+    #endregion
     
     void Start()
     {
@@ -78,16 +68,6 @@ public class LevelManager : MonoBehaviour
         
         // 初始场景加载
         LoadCurrentSceneLevel();
-    }
-    
-    void OnDestroy()
-    {
-        // 取消订阅游戏重启事件
-        GameEventBus.OnGameRestart -= ResetState;
-        
-        // 取消订阅事件
-        GameEventBus.OnDeath -= OnDeath;
-        SceneManager.sceneLoaded -= OnSceneLoaded;
     }
     
     /// <summary>

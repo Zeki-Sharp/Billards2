@@ -13,9 +13,8 @@ using UnityEngine;
 /// - 状态驱动，自动根据游戏流程调整
 /// - 可配置，时间缩放值可在Inspector中调整
 /// </summary>
-public class TimeManager : MonoBehaviour
+public class TimeManager : SingletonManager<TimeManager>
 {
-    public static TimeManager Instance { get; private set; }
     
     [Header("时间缩放设置")]
     [Tooltip("敌人时间缩放（Charging和Transition阶段）")]
@@ -50,20 +49,16 @@ public class TimeManager : MonoBehaviour
     private GameFlowController gameFlowController;
     private PlayerStateMachine playerStateMachine;
     
-    void Awake()
+    #region SingletonManager 重写
+    
+    protected override bool PersistAcrossScenes => false;
+    
+    protected override void OnManagerCreated()
     {
-        // 单例模式
-        if (Instance == null)
-        {
-            Instance = this;
-        }
-        else
-        {
-            Debug.LogWarning("发现多个TimeManager实例，销毁重复的实例");
-            Destroy(gameObject);
-            return;
-        }
+        // TimeManager 初始化逻辑在 Start 中
     }
+    
+    #endregion
     
     void Start()
     {

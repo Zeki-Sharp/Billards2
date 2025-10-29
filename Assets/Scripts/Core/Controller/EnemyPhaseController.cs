@@ -14,9 +14,8 @@ using UnityEngine;
 /// - 生成：生成上一回合预告的位置
 /// - 预告：预告下一个位置
 /// </summary>
-public class EnemyPhaseController : MonoBehaviour
+public class EnemyPhaseController : SingletonManager<EnemyPhaseController>
 {
-    public static EnemyPhaseController Instance { get; private set; }
     
     [Header("调试")]
     [SerializeField] private bool showDebugInfo = true;
@@ -45,26 +44,16 @@ public class EnemyPhaseController : MonoBehaviour
     // 公共属性
     public EnemyPhase CurrentEnemyPhase => currentEnemyPhase;
     
-    void Awake()
+    #region SingletonManager 重写
+    
+    protected override bool PersistAcrossScenes => false;
+    
+    protected override void OnManagerCreated()
     {
-        if (Instance == null)
-        {
-            Instance = this;
-            //DontDestroyOnLoad(gameObject);
-        }
-        else
-        {
-            Destroy(gameObject);
-        }
+        // EnemyPhaseController 初始化逻辑在 Start 中
     }
     
-    void Start()
-    {
-        InitializeController();
-        // 不再自动开始阶段循环，由 GameFlowController 控制
-    }
-    
-    void OnDestroy()
+    protected override void OnManagerDestroyed()
     {
         CancelInvoke(); // 取消所有定时器
         
@@ -73,6 +62,14 @@ public class EnemyPhaseController : MonoBehaviour
         {
             enemyController.OnPhaseCanSwitch -= OnEnemyPhaseCanSwitch;
         }
+    }
+    
+    #endregion
+    
+    void Start()
+    {
+        InitializeController();
+        // 不再自动开始阶段循环，由 GameFlowController 控制
     }
     
     /// <summary>

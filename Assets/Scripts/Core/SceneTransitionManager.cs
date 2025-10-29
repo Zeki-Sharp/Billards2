@@ -10,9 +10,8 @@ using System;
 /// - 传递选中的角色数据到游戏场景
 /// - 提供统一的场景加载接口
 /// </summary>
-public class SceneTransitionManager : MonoBehaviour
+public class SceneTransitionManager : SingletonManager<SceneTransitionManager>
 {
-    public static SceneTransitionManager Instance { get; private set; }
     
     [Header("场景配置")]
     [SerializeField] private string level1SceneName = "Level1";
@@ -23,29 +22,20 @@ public class SceneTransitionManager : MonoBehaviour
     // 静态数据存储 - 用于场景间传递数据
     private static PlayerData selectedCharacterData;
     
-    void Awake()
-    {
-        // 单例模式
-        if (Instance == null)
-        {
-            Instance = this;
-            DontDestroyOnLoad(gameObject); // 保持跨场景存在
-        }
-        else
-        {
-            Debug.LogWarning("发现多个SceneTransitionManager实例，销毁重复的实例");
-            Destroy(gameObject);
-            return;
-        }
-    }
+    #region SingletonManager 重写
     
-    void Start()
+    protected override bool PersistAcrossScenes => true;
+    protected override bool EnableDebugLog => showDebugInfo;
+    
+    protected override void OnManagerCreated()
     {
         if (showDebugInfo)
         {
-            Debug.Log("SceneTransitionManager: 初始化完成");
+            Debug.Log("SceneTransitionManager: 单例创建成功，将跨场景保留");
         }
     }
+    
+    #endregion
     
     /// <summary>
     /// 设置选中的角色数据

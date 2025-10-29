@@ -6,9 +6,8 @@ using UnityEngine;
 /// 替代 TestSkillChain，提供可配置的技能系统
 /// 使用单例模式，跨场景保留技能数据
 /// </summary>
-public class SkillManager : MonoBehaviour
+public class SkillManager : SingletonManager<SkillManager>
 {
-    public static SkillManager Instance { get; private set; }
     [Header("技能配置")]
     [Tooltip("激活的技能配置列表")]
     public List<SkillConfig> activeSkills = new List<SkillConfig>();
@@ -30,35 +29,33 @@ public class SkillManager : MonoBehaviour
     /// </summary>
     private HashSet<string> dropItemSkillNames = new HashSet<string>();
     
-    #region Unity生命周期
+    #region SingletonManager 重写
     
-    void Awake()
+    protected override bool PersistAcrossScenes => true;
+    protected override bool EnableDebugLog => enableDebugLog;
+    
+    protected override void OnManagerCreated()
     {
-        // 单例模式初始化
-        if (Instance == null)
+        // 订阅游戏重启事件
+        GameEventBus.OnGameRestart += ResetState;
+        
+        if (enableDebugLog)
         {
-            Instance = this;
-            DontDestroyOnLoad(gameObject); // 跨场景保留
-            
-            // 订阅游戏重启事件
-            GameEventBus.OnGameRestart += ResetState;
-            
-            if (enableDebugLog)
-            {
-                Debug.Log("[SkillManager] 单例初始化完成，将跨场景保留");
-            }
-        }
-        else
-        {
-            // 如果已经存在实例，销毁当前对象
-            if (enableDebugLog)
-            {
-                Debug.Log("[SkillManager] 检测到重复实例，销毁当前对象");
-            }
-            Destroy(gameObject);
-            return;
+            Debug.Log("[SkillManager] 单例创建成功，将跨场景保留");
         }
     }
+    
+    protected override void OnManagerDestroyed()
+    {
+        // 取消订阅游戏重启事件
+        GameEventBus.OnGameRestart -= ResetState;
+        
+        UnsubscribeFromEvents();
+    }
+    
+    #endregion
+    
+    #region Unity生命周期
     
     void Start()
     {
@@ -73,14 +70,6 @@ public class SkillManager : MonoBehaviour
         ReinitializeSkillInstances();
         
         SubscribeToEvents();
-    }
-    
-    void OnDestroy()
-    {
-        // 取消订阅游戏重启事件
-        GameEventBus.OnGameRestart -= ResetState;
-        
-        UnsubscribeFromEvents();
     }
     
     #endregion
@@ -350,27 +339,6 @@ public class SkillManager : MonoBehaviour
     #endregion
     
     #region 公共方法
-    
-    /// <summary>
-    /// 获取或创建 SkillManager 实例
-    /// </summary>
-    /// <returns>SkillManager 实例</returns>
-    public static SkillManager GetOrCreateInstance()
-    {
-        if (Instance == null)
-        {
-            // 如果没有实例，创建一个新的
-            GameObject skillManagerObj = new GameObject("SkillManager");
-            Instance = skillManagerObj.AddComponent<SkillManager>();
-            
-            if (Instance.enableDebugLog)
-            {
-                Debug.Log("[SkillManager] 自动创建了 SkillManager 实例");
-            }
-        }
-        
-        return Instance;
-    }
     
     /// <summary>
     /// 添加技能配置
