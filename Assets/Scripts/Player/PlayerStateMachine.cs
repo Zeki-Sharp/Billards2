@@ -20,7 +20,11 @@ using UnityEngine;
 /// - 单一职责：只管理操作状态转换
 /// - 通过GameEventBus响应输入和物理事件
 /// - 为技能系统提供触发点（MovingEnd状态）
+/// 
+/// 【执行顺序】：BEFORE_CONTROLLER (-10)，早于 Controller 层
+/// 【依赖】：同 GameObject 组件 (PlayerCore, ChargeSystem)
 /// </summary>
+[DefaultExecutionOrder(ManagerExecutionOrder.BEFORE_CONTROLLER)]
 public class PlayerStateMachine : MonoBehaviour
 {
     /// <summary>

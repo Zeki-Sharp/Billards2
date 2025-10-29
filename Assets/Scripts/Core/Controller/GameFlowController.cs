@@ -13,7 +13,11 @@ using MoreMountains.Tools;
 /// - 只管理顶层阶段切换
 /// - 通过事件系统与阶段控制器通信
 /// - 保持架构的对称性和清晰性
+/// 
+/// 【执行顺序】：CONTROLLER 层 (0)
+/// 【依赖】：SYSTEM 层, LEVEL 层
 /// </summary>
+[DefaultExecutionOrder(ManagerExecutionOrder.CONTROLLER)]
 public class GameFlowController : SingletonManager<GameFlowController>
 {
     
@@ -39,7 +43,10 @@ public class GameFlowController : SingletonManager<GameFlowController>
     
     protected override void OnManagerCreated()
     {
-        // GameFlowController 初始化逻辑在延迟协程中
+        if (showDebugInfo)
+        {
+            Debug.Log("GameFlowController: 单例创建成功（CONTROLLER 层）");
+        }
     }
     
     protected override void OnManagerDestroyed()
@@ -51,31 +58,13 @@ public class GameFlowController : SingletonManager<GameFlowController>
     
     void Start()
     {
-        // 延迟初始化，确保所有组件都已创建
-        StartCoroutine(DelayedInitialization());
-    }
-    
-    System.Collections.IEnumerator DelayedInitialization()
-    {
-        // 等待几帧，确保所有控制器都已创建和初始化
-        yield return new WaitForSeconds(0.1f);
-        
-        InitializeControllers();
-        SubscribeToEvents();
-        
-        // 启动游戏
-        OnGameStart?.Invoke();
-        
-        // 自动启动玩家阶段
-        SwitchToPlayerPhase();
-    }
-    
-    void InitializeControllers()
-    {
-        // 获取阶段控制器引用
         playerPhaseController = PlayerPhaseController.Instance;
         enemyPhaseController = EnemyPhaseController.Instance;
         
+        SubscribeToEvents();
+        
+        OnGameStart?.Invoke();
+        SwitchToPlayerPhase();
     }
     
     void SubscribeToEvents()

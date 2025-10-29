@@ -12,7 +12,11 @@ using UnityEngine;
 /// - 只影响移动和动画，不影响物理系统
 /// - 状态驱动，自动根据游戏流程调整
 /// - 可配置，时间缩放值可在Inspector中调整
+/// 
+/// 【执行顺序】：UTILITY 层 (10)
+/// 【依赖】：CONTROLLER 层
 /// </summary>
+[DefaultExecutionOrder(ManagerExecutionOrder.UTILITY)]
 public class TimeManager : SingletonManager<TimeManager>
 {
     
@@ -55,22 +59,21 @@ public class TimeManager : SingletonManager<TimeManager>
     
     protected override void OnManagerCreated()
     {
-        // TimeManager 初始化逻辑在 Start 中
+        Debug.Log("TimeManager: 单例创建成功（UTILITY 层）");
     }
     
     #endregion
     
     void Start()
     {
-        // 获取GameFlowController引用
         gameFlowController = GameFlowController.Instance;
+        playerStateMachine = FindFirstObjectByType<PlayerStateMachine>();
+        
         if (gameFlowController == null)
         {
             Debug.LogError("TimeManager: 未找到GameFlowController实例！");
         }
         
-        // 获取PlayerStateMachine引用
-        playerStateMachine = FindFirstObjectByType<PlayerStateMachine>();
         if (playerStateMachine == null)
         {
             Debug.LogError("TimeManager: 未找到PlayerStateMachine实例！");

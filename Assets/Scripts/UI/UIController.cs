@@ -18,7 +18,11 @@ using System.Collections.Generic;
 /// 【设计模式】：
 /// - 单例模式：全局唯一实例
 /// - 中介者模式：协调各面板交互
+/// 
+/// 【执行顺序】：UI 层 (50)
+/// 【依赖】：所有 Manager 层
 /// </summary>
+[DefaultExecutionOrder(ManagerExecutionOrder.UI)]
 public class UIController : SingletonManager<UIController>
 {
     

@@ -13,7 +13,11 @@ using UnityEngine;
 /// - 移动：敌人移动
 /// - 生成：生成上一回合预告的位置
 /// - 预告：预告下一个位置
+/// 
+/// 【执行顺序】：CONTROLLER 层 (0)
+/// 【依赖】：SYSTEM 层, EnemyManager (CONTROLLER 层)
 /// </summary>
+[DefaultExecutionOrder(ManagerExecutionOrder.CONTROLLER)]
 public class EnemyPhaseController : SingletonManager<EnemyPhaseController>
 {
     
@@ -50,7 +54,10 @@ public class EnemyPhaseController : SingletonManager<EnemyPhaseController>
     
     protected override void OnManagerCreated()
     {
-        // EnemyPhaseController 初始化逻辑在 Start 中
+        if (showDebugInfo)
+        {
+            Debug.Log("EnemyPhaseController: 单例创建成功（CONTROLLER 层）");
+        }
     }
     
     protected override void OnManagerDestroyed()
@@ -68,16 +75,6 @@ public class EnemyPhaseController : SingletonManager<EnemyPhaseController>
     
     void Start()
     {
-        InitializeController();
-        // 不再自动开始阶段循环，由 GameFlowController 控制
-    }
-    
-    /// <summary>
-    /// 初始化控制器
-    /// </summary>
-    void InitializeController()
-    {
-        // 直接访问单例
         enemyManager = EnemyManager.Instance;
         if (enemyManager == null)
         {
@@ -85,7 +82,6 @@ public class EnemyPhaseController : SingletonManager<EnemyPhaseController>
         }
         else
         {
-            // 订阅 EnemyManager 的阶段切换事件
             enemyManager.OnPhaseCanSwitch += OnEnemyPhaseCanSwitch;
         }
         

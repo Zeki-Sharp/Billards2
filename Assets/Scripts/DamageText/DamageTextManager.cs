@@ -7,7 +7,11 @@ using MoreMountains.Feedbacks;
 /// 伤害数字管理器
 /// 负责全局伤害数字的生成、回收和对象池管理
 /// 监听攻击事件系统，当有伤害值时显示伤害数字
+/// 
+/// 【执行顺序】：UTILITY 层 (10)
+/// 【依赖】：无
 /// </summary>
+[DefaultExecutionOrder(ManagerExecutionOrder.UTILITY)]
 public class DamageTextManager : SingletonManager<DamageTextManager>
 {
     

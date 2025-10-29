@@ -20,7 +20,11 @@ using MoreMountains.Tools;
 /// - 单向依赖：调用 PlayerStateMachine，不监听其状态变化
 /// - 通过 OnPlayingComplete 事件接收完成通知
 /// - 所有 Phase 都是必然流程，可选能力属于技能系统
+/// 
+/// 【执行顺序】：CONTROLLER 层 (0)
+/// 【依赖】：SYSTEM 层, PlayerStateMachine (COMPONENT 层)
 /// </summary>
+[DefaultExecutionOrder(ManagerExecutionOrder.CONTROLLER)]
 public class PlayerPhaseController : SingletonManager<PlayerPhaseController>
 {
     
@@ -57,31 +61,18 @@ public class PlayerPhaseController : SingletonManager<PlayerPhaseController>
     
     protected override void OnManagerCreated()
     {
-        // PlayerPhaseController 初始化逻辑在延迟协程中
+        if (showDebugInfo)
+        {
+            Debug.Log("PlayerPhaseController: 单例创建成功（CONTROLLER 层）");
+        }
     }
     
     #endregion
     
     void Start()
     {
-        // 延迟初始化，确保PlayerStateMachine已经被创建
-        StartCoroutine(DelayedInitialization());
-    }
-    
-    System.Collections.IEnumerator DelayedInitialization()
-    {
-        // 等待一帧，确保所有组件都已创建
-        yield return null;
-        
-        InitializeController();
-    }
-    
-    void InitializeController()
-    {
-        // 获取组件引用
         playerStateMachine = FindFirstObjectByType<PlayerStateMachine>();
         
-        // 订阅 PlayerStateMachine 的 Playing 完成事件
         if (playerStateMachine != null)
         {
             playerStateMachine.OnPlayingComplete += OnPlayingComplete;
