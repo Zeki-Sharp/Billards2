@@ -310,9 +310,21 @@ public class PlayerStateMachine : MonoBehaviour
     /// </summary>
     void OnChargingStarted()
     {
+        if (showDebugInfo)
+        {
+            Debug.Log($"PlayerStateMachine.OnChargingStarted: 收到蓄力开始事件，当前状态={currentState}");
+        }
+        
         if (currentState == PlayerState.Idle)
         {
             SwitchToState(PlayerState.Charging);
+        }
+        else
+        {
+            if (showDebugInfo)
+            {
+                Debug.LogWarning($"PlayerStateMachine.OnChargingStarted: 无法开始蓄力，当前状态不是Idle（当前={currentState}）");
+            }
         }
     }
     

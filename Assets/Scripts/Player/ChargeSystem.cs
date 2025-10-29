@@ -108,6 +108,12 @@ public class ChargeSystem : MonoBehaviour
     
     void Update()
     {
+        // 游戏暂停时，不更新蓄力进度
+        if (GameManager.Instance != null && GameManager.Instance.IsGamePaused)
+        {
+            return;
+        }
+        
         if (isCharging)
         {
             // 根据模式更新蓄力进度

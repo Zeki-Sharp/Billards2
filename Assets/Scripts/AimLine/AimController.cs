@@ -80,6 +80,12 @@ public class AimController : MonoBehaviour
     
     void Update()
     {
+        // 游戏暂停时，不更新瞄准线
+        if (GameManager.Instance != null && GameManager.Instance.IsGamePaused)
+        {
+            return;
+        }
+        
         UpdateAimLine();
         UpdateAimDirection();
     }

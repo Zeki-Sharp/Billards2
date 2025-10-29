@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.EventSystems;
+using System.Collections.Generic;
 
 /// <summary>
 /// 玩家输入处理器 - 统一处理所有玩家输入检测和分发
@@ -23,6 +24,10 @@ public class PlayerInputHandler : MonoBehaviour
 {
     [Header("输入设置")]
     [SerializeField] private bool showDebugInfo = true;
+    
+    [Header("UI检测设置")]
+    [Tooltip("阻挡点击的UI Layer（只勾选InteractiveUI，不勾选UI）")]
+    [SerializeField] private LayerMask blockingUILayers;
     
     // 组件引用
     private PlayerMovementController movementController; // 需要处理WASD移动
@@ -149,6 +154,12 @@ public class PlayerInputHandler : MonoBehaviour
         isChargeHeld = chargeAction.IsPressed();
         isChargeReleased = chargeAction.WasReleasedThisFrame();
         scrollDelta = scrollAction.ReadValue<float>();
+        
+        // 调试：记录鼠标点击
+        if (isChargePressed && showDebugInfo)
+        {
+            Debug.Log($"PlayerInputHandler.UpdateInputState: 检测到鼠标左键按下");
+        }
     }
     
     #endregion
@@ -160,7 +171,13 @@ public class PlayerInputHandler : MonoBehaviour
     /// </summary>
     void HandleInput()
     {
-        // 首先检查顶层权限：是否在玩家阶段
+        // 【优先级1】检查游戏是否暂停
+        if (GameManager.Instance != null && GameManager.Instance.IsGamePaused)
+        {
+            return; // 游戏暂停时，不处理任何输入
+        }
+        
+        // 【优先级2】检查顶层权限：是否在玩家阶段
         if (!permissionManager.CanProcessInputInCurrentPhase())
         {
             return; // 不在玩家阶段，不处理任何输入
@@ -174,18 +191,37 @@ public class PlayerInputHandler : MonoBehaviour
         
         // 处理滚轮输入（在蓄力状态下调节力度）
         if (chargeSystem != null && Mathf.Abs(scrollDelta) > 0.01f)
-        {
+        { 
             chargeSystem.ProcessScrollInput(scrollDelta);
         }
         
         // 【滚轮模式特殊处理】：点击发射（不受Idle状态限制，因为已自动进入蓄力状态）
+        // 先记录每个条件的状态用于调试
+        bool isScrollMode = chargeSystem != null && chargeSystem.CurrentChargeMode == ChargeSystem.ChargeMode.ScrollBased;
+        bool isCurrentlyCharging = chargeSystem != null && chargeSystem.IsCharging();
+        
+        // 如果是滚轮模式且点击了鼠标，无论是否在蓄力状态都记录日志
+        if (isChargePressed && isScrollMode && showDebugInfo)
+        {
+            Debug.Log($"PlayerInputHandler [滚轮模式]: 检测到鼠标点击 - isCharging={isCurrentlyCharging}, 当前力度={chargeSystem.GetCurrentForce():F2}, 阈值={chargeSystem.LaunchForceThreshold:F2}");
+        }
+        
         if (isChargePressed && chargeSystem != null && 
             chargeSystem.CurrentChargeMode == ChargeSystem.ChargeMode.ScrollBased && 
             chargeSystem.IsCharging())
         {
+            if (showDebugInfo)
+            {
+                Debug.Log($"PlayerInputHandler [滚轮模式]: 检测到点击，开始发射检查 - 当前力度={chargeSystem.GetCurrentForce():F2}");
+            }
+            
             // 检查鼠标是否在UI上
             if (IsPointerOverUI())
             {
+                if (showDebugInfo)
+                {
+                    Debug.LogWarning("PlayerInputHandler [滚轮模式]: 鼠标在UI上，忽略发射");
+                }
                 return;
             }
             
@@ -199,6 +235,10 @@ public class PlayerInputHandler : MonoBehaviour
                 return;
             }
             
+            if (showDebugInfo)
+            {
+                Debug.Log($"PlayerInputHandler [滚轮模式]: 所有检查通过，发射！力度={chargeSystem.GetCurrentForce():F2}");
+            }
             GameEventBus.PublishChargingStopped();
             return;
         }
@@ -248,7 +288,7 @@ public class PlayerInputHandler : MonoBehaviour
     #region UI检测
     
     /// <summary>
-    /// 检测鼠标是否在UI上
+    /// 检测鼠标是否在阻挡点击的UI上（使用LayerMask过滤）
     /// </summary>
     bool IsPointerOverUI()
     {
@@ -258,8 +298,37 @@ public class PlayerInputHandler : MonoBehaviour
             return false;
         }
         
-        // PC端：检测鼠标是否在UI上
-        return EventSystem.current.IsPointerOverGameObject();
+        // 创建PointerEventData
+        PointerEventData eventData = new PointerEventData(EventSystem.current);
+        eventData.position = Input.mousePosition;
+        
+        // 获取所有射线检测结果
+        List<RaycastResult> results = new List<RaycastResult>();
+        EventSystem.current.RaycastAll(eventData, results);
+        
+        // 检查是否有UI在阻挡Layer上
+        foreach (var result in results)
+        {
+            // 使用LayerMask的位运算检查
+            if (IsInLayerMask(result.gameObject.layer, blockingUILayers))
+            {
+                if (showDebugInfo)
+                {
+                    Debug.Log($"PlayerInputHandler: 检测到阻挡UI - {result.gameObject.name} (Layer: {LayerMask.LayerToName(result.gameObject.layer)})");
+                }
+                return true;
+            }
+        }
+        
+        return false;
+    }
+    
+    /// <summary>
+    /// 检查Layer是否在LayerMask中（工具方法）
+    /// </summary>
+    bool IsInLayerMask(int layer, LayerMask layerMask)
+    {
+        return ((1 << layer) & layerMask) != 0;
     }
     
     #endregion

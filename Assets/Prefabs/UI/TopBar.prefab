@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 6695130310126255146}
   - component: {fileID: 8299224759652313570}
   - component: {fileID: 956353110595579000}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: Back
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -88,7 +88,7 @@ GameObject:
   - component: {fileID: 2203408897644881991}
   - component: {fileID: 6725695297527323969}
   - component: {fileID: 3929925996811181931}
-  m_Layer: 5
+  m_Layer: 7
   m_Name: TopBar
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -198,7 +198,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1093312696630044989}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: PlayerHealthBar
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -234,7 +234,7 @@ GameObject:
   - component: {fileID: 1249136742105461153}
   - component: {fileID: 5981486930906668891}
   - component: {fileID: 2208659809756946089}
-  m_Layer: 5
+  m_Layer: 7
   m_Name: SettingsButton
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -351,7 +351,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4560718383079621621}
-  m_Layer: 5
+  m_Layer: 7
   m_Name: "\u8840\u91CF\u6587\u672C"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -391,7 +391,7 @@ GameObject:
   - component: {fileID: 8670867953547538280}
   - component: {fileID: 2242159228169313201}
   - component: {fileID: 1442077633485609904}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: Fill
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -467,7 +467,7 @@ GameObject:
   - component: {fileID: 4143389835141580728}
   - component: {fileID: 7236843885392426246}
   - component: {fileID: 6937445527469863812}
-  m_Layer: 5
+  m_Layer: 7
   m_Name: SkillButton
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -586,7 +586,7 @@ GameObject:
   - component: {fileID: 8408715771047522000}
   - component: {fileID: 7139294512893901691}
   - component: {fileID: 5888252265853949813}
-  m_Layer: 5
+  m_Layer: 7
   m_Name: Frame
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -659,7 +659,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5507966444519181013}
-  m_Layer: 5
+  m_Layer: 7
   m_Name: "\u89D2\u8272\u5934\u50CF"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -698,7 +698,7 @@ GameObject:
   - component: {fileID: 7472592251793329575}
   - component: {fileID: 1712982720408333848}
   - component: {fileID: 2648623587987798868}
-  m_Layer: 5
+  m_Layer: 7
   m_Name: currentHealth
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -834,7 +834,7 @@ GameObject:
   - component: {fileID: 1499091376140758908}
   - component: {fileID: 9174041553045293377}
   - component: {fileID: 5330828273171332382}
-  m_Layer: 5
+  m_Layer: 7
   m_Name: /
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -970,7 +970,7 @@ GameObject:
   - component: {fileID: 5622756193568561916}
   - component: {fileID: 6988067347540288411}
   - component: {fileID: 7130538834953218578}
-  m_Layer: 5
+  m_Layer: 7
   m_Name: CharacterIcon
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1045,7 +1045,7 @@ GameObject:
   - component: {fileID: 6596194775323502289}
   - component: {fileID: 8846133361008861078}
   - component: {fileID: 4794364431401562338}
-  m_Layer: 5
+  m_Layer: 7
   m_Name: totalHealth
   m_TagString: Untagged
   m_Icon: {fileID: 0}
