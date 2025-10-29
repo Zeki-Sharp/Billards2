@@ -27,10 +27,12 @@ public class PlayerInputHandler : MonoBehaviour
     // 组件引用
     private PlayerMovementController movementController; // 需要处理WASD移动
     private PlayerInputPermissionManager permissionManager; // 需要权限检查
+    private ChargeSystem chargeSystem; // 需要处理滚轮输入
     
     // Input System支持
     private InputAction moveAction;
     private InputAction chargeAction;
+    private InputAction scrollAction;
     private InputActionMap inputActionMap;
     
     // 输入状态
@@ -39,12 +41,14 @@ public class PlayerInputHandler : MonoBehaviour
     private bool isChargePressed;
     private bool isChargeHeld;
     private bool isChargeReleased;
+    private float scrollDelta;
     
     void Start()
     {
         // 获取组件引用
         movementController = GetComponent<PlayerMovementController>();
         permissionManager = GetComponent<PlayerInputPermissionManager>();
+        chargeSystem = GetComponent<ChargeSystem>();
         
         // 确保权限管理器存在
         if (permissionManager == null)
@@ -117,6 +121,9 @@ public class PlayerInputHandler : MonoBehaviour
         // 创建Charge Action
         chargeAction = inputActionMap.AddAction("Charge", InputActionType.Button, "<Mouse>/leftButton");
         
+        // 创建Scroll Action（鼠标滚轮）
+        scrollAction = inputActionMap.AddAction("Scroll", InputActionType.Value, "<Mouse>/scroll/y");
+        
         // 启用Actions
         inputActionMap.Enable();
         
@@ -141,6 +148,7 @@ public class PlayerInputHandler : MonoBehaviour
         isChargePressed = chargeAction.WasPressedThisFrame();
         isChargeHeld = chargeAction.IsPressed();
         isChargeReleased = chargeAction.WasReleasedThisFrame();
+        scrollDelta = scrollAction.ReadValue<float>();
     }
     
     #endregion
@@ -164,36 +172,72 @@ public class PlayerInputHandler : MonoBehaviour
             movementController.HandleMovement(moveInput, isMovePressed);
         }
         
-        // 处理蓄力输入（只在Normal子阶段允许）
+        // 处理滚轮输入（在蓄力状态下调节力度）
+        if (chargeSystem != null && Mathf.Abs(scrollDelta) > 0.01f)
+        {
+            chargeSystem.ProcessScrollInput(scrollDelta);
+        }
+        
+        // 【滚轮模式特殊处理】：点击发射（不受Idle状态限制，因为已自动进入蓄力状态）
+        if (isChargePressed && chargeSystem != null && 
+            chargeSystem.CurrentChargeMode == ChargeSystem.ChargeMode.ScrollBased && 
+            chargeSystem.IsCharging())
+        {
+            // 检查鼠标是否在UI上
+            if (IsPointerOverUI())
+            {
+                return;
+            }
+            
+            // 点击发射：检查阈值并发射
+            if (!chargeSystem.CanLaunch())
+            {
+                if (showDebugInfo)
+                {
+                    Debug.LogWarning($"PlayerInputHandler [滚轮模式]: 力度不足，无法发射（当前={chargeSystem.GetCurrentForce():F2}，需要>={chargeSystem.LaunchForceThreshold:F2}）");
+                }
+                return;
+            }
+            
+            GameEventBus.PublishChargingStopped();
+            return;
+        }
+        
+        // 【其他模式】处理蓄力输入（只在Idle状态允许）
         if (isChargePressed && permissionManager.CanChargeInCurrentSubPhase())
         {
-            // 检查鼠标是否在UI上（关键！）
+            // 检查鼠标是否在UI上
             if (IsPointerOverUI())
             {
                 if (showDebugInfo)
                 {
                     Debug.Log("PlayerInputHandler: 鼠标在UI上，忽略蓄力输入");
                 }
-                return; // 在UI上点击，不开始蓄力
+                return;
             }
             
+            // 滚轮模式已经自动进入蓄力，这里不需要处理
+            if (chargeSystem != null && chargeSystem.CurrentChargeMode == ChargeSystem.ChargeMode.ScrollBased)
+            {
+                // 滚轮模式不走这里，已经在上面处理
+                return;
+            }
+            
+            // 其他模式：左键按下开始蓄力
             if (showDebugInfo)
             {
                 Debug.Log("PlayerInputHandler: 检测到蓄力输入，发布蓄力开始事件");
             }
-            
-            // 直接发布蓄力开始事件
             GameEventBus.PublishChargingStarted();
         }
         
-        if (isChargeReleased)
+        // 非滚轮模式：左键释放停止蓄力
+        if (isChargeReleased && chargeSystem != null && chargeSystem.CurrentChargeMode != ChargeSystem.ChargeMode.ScrollBased)
         {
             if (showDebugInfo)
             {
                 Debug.Log("PlayerInputHandler: 检测到蓄力释放，发布蓄力停止事件");
             }
-            
-            // 直接发布蓄力停止事件
             GameEventBus.PublishChargingStopped();
         }
     }

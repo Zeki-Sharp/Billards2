@@ -23,7 +23,8 @@ public class ChargeSystem : MonoBehaviour
     public enum ChargeMode
     {
         TimeBased,    // 时间模式：力度随时间自动循环变化
-        BowPull       // 拉弓模式：力度基于拖拽距离
+        BowPull,      // 拉弓模式：力度基于拖拽距离
+        ScrollBased   // 滚轮模式：鼠标滚轮调节力度
     }
     
     [Header("蓄力模式设置")]
@@ -40,6 +41,10 @@ public class ChargeSystem : MonoBehaviour
     [Header("拉弓蓄力设置")]
     [SerializeField] [Tooltip("拉弓的最大距离（世界单位）")] private float maxPullDistance = 5f;
     [SerializeField] [Tooltip("拉弓的最小有效距离")] private float minPullDistance = 0.1f;
+    
+    [Header("滚轮蓄力设置")]
+    [SerializeField] [Tooltip("滚轮灵敏度")] private float scrollSensitivity = 0.5f;
+    [SerializeField] [Tooltip("发射力度阈值（小于此值不能发射）")] private float launchForceThreshold = 1f;
     
     [Header("组件引用")]
     [SerializeField] private PlayerCore playerCore; // 用于获取球位置
@@ -60,6 +65,9 @@ public class ChargeSystem : MonoBehaviour
     private Vector2 bowPullDirection = Vector2.zero; // 拉弓方向（从起始位置指向当前位置）
     private Vector2 launchDirection = Vector2.zero; // 发射方向（拉弓方向的反向）
     
+    // 滚轮模式状态
+    private float scrollAccumulatedValue = 0f; // 累计滚轮输入值
+    
     // 时停特效状态（暂未使用）
     // private bool timestopEffectTriggered = false; // 是否已触发时停入场特效
     
@@ -71,6 +79,16 @@ public class ChargeSystem : MonoBehaviour
         GameEventBus.OnChargingStarted += StartCharging;
         GameEventBus.OnChargingStopped += StopCharging;
         GameEventBus.OnChargingReset += ResetCharging;
+        
+        // 【滚轮模式】订阅玩家 Playing 阶段开始事件，自动进入蓄力
+        if (chargeMode == ChargeMode.ScrollBased)
+        {
+            GameEventBus.OnPlayerPlayingPhaseStarted += OnPlayerPlayingPhaseStarted;
+            Debug.Log("ChargeSystem [滚轮模式]: 已订阅 PlayerPlayingPhaseStarted 事件");
+            
+            // 延迟检查初始游戏状态（处理初次进入关卡的情况）
+            StartCoroutine(CheckInitialGameState());
+        }
     }
     
     void OnDestroy()
@@ -79,6 +97,12 @@ public class ChargeSystem : MonoBehaviour
         GameEventBus.OnChargingStarted -= StartCharging;
         GameEventBus.OnChargingStopped -= StopCharging;
         GameEventBus.OnChargingReset -= ResetCharging;
+        
+        // 取消订阅 PlayerPlayingPhaseStarted 事件
+        if (chargeMode == ChargeMode.ScrollBased)
+        {
+            GameEventBus.OnPlayerPlayingPhaseStarted -= OnPlayerPlayingPhaseStarted;
+        }
     }
     
     void Update()
@@ -93,6 +117,10 @@ public class ChargeSystem : MonoBehaviour
             else if (chargeMode == ChargeMode.BowPull)
             {
                 UpdateChargingProgress_BowPull();
+            }
+            else if (chargeMode == ChargeMode.ScrollBased)
+            {
+                UpdateChargingProgress_ScrollBased();
             }
         }
     }
@@ -129,6 +157,16 @@ public class ChargeSystem : MonoBehaviour
             if (showDebugInfo && showModeInfo)
             {
                 Debug.Log($"ChargeSystem [拉弓模式]: 开始蓄力，拉弓中心（球位置）: {bowPullStartPosition}");
+            }
+        }
+        else if (chargeMode == ChargeMode.ScrollBased)
+        {
+            // 滚轮模式：重置累计值
+            scrollAccumulatedValue = 0f;
+            
+            if (showDebugInfo && showModeInfo)
+            {
+                Debug.Log("ChargeSystem [滚轮模式]: 开始蓄力，等待滚轮输入调节力度");
             }
         }
         else
@@ -168,6 +206,7 @@ public class ChargeSystem : MonoBehaviour
         bowPullStartPosition = Vector3.zero;
         bowPullDirection = Vector2.zero;
         launchDirection = Vector2.zero;
+        scrollAccumulatedValue = 0f;
         
         GameEventBus.PublishChargingProgressChanged(0f);
         GameEventBus.PublishForceChanged(0f);
@@ -275,6 +314,39 @@ public class ChargeSystem : MonoBehaviour
         currentForce = Mathf.Lerp(minForce, maxForce, chargingPower);
     }
     
+    /// <summary>
+    /// 更新蓄力进度 - 滚轮模式
+    /// </summary>
+    void UpdateChargingProgress_ScrollBased()
+    {
+        if (!isCharging) return;
+        
+        // 根据累计的滚轮值计算蓄力进度（0-1）
+        chargingPower = Mathf.Clamp01(scrollAccumulatedValue);
+        
+        // 计算当前力度
+        CalculateCurrentForce_ScrollBased();
+        
+        // 触发事件
+        GameEventBus.PublishChargingProgressChanged(chargingPower);
+        GameEventBus.PublishForceChanged(currentForce);
+        
+        // 调试信息（每帧都打印，便于调试）
+        if (showDebugInfo && Time.frameCount % 60 == 0) // 每秒打印一次
+        {
+            Debug.Log($"ChargeSystem [滚轮模式]: 滚轮累计值={scrollAccumulatedValue:F2}, 蓄力进度={chargingPower:F2}, 当前力度={currentForce:F2}, 阈值={launchForceThreshold:F2}");
+        }
+    }
+    
+    /// <summary>
+    /// 计算当前力度 - 滚轮模式
+    /// </summary>
+    void CalculateCurrentForce_ScrollBased()
+    {
+        // 滚轮模式：基于蓄力进度计算力度
+        currentForce = Mathf.Lerp(minForce, maxForce, chargingPower);
+    }
+    
     #endregion
     
     #region 公共接口
@@ -333,11 +405,49 @@ public class ChargeSystem : MonoBehaviour
         }
         else
         {
-            // 时间模式：从球指向鼠标
+            // 时间模式和滚轮模式：从球指向鼠标
             Vector3 mouseWorldPos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
             mouseWorldPos.z = 0;
             Vector2 direction = (mouseWorldPos - ballPosition).normalized;
             return direction;
+        }
+    }
+    
+    /// <summary>
+    /// 处理滚轮输入（由 PlayerInputHandler 调用）
+    /// </summary>
+    /// <param name="scrollDelta">滚轮输入增量</param>
+    public void ProcessScrollInput(float scrollDelta)
+    {
+        if (!isCharging || chargeMode != ChargeMode.ScrollBased) return;
+        
+        // 累加滚轮输入（考虑灵敏度）
+        scrollAccumulatedValue += scrollDelta * scrollSensitivity;
+        
+        // 限制在 0-1 范围内
+        scrollAccumulatedValue = Mathf.Clamp01(scrollAccumulatedValue);
+        
+        if (showDebugInfo)
+        {
+            Debug.Log($"ChargeSystem [滚轮模式]: 滚轮输入={scrollDelta:F2}, 累计值={scrollAccumulatedValue:F2}");
+        }
+    }
+    
+    /// <summary>
+    /// 检查当前力度是否达到发射阈值
+    /// </summary>
+    /// <returns>是否可以发射</returns>
+    public bool CanLaunch()
+    {
+        if (chargeMode == ChargeMode.ScrollBased)
+        {
+            // 滚轮模式：检查力度阈值
+            return currentForce >= launchForceThreshold;
+        }
+        else
+        {
+            // 其他模式：总是可以发射
+            return true;
         }
     }
     
@@ -375,6 +485,8 @@ public class ChargeSystem : MonoBehaviour
     public Vector3 BowPullStartPosition => bowPullStartPosition;
     public Vector2 BowPullDirection => bowPullDirection;
     public Vector2 LaunchDirection => launchDirection;
+    public float LaunchForceThreshold => launchForceThreshold;
+    public float ScrollAccumulatedValue => scrollAccumulatedValue;
     
     #endregion
     
@@ -413,6 +525,57 @@ public class ChargeSystem : MonoBehaviour
     public void SwitchToBowPullMode()
     {
         SetChargeMode(ChargeMode.BowPull);
+    }
+    
+    #endregion
+    
+    #region 玩家回合事件处理（滚轮模式专用）
+    
+    /// <summary>
+    /// 处理玩家 Playing 阶段开始事件（PlayerStateMachine 已准备好）
+    /// </summary>
+    private void OnPlayerPlayingPhaseStarted()
+    {
+        // 只在滚轮模式下处理
+        if (chargeMode != ChargeMode.ScrollBased)
+            return;
+        
+        // 检查是否需要自动开始蓄力
+        if (!isCharging)
+        {
+            if (showDebugInfo)
+            {
+                Debug.Log("ChargeSystem [滚轮模式]: 玩家回合开始，自动进入蓄力");
+            }
+            GameEventBus.PublishChargingStarted();
+        }
+    }
+    
+    /// <summary>
+    /// 延迟检查初始游戏状态（处理游戏开始时已经是玩家回合的情况）
+    /// </summary>
+    private System.Collections.IEnumerator CheckInitialGameState()
+    {
+        // 等待确保所有组件初始化完成
+        yield return new WaitForSeconds(0.5f);
+        
+        // 检查是否是玩家阶段
+        GameFlowController gameFlowController = GameFlowController.Instance;
+        
+        if (gameFlowController == null)
+        {
+            Debug.LogWarning("ChargeSystem [滚轮模式]: GameFlowController.Instance 为 null！");
+            yield break;
+        }
+        
+        if (gameFlowController.IsPlayerPhase && !isCharging)
+        {
+            if (showDebugInfo)
+            {
+                Debug.Log("ChargeSystem [滚轮模式]: 初始状态为玩家回合，自动进入蓄力");
+            }
+            GameEventBus.PublishChargingStarted();
+        }
     }
     
     #endregion

@@ -118,6 +118,11 @@ public static class GameEventBus
     public static event System.Action<GameFlowState> OnGameFlowStateChanged;
     
     /// <summary>
+    /// 玩家 Playing 阶段开始事件（PlayerStateMachine 已准备好）
+    /// </summary>
+    public static event System.Action OnPlayerPlayingPhaseStarted;
+    
+    /// <summary>
     /// 游戏状态变化事件
     /// </summary>
     public static event System.Action<bool> OnGameStateChanged;
@@ -346,6 +351,11 @@ public static class GameEventBus
     /// 发布游戏流程状态变化事件
     /// </summary>
     public static void PublishGameFlowStateChanged(GameFlowState gameFlowState) => OnGameFlowStateChanged?.Invoke(gameFlowState);
+    
+    /// <summary>
+    /// 发布玩家 Playing 阶段开始事件
+    /// </summary>
+    public static void PublishPlayerPlayingPhaseStarted() => OnPlayerPlayingPhaseStarted?.Invoke();
     
     /// <summary>
     /// 发布游戏状态变化事件

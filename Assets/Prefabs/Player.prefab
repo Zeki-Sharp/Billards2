@@ -7706,13 +7706,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 99fb07427277eeb4aa1f7dae44de0546, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  chargeMode: 1
+  chargeMode: 2
   showModeInfo: 1
-  maxForce: 30
+  maxForce: 25
   minForce: 1
   chargeTime: 2
   maxPullDistance: 2
   minPullDistance: 0.5
+  scrollSensitivity: 0.08
+  launchForceThreshold: 2
   playerCore: {fileID: 3655923765959461568}
   targetCamera: {fileID: 0}
   showDebugInfo: 1

@@ -57,7 +57,28 @@ MonoBehaviour:
       min: 4
       max: 5
     nodesApartDistance: 2
-    randomizePosition: 0.176
+    randomizePosition: 0.509
+    randomizeNodes: 0
+  - nodeType: 0
+    distanceFromPreviousLayer:
+      min: 4
+      max: 5
+    nodesApartDistance: 2
+    randomizePosition: 0
+    randomizeNodes: 0
+  - nodeType: 0
+    distanceFromPreviousLayer:
+      min: 4
+      max: 5
+    nodesApartDistance: 2
+    randomizePosition: 0.509
+    randomizeNodes: 0
+  - nodeType: 0
+    distanceFromPreviousLayer:
+      min: 4
+      max: 5
+    nodesApartDistance: 2
+    randomizePosition: 0.509
     randomizeNodes: 0
   - nodeType: 5
     distanceFromPreviousLayer:

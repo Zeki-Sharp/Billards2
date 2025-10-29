@@ -224,6 +224,14 @@ public class PlayerPhaseController : MonoBehaviour
         if (playerStateMachine != null)
         {
             playerStateMachine.StartPlaying();
+            
+            // 发布 Playing 阶段开始事件（PlayerStateMachine 已准备好，状态为 Idle）
+            GameEventBus.PublishPlayerPlayingPhaseStarted();
+            
+            if (showDebugInfo)
+            {
+                Debug.Log("PlayerPhaseController: 已发布 PlayerPlayingPhaseStarted 事件");
+            }
         }
         else
         {

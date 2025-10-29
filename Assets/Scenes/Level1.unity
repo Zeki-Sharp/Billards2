@@ -5827,6 +5827,7 @@ MonoBehaviour:
   victoryPanelPath: UI/Popups/VictoryPanel
   gameOverPanelPath: UI/Popups/GameOverPanel
   skillStatusPanelPath: UI/Popups/SkillStatusPanel
+  settingsPanelPath: UI/Popups/SettingsPanel
   showDebugInfo: 1
 --- !u!4 &590523341
 Transform:
@@ -10824,10 +10825,6 @@ PrefabInstance:
     - target: {fileID: 5182198335736264703, guid: 2d86053af5e50c446a06f75cbdecb65b, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 7844486164170001436, guid: 2d86053af5e50c446a06f75cbdecb65b, type: 3}
-      propertyPath: maxForce
-      value: 25
       objectReference: {fileID: 0}
     - target: {fileID: 7844486164170001436, guid: 2d86053af5e50c446a06f75cbdecb65b, type: 3}
       propertyPath: targetCamera
