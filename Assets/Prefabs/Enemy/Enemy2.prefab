@@ -164,6 +164,10 @@ PrefabInstance:
       value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 3650335641447170782, guid: 92bb8c5569acb9348bf9d53ecaefe6fb, type: 3}
+      propertyPath: m_Name
+      value: Enemy_Image
+      objectReference: {fileID: 0}
+    - target: {fileID: 3650335641447170782, guid: 92bb8c5569acb9348bf9d53ecaefe6fb, type: 3}
       propertyPath: m_Layer
       value: 6
       objectReference: {fileID: 0}
