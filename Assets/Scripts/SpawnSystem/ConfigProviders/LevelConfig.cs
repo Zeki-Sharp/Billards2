@@ -58,6 +58,38 @@ public class LevelConfig : ScriptableObject
     [Tooltip("当所有波次完成后是否重新开始")]
     public bool loopWaves = true;
     
+    [BoxGroup("回合限制配置")]
+    [LabelText("启用回合限制")]
+    [Tooltip("是否启用回合限制惩罚系统（超过回合数后开始扣血）")]
+    public bool enableTurnPenalty = false;
+    
+    [BoxGroup("回合限制配置")]
+    [LabelText("开始惩罚回合数")]
+    [Tooltip("超过此回合数后开始扣血（例如：设置为20，则从第21回合开始扣血）")]
+    [ShowIf("enableTurnPenalty")]
+    [MinValue(1)]
+    public int turnPenaltyThreshold = 20;
+    
+    [BoxGroup("回合限制配置")]
+    [LabelText("每回合扣血量")]
+    [Tooltip("超过回合限制后，每个玩家回合扣除的血量")]
+    [ShowIf("enableTurnPenalty")]
+    [MinValue(0.1f)]
+    public float damagePerTurn = 5f;
+    
+    [BoxGroup("回合限制配置")]
+    [LabelText("是否递增伤害")]
+    [Tooltip("每回合扣血量是否递增（如第21回合扣5点，第22回合扣6点）")]
+    [ShowIf("enableTurnPenalty")]
+    public bool increasingDamage = false;
+    
+    [BoxGroup("回合限制配置")]
+    [LabelText("伤害递增量")]
+    [Tooltip("每回合增加的伤害量（仅在启用递增伤害时有效）")]
+    [ShowIf("@enableTurnPenalty && increasingDamage")]
+    [MinValue(0)]
+    public float damageIncrement = 1f;
+    
     
     /// <summary>
     /// 获取指定索引的波次配置

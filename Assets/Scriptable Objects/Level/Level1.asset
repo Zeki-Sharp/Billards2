@@ -41,3 +41,8 @@ MonoBehaviour:
     enablePositionOffset: 1
     offsetRange: 0.5
   loopWaves: 0
+  enableTurnPenalty: 1
+  turnPenaltyThreshold: 2
+  damagePerTurn: 5
+  increasingDamage: 0
+  damageIncrement: 1
