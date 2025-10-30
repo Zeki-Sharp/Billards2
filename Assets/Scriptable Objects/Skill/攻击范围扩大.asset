@@ -38,7 +38,7 @@ MonoBehaviour:
     effectConfig:
       effectType: 0
       targetStat: AreaRadius
-      modifierValue: 0.5
+      modifierValue: 0.3
       modifierType: 0
       allowStacking: 0
       healAmount: 20
@@ -101,9 +101,9 @@ MonoBehaviour:
     effectConfig:
       effectType: 0
       targetStat: AreaRadius
-      modifierValue: 1
+      modifierValue: 0.6
       modifierType: 0
-      allowStacking: 1
+      allowStacking: 0
       healAmount: 20
       minTransitionTime: 1
       maxTransitionTime: 5

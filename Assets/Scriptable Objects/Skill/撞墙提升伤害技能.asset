@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: efc89a18d420d744da9894a9f7094350, type: 3}
   m_Name: "\u649E\u5899\u63D0\u5347\u4F24\u5BB3\u6280\u80FD"
   m_EditorClassIdentifier: 
-  skillName: "\u78B0\u649E\u8FDE\u51FB"
+  skillName: "\u649E\u5899\u589E\u4F24"
   description: "\u78B0\u649E\u5899\u58C12\u6B21\u540E\uFF0C\u653B\u51FB\u529B\u63D0\u5347"
   skillTag: common
   skillLevels:
@@ -206,4 +206,4 @@ MonoBehaviour:
       maxValue: 1
       dataExtractorType: 0
   requiredSkills: []
-  isActive: 0
+  isActive: 1

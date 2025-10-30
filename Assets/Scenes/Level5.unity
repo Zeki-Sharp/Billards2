@@ -5750,13 +5750,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 27b701b03471ef64292458037b5373b2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  gameUIPanel: {fileID: 0}
+  topBarController: {fileID: 0}
   skillSelectionUI: {fileID: 0}
   hudCanvas: {fileID: 0}
   fullScreenCanvas: {fileID: 0}
   popupCanvas: {fileID: 0}
   victoryPanelPath: UI/Popups/VictoryPanel
   gameOverPanelPath: UI/Popups/GameOverPanel
+  skillStatusPanelPath: UI/Popups/SkillStatusPanel
+  settingsPanelPath: UI/Popups/SettingsPanel
   showDebugInfo: 1
 --- !u!4 &590523341
 Transform:
@@ -9267,7 +9269,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3c4333f109bb5af459406e60f828e8f6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  levelConfig: {fileID: 11400000, guid: 352d89c211e3f27418c26210d5738d4c, type: 2}
+  levelConfig: {fileID: 11400000, guid: b390f664261faa1498aa565ab9bc861e, type: 2}
   currentWaveIndex: 0
   showDebugInfo: 1
 --- !u!4 &1568426789
@@ -9672,7 +9674,6 @@ Transform:
   m_Children:
   - {fileID: 444653467}
   - {fileID: 1361499548}
-  - {fileID: 2134845609}
   - {fileID: 38867660}
   - {fileID: 1354289661}
   - {fileID: 12911529}
@@ -10626,50 +10627,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &2134845608
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 2134845609}
-  - component: {fileID: 2134845610}
-  m_Layer: 0
-  m_Name: GameInitializer
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &2134845609
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2134845608}
-  serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0.4747219, y: 0.21998072, z: 0.08004183}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 1787785598}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &2134845610
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2134845608}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 78901234567890123456789012345678, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!1001 &5924173280866626688
 PrefabInstance:
   m_ObjectHideFlags: 0

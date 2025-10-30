@@ -10,17 +10,17 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: efc89a18d420d744da9894a9f7094350, type: 3}
-  m_Name: "\u51FB\u6740\u63D0\u5347\u4F24\u5BB3"
+  m_Name: "\u8FDE\u51FB\u589E\u4F24"
   m_EditorClassIdentifier: 
-  skillName: "\u6B7B\u4EA1\u63D0\u5347"
-  description: "\u6740\u6B7B\u654C\u4EBA\u540E\u4F24\u5BB3\u4E0A\u5347"
-  skillTag: common
+  skillName: "\u8FDE\u51FB\u654C\u4EBA\u589E\u4F24"
+  description: "\u78B0\u649E\u654C\u4EBA2\u6B21\u540E\uFF0C\u653B\u51FB\u529B\u63D0\u5347100%"
+  skillTag: "\u649E\u51FB\u89D2\u8272"
   skillLevels:
   - level: 1
     isActive: 1
     levelDescription: 
     triggerConfig:
-      triggerType: 1
+      triggerType: 0
       targetTag: Enemy
       killTargetTag: Enemy
       dataExtractorType: 0
@@ -38,7 +38,7 @@ MonoBehaviour:
     effectConfig:
       effectType: 0
       targetStat: Damage
-      modifierValue: 2
+      modifierValue: 5
       modifierType: 0
       allowStacking: 1
       healAmount: 20
@@ -71,8 +71,14 @@ MonoBehaviour:
         minValue: 0
         maxValue: 1
         dataExtractorType: 0
+      - resetType: 1
+        comparisonType: 1
+        targetValue: 0.99
+        minValue: 0
+        maxValue: 1
+        dataExtractorType: 0
     effectRemovalConfig:
-      removalType: 2
+      removalType: 1
       duration: 30
       comparisonType: 2
       targetValue: 0.5
@@ -83,7 +89,7 @@ MonoBehaviour:
     isActive: 1
     levelDescription: 
     triggerConfig:
-      triggerType: 1
+      triggerType: 0
       targetTag: Enemy
       killTargetTag: Enemy
       dataExtractorType: 0
@@ -101,7 +107,7 @@ MonoBehaviour:
     effectConfig:
       effectType: 0
       targetStat: Damage
-      modifierValue: 4
+      modifierValue: 10
       modifierType: 0
       allowStacking: 1
       healAmount: 20
@@ -134,8 +140,14 @@ MonoBehaviour:
         minValue: 0
         maxValue: 1
         dataExtractorType: 0
+      - resetType: 1
+        comparisonType: 1
+        targetValue: 0.99
+        minValue: 0
+        maxValue: 1
+        dataExtractorType: 0
     effectRemovalConfig:
-      removalType: 2
+      removalType: 1
       duration: 30
       comparisonType: 2
       targetValue: 0.5

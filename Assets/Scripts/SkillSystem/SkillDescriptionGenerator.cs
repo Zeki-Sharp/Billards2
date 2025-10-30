@@ -107,16 +107,22 @@ public static class SkillDescriptionGenerator
             return "一局内，每击杀{0}个敌人后{1}";
         }
         
-        // 碰撞连击技能
-        if (IsCollisionComboSkill(levelConfig))
+        // 撞墙增伤技能
+        if (IsWallCollisionComboSkill(levelConfig))
         {
-            return "碰撞{0}次后{1}";
+            return "一回合一次，撞击墙壁后伤害提升{0}";
+        }
+        
+        // 连击敌人增伤技能
+        if (IsEnemyCollisionComboSkill(levelConfig))
+        {
+            return "一回合内，撞击敌人{0}次后{1}";
         }
         
         // 碰撞治疗技能
         if (IsCollisionHealSkill(levelConfig))
         {
-            return "碰撞{0}{1}次后，恢复{2}点生命值";
+            return "一回合一次，碰撞{0}{1}次后，恢复{2}点生命值";
         }
         
         // 治疗技能
@@ -166,11 +172,16 @@ public static class SkillDescriptionGenerator
             values.Add(GetRequiredCountWithComparison(currentLevel, previousLevel));      // {0} - 需要击杀数量
             values.Add(GetStatModifierDescriptionWithComparison(currentLevel, previousLevel)); // {1} - 伤害提升描述
         }
-        // 碰撞连击技能
-        else if (IsCollisionComboSkill(currentLevel))
+        // 撞墙增伤技能
+        else if (IsWallCollisionComboSkill(currentLevel))
+        {
+            values.Add(GetStatModifierDescriptionWithComparison(currentLevel, previousLevel)); // {0} - 伤害提升描述
+        }
+        // 连击敌人增伤技能
+        else if (IsEnemyCollisionComboSkill(currentLevel))
         {
             values.Add(GetRequiredCountWithComparison(currentLevel, previousLevel));      // {0} - 需要碰撞次数
-            values.Add(GetStatModifierDescriptionWithComparison(currentLevel, previousLevel)); // {1} - 攻击力提升描述
+            values.Add(GetStatModifierDescriptionWithComparison(currentLevel, previousLevel)); // {1} - 伤害提升描述
         }
         // 碰撞治疗技能
         else if (IsCollisionHealSkill(currentLevel))
@@ -228,11 +239,22 @@ public static class SkillDescriptionGenerator
     }
 
     /// <summary>
-    /// 判断是否为碰撞连击技能
+    /// 判断是否为撞墙增伤技能
     /// </summary>
-    private static bool IsCollisionComboSkill(SkillLevelConfig levelConfig)
+    private static bool IsWallCollisionComboSkill(SkillLevelConfig levelConfig)
     {
         return levelConfig.triggerConfig.triggerType == TriggerType.Collision &&
+               levelConfig.triggerConfig.targetTag == "Wall" &&
+               levelConfig.effectConfig.effectType == SkillEffectType.StatModifier;
+    }
+    
+    /// <summary>
+    /// 判断是否为连击敌人增伤技能
+    /// </summary>
+    private static bool IsEnemyCollisionComboSkill(SkillLevelConfig levelConfig)
+    {
+        return levelConfig.triggerConfig.triggerType == TriggerType.Collision &&
+               levelConfig.triggerConfig.targetTag == "Enemy" &&
                levelConfig.effectConfig.effectType == SkillEffectType.StatModifier;
     }
 

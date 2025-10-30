@@ -30,17 +30,17 @@ public class Player : MonoBehaviour
     public PlayerData playerData; // 玩家配置数据
     
     [Header("核心组件")]
-    // 以下组件由 Player 自动管理，无需手动配置
-    private PlayerCore playerCore;
-    private PlayerStateMachine stateMachine;
-    private PlayerInputHandler inputHandler;
-    private PlayerMovementController movementController;
+    [Tooltip("如果为空，将自动从同一GameObject获取")]
+    [SerializeField] private PlayerCore playerCore;
+    [SerializeField] private PlayerStateMachine stateMachine;
+    [SerializeField] private PlayerInputHandler inputHandler;
+    [SerializeField] private PlayerMovementController movementController;
     
     [Header("子系统组件")]
-    // 以下组件由 Player 自动管理，无需手动配置
-    private PlayerAttackManager attackManager;
-    private ChargeSystem chargeSystem;
-    private PlayerStatsManager statsManager;
+    [Tooltip("如果为空，将自动从同一GameObject获取")]
+    [SerializeField] private PlayerAttackManager attackManager;
+    [SerializeField] private ChargeSystem chargeSystem;
+    [SerializeField] private PlayerStatsManager statsManager;
     
     [Header("特效配置")]
     [Tooltip("玩家特效配置列表，在 Inspector 中直接拖拽 MMF_Player 组件")]
@@ -93,63 +93,43 @@ public class Player : MonoBehaviour
     }
     
     /// <summary>
-    /// 获取或添加所有组件
+    /// 获取所有组件（如果Inspector中未配置，则自动从同一GameObject获取）
     /// </summary>
     void InitializeComponents()
     {
-        // 核心组件
-        playerCore = GetComponent<PlayerCore>();
-        stateMachine = GetComponent<PlayerStateMachine>();
-        inputHandler = GetComponent<PlayerInputHandler>();
-        movementController = GetComponent<PlayerMovementController>();
-        
-        // 子系统组件
-        attackManager = GetComponent<PlayerAttackManager>();
-        chargeSystem = GetComponent<ChargeSystem>();
-        statsManager = GetComponent<PlayerStatsManager>();
-        
-        // 确保所有组件都存在
+        // 核心组件 - 优先使用Inspector配置，否则从GameObject获取
         if (playerCore == null)
-        {
-            playerCore = gameObject.AddComponent<PlayerCore>();
-            Debug.LogWarning("Player: 自动添加PlayerCore组件");
-        }
-        
+            playerCore = GetComponent<PlayerCore>();
         if (stateMachine == null)
-        {
-            stateMachine = gameObject.AddComponent<PlayerStateMachine>();
-            Debug.LogWarning("Player: 自动添加PlayerStateMachine组件");
-        }
-        
+            stateMachine = GetComponent<PlayerStateMachine>();
         if (inputHandler == null)
-        {
-            inputHandler = gameObject.AddComponent<PlayerInputHandler>();
-            Debug.LogWarning("Player: 自动添加PlayerInputHandler组件");
-        }
-        
+            inputHandler = GetComponent<PlayerInputHandler>();
         if (movementController == null)
-        {
-            movementController = gameObject.AddComponent<PlayerMovementController>();
-            Debug.LogWarning("Player: 自动添加PlayerMovementController组件");
-        }
+            movementController = GetComponent<PlayerMovementController>();
         
+        // 子系统组件 - 优先使用Inspector配置，否则从GameObject获取
         if (attackManager == null)
-        {
-            attackManager = gameObject.AddComponent<PlayerAttackManager>();
-            Debug.LogWarning("Player: 自动添加PlayerAttackManager组件");
-        }
-        
+            attackManager = GetComponent<PlayerAttackManager>();
         if (chargeSystem == null)
-        {
-            chargeSystem = gameObject.AddComponent<ChargeSystem>();
-            Debug.LogWarning("Player: 自动添加ChargeSystem组件");
-        }
-        
+            chargeSystem = GetComponent<ChargeSystem>();
         if (statsManager == null)
-        {
-            statsManager = gameObject.AddComponent<PlayerStatsManager>();
-            Debug.LogWarning("Player: 自动添加PlayerStatsManager组件");
-        }
+            statsManager = GetComponent<PlayerStatsManager>();
+        
+        // 检查必需组件是否存在
+        if (playerCore == null)
+            Debug.LogError("Player: 缺少 PlayerCore 组件！请在Inspector中添加或在GameObject上添加。");
+        if (stateMachine == null)
+            Debug.LogError("Player: 缺少 PlayerStateMachine 组件！请在Inspector中添加或在GameObject上添加。");
+        if (inputHandler == null)
+            Debug.LogError("Player: 缺少 PlayerInputHandler 组件！请在Inspector中添加或在GameObject上添加。");
+        if (movementController == null)
+            Debug.LogError("Player: 缺少 PlayerMovementController 组件！请在Inspector中添加或在GameObject上添加。");
+        if (attackManager == null)
+            Debug.LogError("Player: 缺少 PlayerAttackManager 组件！请在Inspector中添加或在GameObject上添加。");
+        if (chargeSystem == null)
+            Debug.LogError("Player: 缺少 ChargeSystem 组件！请在Inspector中添加或在GameObject上添加。");
+        if (statsManager == null)
+            Debug.LogError("Player: 缺少 PlayerStatsManager 组件！请在Inspector中添加或在GameObject上添加。");
     }
     
     /// <summary>

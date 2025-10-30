@@ -123,7 +123,11 @@ public class SkillManager : SingletonManager<SkillManager>
         
         if (enableDebugLog)
         {
-            Debug.Log($"SkillManager: 重新初始化完成，共加载 {skillInstances.Count} 个技能实例");
+            Debug.Log($"SkillManager: 技能实例初始化完成，共 {skillInstances.Count} 个技能");
+        }
+        
+        if (enableDebugLog)
+        {
             foreach (var skillName in skillInstances.Keys)
             {
                 Debug.Log($"SkillManager: 已重新加载技能实例 - {skillName}");
