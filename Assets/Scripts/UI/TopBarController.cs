@@ -3,13 +3,21 @@ using UnityEngine.UI;
 using TMPro;
 
 /// <summary>
-/// TopBar控制器 - 管理屏幕顶部常驻UI
+/// TopBar控制器 - 管理屏幕顶部常驻UI（容器控制器）
 /// 
 /// 【核心职责】：
 /// - 显示玩家血条
-/// - 监听血量变化更新UI
 /// - 控制TopBar的显示/隐藏（角色选择后显示）
-/// - 管理技能按钮（后续添加）
+/// - 管理技能按钮和设置按钮
+/// - 管理子组件引用
+/// 
+/// 【子组件】：
+/// - RemainingTurnsDisplay: 剩余回合数显示（独立组件）
+/// 
+/// 【设计原则】：
+/// - 容器职责：只负责整体显示和按钮管理
+/// - 业务逻辑：由子组件独立处理
+/// - 松耦合：子组件自我管理
 /// </summary>
 public class TopBarController : MonoBehaviour
 {
@@ -20,6 +28,11 @@ public class TopBarController : MonoBehaviour
     [SerializeField] private Image healthBarFill;
     [SerializeField] private TextMeshProUGUI currentHealthText;
     [SerializeField] private TextMeshProUGUI totalHealthText;
+    
+    [Header("子组件")]
+    [SerializeField] 
+    [Tooltip("剩余回合数显示组件（独立管理）")]
+    private RemainingTurnsDisplay turnsDisplay;
     
     [Header("按钮")]
     [SerializeField] private UnityEngine.UI.Button skillButton;      // 技能按钮（书本图标）
@@ -390,6 +403,7 @@ public class TopBarController : MonoBehaviour
                  $"Health Bar Fill: {(healthBarFill != null ? "已配置" : "未配置")}\n" +
                  $"Current Health Text: {(currentHealthText != null ? "已配置" : "未配置")}\n" +
                  $"Total Health Text: {(totalHealthText != null ? "已配置" : "未配置")}\n" +
+                 $"Turns Display: {(turnsDisplay != null ? "已配置" : "未配置")}\n" +
                  $"Skill Button: {(skillButton != null ? "已配置" : "未配置")}\n" +
                  $"Settings Button: {(settingsButton != null ? "已配置" : "未配置")}");
     }
