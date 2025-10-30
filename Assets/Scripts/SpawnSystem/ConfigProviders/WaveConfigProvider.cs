@@ -221,11 +221,16 @@ public class WaveConfigProvider : MonoBehaviour, SpawnConfigProvider<EnemySpawn>
     {
         if (levelConfig != null)
         {
-            return levelConfig.initialEnemySpawnRange;
+            // 调用LevelConfig的方法来获取配置（这样会触发LevelConfig中的调试日志）
+            SpawnRangeConfig config = levelConfig.GetInitialEnemySpawnRange();
+            if (config != null)
+            {
+                return config;
+            }
         }
         
-        Debug.LogWarning("[WaveConfigProvider] LevelConfig为空，返回默认范围配置");
-        return new SpawnRangeConfig();
+        Debug.LogWarning("[WaveConfigProvider] LevelConfig为空或未配置初始敌人生成范围，返回默认范围配置");
+        return CreateDefaultSpawnRangeConfig();
     }
     
     /// <summary>
@@ -236,11 +241,29 @@ public class WaveConfigProvider : MonoBehaviour, SpawnConfigProvider<EnemySpawn>
     {
         if (levelConfig != null)
         {
-            return levelConfig.waveEnemySpawnRange;
+            // 调用LevelConfig的方法来获取配置
+            SpawnRangeConfig config = levelConfig.GetWaveEnemySpawnRange();
+            if (config != null)
+            {
+                return config;
+            }
         }
         
-        Debug.LogWarning("[WaveConfigProvider] LevelConfig为空，返回默认范围配置");
-        return new SpawnRangeConfig();
+        Debug.LogWarning("[WaveConfigProvider] LevelConfig为空或未配置波次敌人生成范围，返回默认范围配置");
+        return CreateDefaultSpawnRangeConfig();
+    }
+    
+    /// <summary>
+    /// 创建默认的生成范围配置
+    /// </summary>
+    private SpawnRangeConfig CreateDefaultSpawnRangeConfig()
+    {
+        SpawnRangeConfig config = new SpawnRangeConfig();
+        config.coordinateSystem = SpawnCoordinateSystem.WorldSpace;
+        config.rangeShape = SpawnRangeShape.Rectangle;
+        config.worldCenter = Vector3.zero;
+        config.worldSize = new Vector2(20f, 10f);
+        return config;
     }
     
     /// <summary>

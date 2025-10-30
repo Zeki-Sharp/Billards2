@@ -91,7 +91,7 @@ MonoBehaviour:
       logicType: 0
       conditions:
       - conditionType: 0
-        requiredCount: 2
+        requiredCount: 1
         timeWindow: 5
         comparisonType: 0
         targetValue: 1

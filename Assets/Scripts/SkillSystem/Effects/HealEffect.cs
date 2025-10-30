@@ -8,15 +8,20 @@ public class HealEffect : IEffect
 {
     public string EffectName => "HealEffect";
     
-    // 瞬时效果，总是可以执行
-    public bool CanExecute => true;
+    private bool canExecute = true; // 是否允许执行（完全由重置条件控制）
     
     /// <summary>
-    /// 设置是否允许执行（空实现，瞬时效果总是可以执行）
+    /// 是否允许执行（完全由重置条件控制）
     /// </summary>
-    public void SetCanExecute(bool canExecute)
+    public bool CanExecute => canExecute;
+    
+    /// <summary>
+    /// 设置是否允许执行（完全由重置条件控制）
+    /// </summary>
+    public void SetCanExecute(bool value)
     {
-        // 瞬时效果不需要控制执行权限
+        canExecute = value;
+        Debug.Log($"[{EffectName}] 设置执行权限: {value}");
     }
     
     private float healAmount = 20f;
@@ -43,6 +48,13 @@ public class HealEffect : IEffect
     /// </summary>
     public bool ExecuteEffect(object eventData)
     {
+        // 检查执行权限（完全由重置条件控制）
+        if (!canExecute)
+        {
+            Debug.Log($"[{EffectName}] 执行权限被禁止，跳过执行");
+            return false;
+        }
+        
         // 动态查找目标玩家
         if (!GetTargetPlayer())
         {
@@ -56,6 +68,10 @@ public class HealEffect : IEffect
         
         // 触发治疗表现效果（可选）
         TriggerVisualEffect();
+        
+        // 执行成功后，禁止再次执行（由重置条件重新允许）
+        canExecute = false;
+        Debug.Log($"[{EffectName}] 执行成功，禁止再次执行，等待重置条件");
         
         return true;
     }

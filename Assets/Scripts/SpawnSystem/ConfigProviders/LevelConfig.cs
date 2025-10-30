@@ -40,7 +40,8 @@ public class LevelConfig : ScriptableObject
     [BoxGroup("初始敌人配置")]
     [LabelText("初始敌人生成范围")]
     [Tooltip("初始敌人生成的范围配置")]
-    public SpawnRangeConfig initialEnemySpawnRange = new SpawnRangeConfig();
+    [SerializeField]
+    public SpawnRangeConfig initialEnemySpawnRange;
     
     [BoxGroup("波次配置")]
     [LabelText("波次列表")]
@@ -51,7 +52,8 @@ public class LevelConfig : ScriptableObject
     [BoxGroup("波次配置")]
     [LabelText("波次敌人生成范围")]
     [Tooltip("波次敌人生成的范围配置")]
-    public SpawnRangeConfig waveEnemySpawnRange = new SpawnRangeConfig();
+    [SerializeField]
+    public SpawnRangeConfig waveEnemySpawnRange;
     
     [BoxGroup("波次配置")]
     [LabelText("是否循环波次")]

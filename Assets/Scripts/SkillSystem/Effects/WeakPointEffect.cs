@@ -8,15 +8,20 @@ public class WeakPointEffect : IEffect
 {
     public string EffectName => "WeakPointEffect";
     
-    // 瞬时效果，总是可以执行
-    public bool CanExecute => true;
+    private bool canExecute = true; // 是否允许执行（完全由重置条件控制）
     
     /// <summary>
-    /// 设置是否允许执行（空实现，瞬时效果总是可以执行）
+    /// 是否允许执行（完全由重置条件控制）
     /// </summary>
-    public void SetCanExecute(bool canExecute)
+    public bool CanExecute => canExecute;
+    
+    /// <summary>
+    /// 设置是否允许执行（完全由重置条件控制）
+    /// </summary>
+    public void SetCanExecute(bool value)
     {
-        // 瞬时效果不需要控制执行权限
+        canExecute = value;
+        Debug.Log($"[{EffectName}] 设置执行权限: {value}");
     }
     
     // 配置参数（从 SkillEffectConfig 传入）
@@ -87,8 +92,19 @@ public class WeakPointEffect : IEffect
     /// </summary>
     public bool ExecuteEffect(object eventData)
     {
+        // 检查执行权限（完全由重置条件控制）
+        if (!canExecute)
+        {
+            Debug.Log($"[{EffectName}] 执行权限被禁止，跳过执行");
+            return false;
+        }
+        
         // 弱点效果在 Initialize 时启动，持续到 Reset
         // 无需在此方法中处理
+        
+        // 执行成功后，禁止再次执行（由重置条件重新允许）
+        canExecute = false;
+        
         return true;
     }
     

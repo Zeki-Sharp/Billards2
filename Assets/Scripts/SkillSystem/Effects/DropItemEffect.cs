@@ -8,15 +8,20 @@ public class DropItemEffect : IEffect
 {
     public string EffectName => "DropItemEffect";
     
-    // 瞬时效果，总是可以执行
-    public bool CanExecute => true;
+    private bool canExecute = true; // 是否允许执行（完全由重置条件控制）
     
     /// <summary>
-    /// 设置是否允许执行（空实现，瞬时效果总是可以执行）
+    /// 是否允许执行（完全由重置条件控制）
     /// </summary>
-    public void SetCanExecute(bool canExecute)
+    public bool CanExecute => canExecute;
+    
+    /// <summary>
+    /// 设置是否允许执行（完全由重置条件控制）
+    /// </summary>
+    public void SetCanExecute(bool value)
     {
-        // 瞬时效果不需要控制执行权限
+        canExecute = value;
+        Debug.Log($"[{EffectName}] 设置执行权限: {value}");
     }
     
     private ItemConfig dropItemConfig;
@@ -75,6 +80,13 @@ public class DropItemEffect : IEffect
     /// <returns>效果是否执行成功</returns>
     public bool ExecuteEffect(object eventData)
     {
+        // 检查执行权限（完全由重置条件控制）
+        if (!canExecute)
+        {
+            Debug.Log($"[{EffectName}] 执行权限被禁止，跳过执行");
+            return false;
+        }
+        
         // 检查配置是否完整
         if (dropItemConfig == null)
         {
@@ -93,7 +105,9 @@ public class DropItemEffect : IEffect
         // 概率判定
         if (Random.Range(0f, 1f) > dropChance)
         {
-            return false; // 概率判定失败，静默跳过
+            // 概率判定失败，但仍需禁止再次执行
+            canExecute = false;
+            return false; 
         }
         
         // 获取掉落位置
@@ -109,6 +123,10 @@ public class DropItemEffect : IEffect
         {
             spawner.Spawn(dropItemConfig, dropPosition);
             Debug.Log($"[{EffectName}] ✅ 成功掉落物品: {dropItemConfig.itemName}");
+            
+            // 执行成功后，禁止再次执行（由重置条件重新允许）
+            canExecute = false;
+            
             return true;
         }
         catch (System.Exception e)

@@ -71,13 +71,11 @@ public class SpawnRangeConfig
             case SpawnCoordinateSystem.WorldSpace:
                 // 世界坐标：直接使用范围配置 + 偏移
                 finalPosition = worldCenter + localOffset;
-                Debug.Log($"[SpawnRangeConfig] 世界坐标计算: 世界中心({worldCenter}) + 偏移({localOffset}) = 最终位置({finalPosition})");
                 break;
             case SpawnCoordinateSystem.RelativeSpace:
                 // 相对坐标：原点 + 偏移
                 Vector3 baseOrigin = origin ?? Vector3.zero;
                 finalPosition = baseOrigin + localOffset;
-                Debug.Log($"[SpawnRangeConfig] 相对坐标计算: 原点({baseOrigin}) + 偏移({localOffset}) = 最终位置({finalPosition})");
                 break;
             default:
                 finalPosition = Vector3.zero;
@@ -101,15 +99,12 @@ public class SpawnRangeConfig
         {
             case SpawnRangeShape.Rectangle:
                 baseOffset = GetRandomRectangleOffset();
-                Debug.Log($"[SpawnRangeConfig] 矩形偏移计算: 坐标系统({coordinateSystem}), 形状({rangeShape}), 基础偏移({baseOffset})");
                 break;
             case SpawnRangeShape.Circle:
                 baseOffset = GetRandomCircleOffset();
-                Debug.Log($"[SpawnRangeConfig] 圆形偏移计算: 坐标系统({coordinateSystem}), 形状({rangeShape}), 基础偏移({baseOffset})");
                 break;
             case SpawnRangeShape.Ring:
                 baseOffset = GetRandomRingOffset();
-                Debug.Log($"[SpawnRangeConfig] 环形偏移计算: 坐标系统({coordinateSystem}), 形状({rangeShape}), 基础偏移({baseOffset})");
                 break;
             default:
                 baseOffset = Vector3.zero;
@@ -127,7 +122,6 @@ public class SpawnRangeConfig
                 0f
             );
             finalOffset = baseOffset + randomOffset;
-            Debug.Log($"[SpawnRangeConfig] 添加随机偏移: 基础偏移({baseOffset}) + 随机偏移({randomOffset}) = 最终偏移({finalOffset})");
         }
         
         return finalOffset;

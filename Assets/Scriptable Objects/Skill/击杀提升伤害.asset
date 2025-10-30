@@ -38,7 +38,7 @@ MonoBehaviour:
     effectConfig:
       effectType: 0
       targetStat: Damage
-      modifierValue: 3
+      modifierValue: 2
       modifierType: 0
       allowStacking: 1
       healAmount: 20
@@ -101,7 +101,7 @@ MonoBehaviour:
     effectConfig:
       effectType: 0
       targetStat: Damage
-      modifierValue: 5
+      modifierValue: 4
       modifierType: 0
       allowStacking: 1
       healAmount: 20
@@ -143,4 +143,4 @@ MonoBehaviour:
       maxValue: 1
       dataExtractorType: 0
   requiredSkills: []
-  isActive: 1
+  isActive: 0

@@ -5750,13 +5750,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 27b701b03471ef64292458037b5373b2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  gameUIPanel: {fileID: 0}
+  topBarController: {fileID: 0}
   skillSelectionUI: {fileID: 0}
   hudCanvas: {fileID: 0}
   fullScreenCanvas: {fileID: 0}
   popupCanvas: {fileID: 0}
   victoryPanelPath: UI/Popups/VictoryPanel
   gameOverPanelPath: UI/Popups/GameOverPanel
+  skillStatusPanelPath: UI/Popups/SkillStatusPanel
+  settingsPanelPath: UI/Popups/SettingsPanel
   showDebugInfo: 1
 --- !u!4 &590523341
 Transform:
@@ -9267,7 +9269,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3c4333f109bb5af459406e60f828e8f6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  levelConfig: {fileID: 11400000, guid: 352d89c211e3f27418c26210d5738d4c, type: 2}
+  levelConfig: {fileID: 11400000, guid: 4940f86b5e102094c8fd37a3cb68b070, type: 2}
   currentWaveIndex: 0
   showDebugInfo: 1
 --- !u!4 &1568426789
