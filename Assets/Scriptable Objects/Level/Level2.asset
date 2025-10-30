@@ -31,13 +31,7 @@ MonoBehaviour:
     relativeRadius: 2
     enablePositionOffset: 1
     offsetRange: 0.5
-  waves:
-  - enemySpawns:
-    - enemyData: {fileID: 0}
-      count: 0
-  - enemySpawns:
-    - enemyData: {fileID: 11400000, guid: ce82a34099b9d1f4899931eb09ed10ce, type: 2}
-      count: 2
+  waves: []
   waveEnemySpawnRange:
     coordinateSystem: 0
     rangeShape: 0
@@ -49,3 +43,8 @@ MonoBehaviour:
     enablePositionOffset: 1
     offsetRange: 0.5
   loopWaves: 0
+  enableTurnPenalty: 1
+  turnPenaltyThreshold: 8
+  damagePerTurn: 5
+  increasingDamage: 1
+  damageIncrement: 5

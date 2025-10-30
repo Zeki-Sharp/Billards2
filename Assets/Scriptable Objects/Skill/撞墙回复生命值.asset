@@ -28,7 +28,7 @@ MonoBehaviour:
       logicType: 0
       conditions:
       - conditionType: 0
-        requiredCount: 2
+        requiredCount: 1
         timeWindow: 5
         comparisonType: 0
         targetValue: 1
@@ -66,12 +66,6 @@ MonoBehaviour:
       logicType: 1
       resetConditions:
       - resetType: 1
-        comparisonType: 1
-        targetValue: 0.99
-        minValue: 0
-        maxValue: 1
-        dataExtractorType: 0
-      - resetType: 0
         comparisonType: 1
         targetValue: 0.99
         minValue: 0
@@ -134,12 +128,6 @@ MonoBehaviour:
     resetConditionConfig:
       logicType: 1
       resetConditions:
-      - resetType: 0
-        comparisonType: 1
-        targetValue: 0.99
-        minValue: 0
-        maxValue: 1
-        dataExtractorType: 0
       - resetType: 1
         comparisonType: 1
         targetValue: 0.99

@@ -41,7 +41,7 @@ MonoBehaviour:
       modifierValue: 2
       modifierType: 2
       allowStacking: 1
-      healAmount: 10
+      healAmount: 5
       minTransitionTime: 1
       maxTransitionTime: 5
       transitionThreshold: 0.3

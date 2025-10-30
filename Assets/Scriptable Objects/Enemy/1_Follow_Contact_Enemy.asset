@@ -10,13 +10,13 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 680835e44d1251848acb0e09b9c418ff, type: 3}
-  m_Name: Follow_Contact_Enemy
+  m_Name: 1_Follow_Contact_Enemy
   m_EditorClassIdentifier: 
   enemyName: Follow_Contact_Enemy
-  enemyContainerPrefab: {fileID: 7420645124294310907, guid: 3953b119ae556034889e4bc9a3e4948f, type: 3}
+  enemyContainerPrefab: {fileID: 7420645124294310907, guid: beabcb4cb855ff94a97a111d70c1f376, type: 3}
   enemyIcon: {fileID: 0}
   ballData: {fileID: 11400000, guid: d1c30c129175ecf48a42f1070d15a627, type: 2}
-  maxHealth: 40
+  maxHealth: 60
   damage: 10
   attackCooldown: 1
   moveSpeed: 3
