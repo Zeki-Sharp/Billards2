@@ -44,22 +44,18 @@ public class EnemyBehavior : MonoBehaviour
     /// </summary>
     public bool IsTrapMode => isTrapMode;
     
+    /// <summary>
+    /// Awake - 初始化组件引用（确保在 SetEnemyData 调用前完成）
+    /// </summary>
+    void Awake()
+    {
+        // ✅ 在 Awake 中初始化 EnemyStats，确保在 SetEnemyData 调用前完成
+        InitializeStatsManager();
+    }
+    
     void Start()
     {
-        // ✅ 获取或添加 EnemyStats 组件
-        InitializeStatsManager();
-        
-        // 如果 enemyData 已经设置（手动放置的敌人），直接初始化
-        if (enemyData != null)
-        {
-            Debug.Log($"EnemyBehavior {name}: 检测到手动配置的 EnemyData，直接初始化");
-            InitializeHealth();
-            InitializeBehavior();
-        }
-        else
-        {
-            Debug.Log($"EnemyBehavior {name}: 等待 SetEnemyData 调用（通过 EnemySpawner 生成）");
-        }
+        // ✅ 所有敌人都通过 SetEnemyData 初始化，Start() 只负责组件查找和事件订阅
         
         // 如果手动配置了AttackRange，就不需要自动查找
         if (attackRange == null)
@@ -280,16 +276,16 @@ public class EnemyBehavior : MonoBehaviour
     /// <summary>
     /// 设置敌人数据（由 EnemySpawner 调用）
     /// </summary>
-    public void SetEnemyData(EnemyData data)
+    public void SetEnemyData(EnemyData data, int level = 1)
     {
-        Debug.Log($"EnemyBehavior {name}: SetEnemyData 被调用，传入数据: {(data != null ? data.enemyName : "null")}");
+        Debug.Log($"EnemyBehavior {name}: SetEnemyData 被调用，传入数据: {(data != null ? data.enemyName : "null")}, 等级: {level}");
         enemyData = data;
         
         if (enemyData != null)
         {
-            Debug.Log($"EnemyBehavior {name}: 设置敌人数据成功 - {enemyData.enemyName}，移动类型: {enemyData.movementType}");
-            // 重新初始化
-            InitializeHealth();
+            Debug.Log($"EnemyBehavior {name}: 设置敌人数据成功 - {enemyData.enemyName} Lv{level}，移动类型: {enemyData.movementType}");
+            // 重新初始化（传递等级参数）
+            InitializeHealth(level);
             InitializeBehavior();
             Debug.Log($"EnemyBehavior {name}: 初始化完成，enemyData 状态: {(enemyData != null ? "已设置" : "未设置")}");
         }
@@ -337,7 +333,7 @@ public class EnemyBehavior : MonoBehaviour
     /// <summary>
     /// 初始化血量
     /// </summary>
-    private void InitializeHealth()
+    private void InitializeHealth(int level = 1)
     {
         if (enemyData == null)
         {
@@ -351,12 +347,12 @@ public class EnemyBehavior : MonoBehaviour
             return;
         }
         
-        // ✅ 设置 EnemyData 并初始化属性系统
+        // ✅ 设置 EnemyData 并初始化属性系统（传递等级参数）
         statsManager.SetEnemyData(enemyData);
-        statsManager.Initialize();
+        statsManager.Initialize(level);
         
         isDead = false;
-        Debug.Log($"EnemyBehavior {name}: 初始化血量 {statsManager.CurrentHealth}/{statsManager.MaxHealth}");
+        Debug.Log($"EnemyBehavior {name} Lv{level}: 初始化完成，血量 {statsManager.CurrentHealth}/{statsManager.MaxHealth}");
         
         // 初始化血条UI
         if (healthBar != null)

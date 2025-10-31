@@ -61,12 +61,27 @@ public class WaveConfig
 }
 
 /// <summary>
-/// 敌人生成配置 - 专注于敌人数据和数量配置
+/// 敌人生成配置 - 专注于敌人数据、等级和数量配置
 /// </summary>
 [System.Serializable]
 public class EnemySpawn
 {
+    [LabelText("敌人数据")]
+    [HorizontalGroup("Main")]
+    [LabelWidth(60)]
     public EnemyData enemyData;
+    
+    [LabelText("等级")]
+    [HorizontalGroup("Main")]
+    [LabelWidth(40)]
+    [Tooltip("敌人等级（1, 2, 3...）。如果敌人没有配置此等级，将使用 Level 1")]
+    [MinValue(1)]
+    public int level = 1;
+    
+    [LabelText("数量")]
+    [HorizontalGroup("Main")]
+    [LabelWidth(40)]
+    [MinValue(1)]
     public int count = 1;
     
     /// <summary>
@@ -78,6 +93,6 @@ public class EnemySpawn
         {
             return "未设置敌人数据";
         }
-        return $"{enemyData.enemyName} + {count}个";
+        return $"{enemyData.enemyName} Lv{level} x{count}";
     }
 }

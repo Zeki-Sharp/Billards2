@@ -249,9 +249,9 @@ public class Enemy : MonoBehaviour
     /// <summary>
     /// 设置敌人数据
     /// </summary>
-    public void SetEnemyData(EnemyData data)
+    public void SetEnemyData(EnemyData data, int level = 1)
     {
-        Debug.Log($"Enemy {name}: SetEnemyData 被调用，传入数据: {(data != null ? data.enemyName : "null")}");
+        Debug.Log($"Enemy {name}: SetEnemyData 被调用，传入数据: {(data != null ? data.enemyName : "null")}, 等级: {level}");
         
         // 如果 enemyBehavior 还没有初始化，先尝试获取
         if (enemyBehavior == null)
@@ -262,8 +262,8 @@ public class Enemy : MonoBehaviour
         
         if (enemyBehavior != null)
         {
-            Debug.Log($"Enemy {name}: 找到 enemyBehavior，调用 SetEnemyData");
-            enemyBehavior.SetEnemyData(data);
+            Debug.Log($"Enemy {name}: 找到 enemyBehavior，调用 SetEnemyData (Lv{level})");
+            enemyBehavior.SetEnemyData(data, level);
             Debug.Log($"Enemy {name}: 成功设置敌人数据，移动类型: {data.movementType}");
         }
         else

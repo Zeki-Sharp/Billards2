@@ -12,9 +12,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 680835e44d1251848acb0e09b9c418ff, type: 3}
   m_Name: 1_Follow_Thorn_Enemy 1
   m_EditorClassIdentifier: 
-  enemyName: Follow_Thorn_Enemy
+  info:
+    name: 
+    acronym: 
+    description: 
+    icon: {fileID: 0}
+    color: {r: 1, g: 1, b: 1, a: 1}
+    enemyType: 
+    threatLevel: "\u4F4E"
   enemyContainerPrefab: {fileID: 7420645124294310907, guid: 46bf9ffb4d6443846a716fa40f167808, type: 3}
-  enemyIcon: {fileID: 0}
+  enemyLevels: []
   ballData: {fileID: 11400000, guid: d1c30c129175ecf48a42f1070d15a627, type: 2}
   maxHealth: 60
   damage: 10

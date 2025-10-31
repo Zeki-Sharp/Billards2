@@ -1,5 +1,7 @@
 using UnityEngine;
 using Sirenix.OdinInspector;
+using System.Collections.Generic;
+using System.Linq;
 
 [CreateAssetMenu(fileName = "EnemyData", menuName = "Game/Enemy Data")]
 public class EnemyData : ScriptableObject
@@ -16,6 +18,29 @@ public class EnemyData : ScriptableObject
     [Tooltip("敌人容器预制体（包含预告和敌人）")]
     [Required]
     public GameObject enemyContainerPrefab;
+    
+    [BoxGroup("等级配置")]
+    [LabelText("敌人等级列表")]
+    [Tooltip("敌人的所有等级配置。每个等级独立配置所有参数（类似技能系统）")]
+    [ListDrawerSettings(ShowIndexLabels = true, NumberOfItemsPerPage = 3)]
+    public List<EnemyLevelConfig> enemyLevels = new List<EnemyLevelConfig>();
+    
+    [Button("自动分配等级编号", ButtonSizes.Medium)]
+    [BoxGroup("等级配置")]
+    private void AutoAssignLevelNumbers()
+    {
+        if (enemyLevels == null || enemyLevels.Count == 0)
+        {
+            Debug.LogWarning($"敌人 {enemyName} 没有等级配置");
+            return;
+        }
+        
+        for (int i = 0; i < enemyLevels.Count; i++)
+        {
+            enemyLevels[i].level = i + 1;
+        }
+        Debug.Log($"敌人 {enemyName} 已自动分配等级编号: [{string.Join(", ", enemyLevels.Select(l => l.level))}]");
+    }
     
     #region 向后兼容属性（从 Info 读取）
     
@@ -114,4 +139,48 @@ public class EnemyData : ScriptableObject
     [LabelText("经验值")]
     [MinValue(0)]
     public int experienceValue = 10;
+    
+    #region 多等级配置管理
+    
+    /// <summary>
+    /// 获取指定等级的配置
+    /// </summary>
+    public EnemyLevelConfig GetLevelConfig(int level)
+    {
+        if (enemyLevels == null || enemyLevels.Count == 0)
+        {
+            return null;
+        }
+        
+        return enemyLevels.FirstOrDefault(l => l.level == level && l.isActive);
+    }
+    
+    /// <summary>
+    /// 获取最高可用等级
+    /// </summary>
+    public int GetMaxLevel()
+    {
+        if (enemyLevels == null || enemyLevels.Count == 0)
+        {
+            return 1;
+        }
+        
+        var maxLevel = enemyLevels.Where(l => l.isActive).Max(l => (int?)l.level);
+        return maxLevel ?? 1;
+    }
+    
+    /// <summary>
+    /// 获取所有可用等级
+    /// </summary>
+    public List<int> GetAvailableLevels()
+    {
+        if (enemyLevels == null || enemyLevels.Count == 0)
+        {
+            return new List<int> { 1 };
+        }
+        
+        return enemyLevels.Where(l => l.isActive).Select(l => l.level).OrderBy(l => l).ToList();
+    }
+    
+    #endregion
 }

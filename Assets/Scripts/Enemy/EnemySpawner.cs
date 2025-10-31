@@ -80,6 +80,14 @@ public class EnemySpawner : BaseSpawner<EnemyData>
     /// <param name="data">敌人数据</param>
     protected override void OnPostSpawn(GameObject spawnedObject, EnemyData data)
     {
+        OnPostSpawnWithLevel(spawnedObject, data, 1);  // 默认 Level 1
+    }
+    
+    /// <summary>
+    /// 生成后处理（带等级参数）
+    /// </summary>
+    private void OnPostSpawnWithLevel(GameObject spawnedObject, EnemyData data, int level)
+    {
         // 父对象已在Instantiate时设置，无需再次设置
         
         // 设置敌人数据
@@ -87,7 +95,7 @@ public class EnemySpawner : BaseSpawner<EnemyData>
         
         if (enemy != null)
         {
-            enemy.SetEnemyData(data);
+            enemy.SetEnemyData(data, level);  // ✅ 传递等级参数
             
             // 注册到预告列表（新生成的敌人先进入预告阶段）
             if (enemyManager != null)
@@ -114,7 +122,7 @@ public class EnemySpawner : BaseSpawner<EnemyData>
     }
     
     /// <summary>
-    /// 向后兼容：批量生成敌人
+    /// 批量生成敌人（支持等级参数）
     /// </summary>
     /// <param name="enemySpawns">敌人生成配置列表</param>
     /// <param name="rangeConfig">范围配置（可选）</param>
@@ -124,13 +132,30 @@ public class EnemySpawner : BaseSpawner<EnemyData>
         {
             for (int i = 0; i < enemySpawn.count; i++)
             {
-                Spawn(enemySpawn.enemyData, null, rangeConfig);
+                // ✅ 生成敌人并设置等级
+                SpawnEnemyWithLevel(enemySpawn.enemyData, enemySpawn.level, rangeConfig);
             }
         }
         
         if (showDebugInfo)
         {
             Debug.Log($"EnemySpawner: 批量生成完成，共 {enemySpawns.Count} 种敌人");
+        }
+    }
+    
+    /// <summary>
+    /// 生成指定等级的敌人
+    /// </summary>
+    private void SpawnEnemyWithLevel(EnemyData enemyData, int level, SpawnRangeConfig rangeConfig = null)
+    {
+        // 使用基类的 Spawn 方法生成敌人
+        Vector3 spawnPosition = rangeConfig != null ? rangeConfig.GetRandomPosition() : transform.position;
+        GameObject spawnedObject = InstantiateObject(enemyData, spawnPosition, enemyParent);
+        
+        if (spawnedObject != null)
+        {
+            // ✅ 使用带等级的后处理方法
+            OnPostSpawnWithLevel(spawnedObject, enemyData, level);
         }
     }
 }

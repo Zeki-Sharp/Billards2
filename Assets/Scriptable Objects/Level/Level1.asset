@@ -18,6 +18,7 @@ MonoBehaviour:
   generateInitialEnemies: 1
   initialEnemies:
   - enemyData: {fileID: 11400000, guid: ce82a34099b9d1f4899931eb09ed10ce, type: 2}
+    level: 2
     count: 2
   initialEnemySpawnRange:
     coordinateSystem: 0

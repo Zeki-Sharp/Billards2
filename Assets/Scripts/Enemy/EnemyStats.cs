@@ -24,6 +24,7 @@ public class EnemyStats : MonoBehaviour
     
     [Header("基础数据")]
     private EnemyData enemyData;
+    private int currentLevel = 1;  // 当前等级
     
     [Header("调试设置")]
     public bool enableDebugLog = false;  // 敌人默认不输出日志
@@ -66,8 +67,9 @@ public class EnemyStats : MonoBehaviour
     /// <summary>
     /// 初始化属性管理器（由 EnemyBehavior 调用）
     /// </summary>
-    public void Initialize()
+    public void Initialize(int level = 1)
     {
+        currentLevel = level;
         InitializeStatsManager();
     }
     
@@ -102,20 +104,30 @@ public class EnemyStats : MonoBehaviour
     /// </summary>
     private void RegisterBaseStats()
     {
+        // ✅ 从指定等级配置读取数值
+        var levelConfig = enemyData.GetLevelConfig(currentLevel);
+        
+        // 读取数值（优先 levelConfig，回退到旧字段）
+        float maxHealth = levelConfig?.maxHealth ?? enemyData.maxHealth;
+        float damage = levelConfig?.damage ?? enemyData.damage;
+        float moveSpeed = levelConfig?.moveSpeed ?? enemyData.moveSpeed;
+        float attackRange = levelConfig?.attackRange ?? enemyData.attackRange;
+        float attackCooldown = levelConfig?.attackCooldown ?? enemyData.attackCooldown;
+        
         var baseStats = new Dictionary<string, float>
         {
-            { "MaxHealth", enemyData.maxHealth },
-            { "Damage", enemyData.damage },
-            { "MoveSpeed", enemyData.moveSpeed },
-            { "AttackRange", enemyData.attackRange },
-            { "AttackCooldown", enemyData.attackCooldown }
+            { "MaxHealth", maxHealth },
+            { "Damage", damage },
+            { "MoveSpeed", moveSpeed },
+            { "AttackRange", attackRange },
+            { "AttackCooldown", attackCooldown }
         };
         
         runtimeStats.RegisterStats(baseStats);
         
         if (enableDebugLog)
         {
-            Debug.Log($"[EnemyStats] {gameObject.name}: 注册基础属性 - MaxHealth: {enemyData.maxHealth}, Damage: {enemyData.damage}");
+            Debug.Log($"[EnemyStats] {gameObject.name} Lv{currentLevel}: 注册基础属性 - MaxHealth: {maxHealth}, Damage: {damage}");
         }
     }
     
@@ -124,17 +136,21 @@ public class EnemyStats : MonoBehaviour
     /// </summary>
     private void RegisterBaseAttributes()
     {
+        // ✅ 从指定等级配置读取血量
+        var levelConfig = enemyData.GetLevelConfig(currentLevel);
+        float maxHealth = levelConfig?.maxHealth ?? enemyData.maxHealth;
+        
         // 注册生命值属性（动态资源）
         runtimeAttributes.RegisterAttribute(
-            "Health",                  // attributeID
-            0f,                       // minValue
-            enemyData.maxHealth,      // maxValue
-            enemyData.maxHealth       // startValue（满血开始）
+            "Health",           // attributeID
+            0f,                // minValue
+            maxHealth,         // maxValue
+            maxHealth          // startValue（满血开始）
         );
         
         if (enableDebugLog)
         {
-            Debug.Log($"[EnemyStats] {gameObject.name}: 注册 Health 属性，最大值: {enemyData.maxHealth}");
+            Debug.Log($"[EnemyStats] {gameObject.name} Lv{currentLevel}: 注册 Health 属性，最大值: {maxHealth}");
         }
     }
     
