@@ -146,8 +146,8 @@ public class SettingsPanel : BasePanel
         // 发布游戏重启事件（让所有DontDestroyOnLoad管理器重置状态）
         GameEventBus.PublishGameRestart();
         
-        // 清理静态数据
-        GameRuntimeData.ClearAllData();
+        // ✅ 清理会话数据
+        GameSession.GetOrCreateInstance()?.Reset();
         SceneTransitionManager.ClearSelectedCharacter();
         
         // 恢复游戏状态

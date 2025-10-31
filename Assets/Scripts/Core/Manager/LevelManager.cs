@@ -252,8 +252,8 @@ public class LevelManager : SingletonManager<LevelManager>
         {
             killedEnemyCount++;
             
-            // 同步更新总击杀数到GameRuntimeData
-            GameRuntimeData.AddEnemyKill();
+            // ✅ 同步更新总击杀数到 GameSession
+            GameSession.GetOrCreateInstance()?.Statistics.AddKill();
             
             if (showDebugInfo)
             {
@@ -373,11 +373,12 @@ public class LevelManager : SingletonManager<LevelManager>
             Debug.Log($"LevelManager: 场景加载完成 - {scene.name}");
         }
         
-        // 从GameRuntimeData同步当前地图层级到currentLevelIndex
-        // MapPlayerTracker在加载战斗场景时会设置GameRuntimeData的当前层级
-        if (GameRuntimeData.IsFromMapSystem())
+        // ✅ 从 GameSession 同步当前地图层级到 currentLevelIndex
+        // MapPlayerTracker 在加载战斗场景时会设置 GameSession 的当前层级
+        var session = GameSession.GetOrCreateInstance();
+        if (session != null && session.IsFromMapSystem())
         {
-            int mapLayer = GameRuntimeData.GetCurrentMapLayer();
+            int mapLayer = session.GetCurrentMapLayer();
             if (currentLevelIndex != mapLayer)
             {
                 if (showDebugInfo)

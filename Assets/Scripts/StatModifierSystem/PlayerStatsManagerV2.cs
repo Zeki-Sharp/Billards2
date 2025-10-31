@@ -27,12 +27,22 @@ public class PlayerStatsManagerV2 : MonoBehaviour
     
     #endregion
     
-    #region 核心系统
+    #region 核心系统（三层属性）
     
     /// <summary>
-    /// 运行时属性管理器（新系统）
+    /// Stats 层 - 基础属性（攻击力、速度等）
     /// </summary>
     private RuntimeStatsManager runtimeStats;
+    
+    /// <summary>
+    /// Attributes 层 - 动态资源（生命值、能量等）
+    /// </summary>
+    private RuntimeAttributes runtimeAttributes;
+    
+    /// <summary>
+    /// StatusEffects 层 - 状态效果（中毒、加速等）
+    /// </summary>
+    private RuntimeStatusEffects runtimeStatusEffects;
     
     #endregion
     
@@ -70,26 +80,32 @@ public class PlayerStatsManagerV2 : MonoBehaviour
     /// </summary>
     void InitializeStatsManager()
     {
-        // 创建运行时属性管理器
+        // ✅ 创建三层属性系统
         runtimeStats = new RuntimeStatsManager(enableDebugLog);
+        runtimeAttributes = new RuntimeAttributes(enableDebugLog);
+        runtimeStatusEffects = new RuntimeStatusEffects(enableDebugLog);
         
-        // 注册基础属性
+        // 注册基础属性和资源
         if (playerData != null)
         {
             RegisterBaseStats();
+            RegisterBaseAttributes();
         }
+        
+        // ✅ 尝试从 GameSession 恢复数据（跨场景持久化）
+        RestoreFromGameSession();
         
         // 订阅事件
         SubscribeToEvents();
         
         if (enableDebugLog)
         {
-            Debug.Log("PlayerStatsManagerV2: 初始化完成，使用轻量级 Modifier 系统");
+            Debug.Log("PlayerStatsManagerV2: ✅ 初始化完成，三层属性系统已就绪");
         }
     }
     
     /// <summary>
-    /// 注册基础属性
+    /// 注册基础属性（Stats 层）
     /// </summary>
     private void RegisterBaseStats()
     {
@@ -102,6 +118,25 @@ public class PlayerStatsManagerV2 : MonoBehaviour
         };
         
         runtimeStats.RegisterStats(baseStats);
+    }
+    
+    /// <summary>
+    /// 注册基础属性资源（Attributes 层）
+    /// </summary>
+    private void RegisterBaseAttributes()
+    {
+        // 注册生命值属性（动态资源）
+        runtimeAttributes.RegisterAttribute(
+            "Health",                      // attributeID
+            0f,                           // minValue
+            playerData.baseMaxHealth,     // maxValue
+            playerData.baseMaxHealth      // startValue（满血开始）
+        );
+        
+        if (enableDebugLog)
+        {
+            Debug.Log($"PlayerStatsManagerV2: 注册 Health 属性资源，最大值: {playerData.baseMaxHealth}");
+        }
     }
     
     /// <summary>
@@ -129,15 +164,23 @@ public class PlayerStatsManagerV2 : MonoBehaviour
     
     void Update()
     {
-        // 更新临时修改器
+        // ✅ 更新三层属性系统
         if (runtimeStats != null)
         {
             runtimeStats.UpdateModifiers(Time.deltaTime);
+        }
+        
+        if (runtimeStatusEffects != null)
+        {
+            runtimeStatusEffects.UpdateEffects(Time.deltaTime);
         }
     }
     
     void OnDestroy()
     {
+        // ✅ 保存数据到 GameSession（跨场景持久化）
+        SaveToGameSession();
+        
         // 取消事件订阅
         GameEventBus.OnBallStopped -= HandleBallStopped;
         GameEventBus.OnGameFlowStateChanged -= HandleGameFlowStateChanged;
@@ -202,24 +245,7 @@ public class PlayerStatsManagerV2 : MonoBehaviour
     /// </summary>
     public float GetFinalStat(string statName)
     {
-        // ✅ 优先从静态数据读取最终值（与旧系统兼容）
-        switch (statName)
-        {
-            case "MaxHealth":
-                if (GameRuntimeData.HasMaxHealthData())
-                    return GameRuntimeData.GetMaxHealth();
-                break;
-            case "Damage":
-                if (GameRuntimeData.HasDamageData())
-                    return GameRuntimeData.GetDamage();
-                break;
-            case "AreaRadius":
-                if (GameRuntimeData.HasAttackRangeData())
-                    return GameRuntimeData.GetAttackRange();
-                break;
-        }
-        
-        // 从新系统获取
+        // ✅ 直接从新系统获取（已废弃 GameRuntimeData 静态存储）
         return runtimeStats.GetStatValue(statName);
     }
     
@@ -281,23 +307,11 @@ public class PlayerStatsManagerV2 : MonoBehaviour
         // 计算最终值并保存到静态数据
         float finalValue = runtimeStats.GetStatValue(statName);
         
-        // 保存到静态数据（与旧系统兼容）
-        switch (statName)
-        {
-            case "MaxHealth":
-                GameRuntimeData.SetMaxHealth(finalValue);
-                break;
-            case "Damage":
-                GameRuntimeData.SetDamage(finalValue);
-                break;
-            case "AreaRadius":
-                GameRuntimeData.SetAttackRange(finalValue);
-                break;
-        }
+        // ✅ 已废弃 GameRuntimeData 静态存储，数值由 runtimeStats 直接管理
         
         if (enableDebugLog)
         {
-            Debug.Log($"PlayerStatsManagerV2: {statName} 变化，最终值: {finalValue:F2}，已保存到 GameRuntimeData");
+            Debug.Log($"PlayerStatsManagerV2: ✅ {statName} 变化，最终值: {finalValue:F2}");
         }
     }
     
@@ -368,26 +382,228 @@ public class PlayerStatsManagerV2 : MonoBehaviour
     
     #endregion
     
-    #region 调试和监控
+    #region Attributes 层访问接口
     
     /// <summary>
-    /// 获取所有属性的调试信息
+    /// 获取生命值当前值
     /// </summary>
-    public string GetDebugInfo()
+    public float CurrentHealth => runtimeAttributes.GetCurrentValue("Health");
+    
+    /// <summary>
+    /// 获取生命值最大值
+    /// </summary>
+    public float MaxHealth => runtimeAttributes.GetMaxValue("Health");
+    
+    /// <summary>
+    /// 获取生命值百分比
+    /// </summary>
+    public float HealthRatio => runtimeAttributes.GetRatio("Health");
+    
+    /// <summary>
+    /// 设置生命值
+    /// </summary>
+    public void SetHealth(float value)
     {
-        return runtimeStats.GetDebugInfo();
+        runtimeAttributes.SetValue("Health", value);
     }
     
     /// <summary>
-    /// 获取最终属性值调试信息
+    /// 增加生命值
+    /// </summary>
+    public void AddHealth(float amount)
+    {
+        runtimeAttributes.Add("Health", amount);
+    }
+    
+    /// <summary>
+    /// 减少生命值
+    /// </summary>
+    public void SubtractHealth(float amount)
+    {
+        runtimeAttributes.Subtract("Health", amount);
+    }
+    
+    /// <summary>
+    /// 获取 RuntimeAttribute 对象（用于高级操作）
+    /// </summary>
+    public RuntimeAttribute GetHealthAttribute()
+    {
+        return runtimeAttributes.GetAttribute("Health");
+    }
+    
+    #endregion
+    
+    #region StatusEffects 层访问接口
+    
+    /// <summary>
+    /// 添加状态效果
+    /// </summary>
+    public RuntimeStatusEffect AddStatusEffect(StatusEffectData effectData, object source = null)
+    {
+        return runtimeStatusEffects.AddEffect(effectData, source);
+    }
+    
+    /// <summary>
+    /// 移除状态效果
+    /// </summary>
+    public bool RemoveStatusEffect(RuntimeStatusEffect effect)
+    {
+        return runtimeStatusEffects.RemoveEffect(effect);
+    }
+    
+    /// <summary>
+    /// 根据ID移除状态效果
+    /// </summary>
+    public bool RemoveStatusEffectByID(string effectID)
+    {
+        return runtimeStatusEffects.RemoveEffectByID(effectID);
+    }
+    
+    /// <summary>
+    /// 检查是否有指定状态效果
+    /// </summary>
+    public bool HasStatusEffect(string effectID)
+    {
+        return runtimeStatusEffects.HasEffect(effectID);
+    }
+    
+    /// <summary>
+    /// 获取所有激活的状态效果
+    /// </summary>
+    public System.Collections.Generic.IReadOnlyList<RuntimeStatusEffect> GetAllStatusEffects()
+    {
+        return runtimeStatusEffects.GetAllEffects();
+    }
+    
+    #endregion
+    
+    #region 调试和监控
+    
+    /// <summary>
+    /// 获取三层属性系统的完整调试信息
+    /// </summary>
+    public string GetDebugInfo()
+    {
+        string info = "=== 玩家属性系统（三层架构） ===\n\n";
+        
+        // Stats 层
+        info += "【1. Stats 层 - 基础属性】\n";
+        info += runtimeStats.GetDebugInfo();
+        info += "\n";
+        
+        // Attributes 层
+        info += "【2. Attributes 层 - 动态资源】\n";
+        info += runtimeAttributes.GetDebugInfo();
+        info += "\n";
+        
+        // StatusEffects 层
+        info += "【3. StatusEffects 层 - 状态效果】\n";
+        info += runtimeStatusEffects.GetDebugInfo();
+        
+        return info;
+    }
+    
+    /// <summary>
+    /// 获取最终属性值调试信息（简化版）
     /// </summary>
     public string GetFinalStatsDebugInfo()
     {
-        return $"最终属性值:\n" +
-               $"- 攻击力: {FinalDamage:F2}\n" +
-               $"- 最大血量: {FinalMaxHealth:F2}\n" +
-               $"- 微调移动速度: {FinalMicroMoveSpeed:F2}\n" +
-               $"- 攻击范围: {FinalAreaRadius:F2}";
+        return $"=== 最终属性值 ===\n" +
+               $"Stats 层:\n" +
+               $"  - 攻击力: {FinalDamage:F2}\n" +
+               $"  - 最大血量: {FinalMaxHealth:F2}\n" +
+               $"  - 微调移动速度: {FinalMicroMoveSpeed:F2}\n" +
+               $"  - 攻击范围: {FinalAreaRadius:F2}\n" +
+               $"\n" +
+               $"Attributes 层:\n" +
+               $"  - 当前生命值: {CurrentHealth:F1}/{MaxHealth:F1} ({HealthRatio * 100:F0}%)\n" +
+               $"\n" +
+               $"StatusEffects 层:\n" +
+               $"  - 激活效果数: {runtimeStatusEffects?.ActiveCount ?? 0}";
+    }
+    
+    #endregion
+    
+    #region GameSession 集成（跨场景数据持久化）
+    
+    /// <summary>
+    /// 保存数据到 GameSession（场景销毁前调用）
+    /// </summary>
+    private void SaveToGameSession()
+    {
+        // ✅ 使用 GetOrCreateInstance 确保 GameSession 存在
+        var session = GameSession.GetOrCreateInstance();
+        if (session == null)
+        {
+            if (enableDebugLog)
+            {
+                Debug.LogWarning("[PlayerStatsManagerV2] ⚠️ GameSession 创建失败，无法保存数据");
+            }
+            return;
+        }
+        
+        // 导出 Attributes 当前值
+        if (runtimeAttributes != null)
+        {
+            session.PlayerData.attributeCurrentValues = runtimeAttributes.ExportCurrentValues();
+        }
+        
+        // 导出 Stats 修改器（当前简化版本）
+        if (runtimeStats != null)
+        {
+            session.PlayerData.activeModifiers = runtimeStats.ExportModifiers();
+        }
+        
+        // 导出 StatusEffects（当前简化版本）
+        if (runtimeStatusEffects != null)
+        {
+            session.PlayerData.activeStatusEffects = runtimeStatusEffects.ExportStatusEffects();
+        }
+        
+        if (enableDebugLog)
+        {
+            Debug.Log($"[PlayerStatsManagerV2] 📤 已保存数据到 GameSession " +
+                     $"(Attributes: {session.PlayerData.attributeCurrentValues.Count}, " +
+                     $"Modifiers: {session.PlayerData.activeModifiers.Count}, " +
+                     $"Effects: {session.PlayerData.activeStatusEffects.Count})");
+        }
+    }
+    
+    /// <summary>
+    /// 从 GameSession 恢复数据（初始化后调用）
+    /// </summary>
+    private void RestoreFromGameSession()
+    {
+        // ✅ 使用 GetOrCreateInstance 确保 GameSession 存在
+        var session = GameSession.GetOrCreateInstance();
+        if (session == null || !session.HasPlayerData())
+        {
+            if (enableDebugLog)
+            {
+                Debug.Log("[PlayerStatsManagerV2] 📥 GameSession 无保存数据，使用默认初始值");
+            }
+            return;
+        }
+        
+        var playerData = session.PlayerData;
+        
+        // 恢复 Attributes 当前值
+        if (runtimeAttributes != null && playerData.attributeCurrentValues.Count > 0)
+        {
+            runtimeAttributes.RestoreCurrentValues(playerData.attributeCurrentValues);
+        }
+        
+        // 恢复 Stats 修改器（当前简化版本，跳过）
+        // 修改器通常由技能系统在场景加载时重新应用
+        
+        // 恢复 StatusEffects（当前简化版本，跳过）
+        // 状态效果通常由技能系统在场景加载时重新应用
+        
+        if (enableDebugLog)
+        {
+            Debug.Log($"[PlayerStatsManagerV2] 📥 已从 GameSession 恢复数据 " +
+                     $"(Attributes: {playerData.attributeCurrentValues.Count})");
+        }
     }
     
     #endregion

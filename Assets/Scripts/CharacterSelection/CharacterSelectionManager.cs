@@ -273,8 +273,12 @@ public class CharacterSelectionManager : MonoBehaviour
             Debug.Log($"CharacterSelectionManager: 准备加载地图场景，选中角色: {selectedCharacter.playerName}");
         }
         
-        // 清除地图系统标记（确保MapSceneController识别为首次进入）
-        GameRuntimeData.ClearFromMapSystem();
+        // ✅ 清除地图系统标记（确保MapSceneController识别为首次进入）
+        var session = GameSession.GetOrCreateInstance();
+        if (session != null)
+        {
+            session.State.ClearMapSystemFlag();
+        }
         
         // 加载MapScene（MapSceneController会处理新地图生成）
         UnityEngine.SceneManagement.SceneManager.LoadScene("MapScene");

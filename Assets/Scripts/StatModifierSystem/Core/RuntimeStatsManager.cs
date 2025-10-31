@@ -382,5 +382,61 @@ public class RuntimeStatsManager
     }
     
     #endregion
+    
+    #region 序列化接口（跨场景持久化）
+    
+    /// <summary>
+    /// 导出激活的修改器快照（用于跨场景保存）
+    /// 注意：当前简化实现，仅导出基础信息，不包含复杂的源对象引用
+    /// </summary>
+    public List<ModifierSnapshot> ExportModifiers()
+    {
+        var snapshots = new List<ModifierSnapshot>();
+        
+        // 注意：当前版本暂不完全序列化修改器
+        // 修改器通常由技能系统在场景加载时重新应用
+        // 这里保留接口供未来扩展
+        
+        if (enableDebugLog)
+        {
+            Debug.Log($"[RuntimeStatsManager] 📤 导出修改器快照（当前版本：简化实现）");
+        }
+        
+        return snapshots;
+    }
+    
+    /// <summary>
+    /// 恢复修改器（用于跨场景恢复）
+    /// 注意：当前简化实现
+    /// </summary>
+    public void RestoreModifiers(List<ModifierSnapshot> snapshots)
+    {
+        if (snapshots == null || snapshots.Count == 0) return;
+        
+        // 注意：当前版本暂不完全恢复修改器
+        // 修改器通常由技能系统在场景加载时重新应用
+        
+        if (enableDebugLog)
+        {
+            Debug.Log($"[RuntimeStatsManager] 📥 恢复修改器快照（当前版本：简化实现）");
+        }
+    }
+    
+    /// <summary>
+    /// 导出基础属性值（用于调试）
+    /// </summary>
+    public Dictionary<string, float> ExportBaseValues()
+    {
+        var snapshot = new Dictionary<string, float>();
+        
+        foreach (var kvp in stats)
+        {
+            snapshot[kvp.Key] = kvp.Value.BaseValue;
+        }
+        
+        return snapshot;
+    }
+    
+    #endregion
 }
 

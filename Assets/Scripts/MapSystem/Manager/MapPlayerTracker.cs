@@ -119,9 +119,12 @@ namespace Map
             
             Debug.Log($"MapPlayerTracker: 加载战斗场景 - {sceneName} (Layer {layer}, NodeType: {mapNode.Node.nodeType})");
             
-            // 保存地图系统数据到GameRuntimeData
-            GameRuntimeData.SetFromMapSystem(true);
-            GameRuntimeData.SetCurrentMapLayer(layer);
+            // ✅ 保存地图系统数据到 GameSession
+            var session = GameSession.GetOrCreateInstance();
+            if (session != null)
+            {
+                session.State.SetMapSystemState(true, layer);
+            }
             
             // 加载战斗场景
             SceneManager.LoadScene(sceneName);

@@ -78,11 +78,12 @@ public class GameOverPanel : BasePanel
     /// </summary>
     void UpdateStatistics()
     {
-        // 获取总击杀数
-        int totalKills = GameRuntimeData.GetTotalEnemyKills();
+        // ✅ 获取总击杀数
+        var session = GameSession.GetOrCreateInstance();
+        int totalKills = session != null ? session.GetTotalKills() : 0;
         
-        // 获取通过的地图层级数
-        int layersPassed = GameRuntimeData.GetCurrentMapLayer();
+        // ✅ 获取通过的地图层级数
+        int layersPassed = session != null ? session.GetCurrentMapLayer() : -1;
         
         // 更新UI文本
         if (enemyCountText != null)
@@ -124,8 +125,8 @@ public class GameOverPanel : BasePanel
         // 发布游戏重启事件（让所有DontDestroyOnLoad管理器重置状态）
         GameEventBus.PublishGameRestart();
         
-        // 清理静态数据
-        GameRuntimeData.ClearAllData();
+        // ✅ 清理会话数据
+        GameSession.GetOrCreateInstance()?.Reset();
         SceneTransitionManager.ClearSelectedCharacter();
         
         // 恢复游戏状态（双保险，UIController.ResetState也会做）

@@ -36,8 +36,9 @@ namespace Map
                 Debug.Log("MapSceneController: 初始化地图场景");
             }
             
-            // 检查是否从战斗场景返回
-            if (GameRuntimeData.IsFromMapSystem())
+            // ✅ 检查是否从战斗场景返回
+            var session = GameSession.GetOrCreateInstance();
+            if (session != null && session.IsFromMapSystem())
             {
                 OnReturnFromCombat();
             }
@@ -89,8 +90,12 @@ namespace Map
                 Debug.Log("MapSceneController: 从战斗返回地图场景");
             }
             
-            // 清除"从地图系统"标记
-            GameRuntimeData.ClearFromMapSystem();
+            // ✅ 清除"从地图系统"标记
+            var session = GameSession.GetOrCreateInstance();
+            if (session != null)
+            {
+                session.State.ClearMapSystemFlag();
+            }
             
             // 解锁地图供玩家继续选择下一个节点
             if (mapPlayerTracker != null)
@@ -124,10 +129,11 @@ namespace Map
         {
             if (mapManager != null && mapManager.CurrentMap != null)
             {
+                var session = GameSession.GetOrCreateInstance();
                 Debug.Log($"MapSceneController 状态:\n" +
                          $"当前地图: {mapManager.CurrentMap.configName}\n" +
                          $"已访问节点数: {mapManager.CurrentMap.path.Count}\n" +
-                         $"是否从战斗返回: {GameRuntimeData.IsFromMapSystem()}\n" +
+                         $"是否从战斗返回: {(session != null && session.IsFromMapSystem())}\n" +
                          $"地图已锁定: {(mapPlayerTracker != null ? mapPlayerTracker.Locked : false)}");
             }
             else
