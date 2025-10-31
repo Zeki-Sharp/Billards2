@@ -34,8 +34,8 @@ public class PlayerAttackManager : MonoBehaviour
     
     // 数据和组件引用（由 Player 统一设置）
     private PlayerData playerData;
-    private PlayerCore playerCore;
-    private PlayerStatsManagerV2 statsManager; // ✅ 使用轻量级 Modifier 系统
+    private PlayerBehavior playerCore;
+    private PlayerStats statsManager; // ✅ 使用轻量级 Modifier 系统
     
     // 范围攻击表现
     private GameObject currentAreaCircle;
@@ -60,7 +60,7 @@ public class PlayerAttackManager : MonoBehaviour
     /// <summary>
     /// 设置 PlayerCore（由 Player 调用）
     /// </summary>
-    public void SetPlayerCore(PlayerCore core)
+    public void SetPlayerCore(PlayerBehavior core)
     {
         playerCore = core;
         Debug.Log("PlayerAttackManager: PlayerCore 已设置");
@@ -94,7 +94,7 @@ public class PlayerAttackManager : MonoBehaviour
     void InitializeAttackManager()
     {
         // 获取 StatsManager 引用
-        statsManager = GetComponent<PlayerStatsManagerV2>();
+        statsManager = GetComponent<PlayerStats>();
         
         if (playerCore == null)
         {

@@ -25,7 +25,7 @@ public class TurnPenaltyManager : SingletonManager<TurnPenaltyManager>
     
     [Header("组件引用")]
     [SerializeField] [Tooltip("玩家核心组件引用")]
-    private PlayerCore playerCore;
+    private PlayerBehavior playerCore;
     
     [Header("关卡配置")]
     [SerializeField] [Tooltip("当前关卡配置")]
@@ -104,7 +104,7 @@ public class TurnPenaltyManager : SingletonManager<TurnPenaltyManager>
     private void InitializeCurrentLevel()
     {
         // 自动查找 PlayerCore（每个场景都需要重新查找）
-        playerCore = FindFirstObjectByType<PlayerCore>();
+        playerCore = FindFirstObjectByType<PlayerBehavior>();
         if (playerCore == null && showDebugInfo)
         {
             Debug.LogWarning("TurnPenaltyManager: 未找到 PlayerCore 组件（可能还未加载场景）");

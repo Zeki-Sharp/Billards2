@@ -20,7 +20,7 @@ using UnityEngine;
 /// - 通过事件与其他组件通信
 /// - 作为Player系统的业务逻辑中心
 /// </summary>
-public class PlayerCore : MonoBehaviour
+public class PlayerBehavior : MonoBehaviour
 {
     [Header("数据设置")]
     // PlayerData 现在通过 Player 统一分发
@@ -32,7 +32,7 @@ public class PlayerCore : MonoBehaviour
     private PlayerData playerData;
     private PlayerAttackManager attackManager;
     private ChargeSystem chargeSystem;
-    private PlayerStatsManagerV2 statsManager; // ✅ 使用轻量级 Modifier 系统
+    private PlayerStats statsManager; // ✅ 使用轻量级 Modifier 系统
     
     // 核心组件
     private BallPhysics ballPhysics;
@@ -77,7 +77,7 @@ public class PlayerCore : MonoBehaviour
     /// <summary>
     /// 设置 StatsManager（由 Player 调用）
     /// </summary>
-    public void SetStatsManager(PlayerStatsManagerV2 manager)
+    public void SetStatsManager(PlayerStats manager)
     {
         statsManager = manager;
         Debug.Log("PlayerCore: StatsManager 已设置");

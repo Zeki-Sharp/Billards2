@@ -31,7 +31,7 @@ public class Player : MonoBehaviour
     
     [Header("核心组件")]
     [Tooltip("如果为空，将自动从同一GameObject获取")]
-    [SerializeField] private PlayerCore playerCore;
+    [SerializeField] private PlayerBehavior playerCore;
     [SerializeField] private PlayerStateMachine stateMachine;
     [SerializeField] private PlayerInputHandler inputHandler;
     [SerializeField] private PlayerMovementController movementController;
@@ -40,7 +40,7 @@ public class Player : MonoBehaviour
     [Tooltip("如果为空，将自动从同一GameObject获取")]
     [SerializeField] private PlayerAttackManager attackManager;
     [SerializeField] private ChargeSystem chargeSystem;
-    [SerializeField] private PlayerStatsManagerV2 statsManager; // ✅ 使用轻量级 Modifier 系统
+    [SerializeField] private PlayerStats statsManager; // ✅ 使用轻量级 Modifier 系统
     
     [Header("特效配置")]
     [Tooltip("玩家特效配置列表，在 Inspector 中直接拖拽 MMF_Player 组件")]
@@ -99,7 +99,7 @@ public class Player : MonoBehaviour
     {
         // 核心组件 - 优先使用Inspector配置，否则从GameObject获取
         if (playerCore == null)
-            playerCore = GetComponent<PlayerCore>();
+            playerCore = GetComponent<PlayerBehavior>();
         if (stateMachine == null)
             stateMachine = GetComponent<PlayerStateMachine>();
         if (inputHandler == null)
@@ -113,7 +113,7 @@ public class Player : MonoBehaviour
         if (chargeSystem == null)
             chargeSystem = GetComponent<ChargeSystem>();
         if (statsManager == null)
-            statsManager = GetComponent<PlayerStatsManagerV2>();
+            statsManager = GetComponent<PlayerStats>();
         
         // 检查必需组件是否存在
         if (playerCore == null)
@@ -277,7 +277,7 @@ public class Player : MonoBehaviour
     /// <summary>
     /// 获取玩家核心组件
     /// </summary>
-    public PlayerCore GetPlayerCore()
+    public PlayerBehavior GetPlayerCore()
     {
         return playerCore;
     }
@@ -325,7 +325,7 @@ public class Player : MonoBehaviour
     /// <summary>
     /// 获取数值管理器组件
     /// </summary>
-    public PlayerStatsManagerV2 GetStatsManager()
+    public PlayerStats GetStatsManager()
     {
         return statsManager;
     }

@@ -14,8 +14,8 @@ public class StatModifierEffect : IEffect
     private PropertyGetFloat modifierValue;
     private StatModifierType modifierType = StatModifierType.PercentMult; // 默认百分比乘算
     private bool canExecute = true;       // 是否允许执行（完全由重置条件控制）
-    private PlayerCore targetPlayer;      // 目标玩家
-    private PlayerStatsManagerV2 statsManager; // ✅ 属性管理器（轻量级系统）
+    private PlayerBehavior targetPlayer;      // 目标玩家
+    private PlayerStats statsManager; // ✅ 属性管理器（轻量级系统）
     
     // 叠加控制字段
     private bool allowStacking = true;    // 是否允许叠加
@@ -284,11 +284,11 @@ public class StatModifierEffect : IEffect
     {
         if (targetPlayer == null)
         {
-            targetPlayer = Object.FindFirstObjectByType<PlayerCore>();
+            targetPlayer = Object.FindFirstObjectByType<PlayerBehavior>();
             if (targetPlayer != null)
             {
                 // 查找属性管理器
-                statsManager = targetPlayer.GetComponent<PlayerStatsManagerV2>();
+                statsManager = targetPlayer.GetComponent<PlayerStats>();
                 if (statsManager == null)
                 {
                     Debug.LogError($"[{EffectName}] 未找到PlayerStatsManagerV2，无法应用效果");
@@ -320,7 +320,7 @@ public class StatModifierEffect : IEffect
     /// <summary>
     /// 检查玩家是否就绪
     /// </summary>
-    private bool IsPlayerReady(PlayerCore player)
+    private bool IsPlayerReady(PlayerBehavior player)
     {
         return player != null && player.enabled && player.gameObject.activeInHierarchy;
     }

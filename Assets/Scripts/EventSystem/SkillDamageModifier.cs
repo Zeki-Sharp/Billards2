@@ -213,7 +213,7 @@ public class SkillDamageModifier : IDamageModifier
             return false;
         
         // 直接读取玩家当前血量，构造 HealthStateData
-        PlayerCore playerCore = Object.FindFirstObjectByType<PlayerCore>();
+        PlayerBehavior playerCore = Object.FindFirstObjectByType<PlayerBehavior>();
         if (playerCore == null)
         {
             if (showDebugLog)

@@ -15,7 +15,7 @@ using UnityEngine;
 /// - 支持旧的 StatModifier 类型（适配器模式）
 /// - 可以直接替换旧版本使用
 /// </summary>
-public class PlayerStatsManagerV2 : MonoBehaviour
+public class PlayerStats : MonoBehaviour
 {
     #region 配置
     

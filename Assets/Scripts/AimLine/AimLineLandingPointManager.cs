@@ -392,7 +392,7 @@ public class AimLineLandingPointManager : MonoBehaviour
     /// <returns>是否为范围攻击模式</returns>
     bool IsAreaAttackMode()
     {
-        PlayerCore playerCore = FindFirstObjectByType<PlayerCore>();
+        PlayerBehavior playerCore = FindFirstObjectByType<PlayerBehavior>();
         if (playerCore == null) return false;
         
         Player player = playerCore.GetComponent<Player>();
@@ -407,7 +407,7 @@ public class AimLineLandingPointManager : MonoBehaviour
     /// <returns>攻击范围半径</returns>
     float GetAttackRangeRadius()
     {
-        PlayerCore playerCore = FindFirstObjectByType<PlayerCore>();
+        PlayerBehavior playerCore = FindFirstObjectByType<PlayerBehavior>();
         if (playerCore == null) return 0f;
         
         PlayerAttackManager attackManager = playerCore.GetComponent<PlayerAttackManager>();

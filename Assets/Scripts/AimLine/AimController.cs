@@ -25,7 +25,7 @@ public class AimController : MonoBehaviour
     
     
     [Header("球体设置")]
-    public PlayerCore playerCore; // 玩家核心引用
+    public PlayerBehavior playerCore; // 玩家核心引用
     
     
     [Header("相机设置")]

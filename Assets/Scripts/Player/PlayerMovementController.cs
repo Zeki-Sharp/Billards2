@@ -25,7 +25,7 @@ public class PlayerMovementController : MonoBehaviour
     [Header("移动设置")]
     
     // 组件引用
-    private PlayerCore playerCore;
+    private PlayerBehavior playerCore;
     private PlayerData playerData;
     
     // 移动状态
@@ -35,7 +35,7 @@ public class PlayerMovementController : MonoBehaviour
     void Start()
     {
         // 获取组件引用
-        playerCore = GetComponent<PlayerCore>();
+        playerCore = GetComponent<PlayerBehavior>();
         
         // 获取PlayerData引用（通过 Player 组件）
         Player player = GetComponent<Player>();

@@ -48,7 +48,7 @@ public class ChargeSystem : MonoBehaviour
     [SerializeField] [Tooltip("发射力度阈值（小于此值不能发射）")] private float launchForceThreshold = 1f;
     
     [Header("组件引用")]
-    [SerializeField] private PlayerCore playerCore; // 用于获取球位置
+    [SerializeField] private PlayerBehavior playerCore; // 用于获取球位置
     [SerializeField] private Camera targetCamera; // 用于坐标转换
     
     [Header("调试")]

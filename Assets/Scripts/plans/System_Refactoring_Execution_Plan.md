@@ -1117,12 +1117,20 @@ Week 10+:   Phase 4 - 高级优化（按需）
 - ✅ 为多语言系统打下基础
 - ✅ 保持向后兼容（现有代码无需修改）
 
-**自动数据迁移**
-- ✅ 添加临时旧字段（_skillName、_playerName 等）
-- ✅ 添加 OnValidate 自动迁移逻辑
-- ✅ Unity 重新编译后，打开任意 SO 即可触发迁移
-- ✅ 迁移完成后会在 Console 显示日志
-- ⚠️ 迁移后需保存 SO（Ctrl+S 或 File → Save Project）
+**Inspector 优化**
+- ✅ SkillInfo.tag - 下拉选择（default/common/角色名）
+- ✅ SkillInfo.rarity - 下拉选择（普通/稀有/史诗/传说）
+- ✅ PlayerInfo.characterClass - 下拉选择（战士/法师/射手等）
+- ✅ PlayerInfo.rarity - 下拉选择
+- ✅ EnemyInfo.enemyType - 下拉选择（普通怪物/精英/Boss等）
+- ✅ EnemyInfo.threatLevel - 下拉选择（低/中/高/极高）
+- ✅ EnemyInfo.IsBoss - 改为计算属性（自动判断）
+
+**⚠️ 遗留问题（已记录到 Legacy_Issues.md）**
+- 🔧 向后兼容桥接属性清理（约 150+ 处）
+- 🔧 配置层命名规范化（PlayerData/EnemyData/SkillConfig → Class）
+- 🔧 字符串引用更新（PlayerStatsManagerV2 → PlayerStats）
+- 📋 详见：`Assets/Scripts/Plans/Legacy_Issues.md`
 
 **数据结构**
 ```
@@ -1145,5 +1153,30 @@ SkillConfig
   └─ skillLevels, ... - 核心数据
 ```
 
-🔄 **准备进入 Phase 3.2 - Class/Instance 分离**
+### 2024年12月 - 改名规范化 ✅
+
+**PlayerStatsManagerV2 → PlayerStats**
+- ✅ 使用 Unity Rename 工具改名
+- ✅ 文件名、类名、所有类型引用自动更新（约 30 处）
+- ✅ 无编译错误，功能正常
+- ⚠️ 字符串引用（日志、注释）暂不更新（见 Legacy_Issues.md）
+
+**PlayerCore → PlayerBehavior**
+- ✅ 使用 Unity Rename 工具改名
+- ✅ 更符合行为类命名规范
+- ✅ 无编译错误，功能正常
+
+**收益**：
+- ✅ 命名更简洁（去掉 V2 后缀）
+- ✅ 与 GC2 规范更接近
+- ✅ 为 EnemyStats 命名打下基础
+
+**⚠️ 遗留改名（见 Legacy_Issues.md）**：
+- PlayerData → PlayerClass（~50 处）
+- EnemyData → EnemyClass（~30 处）
+- SkillConfig → SkillClass（~40 处）
+
+---
+
+🔄 **准备进入 Phase 3.2 - Class/Instance 分离（敌人系统三层属性迁移）**
 

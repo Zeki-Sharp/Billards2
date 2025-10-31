@@ -58,7 +58,7 @@ public class AttributeRatioFloat : PropertyGetFloat
         }
         
         // 获取目标的 StatsManager
-        var statsManager = args.Target.GetComponent<PlayerStatsManagerV2>();
+        var statsManager = args.Target.GetComponent<PlayerStats>();
         if (statsManager == null)
         {
             Debug.LogWarning($"[AttributeRatioFloat] 目标没有 PlayerStatsManagerV2，返回 0");

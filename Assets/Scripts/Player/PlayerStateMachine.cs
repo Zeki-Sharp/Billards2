@@ -48,7 +48,7 @@ public class PlayerStateMachine : MonoBehaviour
     private PlayerState currentState;
     
     // 组件引用
-    private PlayerCore playerCore;
+    private PlayerBehavior playerCore;
     private ChargeSystem chargeSystem;
     
     // Moving 状态相关
@@ -61,7 +61,7 @@ public class PlayerStateMachine : MonoBehaviour
     void Start()
     {
         // 获取组件引用
-        playerCore = GetComponent<PlayerCore>();
+        playerCore = GetComponent<PlayerBehavior>();
         chargeSystem = GetComponent<ChargeSystem>();
         
         // 订阅蓄力事件
@@ -248,7 +248,7 @@ public class PlayerStateMachine : MonoBehaviour
         }
         
         // 触发球停止攻击（攻击系统触发点）
-        PlayerCore playerCore = FindFirstObjectByType<PlayerCore>();
+        PlayerBehavior playerCore = FindFirstObjectByType<PlayerBehavior>();
         if (playerCore != null)
         {
             playerCore.HandleBallStoppedAttack();

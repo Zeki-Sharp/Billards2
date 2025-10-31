@@ -26,7 +26,7 @@ public class HealEffect : IEffect
     
     // ✅ 使用 PropertyGetFloat 替代固定值
     private PropertyGetFloat healAmount;
-    private PlayerCore targetPlayer;
+    private PlayerBehavior targetPlayer;
     
     /// <summary>
     /// 设置治疗量 Property
@@ -101,7 +101,7 @@ public class HealEffect : IEffect
     {
         if (targetPlayer == null)
         {
-            targetPlayer = Object.FindFirstObjectByType<PlayerCore>();
+            targetPlayer = Object.FindFirstObjectByType<PlayerBehavior>();
             if (targetPlayer == null)
             {
                 Debug.LogWarning($"[{EffectName}] 未找到PlayerCore");
@@ -122,7 +122,7 @@ public class HealEffect : IEffect
     /// <summary>
     /// 检查玩家是否就绪
     /// </summary>
-    private bool IsPlayerReady(PlayerCore player)
+    private bool IsPlayerReady(PlayerBehavior player)
     {
         return player != null && player.enabled && player.gameObject.activeInHierarchy;
     }
