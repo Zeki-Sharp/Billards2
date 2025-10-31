@@ -4,114 +4,6 @@ using System.Collections.Generic;
 using System.Linq;
 
 /// <summary>
-/// 单个条件配置 - 用于配置一个具体的条件
-/// </summary>
-[System.Serializable]
-public class SingleConditionConfig
-{
-    [LabelText("条件类型")]
-    [Tooltip("选择条件的判断类型")]
-    public ConditionType conditionType = ConditionType.Count;
-    
-    // 计数条件参数 - 只在 conditionType == Count 时显示
-    [ShowIf("conditionType", ConditionType.Count)]
-    [LabelText("需要达到的计数")]
-    [Tooltip("需要达到的计数")]
-    public int requiredCount = 2;
-    
-    // 时间窗口条件参数 - 只在 conditionType == TimeWindow 时显示
-    [ShowIf("conditionType", ConditionType.TimeWindow)]
-    [LabelText("时间窗口长度")]
-    [Tooltip("时间窗口长度（秒）")]
-    public float timeWindow = 5f;
-    
-    // 值比较条件参数 - 只在 conditionType == ValueComparison 时显示
-    [ShowIf("conditionType", ConditionType.ValueComparison)]
-    [LabelText("比较类型")]
-    [Tooltip("比较类型")]
-    public ComparisonType comparisonType = ComparisonType.GreaterThanOrEqual;
-    
-    [ShowIf("conditionType", ConditionType.ValueComparison)]
-    [LabelText("目标值")]
-    [Tooltip("目标值")]
-    public float targetValue = 1.0f;
-    
-    [ShowIf("conditionType", ConditionType.ValueComparison)]
-    [ShowIf("comparisonType", ComparisonType.InRange)]
-    [LabelText("最小值")]
-    [Tooltip("最小值")]
-    public float minValue = 0f;
-    
-    [ShowIf("conditionType", ConditionType.ValueComparison)]
-    [ShowIf("comparisonType", ComparisonType.InRange)]
-    [LabelText("最大值")]
-    [Tooltip("最大值")]
-    public float maxValue = 1f;
-    
-    [ShowIf("conditionType", ConditionType.ValueComparison)]
-    [LabelText("数据提取器类型")]
-    [Tooltip("数据提取器类型")]
-    public DataExtractorType dataExtractorType = DataExtractorType.Health;
-    
-    /// <summary>
-    /// 创建单个条件实例
-    /// </summary>
-    public ICondition CreateCondition()
-    {
-        switch (conditionType)
-        {
-            case ConditionType.Count:
-                var countCondition = new CountCondition();
-                countCondition.SetRequiredCount(requiredCount);
-                return countCondition;
-            case ConditionType.ValueComparison:
-                var valueComparisonCondition = new ValueComparisonCondition();
-                valueComparisonCondition.SetComparison(comparisonType, targetValue);
-                if (comparisonType == ComparisonType.InRange)
-                {
-                    valueComparisonCondition.SetRange(minValue, maxValue);
-                }
-                // 直接使用DataExtractors静态类，不再通过中间方法
-                System.Func<object, float> extractor = DataExtractors.GetExtractor(dataExtractorType);
-                valueComparisonCondition.SetValueExtractor(extractor);
-                return valueComparisonCondition;
-            case ConditionType.TimeWindow:
-                // 暂时返回 null，后续实现
-                Debug.LogWarning("TimeWindow 条件暂未实现");
-                return null;
-            default:
-                Debug.LogError($"不支持的条件类型: {conditionType}");
-                return null;
-        }
-    }
-    
-    /// <summary>
-    /// 获取调试信息
-    /// </summary>
-    public string GetDebugInfo()
-    {
-        switch (conditionType)
-        {
-            case ConditionType.Count:
-                return $"计数条件: 需要 {requiredCount} 次";
-            case ConditionType.ValueComparison:
-                if (comparisonType == ComparisonType.InRange)
-                {
-                    return $"值比较条件: {dataExtractorType} 在 {minValue}-{maxValue} 范围内";
-                }
-                else
-                {
-                    return $"值比较条件: {dataExtractorType} {comparisonType} {targetValue}";
-                }
-            case ConditionType.TimeWindow:
-                return $"时间窗口条件: {timeWindow}秒内 {requiredCount} 次";
-            default:
-                return $"条件: {conditionType}";
-        }
-    }
-}
-
-/// <summary>
 /// 条件配置 - 支持多个条件和逻辑判断
 /// 如果没有条件，触发即执行
 /// </summary>
@@ -124,8 +16,9 @@ public class ConditionConfig
     
     [LabelText("条件列表")]
     [Tooltip("条件列表（列表为空时表示无条件，触发即执行）")]
-    [ListDrawerSettings(ShowIndexLabels = true, ListElementLabelName = "conditionType")]
-    public List<SingleConditionConfig> conditions = new List<SingleConditionConfig> { new SingleConditionConfig() };
+    [ListDrawerSettings(ShowIndexLabels = true)]
+    [SerializeReference]
+    public List<ConditionBase> conditions = new List<ConditionBase>();
     
     /// <summary>
     /// 创建条件实例
@@ -152,10 +45,13 @@ public class ConditionConfig
             
             foreach (var conditionConfig in conditions)
             {
-                var condition = conditionConfig.CreateCondition();
-                if (condition != null)
+                if (conditionConfig != null)
                 {
-                    compositeCondition.AddCondition(condition);
+                    var condition = conditionConfig.CreateCondition();
+                    if (condition != null)
+                    {
+                        compositeCondition.AddCondition(condition);
+                    }
                 }
             }
             
@@ -182,7 +78,7 @@ public class ConditionConfig
         }
         
         string logicText = logicType == ConditionLogicType.And ? "AND" : "OR";
-        string conditionTexts = string.Join($" {logicText} ", conditions.Select(c => c.GetDebugInfo()));
+        string conditionTexts = string.Join($" {logicText} ", conditions.Where(c => c != null).Select(c => c.GetDebugInfo()));
         return $"复合条件 ({logicText}): {conditionTexts}";
     }
 }
@@ -206,14 +102,3 @@ public enum ConditionLogicType
     Or      // 任一条件满足即可
 }
 
-/// <summary>
-/// 条件类型枚举
-/// </summary>
-public enum ConditionType
-{
-    Count,              // 计数条件
-    ValueComparison,    // 值比较条件
-    TimeWindow,         // 时间窗口条件（暂未实现）
-    Resource,           // 资源条件（暂未实现）
-    State               // 状态条件（暂未实现）
-}

@@ -25,7 +25,7 @@ public class PlayerMovementController : MonoBehaviour
     [Header("移动设置")]
     
     // 组件引用
-    private PlayerBehavior playerCore;
+    private PlayerBehavior playerBehavior;
     private PlayerData playerData;
     
     // 移动状态
@@ -35,7 +35,7 @@ public class PlayerMovementController : MonoBehaviour
     void Start()
     {
         // 获取组件引用
-        playerCore = GetComponent<PlayerBehavior>();
+        playerBehavior = GetComponent<PlayerBehavior>();
         
         // 获取PlayerData引用（通过 Player 组件）
         Player player = GetComponent<Player>();
@@ -86,7 +86,7 @@ public class PlayerMovementController : MonoBehaviour
     /// </summary>
     void ApplyWASDForce(Vector2 direction)
     {
-        if (playerCore == null) return;
+        if (playerBehavior == null) return;
         
         // 从PlayerData获取微操速度
         float microMoveSpeed = playerData != null ? playerData.microMoveSpeed : 5f;
@@ -95,7 +95,7 @@ public class PlayerMovementController : MonoBehaviour
         Vector2 targetVelocity = direction * microMoveSpeed;
         
         // 检查方向是否改变，或者当前速度与目标速度差距较大
-        Vector2 currentVelocity = playerCore.GetVelocity();
+        Vector2 currentVelocity = playerBehavior.GetVelocity();
         bool directionChanged = Vector2.Distance(direction, lastInputDirection) > 0.1f;
         bool speedChanged = Vector2.Distance(currentVelocity, targetVelocity) > 0.5f;
         
@@ -104,7 +104,7 @@ public class PlayerMovementController : MonoBehaviour
         if (directionChanged || speedChanged)
         {
             // 直接设置速度
-            playerCore.SetVelocity(targetVelocity);
+            playerBehavior.SetVelocity(targetVelocity);
             
             // 更新上次输入方向
             lastInputDirection = direction;
@@ -125,9 +125,9 @@ public class PlayerMovementController : MonoBehaviour
             isMoving = false;
             lastInputDirection = Vector2.zero;
             
-            if (playerCore != null)
+            if (playerBehavior != null)
             {
-                playerCore.SetVelocity(Vector2.zero);
+                playerBehavior.SetVelocity(Vector2.zero);
                 
             }
         }
@@ -143,9 +143,9 @@ public class PlayerMovementController : MonoBehaviour
             isMoving = false;
             lastInputDirection = Vector2.zero;
             
-            if (playerCore != null)
+            if (playerBehavior != null)
             {
-                playerCore.SetVelocity(Vector2.zero);
+                playerBehavior.SetVelocity(Vector2.zero);
                 
             }
         }

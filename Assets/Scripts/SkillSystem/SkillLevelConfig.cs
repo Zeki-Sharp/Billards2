@@ -28,35 +28,37 @@ public class SkillLevelConfig
     [BoxGroup("触发器配置")]
     [LabelText("触发器配置")]
     [Tooltip("什么时候触发技能（如：击杀敌人、碰撞墙壁等）")]
-    [Required]
-    public TriggerConfig triggerConfig = new TriggerConfig();
+    [SerializeReference]
+    [InlineProperty]
+    public TriggerBase triggerConfig;
     
     [BoxGroup("条件配置")]
     [LabelText("条件配置")]
     [Tooltip("触发条件（如：生命值满血、击杀数量等）")]
-    [ShowIf("@triggerConfig.triggerType != TriggerType.AlwaysTrue")]
-    [InfoBox("AlwaysTrue触发器不需要条件配置，会始终触发", InfoMessageType.Info, "@triggerConfig.triggerType == TriggerType.AlwaysTrue")]
+    [ShowIf("@!(triggerConfig is AlwaysTrueTriggerConfig)")]
+    [InfoBox("AlwaysTrue触发器不需要条件配置，会始终触发", InfoMessageType.Info, "@triggerConfig is AlwaysTrueTriggerConfig")]
     [Required]
     public ConditionConfig conditionConfig = new ConditionConfig();
     
     [BoxGroup("效果配置")]
     [LabelText("效果配置")]
     [Tooltip("产生什么效果（如：伤害提升、恢复生命值等）")]
-    [Required]
-    public SkillEffectConfig effectConfig = new SkillEffectConfig();
+    [SerializeReference]
+    public EffectBase effectConfig;
     
     [BoxGroup("重置条件配置")]
     [LabelText("重置条件配置")]
     [Tooltip("什么时候可以再次触发技能（所有技能都需要）")]
-    [Required]
-    public ResetConditionConfig resetConditionConfig = new ResetConditionConfig();
+    [SerializeReference]
+    public ResetConditionBase resetConditionConfig;
     
     [BoxGroup("效果移除配置")]
     [LabelText("效果移除配置")]
     [Tooltip("持续效果何时移除（仅持续效果需要配置）")]
-    [ShowIf("@effectConfig.effectType == SkillEffectType.StatModifier")]
-    [InfoBox("只有持续效果（属性修改）才需要配置移除条件", InfoMessageType.Info, "@effectConfig.effectType == SkillEffectType.StatModifier")]
-    public EffectRemovalConfig effectRemovalConfig = new EffectRemovalConfig();
+    [ShowIf("@effectConfig is StatModifierEffectConfig")]
+    [InfoBox("只有持续效果（属性修改）才需要配置移除条件", InfoMessageType.Info, "@effectConfig is StatModifierEffectConfig")]
+    [SerializeReference]
+    public EffectRemovalConditionBase effectRemovalConfig;
     
     /// <summary>
     /// 创建技能等级实例
@@ -107,7 +109,7 @@ public class SkillLevelConfig
     /// </summary>
     private bool IsPropertyEffect()
     {
-        return effectConfig?.effectType == SkillEffectType.StatModifier;
+        return effectConfig is StatModifierEffectConfig;
     }
     
     /// <summary>

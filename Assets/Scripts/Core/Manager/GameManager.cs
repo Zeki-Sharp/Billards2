@@ -115,8 +115,8 @@ public class GameManager : SingletonManager<GameManager>
     void CheckLoseCondition()
     {
         // 检查失败条件：通过PlayerCore检查血量
-        PlayerBehavior playerCore = FindFirstObjectByType<PlayerBehavior>();
-        if (playerCore != null && playerCore.GetCurrentHealth() <= 0)
+        PlayerBehavior playerBehavior = FindFirstObjectByType<PlayerBehavior>();
+        if (playerBehavior != null && playerBehavior.GetCurrentHealth() <= 0)
         {
             GameOver();
         }

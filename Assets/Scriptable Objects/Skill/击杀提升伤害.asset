@@ -21,152 +21,91 @@ MonoBehaviour:
     skillType: 
     rarity: "\u666E\u901A"
     tag: common
-  _skillName: 
-  _description: 
-  _skillTag: 
   skillLevels:
   - level: 1
     isActive: 1
     levelDescription: 
     triggerConfig:
-      triggerType: 1
-      targetTag: Enemy
-      killTargetTag: Enemy
-      dataExtractorType: 0
+      rid: 832807104352092236
     conditionConfig:
       logicType: 0
       conditions:
-      - conditionType: 0
-        requiredCount: 1
-        timeWindow: 5
-        comparisonType: 0
-        targetValue: 1
-        minValue: 0
-        maxValue: 1
-        dataExtractorType: 0
+      - rid: 832807104352092256
     effectConfig:
-      effectType: 0
-      targetStat: Damage
-      modifierValue:
-        rid: 832807095810916620
-      modifierType: 0
-      allowStacking: 1
-      healAmount:
-        rid: -2
-      minTransitionTime: 1
-      maxTransitionTime: 5
-      transitionThreshold: 0.3
-      chargingToTransitionCurve:
-        serializedVersion: 2
-        m_Curve: []
-        m_PreInfinity: 2
-        m_PostInfinity: 2
-        m_RotationOrder: 4
-      weakPointMarkerPrefab: {fileID: 0}
-      weakPointRadius: 0.5
-      dropItemConfig: {fileID: 0}
-      dropChance: 1
-      dropRangeConfig:
-        dropRadius: 1
-        dropShape: 0
-        positionOffset: {x: 0, y: 0, z: 0}
-        coordinateSystemType: 0
-      weakPointDamageMultiplier: 1.5
-      weakPointRefreshOnHit: 1
+      rid: 832807104352092272
     resetConditionConfig:
-      logicType: 1
-      resetConditions:
-      - resetType: 0
-        comparisonType: 1
-        targetValue: 0.99
-        minValue: 0
-        maxValue: 1
-        dataExtractorType: 0
+      rid: 832807104352092315
     effectRemovalConfig:
-      removalType: 2
-      duration: 30
-      comparisonType: 2
-      targetValue: 0.5
-      minValue: 0
-      maxValue: 1
-      dataExtractorType: 0
+      rid: 832807104352092316
   - level: 2
     isActive: 1
     levelDescription: 
     triggerConfig:
-      triggerType: 1
-      targetTag: Enemy
-      killTargetTag: Enemy
-      dataExtractorType: 0
+      rid: 832807104352092247
     conditionConfig:
       logicType: 0
       conditions:
-      - conditionType: 0
-        requiredCount: 1
-        timeWindow: 5
-        comparisonType: 0
-        targetValue: 1
-        minValue: 0
-        maxValue: 1
-        dataExtractorType: 0
+      - rid: 832807104352092257
     effectConfig:
-      effectType: 0
-      targetStat: Damage
-      modifierValue:
-        rid: 832807095810916621
-      modifierType: 0
-      allowStacking: 1
-      healAmount:
-        rid: -2
-      minTransitionTime: 1
-      maxTransitionTime: 5
-      transitionThreshold: 0.3
-      chargingToTransitionCurve:
-        serializedVersion: 2
-        m_Curve: []
-        m_PreInfinity: 2
-        m_PostInfinity: 2
-        m_RotationOrder: 4
-      weakPointMarkerPrefab: {fileID: 0}
-      weakPointRadius: 0.5
-      dropItemConfig: {fileID: 0}
-      dropChance: 1
-      dropRangeConfig:
-        dropRadius: 1
-        dropShape: 0
-        positionOffset: {x: 0, y: 0, z: 0}
-        coordinateSystemType: 0
-      weakPointDamageMultiplier: 1.5
-      weakPointRefreshOnHit: 1
+      rid: 832807104352092276
     resetConditionConfig:
-      logicType: 1
-      resetConditions:
-      - resetType: 0
-        comparisonType: 1
-        targetValue: 0.99
-        minValue: 0
-        maxValue: 1
-        dataExtractorType: 0
+      rid: 832807104352092312
     effectRemovalConfig:
-      removalType: 2
-      duration: 30
-      comparisonType: 2
-      targetValue: 0.5
-      minValue: 0
-      maxValue: 1
-      dataExtractorType: 0
+      rid: 832807104352092313
   requiredSkills: []
   isActive: 1
   references:
     version: 2
     RefIds:
-    - rid: -2
-      type: {class: , ns: , asm: }
-    - rid: 832807095810916620
+    - rid: 832807104352092236
+      type: {class: KillTriggerConfig, ns: , asm: Assembly-CSharp}
+      data:
+        killTargetTag: Enemy
+    - rid: 832807104352092247
+      type: {class: KillTriggerConfig, ns: , asm: Assembly-CSharp}
+      data:
+        killTargetTag: Enemy
+    - rid: 832807104352092256
+      type: {class: CountConditionConfig, ns: , asm: Assembly-CSharp}
+      data:
+        requiredCount: 1
+    - rid: 832807104352092257
+      type: {class: CountConditionConfig, ns: , asm: Assembly-CSharp}
+      data:
+        requiredCount: 1
+    - rid: 832807104352092272
+      type: {class: StatModifierEffectConfig, ns: , asm: Assembly-CSharp}
+      data:
+        targetStat: Damage
+        modifierValue:
+          rid: 832807104352092274
+        modifierType: 0
+        allowStacking: 1
+    - rid: 832807104352092274
       type: {class: ConstantFloat, ns: , asm: Assembly-CSharp}
       data:
         value: 2
-    - rid: 832807095810916621
+    - rid: 832807104352092276
+      type: {class: StatModifierEffectConfig, ns: , asm: Assembly-CSharp}
+      data:
+        targetStat: Damage
+        modifierValue:
+          rid: 832807104352092277
+        modifierType: 0
+        allowStacking: 1
+    - rid: 832807104352092277
       type: {class: ConstantFloat, ns: , asm: Assembly-CSharp}
       data:
-        value: 4
+        value: 3
+    - rid: 832807104352092312
+      type: {class: ImmediateResetConditionConfig, ns: , asm: Assembly-CSharp}
+      data: 
+    - rid: 832807104352092313
+      type: {class: OnLevelCompletedEffectRemovalConditionConfig, ns: , asm: Assembly-CSharp}
+      data: 
+    - rid: 832807104352092315
+      type: {class: ImmediateResetConditionConfig, ns: , asm: Assembly-CSharp}
+      data: 
+    - rid: 832807104352092316
+      type: {class: OnLevelCompletedEffectRemovalConditionConfig, ns: , asm: Assembly-CSharp}
+      data: 

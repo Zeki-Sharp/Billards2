@@ -25,7 +25,7 @@ public class TurnPenaltyManager : SingletonManager<TurnPenaltyManager>
     
     [Header("组件引用")]
     [SerializeField] [Tooltip("玩家核心组件引用")]
-    private PlayerBehavior playerCore;
+    private PlayerBehavior playerBehavior;
     
     [Header("关卡配置")]
     [SerializeField] [Tooltip("当前关卡配置")]
@@ -104,8 +104,8 @@ public class TurnPenaltyManager : SingletonManager<TurnPenaltyManager>
     private void InitializeCurrentLevel()
     {
         // 自动查找 PlayerCore（每个场景都需要重新查找）
-        playerCore = FindFirstObjectByType<PlayerBehavior>();
-        if (playerCore == null && showDebugInfo)
+        playerBehavior = FindFirstObjectByType<PlayerBehavior>();
+        if (playerBehavior == null && showDebugInfo)
         {
             Debug.LogWarning("TurnPenaltyManager: 未找到 PlayerCore 组件（可能还未加载场景）");
         }
@@ -169,7 +169,7 @@ public class TurnPenaltyManager : SingletonManager<TurnPenaltyManager>
         }
         
         // 检查玩家是否存活
-        if (playerCore == null || !playerCore.IsAlive())
+        if (playerBehavior == null || !playerBehavior.IsAlive())
         {
             return;
         }
@@ -207,7 +207,7 @@ public class TurnPenaltyManager : SingletonManager<TurnPenaltyManager>
     /// </summary>
     private void ApplyPenalty(float damage)
     {
-        if (playerCore == null)
+        if (playerBehavior == null)
         {
             Debug.LogError("TurnPenaltyManager: PlayerCore 为 null，无法施加惩罚！");
             return;
@@ -224,7 +224,7 @@ public class TurnPenaltyManager : SingletonManager<TurnPenaltyManager>
         }
         
         // 通过 PlayerCore 施加伤害（使用 IgnorePhase 版本，确保一定会生效）
-        playerCore.TakeDamageIgnorePhase(damage);
+        playerBehavior.TakeDamageIgnorePhase(damage);
         
         // 可以在这里添加 UI 提示或特效
         // 例如：显示"回合超时！失去XX生命值"的提示

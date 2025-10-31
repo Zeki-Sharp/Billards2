@@ -48,7 +48,7 @@ public class ChargeSystem : MonoBehaviour
     [SerializeField] [Tooltip("发射力度阈值（小于此值不能发射）")] private float launchForceThreshold = 1f;
     
     [Header("组件引用")]
-    [SerializeField] private PlayerBehavior playerCore; // 用于获取球位置
+    [SerializeField] private PlayerBehavior playerBehavior; // 用于获取球位置
     [SerializeField] private Camera targetCamera; // 用于坐标转换
     
     [Header("调试")]
@@ -150,9 +150,9 @@ public class ChargeSystem : MonoBehaviour
         // 拉弓模式：记录开始位置（球的位置作为拉弓中心）
         if (chargeMode == ChargeMode.BowPull)
         {
-            if (playerCore != null)
+            if (playerBehavior != null)
             {
-                bowPullStartPosition = playerCore.transform.position;
+                bowPullStartPosition = playerBehavior.transform.position;
             }
             else
             {
@@ -261,14 +261,14 @@ public class ChargeSystem : MonoBehaviour
     {
         if (!isCharging) return;
         
-        if (playerCore == null)
+        if (playerBehavior == null)
         {
             Debug.LogError("ChargeSystem [拉弓模式]: PlayerCore未设置，无法更新拉弓进度！");
             return;
         }
         
         // 获取球的当前位置（拉弓中心）
-        Vector3 ballPosition = playerCore.transform.position;
+        Vector3 ballPosition = playerBehavior.transform.position;
         
         // 获取当前鼠标位置（世界坐标）
         Vector3 mouseWorldPos = Camera.main.ScreenToWorldPoint(Input.mousePosition);

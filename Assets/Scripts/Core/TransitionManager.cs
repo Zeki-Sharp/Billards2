@@ -238,6 +238,6 @@ public class TransitionManager : MonoBehaviour
         }
         
         // 检查是否有 Transition 类型的技能
-        return skillManager.HasActiveSkillOfType(SkillEffectType.Transition);
+        return skillManager.HasActiveSkillOfType<TransitionEffectConfig>();
     }
 }

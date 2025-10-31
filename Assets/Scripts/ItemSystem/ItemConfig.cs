@@ -64,16 +64,21 @@ public class ItemConfig : ScriptableObject
             var level1Config = itemSkill.GetLevelConfig(1);
             if (level1Config?.effectConfig == null) return ItemType.Unknown;
             
-            switch (level1Config.effectConfig.effectType)
+            if (level1Config.effectConfig is HealEffectConfig)
             {
-                case SkillEffectType.Heal:
-                    return ItemType.Consumable;
-                case SkillEffectType.StatModifier:
-                    return ItemType.Buff;
-                case SkillEffectType.DropItem:
-                    return ItemType.Special;
-                default:
-                    return ItemType.Unknown;
+                return ItemType.Consumable;
+            }
+            else if (level1Config.effectConfig is StatModifierEffectConfig)
+            {
+                return ItemType.Buff;
+            }
+            else if (level1Config.effectConfig is DropItemEffectConfig)
+            {
+                return ItemType.Special;
+            }
+            else
+            {
+                return ItemType.Unknown;
             }
         }
     }

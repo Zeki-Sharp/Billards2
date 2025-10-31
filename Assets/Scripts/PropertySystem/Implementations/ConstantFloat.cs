@@ -1,4 +1,5 @@
 using UnityEngine;
+using Sirenix.OdinInspector;
 
 /// <summary>
 /// 固定值 Float Property

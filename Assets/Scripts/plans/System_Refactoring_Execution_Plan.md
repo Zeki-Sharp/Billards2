@@ -1178,44 +1178,49 @@ SkillConfig
 
 ---
 
-### 2024年12月 - Phase 3.3 多等级配置系统 ✅
+### 2024年12月 - Phase 3.2 完成 ✅
 
-**✅ 已完成：EnemyData 重复字段清理**
-- ✅ 删除 EnemyData 中的重复字段（maxHealth, damage, attackType, movementType 等）
-- ✅ 保留共享配置（ballData）
-- ✅ 默认创建一个 Level 1 配置
-- ✅ EnemyStats 删除向后兼容代码，只从 EnemyLevelConfig 读取
-- ✅ EnemyBehavior 添加 currentLevel 和 CurrentLevelConfig 属性
-- ✅ EnemyBehavior 更新所有引用，使用 CurrentLevelConfig
+**✅ 玩家系统 Class/Instance 分离**
+- ✅ PlayerStats 已完成（三层属性系统）
+- ✅ PlayerBehavior 已精简（职责清晰）
+- ✅ GameSession 跨场景数据持久化
 
-**✅ 已完成：Behavior 类重构**
-- ✅ IAttackBehavior/IMovementBehavior 接口添加 EnemyLevelConfig 参数
-- ✅ BaseAttackBehavior/BaseMovementBehavior 基类更新
-- ✅ 所有攻击行为实现类更新（Melee, Ranged, Thorn）
-- ✅ 所有移动行为实现类更新（Follow, Flee, Interval）
-- ✅ 批量替换 enemyData.xxxConfig → levelConfig.xxxConfig（约50处）
-- ✅ 无编译错误
+**✅ 敌人系统 Class/Instance 分离**
+- ✅ 创建 EnemyStats（三层属性系统）
+- ✅ 创建 EnemyLevelConfig（等级配置）
+- ✅ EnemyBehavior 集成 EnemyStats
+- ✅ 多等级配置系统（列表位置=等级）
+- ✅ 删除 EnemyData 重复字段（只保留共享配置）
+- ✅ Behavior 类重构（接口 + 14个实现类）
 
-**✅ 已完成：编辑器体验优化**
+**✅ 编辑器体验优化**
 - ✅ 等级编号根据列表位置自动确定（第1位=Lv1，第2位=Lv2）
-- ✅ OnValidate 自动同步等级编号（无需手动操作）
+- ✅ OnValidate 自动同步等级编号（敌人 + 技能）
 - ✅ 等级字段只读显示（[ReadOnly]）
 - ✅ WaveConfig 等级改为下拉选框（动态显示可用等级）
 - ✅ 优化字段宽度布局（敌人数据更宽，等级/数量更窄）
-- ✅ 技能系统同步优化（移除手动按钮，添加 OnValidate）
 
-**架构改进**：
-- ✅ EnemyData 只保留共享配置（ballData）
-- ✅ EnemyLevelConfig 包含所有等级特定配置
-- ✅ 统一接口签名，传递 (EnemyData, EnemyLevelConfig)
-- ✅ Behavior 类缓存 levelConfig 而非 enemyData
+**✅ 架构统一**
+- ✅ EnemyStats/PlayerStats - 运行时组件
+- ✅ EnemyData/PlayerData - 配置 ScriptableObject
+- ✅ EnemyLevelConfig/SkillLevelConfig - 等级配置
 - ✅ 列表位置即等级，拖动排序自动更新
 
+**⏸️ Override 机制**
+- ❌ 暂时跳过（多等级配置已足够）
+- 📋 如有需要可后续添加
+
 **收益**：
-- ✅ 配置更直观（列表位置 = 等级）
-- ✅ 减少配置错误（自动同步等级编号）
-- ✅ 动态下拉选框（只能选择已配置的等级）
-- ✅ 统一技能和敌人的多等级配置体验
+- ✅ 玩家/敌人架构完全统一
+- ✅ 配置可复用性极大提升
+- ✅ 支持多等级配置（技能/敌人）
+- ✅ 配置更直观，减少错误
+- ✅ 动态下拉选框，体验更好
+
+**修改统计**：
+- 核心文件：18 个
+- 代码改动：约 200+ 处
+- 无编译错误 ✅
 
 ---
 

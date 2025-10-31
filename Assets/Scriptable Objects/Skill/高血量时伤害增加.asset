@@ -26,132 +26,32 @@ MonoBehaviour:
     isActive: 1
     levelDescription: 
     triggerConfig:
-      triggerType: 2
-      targetTag: Enemy
-      killTargetTag: Enemy
-      dataExtractorType: 0
+      rid: 832807104352092243
     conditionConfig:
       logicType: 0
       conditions:
-      - conditionType: 1
-        requiredCount: 2
-        timeWindow: 5
-        comparisonType: 0
-        targetValue: 0.8
-        minValue: 0
-        maxValue: 1
-        dataExtractorType: 0
+      - rid: 832807104352092264
     effectConfig:
-      effectType: 0
-      targetStat: Damage
-      modifierValue:
-        rid: -2
-      modifierType: 0
-      allowStacking: 0
-      healAmount:
-        rid: -2
-      minTransitionTime: 1
-      maxTransitionTime: 5
-      transitionThreshold: 0.3
-      chargingToTransitionCurve:
-        serializedVersion: 2
-        m_Curve: []
-        m_PreInfinity: 2
-        m_PostInfinity: 2
-        m_RotationOrder: 4
-      weakPointMarkerPrefab: {fileID: 0}
-      weakPointRadius: 0.5
-      dropItemConfig: {fileID: 0}
-      dropChance: 1
-      dropRangeConfig:
-        dropRadius: 1
-        dropShape: 0
-        positionOffset: {x: 0, y: 0, z: 0}
-        coordinateSystemType: 0
-      weakPointDamageMultiplier: 1.5
-      weakPointRefreshOnHit: 1
+      rid: 832807104352092302
     resetConditionConfig:
-      logicType: 1
-      resetConditions:
-      - resetType: 2
-        comparisonType: 2
-        targetValue: 0.8
-        minValue: 0
-        maxValue: 1
-        dataExtractorType: 0
+      rid: -2
     effectRemovalConfig:
-      removalType: 4
-      duration: 30
-      comparisonType: 2
-      targetValue: 0.8
-      minValue: 0
-      maxValue: 1
-      dataExtractorType: 0
+      rid: -2
   - level: 2
     isActive: 1
     levelDescription: 
     triggerConfig:
-      triggerType: 2
-      targetTag: Enemy
-      killTargetTag: Enemy
-      dataExtractorType: 0
+      rid: 832807104352092253
     conditionConfig:
       logicType: 0
       conditions:
-      - conditionType: 1
-        requiredCount: 2
-        timeWindow: 5
-        comparisonType: 0
-        targetValue: 0.8
-        minValue: 0
-        maxValue: 1
-        dataExtractorType: 0
+      - rid: 832807104352092267
     effectConfig:
-      effectType: 0
-      targetStat: Damage
-      modifierValue:
-        rid: -2
-      modifierType: 0
-      allowStacking: 0
-      healAmount:
-        rid: -2
-      minTransitionTime: 1
-      maxTransitionTime: 5
-      transitionThreshold: 0.3
-      chargingToTransitionCurve:
-        serializedVersion: 2
-        m_Curve: []
-        m_PreInfinity: 2
-        m_PostInfinity: 2
-        m_RotationOrder: 4
-      weakPointMarkerPrefab: {fileID: 0}
-      weakPointRadius: 0.5
-      dropItemConfig: {fileID: 0}
-      dropChance: 1
-      dropRangeConfig:
-        dropRadius: 1
-        dropShape: 0
-        positionOffset: {x: 0, y: 0, z: 0}
-        coordinateSystemType: 0
-      weakPointDamageMultiplier: 1.5
-      weakPointRefreshOnHit: 1
+      rid: 832807104352092304
     resetConditionConfig:
-      logicType: 1
-      resetConditions:
-      - resetType: 2
-        comparisonType: 2
-        targetValue: 0.8
-        minValue: 0
-        maxValue: 1
-        dataExtractorType: 0
+      rid: 832807104352092334
     effectRemovalConfig:
-      removalType: 4
-      duration: 30
-      comparisonType: 2
-      targetValue: 0.8
-      minValue: 0
-      maxValue: 1
-      dataExtractorType: 0
+      rid: 832807104352092335
   requiredSkills: []
   isActive: 0
   references:
@@ -159,3 +59,67 @@ MonoBehaviour:
     RefIds:
     - rid: -2
       type: {class: , ns: , asm: }
+    - rid: 832807104352092243
+      type: {class: DataSourceTriggerConfig, ns: , asm: Assembly-CSharp}
+      data:
+        dataExtractorType: 0
+    - rid: 832807104352092253
+      type: {class: DataSourceTriggerConfig, ns: , asm: Assembly-CSharp}
+      data:
+        dataExtractorType: 0
+    - rid: 832807104352092264
+      type: {class: ValueComparisonConditionConfig, ns: , asm: Assembly-CSharp}
+      data:
+        dataExtractorType: 0
+        comparisonType: 0
+        targetValue: 0.8
+        minValue: 0
+        maxValue: 1
+    - rid: 832807104352092267
+      type: {class: ValueComparisonConditionConfig, ns: , asm: Assembly-CSharp}
+      data:
+        dataExtractorType: 0
+        comparisonType: 0
+        targetValue: 0.8
+        minValue: 0
+        maxValue: 1
+    - rid: 832807104352092302
+      type: {class: StatModifierEffectConfig, ns: , asm: Assembly-CSharp}
+      data:
+        targetStat: Damage
+        modifierValue:
+          rid: 832807104352092303
+        modifierType: 0
+        allowStacking: 1
+    - rid: 832807104352092303
+      type: {class: ConstantFloat, ns: , asm: Assembly-CSharp}
+      data:
+        value: 10
+    - rid: 832807104352092304
+      type: {class: StatModifierEffectConfig, ns: , asm: Assembly-CSharp}
+      data:
+        targetStat: Damage
+        modifierValue:
+          rid: 832807104352092305
+        modifierType: 0
+        allowStacking: 1
+    - rid: 832807104352092305
+      type: {class: ConstantFloat, ns: , asm: Assembly-CSharp}
+      data:
+        value: 15
+    - rid: 832807104352092334
+      type: {class: ValueComparisonResetConditionConfig, ns: , asm: Assembly-CSharp}
+      data:
+        dataExtractorType: 0
+        comparisonType: 2
+        targetValue: 0.8
+        minValue: 0
+        maxValue: 1
+    - rid: 832807104352092335
+      type: {class: ValueComparisonEffectRemovalConditionConfig, ns: , asm: Assembly-CSharp}
+      data:
+        dataExtractorType: 0
+        comparisonType: 2
+        targetValue: 0.8
+        minValue: 0
+        maxValue: 1

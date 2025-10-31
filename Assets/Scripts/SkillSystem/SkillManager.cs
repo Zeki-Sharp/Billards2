@@ -101,7 +101,7 @@ public class SkillManager : SingletonManager<SkillManager>
                     
                     // 检查是否为DropItem类型技能（从当前等级获取）
                     var currentLevelConfig = skillConfig.GetLevelConfig(skillInstance.currentLevel);
-                    if (currentLevelConfig?.effectConfig?.effectType == SkillEffectType.DropItem)
+                    if (currentLevelConfig?.effectConfig is DropItemEffectConfig)
                     {
                         dropItemSkillNames.Add(skillConfig.skillName);
                         if (enableDebugLog)
@@ -303,21 +303,28 @@ public class SkillManager : SingletonManager<SkillManager>
         {
             // DataSourceTrigger 根据配置的数据提取器类型判断
             var currentLevelConfig = skillInstance.config.GetLevelConfig(skillInstance.currentLevel);
-            switch (currentLevelConfig?.triggerConfig?.dataExtractorType)
+            var dataSourceConfig = currentLevelConfig?.triggerConfig as DataSourceTriggerConfig;
+            
+            if (dataSourceConfig != null)
             {
-                case DataExtractorType.Health:
-                    return eventData is HealthStateData;
-                case DataExtractorType.Attack:
-                    return eventData is AttackData;
-                case DataExtractorType.Defense:
-                    return eventData is AttackData; // 防御通常与攻击事件相关
-                case DataExtractorType.Speed:
-                    return false; // 速度变化事件暂未实现
-                case DataExtractorType.Mana:
-                    return false; // 法力变化事件暂未实现
-                default:
-                    return false;
+                switch (dataSourceConfig.dataExtractorType)
+                {
+                    case DataExtractorType.Health:
+                        return eventData is HealthStateData;
+                    case DataExtractorType.Attack:
+                        return eventData is AttackData;
+                    case DataExtractorType.Defense:
+                        return eventData is AttackData; // 防御通常与攻击事件相关
+                    case DataExtractorType.Speed:
+                        return false; // 速度变化事件暂未实现
+                    case DataExtractorType.Mana:
+                        return false; // 法力变化事件暂未实现
+                    default:
+                        return false;
+                }
             }
+            
+            return false;
         }
         else if (trigger is CollisionTrigger)
         {
@@ -373,7 +380,7 @@ public class SkillManager : SingletonManager<SkillManager>
             
             // 检查是否为DropItem类型技能，注册到dropItemSkillNames（从当前等级获取）
             var currentLevelConfig = skillConfig.GetLevelConfig(skillInstance.currentLevel);
-            if (currentLevelConfig?.effectConfig?.effectType == SkillEffectType.DropItem)
+            if (currentLevelConfig?.effectConfig is DropItemEffectConfig)
             {
                 dropItemSkillNames.Add(skillConfig.skillName);
                 if (enableDebugLog)
@@ -488,15 +495,15 @@ public class SkillManager : SingletonManager<SkillManager>
     /// <summary>
     /// 检查是否有指定类型的激活技能
     /// </summary>
-    /// <param name="effectType">效果类型</param>
+    /// <typeparam name="T">效果配置类型</typeparam>
     /// <returns>是否有该类型的技能</returns>
-    public bool HasActiveSkillOfType(SkillEffectType effectType)
+    public bool HasActiveSkillOfType<T>() where T : EffectBase
     {
         foreach (var skillInstance in skillInstances.Values)
         {
             // 从当前等级获取效果类型
             var currentLevelConfig = skillInstance.config.GetLevelConfig(skillInstance.currentLevel);
-            if (currentLevelConfig?.effectConfig?.effectType == effectType)
+            if (currentLevelConfig?.effectConfig is T)
             {
                 return true;
             }
@@ -588,7 +595,7 @@ public class SkillManager : SingletonManager<SkillManager>
         
         // 检查新等级是否为DropItem类型
         var currentLevelConfig = skillInstance.config.GetLevelConfig(skillInstance.currentLevel);
-        if (currentLevelConfig?.effectConfig?.effectType == SkillEffectType.DropItem)
+        if (currentLevelConfig?.effectConfig is DropItemEffectConfig)
         {
             dropItemSkillNames.Add(skillName);
             if (enableDebugLog)

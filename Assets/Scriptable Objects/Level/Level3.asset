@@ -18,8 +18,10 @@ MonoBehaviour:
   generateInitialEnemies: 1
   initialEnemies:
   - enemyData: {fileID: 11400000, guid: ce82a34099b9d1f4899931eb09ed10ce, type: 2}
-    count: 2
+    level: 1
+    count: 10
   - enemyData: {fileID: 11400000, guid: 2b3490ac9962fd84fbac65c5de60aa85, type: 2}
+    level: 1
     count: 2
   initialEnemySpawnRange:
     coordinateSystem: 0
@@ -34,6 +36,7 @@ MonoBehaviour:
   waves:
   - enemySpawns:
     - enemyData: {fileID: 11400000, guid: 8d46072aeaab4c44fab958850bbe7872, type: 2}
+      level: 1
       count: 2
   waveEnemySpawnRange:
     coordinateSystem: 0

@@ -233,9 +233,10 @@ public static class SkillDescriptionGenerator
     /// </summary>
     private static bool IsKillBoostDamageSkill(SkillLevelConfig levelConfig)
     {
-        return levelConfig.triggerConfig.triggerType == TriggerType.Kill &&
-               levelConfig.effectConfig.effectType == SkillEffectType.StatModifier &&
-               levelConfig.effectConfig.targetStat.ToLower().Contains("damage");
+        var statModifierEffect = levelConfig.effectConfig as StatModifierEffectConfig;
+        return levelConfig.triggerConfig is KillTriggerConfig &&
+               statModifierEffect != null &&
+               statModifierEffect.targetStat.ToLower().Contains("damage");
     }
 
     /// <summary>
@@ -243,9 +244,10 @@ public static class SkillDescriptionGenerator
     /// </summary>
     private static bool IsWallCollisionComboSkill(SkillLevelConfig levelConfig)
     {
-        return levelConfig.triggerConfig.triggerType == TriggerType.Collision &&
-               levelConfig.triggerConfig.targetTag == "Wall" &&
-               levelConfig.effectConfig.effectType == SkillEffectType.StatModifier;
+        var collisionConfig = levelConfig.triggerConfig as CollisionTriggerConfig;
+        return collisionConfig != null &&
+               collisionConfig.targetTag == "Wall" &&
+               levelConfig.effectConfig is StatModifierEffectConfig;
     }
     
     /// <summary>
@@ -253,9 +255,10 @@ public static class SkillDescriptionGenerator
     /// </summary>
     private static bool IsEnemyCollisionComboSkill(SkillLevelConfig levelConfig)
     {
-        return levelConfig.triggerConfig.triggerType == TriggerType.Collision &&
-               levelConfig.triggerConfig.targetTag == "Enemy" &&
-               levelConfig.effectConfig.effectType == SkillEffectType.StatModifier;
+        var collisionConfig = levelConfig.triggerConfig as CollisionTriggerConfig;
+        return collisionConfig != null &&
+               collisionConfig.targetTag == "Enemy" &&
+               levelConfig.effectConfig is StatModifierEffectConfig;
     }
 
     /// <summary>
@@ -263,8 +266,8 @@ public static class SkillDescriptionGenerator
     /// </summary>
     private static bool IsCollisionHealSkill(SkillLevelConfig levelConfig)
     {
-        return levelConfig.triggerConfig.triggerType == TriggerType.Collision &&
-               levelConfig.effectConfig.effectType == SkillEffectType.Heal;
+        return levelConfig.triggerConfig is CollisionTriggerConfig &&
+               levelConfig.effectConfig is HealEffectConfig;
     }
 
     /// <summary>
@@ -272,7 +275,7 @@ public static class SkillDescriptionGenerator
     /// </summary>
     private static bool IsHealSkill(SkillLevelConfig levelConfig)
     {
-        return levelConfig.effectConfig.effectType == SkillEffectType.Heal;
+        return levelConfig.effectConfig is HealEffectConfig;
     }
 
     /// <summary>
@@ -281,8 +284,10 @@ public static class SkillDescriptionGenerator
     private static bool IsHealthConditionSkill(SkillLevelConfig levelConfig)
     {
         return levelConfig.conditionConfig.conditions.Any(c => 
-            c.conditionType == ConditionType.ValueComparison &&
-            c.dataExtractorType == DataExtractorType.Health);
+        {
+            var valueCondition = c as ValueComparisonConditionConfig;
+            return valueCondition != null && valueCondition.dataExtractorType == DataExtractorType.Health;
+        });
     }
 
     /// <summary>
@@ -290,7 +295,7 @@ public static class SkillDescriptionGenerator
     /// </summary>
     private static bool IsDropItemSkill(SkillLevelConfig levelConfig)
     {
-        return levelConfig.effectConfig.effectType == SkillEffectType.DropItem;
+        return levelConfig.effectConfig is DropItemEffectConfig;
     }
 
     /// <summary>
@@ -298,7 +303,7 @@ public static class SkillDescriptionGenerator
     /// </summary>
     private static bool IsWeakPointSkill(SkillLevelConfig levelConfig)
     {
-        return levelConfig.effectConfig.effectType == SkillEffectType.WeakPoint;
+        return levelConfig.effectConfig is WeakPointEffectConfig;
     }
 
     /// <summary>
@@ -306,7 +311,7 @@ public static class SkillDescriptionGenerator
     /// </summary>
     private static bool IsTransitionSkill(SkillLevelConfig levelConfig)
     {
-        return levelConfig.effectConfig.effectType == SkillEffectType.Transition;
+        return levelConfig.effectConfig is TransitionEffectConfig;
     }
 
     #endregion
@@ -339,12 +344,14 @@ public static class SkillDescriptionGenerator
     /// </summary>
     private static string GetHealAmountWithComparison(SkillLevelConfig current, SkillLevelConfig previous)
     {
+        var currentHealEffect = current.effectConfig as HealEffectConfig;
         // ✅ 使用 Property 的默认值（无 args 时）
-        float currentAmount = current.effectConfig.healAmount?.Get() ?? 20f;
+        float currentAmount = currentHealEffect?.healAmount?.Get() ?? 20f;
         
         if (previous != null)
         {
-            float previousAmount = previous.effectConfig.healAmount?.Get() ?? 20f;
+            var previousHealEffect = previous.effectConfig as HealEffectConfig;
+            float previousAmount = previousHealEffect?.healAmount?.Get() ?? 20f;
             if (!Mathf.Approximately(currentAmount, previousAmount))
             {
                 // 新数字绿色，括号里的旧数字红色
@@ -361,42 +368,49 @@ public static class SkillDescriptionGenerator
     /// </summary>
     private static string GetStatModifierDescriptionWithComparison(SkillLevelConfig current, SkillLevelConfig previous)
     {
-        string statName = GetStatDisplayName(current.effectConfig.targetStat);
-        // ✅ 使用 Property 的默认值（无 args 时）
-        float currentValue = current.effectConfig.modifierValue?.Get() ?? 2f;
+        var currentStatEffect = current.effectConfig as StatModifierEffectConfig;
+        if (currentStatEffect == null) return "未知效果";
         
-        if (previous != null && previous.effectConfig.effectType == SkillEffectType.StatModifier)
+        string statName = GetStatDisplayName(currentStatEffect.targetStat);
+        // ✅ 使用 Property 的默认值（无 args 时）
+        float currentValue = currentStatEffect.modifierValue?.Get() ?? 2f;
+        
+        if (previous != null)
         {
-            float previousValue = previous.effectConfig.modifierValue?.Get() ?? 2f;
-            
-            switch (current.effectConfig.modifierType)
+            var previousStatEffect = previous.effectConfig as StatModifierEffectConfig;
+            if (previousStatEffect != null)
             {
-                case StatModifierType.PercentMult:
-                    int currentPercentage = Mathf.RoundToInt(currentValue * 100);
-                    int previousPercentage = Mathf.RoundToInt(previousValue * 100);
-                    
-                    if (currentPercentage != previousPercentage)
-                    {
-                        return $"{statName}提升为{FormatIntWithColor(currentPercentage, GREEN_COLOR)}%({FormatIntWithColor(previousPercentage, RED_COLOR)}%)";
-                    }
-                    return $"{statName}提升为{FormatIntWithColor(currentPercentage, GREEN_COLOR)}%";
-                    
-                case StatModifierType.PercentAdd:
-                    int currentAddPercentage = Mathf.RoundToInt(currentValue * 100);
-                    int previousAddPercentage = Mathf.RoundToInt(previousValue * 100);
-                    
-                    if (currentAddPercentage != previousAddPercentage)
-                    {
-                        return $"{statName}提升{FormatIntWithColor(currentAddPercentage, GREEN_COLOR)}%({FormatIntWithColor(previousAddPercentage, RED_COLOR)}%)";
-                    }
-                    return $"{statName}提升{FormatIntWithColor(currentAddPercentage, GREEN_COLOR)}%";
-                    
-                case StatModifierType.Add:
-                    if (!Mathf.Approximately(currentValue, previousValue))
-                    {
-                        return $"{statName}提升{FormatNumberWithColor(currentValue, GREEN_COLOR)}({FormatNumberWithColor(previousValue, RED_COLOR)})";
-                    }
-                    return $"{statName}提升{FormatNumberWithColor(currentValue, GREEN_COLOR)}";
+                float previousValue = previousStatEffect.modifierValue?.Get() ?? 2f;
+                
+                switch (currentStatEffect.modifierType)
+                {
+                    case StatModifierType.PercentMult:
+                        int currentPercentage = Mathf.RoundToInt(currentValue * 100);
+                        int previousPercentage = Mathf.RoundToInt(previousValue * 100);
+                        
+                        if (currentPercentage != previousPercentage)
+                        {
+                            return $"{statName}提升为{FormatIntWithColor(currentPercentage, GREEN_COLOR)}%({FormatIntWithColor(previousPercentage, RED_COLOR)}%)";
+                        }
+                        return $"{statName}提升为{FormatIntWithColor(currentPercentage, GREEN_COLOR)}%";
+                        
+                    case StatModifierType.PercentAdd:
+                        int currentAddPercentage = Mathf.RoundToInt(currentValue * 100);
+                        int previousAddPercentage = Mathf.RoundToInt(previousValue * 100);
+                        
+                        if (currentAddPercentage != previousAddPercentage)
+                        {
+                            return $"{statName}提升{FormatIntWithColor(currentAddPercentage, GREEN_COLOR)}%({FormatIntWithColor(previousAddPercentage, RED_COLOR)}%)";
+                        }
+                        return $"{statName}提升{FormatIntWithColor(currentAddPercentage, GREEN_COLOR)}%";
+                        
+                    case StatModifierType.Add:
+                        if (!Mathf.Approximately(currentValue, previousValue))
+                        {
+                            return $"{statName}提升{FormatNumberWithColor(currentValue, GREEN_COLOR)}({FormatNumberWithColor(previousValue, RED_COLOR)})";
+                        }
+                        return $"{statName}提升{FormatNumberWithColor(currentValue, GREEN_COLOR)}";
+                }
             }
         }
         
@@ -409,16 +423,21 @@ public static class SkillDescriptionGenerator
     /// </summary>
     private static string GetEffectDescriptionWithComparison(SkillLevelConfig current, SkillLevelConfig previous)
     {
-        switch (current.effectConfig.effectType)
+        if (current.effectConfig is StatModifierEffectConfig)
         {
-            case SkillEffectType.StatModifier:
-                return GetStatModifierDescriptionWithComparison(current, previous);
-            case SkillEffectType.Heal:
-                return $"恢复{GetHealAmountWithComparison(current, previous)}点生命值";
-            case SkillEffectType.DropItem:
-                return GetDropItemDescription(current);
-            default:
-                return "产生效果";
+            return GetStatModifierDescriptionWithComparison(current, previous);
+        }
+        else if (current.effectConfig is HealEffectConfig)
+        {
+            return $"恢复{GetHealAmountWithComparison(current, previous)}点生命值";
+        }
+        else if (current.effectConfig is DropItemEffectConfig)
+        {
+            return GetDropItemDescription(current);
+        }
+        else
+        {
+            return "产生效果";
         }
     }
 
@@ -427,15 +446,22 @@ public static class SkillDescriptionGenerator
     /// </summary>
     private static string GetWeakPointDamageDescriptionWithComparison(SkillLevelConfig current, SkillLevelConfig previous)
     {
-        float currentMultiplier = current.effectConfig.weakPointDamageMultiplier;
+        var currentWeakPointEffect = current.effectConfig as WeakPointEffectConfig;
+        if (currentWeakPointEffect == null) return "未知伤害";
         
-        if (previous != null && previous.effectConfig.effectType == SkillEffectType.WeakPoint)
+        float currentMultiplier = currentWeakPointEffect.weakPointDamageMultiplier;
+        
+        if (previous != null)
         {
-            float previousMultiplier = previous.effectConfig.weakPointDamageMultiplier;
-            
-            if (!Mathf.Approximately(currentMultiplier, previousMultiplier))
+            var previousWeakPointEffect = previous.effectConfig as WeakPointEffectConfig;
+            if (previousWeakPointEffect != null)
             {
-                return $"造成{FormatNumberWithColor(currentMultiplier, GREEN_COLOR)}({FormatNumberWithColor(previousMultiplier, RED_COLOR)})倍伤害";
+                float previousMultiplier = previousWeakPointEffect.weakPointDamageMultiplier;
+                
+                if (!Mathf.Approximately(currentMultiplier, previousMultiplier))
+                {
+                    return $"造成{FormatNumberWithColor(currentMultiplier, GREEN_COLOR)}({FormatNumberWithColor(previousMultiplier, RED_COLOR)})倍伤害";
+                }
             }
         }
         
@@ -447,28 +473,35 @@ public static class SkillDescriptionGenerator
     /// </summary>
     private static string GetTransitionTimeDescriptionWithComparison(SkillLevelConfig current, SkillLevelConfig previous)
     {
-        float currentMin = current.effectConfig.minTransitionTime;
-        float currentMax = current.effectConfig.maxTransitionTime;
+        var currentTransitionEffect = current.effectConfig as TransitionEffectConfig;
+        if (currentTransitionEffect == null) return "未知时长";
         
-        if (previous != null && previous.effectConfig.effectType == SkillEffectType.Transition)
+        float currentMin = currentTransitionEffect.minTransitionTime;
+        float currentMax = currentTransitionEffect.maxTransitionTime;
+        
+        if (previous != null)
         {
-            float previousMin = previous.effectConfig.minTransitionTime;
-            float previousMax = previous.effectConfig.maxTransitionTime;
-            
-            bool minChanged = !Mathf.Approximately(currentMin, previousMin);
-            bool maxChanged = !Mathf.Approximately(currentMax, previousMax);
-            
-            if (minChanged && maxChanged)
+            var previousTransitionEffect = previous.effectConfig as TransitionEffectConfig;
+            if (previousTransitionEffect != null)
             {
-                return $"{FormatNumberWithColor(currentMin, GREEN_COLOR)}-{FormatNumberWithColor(currentMax, GREEN_COLOR)}({FormatNumberWithColor(previousMin, RED_COLOR)}-{FormatNumberWithColor(previousMax, RED_COLOR)})";
-            }
-            else if (minChanged)
-            {
-                return $"{FormatNumberWithColor(currentMin, GREEN_COLOR)}({FormatNumberWithColor(previousMin, RED_COLOR)})-{FormatNumberWithColor(currentMax, GREEN_COLOR)}";
-            }
-            else if (maxChanged)
-            {
-                return $"{FormatNumberWithColor(currentMin, GREEN_COLOR)}-{FormatNumberWithColor(currentMax, GREEN_COLOR)}({FormatNumberWithColor(previousMax, RED_COLOR)})";
+                float previousMin = previousTransitionEffect.minTransitionTime;
+                float previousMax = previousTransitionEffect.maxTransitionTime;
+                
+                bool minChanged = !Mathf.Approximately(currentMin, previousMin);
+                bool maxChanged = !Mathf.Approximately(currentMax, previousMax);
+                
+                if (minChanged && maxChanged)
+                {
+                    return $"{FormatNumberWithColor(currentMin, GREEN_COLOR)}-{FormatNumberWithColor(currentMax, GREEN_COLOR)}({FormatNumberWithColor(previousMin, RED_COLOR)}-{FormatNumberWithColor(previousMax, RED_COLOR)})";
+                }
+                else if (minChanged)
+                {
+                    return $"{FormatNumberWithColor(currentMin, GREEN_COLOR)}({FormatNumberWithColor(previousMin, RED_COLOR)})-{FormatNumberWithColor(currentMax, GREEN_COLOR)}";
+                }
+                else if (maxChanged)
+                {
+                    return $"{FormatNumberWithColor(currentMin, GREEN_COLOR)}-{FormatNumberWithColor(currentMax, GREEN_COLOR)}({FormatNumberWithColor(previousMax, RED_COLOR)})";
+                }
             }
         }
         
@@ -484,9 +517,10 @@ public static class SkillDescriptionGenerator
     /// </summary>
     private static string GetCollisionTarget(SkillLevelConfig levelConfig)
     {
-        if (levelConfig.triggerConfig.triggerType == TriggerType.Collision)
+        var collisionConfig = levelConfig.triggerConfig as CollisionTriggerConfig;
+        if (collisionConfig != null)
         {
-            return GetTargetDisplayName(levelConfig.triggerConfig.targetTag);
+            return GetTargetDisplayName(collisionConfig.targetTag);
         }
         
         return "目标";
@@ -518,7 +552,8 @@ public static class SkillDescriptionGenerator
     private static int GetRequiredCount(SkillLevelConfig levelConfig)
     {
         var countCondition = levelConfig.conditionConfig.conditions
-            .FirstOrDefault(c => c.conditionType == ConditionType.Count);
+            .OfType<CountConditionConfig>()
+            .FirstOrDefault();
         
         return countCondition?.requiredCount ?? 1;
     }
@@ -529,8 +564,8 @@ public static class SkillDescriptionGenerator
     private static string GetHealthCondition(SkillLevelConfig levelConfig)
     {
         var healthCondition = levelConfig.conditionConfig.conditions
-            .FirstOrDefault(c => c.conditionType == ConditionType.ValueComparison &&
-                                c.dataExtractorType == DataExtractorType.Health);
+            .OfType<ValueComparisonConditionConfig>()
+            .FirstOrDefault(c => c.dataExtractorType == DataExtractorType.Health);
         
         if (healthCondition == null) return "未知";
 
@@ -567,30 +602,31 @@ public static class SkillDescriptionGenerator
     /// </summary>
     private static string GetDropItemDescription(SkillLevelConfig levelConfig)
     {
-        if (levelConfig.effectConfig.dropItemConfig == null)
+        var dropItemEffect = levelConfig.effectConfig as DropItemEffectConfig;
+        if (dropItemEffect?.dropItemConfig == null)
         {
             return "未知物品";
         }
         
-        string itemName = levelConfig.effectConfig.dropItemConfig.itemName;
+        string itemName = dropItemEffect.dropItemConfig.itemName;
         
         // 根据物品类型生成描述
-        if (levelConfig.effectConfig.dropItemConfig.itemSkill != null)
+        if (dropItemEffect.dropItemConfig.itemSkill != null)
         {
-            var itemSkill = levelConfig.effectConfig.dropItemConfig.itemSkill;
+            var itemSkill = dropItemEffect.dropItemConfig.itemSkill;
             var firstLevel = itemSkill.skillLevels.FirstOrDefault();
             
             if (firstLevel != null)
             {
-                if (firstLevel.effectConfig.effectType == SkillEffectType.Heal)
+                if (firstLevel.effectConfig is HealEffectConfig healEffect)
                 {
                     // ✅ 使用 Property 的默认值
-                    float healValue = firstLevel.effectConfig.healAmount?.Get() ?? 20f;
+                    float healValue = healEffect.healAmount?.Get() ?? 20f;
                     return $"恢复{FormatNumberWithColor(healValue, GREEN_COLOR)}点生命值的{itemName}";
                 }
-                else if (firstLevel.effectConfig.effectType == SkillEffectType.StatModifier)
+                else if (firstLevel.effectConfig is StatModifierEffectConfig statEffect)
                 {
-                    string statName = GetStatDisplayName(firstLevel.effectConfig.targetStat);
+                    string statName = GetStatDisplayName(statEffect.targetStat);
                     return $"{statName}提升的{itemName}";
                 }
             }
@@ -604,11 +640,14 @@ public static class SkillDescriptionGenerator
     /// </summary>
     private static string GetStatModifierDescription(SkillLevelConfig levelConfig)
     {
-        string statName = GetStatDisplayName(levelConfig.effectConfig.targetStat);
-        // ✅ 使用 Property 的默认值
-        float value = levelConfig.effectConfig.modifierValue?.Get() ?? 2f;
+        var statModifierEffect = levelConfig.effectConfig as StatModifierEffectConfig;
+        if (statModifierEffect == null) return "未知效果";
         
-        switch (levelConfig.effectConfig.modifierType)
+        string statName = GetStatDisplayName(statModifierEffect.targetStat);
+        // ✅ 使用 Property 的默认值
+        float value = statModifierEffect.modifierValue?.Get() ?? 2f;
+        
+        switch (statModifierEffect.modifierType)
         {
             case StatModifierType.PercentMult:
                 int percentage = Mathf.RoundToInt(value * 100);
@@ -659,18 +698,25 @@ public static class SkillDescriptionGenerator
     /// </summary>
     private static string GenerateDefaultTemplate(SkillLevelConfig levelConfig)
     {
-        switch (levelConfig.triggerConfig.triggerType)
+        if (levelConfig.triggerConfig is KillTriggerConfig)
         {
-            case TriggerType.Kill:
-                return "击杀敌人后{0}";
-            case TriggerType.Collision:
-                return "碰撞后{0}";
-            case TriggerType.AlwaysTrue:
-                return "{0}";
-            case TriggerType.MovingEnd:
-                return "球停止后{0}";
-            default:
-                return levelConfig.levelDescription;
+            return "击杀敌人后{0}";
+        }
+        else if (levelConfig.triggerConfig is CollisionTriggerConfig)
+        {
+            return "碰撞后{0}";
+        }
+        else if (levelConfig.triggerConfig is AlwaysTrueTriggerConfig)
+        {
+            return "{0}";
+        }
+        else if (levelConfig.triggerConfig is MovingEndTriggerConfig)
+        {
+            return "球停止后{0}";
+        }
+        else
+        {
+            return levelConfig.levelDescription;
         }
     }
 
