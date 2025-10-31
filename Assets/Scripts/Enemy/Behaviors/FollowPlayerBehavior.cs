@@ -6,15 +6,15 @@ using UnityEngine;
 /// </summary>
 public class FollowPlayerBehavior : BaseMovementBehavior
 {
-    private EnemyData cachedEnemyData; // 缓存敌人数据用于获取速度
+    private EnemyLevelConfig cachedLevelConfig; // 缓存等级配置用于获取速度
     
     /// <summary>
     /// 执行跟随玩家移动
     /// </summary>
-    public override Vector2 ExecuteMovement(Transform enemyTransform, Transform playerTransform, EnemyData enemyData)
+    public override Vector2 ExecuteMovement(Transform enemyTransform, Transform playerTransform, EnemyData enemyData, EnemyLevelConfig levelConfig)
     {
-        // 缓存敌人数据
-        cachedEnemyData = enemyData;
+        // 缓存等级配置
+        cachedLevelConfig = levelConfig;
         
         // 验证参数
         if (!ValidateMovementParams(enemyTransform, playerTransform, enemyData))
@@ -32,9 +32,9 @@ public class FollowPlayerBehavior : BaseMovementBehavior
         float distanceToPlayer = Vector2.Distance(enemyTransform.position, playerTransform.position);
         
         // 如果已经在最小距离内，不移动
-        if (distanceToPlayer <= enemyData.followConfig.minDistance)
+        if (distanceToPlayer <= levelConfig.followConfig.minDistance)
         {
-            Debug.Log($"FollowPlayerBehavior: 已在最小距离内 ({distanceToPlayer} <= {enemyData.followConfig.minDistance})，不移动");
+            Debug.Log($"FollowPlayerBehavior: 已在最小距离内 ({distanceToPlayer} <= {levelConfig.followConfig.minDistance})，不移动");
             SetMoving(false);
             return enemyTransform.position;
         }
@@ -44,7 +44,7 @@ public class FollowPlayerBehavior : BaseMovementBehavior
         currentDirection = direction;
         
         // 计算实际移动距离：确保不会超过最小距离
-        float actualMoveDistance = Mathf.Min(enemyData.followConfig.moveDistance, distanceToPlayer - enemyData.followConfig.minDistance);
+        float actualMoveDistance = Mathf.Min(levelConfig.followConfig.moveDistance, distanceToPlayer - levelConfig.followConfig.minDistance);
         
         // 如果计算出的移动距离太小，不移动
         if (actualMoveDistance <= 0.01f)
@@ -70,7 +70,7 @@ public class FollowPlayerBehavior : BaseMovementBehavior
     /// </summary>
     public override float GetCurrentMoveSpeed()
     {
-        if (cachedEnemyData == null) return 3f;
-        return cachedEnemyData.followConfig.moveSpeed;
+        if (cachedLevelConfig == null) return 3f;
+        return cachedLevelConfig.followConfig.moveSpeed;
     }
 }

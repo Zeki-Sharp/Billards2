@@ -10,9 +10,9 @@ public class MeleeAttackBehavior : BaseAttackBehavior
     /// <summary>
     /// 执行预告阶段
     /// </summary>
-    public override void ExecuteTelegraph(Transform enemyTransform, Transform playerTransform, EnemyData enemyData, AttackRange attackRange)
+    public override void ExecuteTelegraph(Transform enemyTransform, Transform playerTransform, EnemyData enemyData, EnemyLevelConfig levelConfig, AttackRange attackRange)
     {
-        if (!ValidateAttackParams(enemyTransform, playerTransform, enemyData, attackRange))
+        if (!ValidateAttackParams(enemyTransform, playerTransform, enemyData, levelConfig, attackRange))
         {
             return;
         }
@@ -27,9 +27,9 @@ public class MeleeAttackBehavior : BaseAttackBehavior
     /// <summary>
     /// 执行攻击阶段
     /// </summary>
-    public override void ExecuteAttack(Transform enemyTransform, Transform playerTransform, EnemyData enemyData, AttackRange attackRange, MMFeedbacks attackEffect)
+    public override void ExecuteAttack(Transform enemyTransform, Transform playerTransform, EnemyData enemyData, EnemyLevelConfig levelConfig, AttackRange attackRange, MMFeedbacks attackEffect)
     {
-        if (!ValidateAttackParams(enemyTransform, playerTransform, enemyData, attackRange))
+        if (!ValidateAttackParams(enemyTransform, playerTransform, enemyData, levelConfig, attackRange))
         {
             return;
         }
@@ -49,7 +49,7 @@ public class MeleeAttackBehavior : BaseAttackBehavior
         {
             if (target.CompareTag("Player"))
             {
-                DealDamageToPlayer(target, enemyData, enemyTransform);
+                DealDamageToPlayer(target, levelConfig, enemyTransform);
             }
         }
     }

@@ -45,22 +45,28 @@ public class SkillConfig : ScriptableObject
     
     [BoxGroup("技能等级配置")]
     [LabelText("技能等级列表")]
-    [Tooltip("技能的所有等级配置")]
+    [Tooltip("技能的所有等级配置。等级编号根据列表位置自动确定：第1位=Level 1，第2位=Level 2")]
+    [InfoBox("等级编号根据列表位置自动确定：第1位=Level 1，第2位=Level 2，以此类推", InfoMessageType.Info)]
     [ListDrawerSettings(ShowIndexLabels = true, NumberOfItemsPerPage = 5)]
     public List<SkillLevelConfig> skillLevels = new List<SkillLevelConfig>();
     
     /// <summary>
-    /// 自动分配等级编号
+    /// 编辑器中自动同步等级编号
     /// </summary>
-    [Button("自动分配等级编号")]
-    [BoxGroup("技能等级配置")]
-    public void AutoAssignLevelNumbers()
+    private void OnValidate()
     {
-        for (int i = 0; i < skillLevels.Count; i++)
+        #if UNITY_EDITOR
+        if (skillLevels != null && skillLevels.Count > 0)
         {
-            skillLevels[i].level = i + 1; // 从1开始编号
+            for (int i = 0; i < skillLevels.Count; i++)
+            {
+                if (skillLevels[i] != null)
+                {
+                    skillLevels[i].level = i + 1;
+                }
+            }
         }
-        Debug.Log($"技能 {skillName} 已自动分配等级编号: [{string.Join(", ", skillLevels.Select(l => l.level))}]");
+        #endif
     }
     
     [BoxGroup("解锁条件")]
@@ -85,9 +91,6 @@ public class SkillConfig : ScriptableObject
             Debug.LogWarning($"技能 {skillName} 未激活");
             return null;
         }
-        
-        // 自动分配等级编号（确保等级编号正确）
-        AutoAssignLevelNumbers();
         
         // 如果未指定等级，使用最低可用等级
         if (currentLevel == -1)

@@ -107,27 +107,26 @@ public class EnemyStats : MonoBehaviour
         // ✅ 从指定等级配置读取数值
         var levelConfig = enemyData.GetLevelConfig(currentLevel);
         
-        // 读取数值（优先 levelConfig，回退到旧字段）
-        float maxHealth = levelConfig?.maxHealth ?? enemyData.maxHealth;
-        float damage = levelConfig?.damage ?? enemyData.damage;
-        float moveSpeed = levelConfig?.moveSpeed ?? enemyData.moveSpeed;
-        float attackRange = levelConfig?.attackRange ?? enemyData.attackRange;
-        float attackCooldown = levelConfig?.attackCooldown ?? enemyData.attackCooldown;
+        if (levelConfig == null)
+        {
+            Debug.LogError($"[EnemyStats] {gameObject.name}: 未找到 Level {currentLevel} 配置！请在 EnemyData 中配置此等级");
+            return;
+        }
         
         var baseStats = new Dictionary<string, float>
         {
-            { "MaxHealth", maxHealth },
-            { "Damage", damage },
-            { "MoveSpeed", moveSpeed },
-            { "AttackRange", attackRange },
-            { "AttackCooldown", attackCooldown }
+            { "MaxHealth", levelConfig.maxHealth },
+            { "Damage", levelConfig.damage },
+            { "MoveSpeed", levelConfig.moveSpeed },
+            { "AttackRange", levelConfig.attackRange },
+            { "AttackCooldown", levelConfig.attackCooldown }
         };
         
         runtimeStats.RegisterStats(baseStats);
         
         if (enableDebugLog)
         {
-            Debug.Log($"[EnemyStats] {gameObject.name} Lv{currentLevel}: 注册基础属性 - MaxHealth: {maxHealth}, Damage: {damage}");
+            Debug.Log($"[EnemyStats] {gameObject.name} Lv{currentLevel}: 注册基础属性 - MaxHealth: {levelConfig.maxHealth}, Damage: {levelConfig.damage}");
         }
     }
     
@@ -138,19 +137,24 @@ public class EnemyStats : MonoBehaviour
     {
         // ✅ 从指定等级配置读取血量
         var levelConfig = enemyData.GetLevelConfig(currentLevel);
-        float maxHealth = levelConfig?.maxHealth ?? enemyData.maxHealth;
+        
+        if (levelConfig == null)
+        {
+            Debug.LogError($"[EnemyStats] {gameObject.name}: 未找到 Level {currentLevel} 配置！请在 EnemyData 中配置此等级");
+            return;
+        }
         
         // 注册生命值属性（动态资源）
         runtimeAttributes.RegisterAttribute(
-            "Health",           // attributeID
-            0f,                // minValue
-            maxHealth,         // maxValue
-            maxHealth          // startValue（满血开始）
+            "Health",                    // attributeID
+            0f,                         // minValue
+            levelConfig.maxHealth,      // maxValue
+            levelConfig.maxHealth       // startValue（满血开始）
         );
         
         if (enableDebugLog)
         {
-            Debug.Log($"[EnemyStats] {gameObject.name} Lv{currentLevel}: 注册 Health 属性，最大值: {maxHealth}");
+            Debug.Log($"[EnemyStats] {gameObject.name} Lv{currentLevel}: 注册 Health 属性，最大值: {levelConfig.maxHealth}");
         }
     }
     

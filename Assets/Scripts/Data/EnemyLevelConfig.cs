@@ -9,15 +9,11 @@ using Sirenix.OdinInspector;
 [System.Serializable]
 public class EnemyLevelConfig
 {
-    [HorizontalGroup("Header")]
+    [BoxGroup("等级基本信息")]
     [LabelText("等级")]
-    [LabelWidth(40)]
+    [ReadOnly]
+    [Tooltip("等级编号（根据列表位置自动确定，不可手动修改）")]
     public int level = 1;
-    
-    [HorizontalGroup("Header")]
-    [LabelText("激活")]
-    [LabelWidth(40)]
-    public bool isActive = true;
     
     [BoxGroup("显示配置")]
     [LabelText("敌人贴图")]
@@ -87,7 +83,6 @@ public class EnemyLevelConfig
     /// </summary>
     public bool IsValid()
     {
-        if (!isActive) return false;
         if (level < 1) return false;
         if (maxHealth <= 0) return false;
         if (damage < 0) return false;

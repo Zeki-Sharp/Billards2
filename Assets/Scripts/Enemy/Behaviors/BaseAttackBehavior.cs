@@ -10,12 +10,12 @@ public abstract class BaseAttackBehavior : IAttackBehavior
     /// <summary>
     /// 执行预告阶段 - 抽象方法，由子类实现
     /// </summary>
-    public abstract void ExecuteTelegraph(Transform enemyTransform, Transform playerTransform, EnemyData enemyData, AttackRange attackRange);
+    public abstract void ExecuteTelegraph(Transform enemyTransform, Transform playerTransform, EnemyData enemyData, EnemyLevelConfig levelConfig, AttackRange attackRange);
     
     /// <summary>
     /// 执行攻击阶段 - 抽象方法，由子类实现
     /// </summary>
-    public abstract void ExecuteAttack(Transform enemyTransform, Transform playerTransform, EnemyData enemyData, AttackRange attackRange, MMFeedbacks attackEffect);
+    public abstract void ExecuteAttack(Transform enemyTransform, Transform playerTransform, EnemyData enemyData, EnemyLevelConfig levelConfig, AttackRange attackRange, MMFeedbacks attackEffect);
     
     /// <summary>
     /// 清理攻击状态 - 抽象方法，由子类实现
@@ -25,7 +25,7 @@ public abstract class BaseAttackBehavior : IAttackBehavior
     /// <summary>
     /// 验证攻击参数
     /// </summary>
-    protected bool ValidateAttackParams(Transform enemyTransform, Transform playerTransform, EnemyData enemyData, AttackRange attackRange)
+    protected bool ValidateAttackParams(Transform enemyTransform, Transform playerTransform, EnemyData enemyData, EnemyLevelConfig levelConfig, AttackRange attackRange)
     {
         if (enemyTransform == null)
         {
@@ -45,6 +45,12 @@ public abstract class BaseAttackBehavior : IAttackBehavior
             return false;
         }
         
+        if (levelConfig == null)
+        {
+            Debug.LogError("BaseAttackBehavior: EnemyLevelConfig为空");
+            return false;
+        }
+        
         if (attackRange == null)
         {
             Debug.LogError("BaseAttackBehavior: AttackRange为空");
@@ -57,15 +63,15 @@ public abstract class BaseAttackBehavior : IAttackBehavior
     /// <summary>
     /// 对玩家造成伤害
     /// </summary>
-    protected void DealDamageToPlayer(GameObject playerObject, EnemyData enemyData, Transform enemyTransform)
+    protected void DealDamageToPlayer(GameObject playerObject, EnemyLevelConfig levelConfig, Transform enemyTransform)
     {
-        if (playerObject == null || enemyData == null)
+        if (playerObject == null || levelConfig == null)
         {
             return;
         }
         
-        // 从 EnemyData 读取伤害值
-        float damage = enemyData.damage;
+        // 从等级配置读取伤害值
+        float damage = levelConfig.damage;
         
         // 只发布攻击事件，让 DamageProcessor 统一处理伤害应用
         if (enemyTransform != null)

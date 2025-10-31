@@ -12,7 +12,7 @@ public abstract class BaseMovementBehavior : IMovementBehavior
     /// <summary>
     /// 执行移动行为 - 抽象方法，由子类实现
     /// </summary>
-    public abstract Vector2 ExecuteMovement(Transform enemyTransform, Transform playerTransform, EnemyData enemyData);
+    public abstract Vector2 ExecuteMovement(Transform enemyTransform, Transform playerTransform, EnemyData enemyData, EnemyLevelConfig levelConfig);
     
     /// <summary>
     /// 检查是否正在移动

@@ -67,22 +67,41 @@ public class WaveConfig
 public class EnemySpawn
 {
     [LabelText("敌人数据")]
-    [HorizontalGroup("Main")]
+    [HorizontalGroup("Main", 0.55f)]
     [LabelWidth(60)]
     public EnemyData enemyData;
     
     [LabelText("等级")]
-    [HorizontalGroup("Main")]
-    [LabelWidth(40)]
-    [Tooltip("敌人等级（1, 2, 3...）。如果敌人没有配置此等级，将使用 Level 1")]
-    [MinValue(1)]
+    [HorizontalGroup("Main", 0.2f)]
+    [LabelWidth(30)]
+    [Tooltip("敌人等级（根据敌人配置的等级列表选择）")]
+    [ValueDropdown("GetAvailableLevels")]
     public int level = 1;
     
     [LabelText("数量")]
-    [HorizontalGroup("Main")]
-    [LabelWidth(40)]
+    [HorizontalGroup("Main", 0.25f)]
+    [LabelWidth(30)]
     [MinValue(1)]
     public int count = 1;
+    
+    /// <summary>
+    /// 获取当前敌人的可用等级列表（供下拉选框使用）
+    /// </summary>
+    private System.Collections.Generic.IEnumerable<int> GetAvailableLevels()
+    {
+        if (enemyData == null)
+        {
+            return new int[] { 1 };
+        }
+        
+        var availableLevels = enemyData.GetAvailableLevels();
+        if (availableLevels == null || availableLevels.Count == 0)
+        {
+            return new int[] { 1 };
+        }
+        
+        return availableLevels;
+    }
     
     /// <summary>
     /// 重写ToString方法，用于在Inspector中显示

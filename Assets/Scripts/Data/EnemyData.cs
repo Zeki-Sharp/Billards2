@@ -21,25 +21,31 @@ public class EnemyData : ScriptableObject
     
     [BoxGroup("等级配置")]
     [LabelText("敌人等级列表")]
-    [Tooltip("敌人的所有等级配置。每个等级独立配置所有参数（类似技能系统）")]
+    [Tooltip("敌人的所有等级配置。等级编号根据列表位置自动确定：第1位=Level 1，第2位=Level 2")]
+    [InfoBox("等级编号根据列表位置自动确定：第1位=Level 1，第2位=Level 2，以此类推", InfoMessageType.Info)]
     [ListDrawerSettings(ShowIndexLabels = true, NumberOfItemsPerPage = 3)]
-    public List<EnemyLevelConfig> enemyLevels = new List<EnemyLevelConfig>();
-    
-    [Button("自动分配等级编号", ButtonSizes.Medium)]
-    [BoxGroup("等级配置")]
-    private void AutoAssignLevelNumbers()
+    public List<EnemyLevelConfig> enemyLevels = new List<EnemyLevelConfig>
     {
-        if (enemyLevels == null || enemyLevels.Count == 0)
+        new EnemyLevelConfig { level = 1 }  // ✅ 默认有一个 Level 1
+    };
+    
+    /// <summary>
+    /// 编辑器中自动同步等级编号
+    /// </summary>
+    private void OnValidate()
+    {
+        #if UNITY_EDITOR
+        if (enemyLevels != null && enemyLevels.Count > 0)
         {
-            Debug.LogWarning($"敌人 {enemyName} 没有等级配置");
-            return;
+            for (int i = 0; i < enemyLevels.Count; i++)
+            {
+                if (enemyLevels[i] != null)
+                {
+                    enemyLevels[i].level = i + 1;
+                }
+            }
         }
-        
-        for (int i = 0; i < enemyLevels.Count; i++)
-        {
-            enemyLevels[i].level = i + 1;
-        }
-        Debug.Log($"敌人 {enemyName} 已自动分配等级编号: [{string.Join(", ", enemyLevels.Select(l => l.level))}]");
+        #endif
     }
     
     #region 向后兼容属性（从 Info 读取）
@@ -56,89 +62,11 @@ public class EnemyData : ScriptableObject
     
     #endregion
     
-    [BoxGroup("物理数据")]
+    [BoxGroup("共享配置")]
     [LabelText("球体数据")]
-    [Tooltip("打包的物理数据")]
+    [Tooltip("打包的物理数据（所有等级共享）")]
     [Required]
     public BallData ballData;
-    
-    [BoxGroup("战斗配置")]
-    [LabelText("最大血量")]
-    [MinValue(1f)]
-    public float maxHealth = 100f;
-    
-    [BoxGroup("战斗配置")]
-    [LabelText("攻击力")]
-    [MinValue(0.1f)]
-    public float damage = 10f;
-    
-    [BoxGroup("战斗配置")]
-    [LabelText("攻击冷却")]
-    [MinValue(0.1f)]
-    public float attackCooldown = 1f;
-    
-    [BoxGroup("战斗配置")]
-    [LabelText("移动速度")]
-    [MinValue(0.1f)]
-    public float moveSpeed = 2f;
-    
-    [BoxGroup("攻击配置")]
-    [LabelText("攻击范围")]
-    [Tooltip("保留用于其他用途，如检测范围")]
-    [MinValue(0.1f)]
-    public float attackRange = 3f;
-    
-    [BoxGroup("攻击配置")]
-    [LabelText("攻击类型")]
-    [Tooltip("攻击类型")]
-    public AttackType attackType = AttackType.Melee;
-    
-    [BoxGroup("攻击配置")]
-    [ShowIf("attackType", AttackType.Ranged)]
-    public RangedAttackConfig rangedConfig = new RangedAttackConfig();
-    
-    [BoxGroup("攻击配置")]
-    [ShowIf("attackType", AttackType.Thorn)]
-    public ThornAttackConfig thornConfig = new ThornAttackConfig();
-    
-    [BoxGroup("AI配置")]
-    [LabelText("启用AI")]
-    public bool enableAI = true;
-    
-    [BoxGroup("AI配置")]
-    [LabelText("移动类型")]
-    public MovementType movementType = MovementType.FollowPlayer;
-    
-    [BoxGroup("AI配置")]
-    [ShowIf("movementType", MovementType.FollowPlayer)]
-    public FollowMovementConfig followConfig = new FollowMovementConfig();
-    
-    [BoxGroup("AI配置")]
-    [ShowIf("movementType", MovementType.Flee)]
-    public FleeMovementConfig fleeConfig = new FleeMovementConfig();
-    
-    [BoxGroup("AI配置")]
-    [ShowIf("movementType", MovementType.IntervalMovement)]
-    public IntervalMovementConfig intervalConfig = new IntervalMovementConfig();
-    
-    [BoxGroup("生成配置")]
-    [LabelText("生成权重")]
-    [MinValue(1)]
-    public int spawnWeight = 1;
-    
-    [BoxGroup("生成配置")]
-    [LabelText("生成成本")]
-    [MinValue(1)]
-    public int spawnCost = 1;
-    
-    [BoxGroup("生成配置")]
-    [LabelText("是否为Boss")]
-    public bool isBoss = false;
-    
-    [BoxGroup("生成配置")]
-    [LabelText("经验值")]
-    [MinValue(0)]
-    public int experienceValue = 10;
     
     #region 多等级配置管理
     
@@ -152,7 +80,16 @@ public class EnemyData : ScriptableObject
             return null;
         }
         
-        return enemyLevels.FirstOrDefault(l => l.level == level && l.isActive);
+        // 根据列表索引获取配置：Level 1 = Index 0, Level 2 = Index 1, ...
+        int index = level - 1;
+        if (index >= 0 && index < enemyLevels.Count && enemyLevels[index] != null)
+        {
+            // 确保 level 字段与列表位置一致
+            enemyLevels[index].level = level;
+            return enemyLevels[index];
+        }
+        
+        return null;
     }
     
     /// <summary>
@@ -165,8 +102,8 @@ public class EnemyData : ScriptableObject
             return 1;
         }
         
-        var maxLevel = enemyLevels.Where(l => l.isActive).Max(l => (int?)l.level);
-        return maxLevel ?? 1;
+        // 列表数量即最高等级
+        return enemyLevels.Count;
     }
     
     /// <summary>
@@ -179,7 +116,13 @@ public class EnemyData : ScriptableObject
             return new List<int> { 1 };
         }
         
-        return enemyLevels.Where(l => l.isActive).Select(l => l.level).OrderBy(l => l).ToList();
+        var levels = new List<int>();
+        for (int i = 0; i < enemyLevels.Count; i++)
+        {
+            levels.Add(i + 1);  // 列表索引 + 1 = 等级
+        }
+        
+        return levels;
     }
     
     #endregion

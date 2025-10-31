@@ -264,7 +264,7 @@ public class Enemy : MonoBehaviour
         {
             Debug.Log($"Enemy {name}: 找到 enemyBehavior，调用 SetEnemyData (Lv{level})");
             enemyBehavior.SetEnemyData(data, level);
-            Debug.Log($"Enemy {name}: 成功设置敌人数据，移动类型: {data.movementType}");
+            Debug.Log($"Enemy {name}: 成功设置敌人数据 (Level {level})");
         }
         else
         {

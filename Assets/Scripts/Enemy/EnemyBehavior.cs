@@ -10,6 +10,12 @@ public class EnemyBehavior : MonoBehaviour
     [Header("数据设置")]
     [Tooltip("敌人数据配置。手动放置的敌人需要在此配置，通过 EnemySpawner 生成的敌人会自动设置")]
     public EnemyData enemyData;
+    private int currentLevel = 1;  // 当前等级
+    
+    /// <summary>
+    /// 当前等级配置（快捷访问）
+    /// </summary>
+    private EnemyLevelConfig CurrentLevelConfig => enemyData?.GetLevelConfig(currentLevel);
     
     [Header("移动设置")]
     // 移动状态由 BaseMovementBehavior 统一管理
@@ -97,10 +103,10 @@ public class EnemyBehavior : MonoBehaviour
     public void ExecuteAttackPhase()
     {
         // 使用攻击行为系统执行攻击
-        if (attackBehavior != null && attackRange != null)
+        if (attackBehavior != null && attackRange != null && CurrentLevelConfig != null)
         {
-            attackBehavior.ExecuteAttack(transform, player, enemyData, attackRange, attackEffect);
-            Debug.Log($"EnemyBehavior {name}: 执行攻击 - 攻击类型: {enemyData.attackType}");
+            attackBehavior.ExecuteAttack(transform, player, enemyData, CurrentLevelConfig, attackRange, attackEffect);
+            Debug.Log($"EnemyBehavior {name}: 执行攻击 - 攻击类型: {CurrentLevelConfig.attackType}");
             
             // 注意：清理将在移动阶段开始时执行，避免在攻击特效播放时立即恢复位置
         }
@@ -116,14 +122,14 @@ public class EnemyBehavior : MonoBehaviour
     private void DealDamageToPlayer(GameObject player)
     {
         Debug.Log($"EnemyBehavior {name}: DealDamageToPlayer 被调用，enemyData 状态: {(enemyData != null ? $"已设置({enemyData.enemyName})" : "未设置")}");
-        if (enemyData == null)
+        if (CurrentLevelConfig == null)
         {
-            Debug.LogError($"【攻击范围检测】EnemyBehavior {name}: EnemyData 未设置，无法造成伤害！");
+            Debug.LogError($"【攻击范围检测】EnemyBehavior {name}: Level {currentLevel} 配置未找到，无法造成伤害！");
             return;
         }
         
-        // 从 EnemyData 读取伤害值
-        float damage = enemyData.damage;
+        // 从等级配置读取伤害值
+        float damage = CurrentLevelConfig.damage;
         
         // 只发布攻击事件，让 DamageProcessor 统一处理伤害应用
         gameObject.PublishAttack("Hit", transform.position, player, damage);
@@ -144,10 +150,10 @@ public class EnemyBehavior : MonoBehaviour
         }
         
         // 使用攻击行为系统执行预告
-        if (attackBehavior != null && attackRange != null)
+        if (attackBehavior != null && attackRange != null && CurrentLevelConfig != null)
         {
-            attackBehavior.ExecuteTelegraph(transform, player, enemyData, attackRange);
-            Debug.Log($"EnemyBehavior {name}: 执行攻击预告 - 攻击类型: {enemyData.attackType}");
+            attackBehavior.ExecuteTelegraph(transform, player, enemyData, CurrentLevelConfig, attackRange);
+            Debug.Log($"EnemyBehavior {name}: 执行攻击预告 - 攻击类型: {CurrentLevelConfig.attackType}");
         }
         else
         {
@@ -160,7 +166,7 @@ public class EnemyBehavior : MonoBehaviour
     /// </summary>
     public void ExecuteMovePhase()
     {
-        Debug.Log($"EnemyBehavior {name}: 执行移动阶段 - 行为类型: {enemyData?.movementType}");
+        Debug.Log($"EnemyBehavior {name}: 执行移动阶段 - 行为类型: {CurrentLevelConfig?.movementType}");
         
         // 在移动阶段开始时清理上一个攻击阶段的状态
         if (attackBehavior != null && attackRange != null)
@@ -171,10 +177,10 @@ public class EnemyBehavior : MonoBehaviour
         
         Debug.Log($"EnemyBehavior {name}: 移动前位置: {transform.position}");
         
-        if (player != null && movementBehavior != null)
+        if (player != null && movementBehavior != null && CurrentLevelConfig != null)
         {
             // 使用行为系统执行移动
-            Vector2 targetPosition = movementBehavior.ExecuteMovement(transform, player, enemyData);
+            Vector2 targetPosition = movementBehavior.ExecuteMovement(transform, player, enemyData, CurrentLevelConfig);
             currentMovementDirection = movementBehavior.GetMovementDirection();
             
             // 设置移动状态（由 BaseMovementBehavior 管理）
@@ -253,12 +259,12 @@ public class EnemyBehavior : MonoBehaviour
         // 降级：如果移动行为未初始化，使用配置中的默认速度
         if (enemyData == null) return 3f;
         
-        switch (enemyData.movementType)
+        switch (CurrentLevelConfig.movementType)
         {
             case MovementType.FollowPlayer:
-                return enemyData.followConfig.moveSpeed;
+                return CurrentLevelConfig.followConfig.moveSpeed;
             case MovementType.Flee:
-                return enemyData.fleeConfig.moveSpeed;
+                return CurrentLevelConfig.fleeConfig.moveSpeed;
             default:
                 return 3f;
         }
@@ -280,10 +286,17 @@ public class EnemyBehavior : MonoBehaviour
     {
         Debug.Log($"EnemyBehavior {name}: SetEnemyData 被调用，传入数据: {(data != null ? data.enemyName : "null")}, 等级: {level}");
         enemyData = data;
+        currentLevel = level;  // ✅ 保存等级
         
         if (enemyData != null)
         {
-            Debug.Log($"EnemyBehavior {name}: 设置敌人数据成功 - {enemyData.enemyName} Lv{level}，移动类型: {enemyData.movementType}");
+            if (CurrentLevelConfig == null)
+            {
+                Debug.LogError($"EnemyBehavior {name}: 未找到 Level {level} 配置！");
+                return;
+            }
+            
+            Debug.Log($"EnemyBehavior {name}: 设置敌人数据成功 - {enemyData.enemyName} Lv{level}，移动类型: {CurrentLevelConfig.movementType}");
             // 重新初始化（传递等级参数）
             InitializeHealth(level);
             InitializeBehavior();
@@ -300,20 +313,19 @@ public class EnemyBehavior : MonoBehaviour
     /// </summary>
     private void InitializeBehavior()
     {
-        if (enemyData != null)
+        if (CurrentLevelConfig == null)
         {
-            // 根据配置创建移动行为
-            movementBehavior = BehaviorFactory.CreateMovementBehavior(enemyData.movementType);
-            Debug.Log($"EnemyBehavior {name}: 初始化移动行为 - 移动类型: {enemyData.movementType}");
-            
-            // 根据配置创建攻击行为
-            attackBehavior = BehaviorFactory.CreateAttackBehavior(enemyData.attackType);
-            Debug.Log($"EnemyBehavior {name}: 初始化攻击行为 - 攻击类型: {enemyData.attackType}");
+            Debug.LogError($"EnemyBehavior {name}: Level {currentLevel} 配置未找到，无法初始化行为系统！");
+            return;
         }
-        else
-        {
-            Debug.LogError($"EnemyBehavior {name}: EnemyData 未设置，无法初始化行为系统！");
-        }
+        
+        // 根据配置创建移动行为
+        movementBehavior = BehaviorFactory.CreateMovementBehavior(CurrentLevelConfig.movementType);
+        Debug.Log($"EnemyBehavior {name}: 初始化移动行为 - 移动类型: {CurrentLevelConfig.movementType}");
+        
+        // 根据配置创建攻击行为
+        attackBehavior = BehaviorFactory.CreateAttackBehavior(CurrentLevelConfig.attackType);
+        Debug.Log($"EnemyBehavior {name}: 初始化攻击行为 - 攻击类型: {CurrentLevelConfig.attackType}");
     }
     
     /// <summary>
@@ -437,13 +449,13 @@ public class EnemyBehavior : MonoBehaviour
     /// </summary>
     public void DealTrapDamageToPlayer(GameObject playerObject, Vector3 hitPosition)
     {
-        if (enemyData == null)
+        if (CurrentLevelConfig == null)
         {
-            Debug.LogWarning($"EnemyBehavior {name}: enemyData 为空，无法造成陷阱伤害");
+            Debug.LogWarning($"EnemyBehavior {name}: Level {currentLevel} 配置未找到，无法造成陷阱伤害");
             return;
         }
         
-        float damage = enemyData.damage;
+        float damage = CurrentLevelConfig.damage;
         
         // 只发布攻击事件，让 DamageProcessor 统一处理伤害应用
         gameObject.PublishAttack("Trap", hitPosition, playerObject, damage);
@@ -516,9 +528,9 @@ public class EnemyBehavior : MonoBehaviour
     public void ShowAttackRange()
     {
         // 使用攻击行为系统执行预告
-        if (attackBehavior != null && attackRange != null)
+        if (attackBehavior != null && attackRange != null && CurrentLevelConfig != null)
         {
-            attackBehavior.ExecuteTelegraph(transform, player, enemyData, attackRange);
+            attackBehavior.ExecuteTelegraph(transform, player, enemyData, CurrentLevelConfig, attackRange);
             Debug.Log($"EnemyBehavior {name}: ShowAttackRange 调用攻击行为系统");
         }
         else if (attackRange != null)

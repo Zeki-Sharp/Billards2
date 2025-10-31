@@ -11,9 +11,10 @@ public interface IMovementBehavior
     /// </summary>
     /// <param name="enemyTransform">敌人Transform</param>
     /// <param name="playerTransform">玩家Transform</param>
-    /// <param name="enemyData">敌人数据</param>
+    /// <param name="enemyData">敌人数据（共享配置）</param>
+    /// <param name="levelConfig">等级配置</param>
     /// <returns>移动目标位置</returns>
-    Vector2 ExecuteMovement(Transform enemyTransform, Transform playerTransform, EnemyData enemyData);
+    Vector2 ExecuteMovement(Transform enemyTransform, Transform playerTransform, EnemyData enemyData, EnemyLevelConfig levelConfig);
     
     /// <summary>
     /// 检查是否正在移动

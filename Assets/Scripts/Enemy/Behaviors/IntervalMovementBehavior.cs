@@ -7,17 +7,17 @@ using UnityEngine;
 /// </summary>
 public class IntervalMovementBehavior : BaseMovementBehavior
 {
-    private EnemyData cachedEnemyData; // 缓存敌人数据用于获取速度
+    private EnemyLevelConfig cachedLevelConfig; // 缓存等级配置用于获取速度
     private int currentRound = 0;       // 当前回合计数
     private bool isInIdlePhase;         // 当前是否处于静止阶段
     
     /// <summary>
     /// 执行间歇移动
     /// </summary>
-    public override Vector2 ExecuteMovement(Transform enemyTransform, Transform playerTransform, EnemyData enemyData)
+    public override Vector2 ExecuteMovement(Transform enemyTransform, Transform playerTransform, EnemyData enemyData, EnemyLevelConfig levelConfig)
     {
-        // 缓存敌人数据
-        cachedEnemyData = enemyData;
+        // 缓存等级配置
+        cachedLevelConfig = levelConfig;
         
         // 验证参数
         if (!ValidateMovementParams(enemyTransform, playerTransform, enemyData))
@@ -34,12 +34,12 @@ public class IntervalMovementBehavior : BaseMovementBehavior
         // 第一次调用时初始化状态
         if (currentRound == 0)
         {
-            isInIdlePhase = enemyData.intervalConfig.startWithIdle;
+            isInIdlePhase = cachedLevelConfig.intervalConfig.startWithIdle;
             Debug.Log($"IntervalMovementBehavior: 初始化，初始状态={( isInIdlePhase ? "静止" : "移动")}");
         }
         
         // 判断当前是否应该切换阶段
-        int phaseRounds = isInIdlePhase ? enemyData.intervalConfig.idleRounds : enemyData.intervalConfig.moveRounds;
+        int phaseRounds = isInIdlePhase ? cachedLevelConfig.intervalConfig.idleRounds : cachedLevelConfig.intervalConfig.moveRounds;
         
         currentRound++;
         Debug.Log($"IntervalMovementBehavior: 当前回合={currentRound}, 阶段={( isInIdlePhase ? "静止" : "移动")}, 阶段总回合={phaseRounds}");
@@ -65,7 +65,7 @@ public class IntervalMovementBehavior : BaseMovementBehavior
         // 移动阶段：根据配置的移动模式执行移动
         Vector2 targetPosition;
         
-        if (enemyData.intervalConfig.movementMode == IntervalMovementMode.Follow)
+        if (cachedLevelConfig.intervalConfig.movementMode == IntervalMovementMode.Follow)
         {
             // 跟随模式
             targetPosition = ExecuteFollowMovement(enemyTransform, playerTransform, enemyData);
@@ -89,9 +89,9 @@ public class IntervalMovementBehavior : BaseMovementBehavior
         float distanceToPlayer = Vector2.Distance(enemyTransform.position, playerTransform.position);
         
         // 如果已经在最小距离内，不移动
-        if (distanceToPlayer <= enemyData.intervalConfig.minDistance)
+        if (distanceToPlayer <= cachedLevelConfig.intervalConfig.minDistance)
         {
-            Debug.Log($"IntervalMovementBehavior-Follow: 已在最小距离内 ({distanceToPlayer} <= {enemyData.intervalConfig.minDistance})，不移动");
+            Debug.Log($"IntervalMovementBehavior-Follow: 已在最小距离内 ({distanceToPlayer} <= {cachedLevelConfig.intervalConfig.minDistance})，不移动");
             SetMoving(false);
             return enemyTransform.position;
         }
@@ -101,7 +101,7 @@ public class IntervalMovementBehavior : BaseMovementBehavior
         currentDirection = direction;
         
         // 计算实际移动距离：确保不会超过最小距离
-        float actualMoveDistance = Mathf.Min(enemyData.intervalConfig.moveDistance, distanceToPlayer - enemyData.intervalConfig.minDistance);
+        float actualMoveDistance = Mathf.Min(cachedLevelConfig.intervalConfig.moveDistance, distanceToPlayer - cachedLevelConfig.intervalConfig.minDistance);
         
         // 如果计算出的移动距离太小，不移动
         if (actualMoveDistance <= 0.01f)
@@ -126,9 +126,9 @@ public class IntervalMovementBehavior : BaseMovementBehavior
         float distanceToPlayer = Vector2.Distance(enemyTransform.position, playerTransform.position);
         
         // 如果玩家距离超过触发距离，不逃跑
-        if (distanceToPlayer > enemyData.intervalConfig.triggerDistance)
+        if (distanceToPlayer > cachedLevelConfig.intervalConfig.triggerDistance)
         {
-            Debug.Log($"IntervalMovementBehavior-Flee: 玩家距离过远 ({distanceToPlayer} > {enemyData.intervalConfig.triggerDistance})，不移动");
+            Debug.Log($"IntervalMovementBehavior-Flee: 玩家距离过远 ({distanceToPlayer} > {cachedLevelConfig.intervalConfig.triggerDistance})，不移动");
             SetMoving(false);
             return enemyTransform.position;
         }
@@ -137,7 +137,7 @@ public class IntervalMovementBehavior : BaseMovementBehavior
         Vector2 direction = (enemyTransform.position - playerTransform.position).normalized;
         currentDirection = direction;
         
-        Vector2 targetPosition = CalculateTargetPosition(enemyTransform.position, direction, enemyData.intervalConfig.moveDistance);
+        Vector2 targetPosition = CalculateTargetPosition(enemyTransform.position, direction, cachedLevelConfig.intervalConfig.moveDistance);
         Debug.Log($"IntervalMovementBehavior-Flee: 远离玩家移动，方向: {direction}, 目标位置: {targetPosition}");
         
         return targetPosition;
@@ -148,8 +148,8 @@ public class IntervalMovementBehavior : BaseMovementBehavior
     /// </summary>
     public override float GetCurrentMoveSpeed()
     {
-        if (cachedEnemyData == null) return 3f;
-        return cachedEnemyData.intervalConfig.moveSpeed;
+        if (cachedLevelConfig == null) return 3f;
+        return cachedLevelConfig.intervalConfig.moveSpeed;
     }
     
     /// <summary>

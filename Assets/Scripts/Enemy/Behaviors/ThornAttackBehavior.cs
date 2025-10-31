@@ -16,13 +16,13 @@ public class ThornAttackBehavior : BaseAttackBehavior
     /// 执行预告阶段
     /// </summary>
     public override void ExecuteTelegraph(Transform enemyTransform, Transform playerTransform, 
-                                         EnemyData enemyData, AttackRange attackRange)
+                                         EnemyData enemyData, EnemyLevelConfig levelConfig, AttackRange attackRange)
     {
-        if (!ValidateAttackParams(enemyTransform, playerTransform, enemyData, attackRange))
+        if (!ValidateAttackParams(enemyTransform, playerTransform, enemyData, levelConfig, attackRange))
             return;
         
         currentRound++;
-        ThornAttackConfig config = enemyData.thornConfig;
+        ThornAttackConfig config = levelConfig.thornConfig;
         
         // 检查冷却
         int roundsSinceLastActivate = currentRound - lastActivateRound;
@@ -81,7 +81,7 @@ public class ThornAttackBehavior : BaseAttackBehavior
     /// 棘刺攻击通过持续碰撞检测造成伤害
     /// </summary>
     public override void ExecuteAttack(Transform enemyTransform, Transform playerTransform, 
-                                      EnemyData enemyData, AttackRange attackRange, MMFeedbacks attackEffect)
+                                      EnemyData enemyData, EnemyLevelConfig levelConfig, AttackRange attackRange, MMFeedbacks attackEffect)
     {
         if (!isThornActive) return;
         
@@ -93,10 +93,10 @@ public class ThornAttackBehavior : BaseAttackBehavior
             if (target.CompareTag("Player"))
             {
                 // 使用配置的伤害间隔控制伤害频率
-                if (Time.time - lastDamageTime >= enemyData.thornConfig.damageInterval)
+                if (Time.time - lastDamageTime >= levelConfig.thornConfig.damageInterval)
                 {
                     lastDamageTime = Time.time;
-                    DealDamageToPlayer(target, enemyData, enemyTransform);
+                    DealDamageToPlayer(target, levelConfig, enemyTransform);
                     
                     // 播放伤害特效（只在造成伤害时）
                     PlayAttackEffect(attackEffect, enemyTransform.name);

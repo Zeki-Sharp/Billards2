@@ -15,18 +15,18 @@ public class RangedAttackBehavior : BaseAttackBehavior
     /// <summary>
     /// 执行预告阶段
     /// </summary>
-    public override void ExecuteTelegraph(Transform enemyTransform, Transform playerTransform, EnemyData enemyData, AttackRange attackRange)
+    public override void ExecuteTelegraph(Transform enemyTransform, Transform playerTransform, EnemyData enemyData, EnemyLevelConfig levelConfig, AttackRange attackRange)
     {
-        if (!ValidateAttackParams(enemyTransform, playerTransform, enemyData, attackRange))
+        if (!ValidateAttackParams(enemyTransform, playerTransform, enemyData, levelConfig, attackRange))
         {
             return;
         }
         
         // 检测玩家是否在检测范围内
         float distanceToPlayer = Vector2.Distance(enemyTransform.position, playerTransform.position);
-        if (distanceToPlayer > enemyData.rangedConfig.detectionRange)
+        if (distanceToPlayer > levelConfig.rangedConfig.detectionRange)
         {
-            Debug.Log($"RangedAttackBehavior: 玩家不在检测范围内 ({distanceToPlayer} > {enemyData.rangedConfig.detectionRange})");
+            Debug.Log($"RangedAttackBehavior: 玩家不在检测范围内 ({distanceToPlayer} > {levelConfig.rangedConfig.detectionRange})");
             return;
         }
         
@@ -37,7 +37,7 @@ public class RangedAttackBehavior : BaseAttackBehavior
         Debug.Log($"RangedAttackBehavior: 保存原始状态 - 父物体: {(originalParent != null ? originalParent.name : "null")}，localPosition: {originalLocalPosition}");
         
         // 计算投射位置
-        projectedPosition = CalculateProjectionPosition(enemyTransform.position, playerTransform.position, enemyData.rangedConfig);
+        projectedPosition = CalculateProjectionPosition(enemyTransform.position, playerTransform.position, levelConfig.rangedConfig);
         
         // 解除父子关系，使用世界坐标
         attackRange.transform.SetParent(null);
@@ -49,9 +49,9 @@ public class RangedAttackBehavior : BaseAttackBehavior
         attackRange.ShowTelegraph();
         
         // 显示抛物线指示器
-        if (enemyData.rangedConfig.showParabolicIndicator)
+        if (levelConfig.rangedConfig.showParabolicIndicator)
         {
-            ShowParabolicIndicator(enemyTransform, attackRange.transform, enemyData.rangedConfig);
+            ShowParabolicIndicator(enemyTransform, attackRange.transform, levelConfig.rangedConfig);
         }
         
         Debug.Log($"RangedAttackBehavior: 显示远程攻击预告，投射位置: {projectedPosition}，AttackRange实际位置: {attackRange.transform.position}");
@@ -60,9 +60,9 @@ public class RangedAttackBehavior : BaseAttackBehavior
     /// <summary>
     /// 执行攻击阶段
     /// </summary>
-    public override void ExecuteAttack(Transform enemyTransform, Transform playerTransform, EnemyData enemyData, AttackRange attackRange, MMFeedbacks attackEffect)
+    public override void ExecuteAttack(Transform enemyTransform, Transform playerTransform, EnemyData enemyData, EnemyLevelConfig levelConfig, AttackRange attackRange, MMFeedbacks attackEffect)
     {
-        if (!ValidateAttackParams(enemyTransform, playerTransform, enemyData, attackRange))
+        if (!ValidateAttackParams(enemyTransform, playerTransform, enemyData, levelConfig, attackRange))
         {
             return;
         }
@@ -84,7 +84,7 @@ public class RangedAttackBehavior : BaseAttackBehavior
         {
             if (target.CompareTag("Player"))
             {
-                DealDamageToPlayer(target, enemyData, enemyTransform);
+                DealDamageToPlayer(target, levelConfig, enemyTransform);
             }
         }
     }
