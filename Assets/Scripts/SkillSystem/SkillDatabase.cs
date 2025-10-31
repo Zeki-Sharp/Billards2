@@ -62,7 +62,7 @@ public class SkillDatabase : ScriptableObject
                 .ToList();
         }
         
-        // 【修复】只允许角色专属技能和通用技能
+        // 只允许角色专属技能和通用技能
         var filteredSkills = allSkills
             .Where(skill => skill != null && 
                            skill.IsValid() && 
@@ -73,7 +73,6 @@ public class SkillDatabase : ScriptableObject
         if (showDebugInfo)
         {
             Debug.Log($"[SkillDatabase] 为角色 '{characterName}' 找到 {filteredSkills.Count} 个技能");
-            Debug.Log($"[SkillDatabase] 过滤条件: skillTag == '{characterName}' OR skillTag == 'common'");
         }
         
         return filteredSkills;
