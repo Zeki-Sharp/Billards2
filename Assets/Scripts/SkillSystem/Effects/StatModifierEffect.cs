@@ -97,8 +97,7 @@ public class StatModifierEffect : IEffect
     /// </summary>
     private void CleanupInvalidModifiers()
     {
-        // ✅ 新系统中，生命周期由 PlayerStatsManagerV2 自动管理
-        // 只需要清理本地列表中的无效句柄
+        // ✅ 清理本地列表中的无效句柄
         appliedHandles.RemoveAll(h => h == null);
     }
     
@@ -132,16 +131,8 @@ public class StatModifierEffect : IEffect
         // 清理已失效的修改器
         CleanupInvalidModifiers();
         
-        // 统一执行效果逻辑（总是创建新修改器）
-        bool result;
-        if (targetStat == "Damage")
-        {
-            result = ExecuteDamageModification(args);
-        }
-        else
-        {
-            result = ExecuteStatModification(args);
-        }
+        // ✅ 统一执行效果逻辑（所有属性都使用 PlayerStats）
+        bool result = ExecuteStatModification(args);
         
         // 更新触发状态
         if (result && !allowStacking)
@@ -160,59 +151,7 @@ public class StatModifierEffect : IEffect
     }
     
     /// <summary>
-    /// 执行攻击力修改 - 委托给 DamageProcessor
-    /// </summary>
-    /// <returns>是否执行成功</returns>
-    private bool ExecuteDamageModification(SkillArgs args)
-    {
-        // 查找 DamageProcessor
-        DamageProcessor damageProcessor = DamageProcessor.Instance;
-        if (damageProcessor == null)
-        {
-            Debug.LogError($"[{EffectName}] 未找到 DamageProcessor，无法处理攻击力修改");
-            return false;
-        }
-        
-        // ✅ 动态获取修改值
-        float value = modifierValue.Get(args);
-        
-        // 总是创建新的技能伤害修改器（支持叠加）
-        string modifierName = $"技能攻击力修改_{targetStat}_{System.Guid.NewGuid().ToString("N").Substring(0, 8)}";
-        SkillDamageModifier damageModifier = new SkillDamageModifier(
-            modifierName,
-            value,
-            modifierType,
-            effectRemovalCondition,
-            true
-        );
-        
-        // 设置移除回调
-        damageModifier.SetOnRemovedCallback(() => {
-            // 只重置标记，不删除修改器（因为修改器已经被禁用了）
-            if (!allowStacking)
-            {
-                hasTriggered = false;
-                Debug.Log($"[{EffectName}] 修改器被移除，重置触发标记，允许重新触发");
-            }
-        });
-        
-        // 注册到 DamageProcessor
-        damageProcessor.RegisterDamageModifier(damageModifier);
-        
-        // ⚠️ SkillDamageModifier 不使用 ModifierHandle 系统
-        // 它有自己的生命周期管理（通过 DamageProcessor）
-        // 这里保持不变
-        
-        Debug.Log($"[{EffectName}] 创建新的攻击力修改器: {modifierName}");
-        
-        // 触发表现效果
-        TriggerVisualEffect();
-        
-        return true;
-    }
-    
-    /// <summary>
-    /// 执行其他属性修改 - ✅ 使用新的轻量级系统
+    /// 执行属性修改 - ✅ 统一使用 PlayerStats 系统（包括 Damage）
     /// </summary>
     /// <returns>是否执行成功</returns>
     private bool ExecuteStatModification(SkillArgs args)
@@ -331,9 +270,7 @@ public class StatModifierEffect : IEffect
     /// </summary>
     public void RemoveEffect()
     {
-        Debug.Log($"[{EffectName}] 重置效果，删除所有修改器，当前句柄数量: {appliedHandles.Count}");
-        
-        // ✅ 使用新系统移除所有修改器
+        // ✅ 移除所有属性修改器（包括 Damage，统一使用 PlayerStats）
         if (statsManager != null)
         {
             foreach (var handle in appliedHandles)
@@ -341,7 +278,6 @@ public class StatModifierEffect : IEffect
                 if (handle != null)
                 {
                     statsManager.RemoveModifier(targetStat, handle);
-                    Debug.Log($"[{EffectName}] ✅ 删除属性修改器: {handle.GetDebugInfo()}");
                 }
             }
         }
@@ -351,7 +287,6 @@ public class StatModifierEffect : IEffect
         
         // 重置触发状态（效果被移除时重置，允许重新触发）
         hasTriggered = false;
-        Debug.Log($"[{EffectName}] 效果被移除，重置触发标记，允许重新触发");
         
         // 注意：不重置 canExecute，因为它完全由重置条件控制
     }

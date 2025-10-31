@@ -31,7 +31,7 @@ public class Player : MonoBehaviour
     
     [Header("核心组件")]
     [Tooltip("如果为空，将自动从同一GameObject获取")]
-    [SerializeField] private PlayerBehavior playerCore;
+    [SerializeField] private PlayerBehavior playerBehavior;
     [SerializeField] private PlayerStateMachine stateMachine;
     [SerializeField] private PlayerInputHandler inputHandler;
     [SerializeField] private PlayerMovementController movementController;
@@ -98,8 +98,8 @@ public class Player : MonoBehaviour
     void InitializeComponents()
     {
         // 核心组件 - 优先使用Inspector配置，否则从GameObject获取
-        if (playerCore == null)
-            playerCore = GetComponent<PlayerBehavior>();
+        if (playerBehavior == null)
+            playerBehavior = GetComponent<PlayerBehavior>();
         if (stateMachine == null)
             stateMachine = GetComponent<PlayerStateMachine>();
         if (inputHandler == null)
@@ -116,7 +116,7 @@ public class Player : MonoBehaviour
             statsManager = GetComponent<PlayerStats>();
         
         // 检查必需组件是否存在
-        if (playerCore == null)
+        if (playerBehavior == null)
             Debug.LogError("Player: 缺少 PlayerCore 组件！请在Inspector中添加或在GameObject上添加。");
         if (stateMachine == null)
             Debug.LogError("Player: 缺少 PlayerStateMachine 组件！请在Inspector中添加或在GameObject上添加。");
@@ -138,8 +138,8 @@ public class Player : MonoBehaviour
     void DistributePlayerData()
     {
         // 分发数据给需要的组件
-        if (playerCore != null)
-            playerCore.SetPlayerData(playerData);
+        if (playerBehavior != null)
+            playerBehavior.SetPlayerData(playerData);
         if (statsManager != null)
             statsManager.SetPlayerData(playerData);
         if (attackManager != null)
@@ -157,17 +157,17 @@ public class Player : MonoBehaviour
     void SetupComponentReferences()
     {
         // 建立 PlayerCore 的组件引用
-        if (playerCore != null)
+        if (playerBehavior != null)
         {
-            playerCore.SetAttackManager(attackManager);
-            playerCore.SetChargeSystem(chargeSystem);
-            playerCore.SetStatsManager(statsManager);
+            playerBehavior.SetAttackManager(attackManager);
+            playerBehavior.SetChargeSystem(chargeSystem);
+            playerBehavior.SetStatsManager(statsManager);
         }
         
         // 建立 AttackManager 的组件引用
         if (attackManager != null)
         {
-            attackManager.SetPlayerCore(playerCore);
+            attackManager.SetPlayerCore(playerBehavior);
         }
         
         if (showDebugInfo)
@@ -182,8 +182,8 @@ public class Player : MonoBehaviour
     void InitializeAllComponents()
     {
         // 按正确顺序初始化组件
-        if (playerCore != null)
-            playerCore.Initialize();
+        if (playerBehavior != null)
+            playerBehavior.Initialize();
         if (statsManager != null)
             statsManager.Initialize();
         if (attackManager != null)
@@ -279,7 +279,7 @@ public class Player : MonoBehaviour
     /// </summary>
     public PlayerBehavior GetPlayerCore()
     {
-        return playerCore;
+        return playerBehavior;
     }
     
     /// <summary>
@@ -375,9 +375,9 @@ public class Player : MonoBehaviour
             stateMachine.SwitchToState(PlayerStateMachine.PlayerState.Idle);
         }
         
-        if (playerCore != null)
+        if (playerBehavior != null)
         {
-            playerCore.ResetForNewTurn();
+            playerBehavior.ResetForNewTurn();
         }
         
         if (showDebugInfo)
@@ -398,10 +398,10 @@ public class Player : MonoBehaviour
             GUILayout.BeginArea(new Rect(10, 10, 200, 100));
             GUILayout.Label($"Player State: {stateMachine.CurrentState}");
             
-            if (playerCore != null)
+            if (playerBehavior != null)
             {
-                GUILayout.Label($"Charging: {playerCore.ChargingProgress:F1}%");
-                GUILayout.Label($"Speed: {playerCore.GetSpeed():F2}");
+                GUILayout.Label($"Charging: {playerBehavior.ChargingProgress:F1}%");
+                GUILayout.Label($"Speed: {playerBehavior.GetSpeed():F2}");
             }
             
             GUILayout.EndArea();

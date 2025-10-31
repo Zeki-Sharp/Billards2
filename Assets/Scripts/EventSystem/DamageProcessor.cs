@@ -134,6 +134,22 @@ public class DamageProcessor : SingletonManager<DamageProcessor>
         // 总是显示处理开始信息
         Debug.Log($"[DamageProcessor] 开始处理攻击伤害: {attackData.AttackType}, 原始伤害: {attackData.Damage}, 目标: {attackData.Target?.name}");
         
+        // ✅ 从 PlayerStats 读取最终 Damage 属性（包含技能加成等持久修改器）
+        if (attackData.Attacker != null && attackData.Attacker.CompareTag("Player"))
+        {
+            PlayerStats playerStats = attackData.Attacker.GetComponent<PlayerStats>();
+            if (playerStats != null)
+            {
+                float baseDamageFromStats = playerStats.GetFinalStat("Damage");
+                Debug.Log($"[DamageProcessor] ✅ 从 PlayerStats 读取 Damage: {attackData.Damage} → {baseDamageFromStats} (包含技能加成)");
+                attackData.Damage = baseDamageFromStats;
+            }
+            else
+            {
+                Debug.LogWarning($"[DamageProcessor] 攻击者没有 PlayerStats 组件，使用原始伤害: {attackData.Damage}");
+            }
+        }
+        
         if (damageModifiers.Count == 0)
         {
             Debug.LogWarning("[DamageProcessor] 没有注册的伤害修改器，直接发布原始伤害");

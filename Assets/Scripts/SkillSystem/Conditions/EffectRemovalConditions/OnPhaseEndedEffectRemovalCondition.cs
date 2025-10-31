@@ -26,23 +26,13 @@ public class OnPhaseEndedEffectRemovalCondition : IEffectRemovalCondition
         // 检查事件类型是否为回合结束事件
         if (args.TryGetEventData<GameFlowStateChangedData>(out var stateData))
         {
-            bool shouldRemove = stateData.NewState == GameFlowState.PlayerPhaseEnd;
-            if (shouldRemove)
-            {
-                Debug.Log($"[{ConditionName}] 检测到玩家回合结束事件，应该移除效果");
-            }
-            return shouldRemove;
+            return stateData.NewState == GameFlowState.PlayerPhaseEnd;
         }
         
         // 检查是否为GameFlowState枚举类型
         if (args.EventData is GameFlowState gameFlowState)
         {
-            bool shouldRemove = gameFlowState == GameFlowState.PlayerPhaseEnd;
-            if (shouldRemove)
-            {
-                Debug.Log($"[{ConditionName}] 检测到玩家回合结束状态，应该移除效果");
-            }
-            return shouldRemove;
+            return gameFlowState == GameFlowState.PlayerPhaseEnd;
         }
         
         return false;

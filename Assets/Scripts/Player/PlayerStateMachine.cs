@@ -48,7 +48,7 @@ public class PlayerStateMachine : MonoBehaviour
     private PlayerState currentState;
     
     // 组件引用
-    private PlayerBehavior playerCore;
+    private PlayerBehavior playerBehavior;
     private ChargeSystem chargeSystem;
     
     // Moving 状态相关
@@ -61,7 +61,7 @@ public class PlayerStateMachine : MonoBehaviour
     void Start()
     {
         // 获取组件引用
-        playerCore = GetComponent<PlayerBehavior>();
+        playerBehavior = GetComponent<PlayerBehavior>();
         chargeSystem = GetComponent<ChargeSystem>();
         
         // 订阅蓄力事件
@@ -200,7 +200,7 @@ public class PlayerStateMachine : MonoBehaviour
     void UpdateIdleState()
     {
         // 检查是否在物理移动（排除WASD移动）
-        if (playerCore != null && playerCore.IsPhysicsMoving() && !playerCore.IsMoving())
+        if (playerBehavior != null && playerBehavior.IsPhysicsMoving() && !playerBehavior.IsMoving())
         {
             SwitchToState(PlayerState.Moving);
         }
@@ -218,7 +218,7 @@ public class PlayerStateMachine : MonoBehaviour
         if (timeInMovingState >= movingStateTimeout)
         {
             // 检查球是否真的在移动
-            bool isBallActuallyMoving = playerCore != null && playerCore.IsPhysicsMoving();
+            bool isBallActuallyMoving = playerBehavior != null && playerBehavior.IsPhysicsMoving();
             
             if (!isBallActuallyMoving)
             {
@@ -248,18 +248,16 @@ public class PlayerStateMachine : MonoBehaviour
         }
         
         // 触发球停止攻击（攻击系统触发点）
-        PlayerBehavior playerCore = FindFirstObjectByType<PlayerBehavior>();
-        if (playerCore != null)
+        PlayerBehavior playerBehavior = FindFirstObjectByType<PlayerBehavior>();
+        if (playerBehavior != null)
         {
-            playerCore.HandleBallStoppedAttack();
+            playerBehavior.HandleBallStoppedAttack();
             if (showDebugInfo)
             {
                 Debug.Log("PlayerStateMachine: MovingEnd 阶段 - 触发球停止攻击");
             }
         }
         
-        // 这里也是技能系统的触发点
-        // 技能系统会监听 MovingEnd 状态，执行各种"停球后效果"
         
         // 等待一小段时间（0.1秒，可配置）
         yield return new WaitForSeconds(0.1f);
@@ -340,9 +338,9 @@ public class PlayerStateMachine : MonoBehaviour
             
             
             // 发射
-            if (playerCore != null)
+            if (playerBehavior != null)
             {
-                playerCore.LaunchCharged();
+                playerBehavior.LaunchCharged();
             }
             
             // 切换到运动状态
@@ -361,7 +359,7 @@ public class PlayerStateMachine : MonoBehaviour
     private void OnBallStoppedHandler(BallPhysics ball)
     {
         // 检查是否是自己的球
-        if (playerCore == null || !playerCore.IsMyBall(ball))
+        if (playerBehavior == null || !playerBehavior.IsMyBall(ball))
         {
             return;
         }

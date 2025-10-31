@@ -27,8 +27,10 @@ public class EnemyBehavior : MonoBehaviour
     [Header("攻击范围管理")]
     private Transform attackArea;  // 攻击范围预制体引用
     
+    [Header("属性管理")]
+    private EnemyStats statsManager;  // ✅ 三层属性系统管理器
+    
     [Header("血量管理")]
-    private float currentHealth;
     private bool isDead = false;
     
     [Header("UI组件")]
@@ -44,6 +46,9 @@ public class EnemyBehavior : MonoBehaviour
     
     void Start()
     {
+        // ✅ 获取或添加 EnemyStats 组件
+        InitializeStatsManager();
+        
         // 如果 enemyData 已经设置（手动放置的敌人），直接初始化
         if (enemyData != null)
         {
@@ -316,31 +321,52 @@ public class EnemyBehavior : MonoBehaviour
     }
     
     /// <summary>
+    /// 初始化属性管理器
+    /// </summary>
+    private void InitializeStatsManager()
+    {
+        // 获取或添加 EnemyStats 组件
+        statsManager = GetComponent<EnemyStats>();
+        if (statsManager == null)
+        {
+            statsManager = gameObject.AddComponent<EnemyStats>();
+            Debug.Log($"EnemyBehavior {name}: ✅ 自动添加 EnemyStats 组件");
+        }
+    }
+    
+    /// <summary>
     /// 初始化血量
     /// </summary>
     private void InitializeHealth()
     {
-        if (enemyData != null)
+        if (enemyData == null)
         {
-            currentHealth = enemyData.maxHealth;
-            isDead = false;
-            Debug.Log($"EnemyBehavior {name}: 初始化血量 {currentHealth}/{enemyData.maxHealth}");
-            
-            // 初始化血条UI
-            if (healthBar != null)
-            {
-                //healthBar.SetTarget(transform);
-                healthBar.UpdateHealth(currentHealth, enemyData.maxHealth);  // 初始化血量显示
-                Debug.Log($"EnemyBehavior {name}: 血条UI已初始化");
-            }
-            else
-            {
-                Debug.LogWarning($"EnemyBehavior {name}: HealthBar未设置！");
-            }
+            Debug.LogError($"EnemyBehavior {name}: EnemyData 未设置，无法初始化血量！");
+            return;
+        }
+        
+        if (statsManager == null)
+        {
+            Debug.LogError($"EnemyBehavior {name}: EnemyStats 未初始化，无法初始化血量！");
+            return;
+        }
+        
+        // ✅ 设置 EnemyData 并初始化属性系统
+        statsManager.SetEnemyData(enemyData);
+        statsManager.Initialize();
+        
+        isDead = false;
+        Debug.Log($"EnemyBehavior {name}: 初始化血量 {statsManager.CurrentHealth}/{statsManager.MaxHealth}");
+        
+        // 初始化血条UI
+        if (healthBar != null)
+        {
+            healthBar.UpdateHealth(statsManager.CurrentHealth, statsManager.MaxHealth);
+            Debug.Log($"EnemyBehavior {name}: 血条UI已初始化");
         }
         else
         {
-            Debug.LogError($"EnemyBehavior {name}: EnemyData 未设置，无法初始化血量！");
+            Debug.LogWarning($"EnemyBehavior {name}: HealthBar未设置！");
         }
     }
     
@@ -370,9 +396,9 @@ public class EnemyBehavior : MonoBehaviour
     /// </summary>
     private void TakeDamage(float damage)
     {
-        if (enemyData == null)
+        if (statsManager == null)
         {
-            Debug.LogError($"EnemyBehavior {name}: EnemyData 未设置，无法处理伤害！");
+            Debug.LogError($"EnemyBehavior {name}: EnemyStats 未初始化，无法处理伤害！");
             return;
         }
         
@@ -382,20 +408,19 @@ public class EnemyBehavior : MonoBehaviour
             return;
         }
         
-        // 扣除血量
-        currentHealth -= damage;
-        currentHealth = Mathf.Max(0, currentHealth);
+        // ✅ 使用 EnemyStats 扣除血量
+        statsManager.SubtractHealth(damage);
         
-        Debug.Log($"EnemyBehavior {name}: 受到 {damage} 点伤害，当前血量: {currentHealth}/{enemyData.maxHealth}");
+        Debug.Log($"EnemyBehavior {name}: 受到 {damage} 点伤害，当前血量: {statsManager.CurrentHealth}/{statsManager.MaxHealth}");
         
         // 更新血条UI
         if (healthBar != null)
         {
-            healthBar.UpdateHealth(currentHealth, enemyData.maxHealth);
+            healthBar.UpdateHealth(statsManager.CurrentHealth, statsManager.MaxHealth);
         }
         
         // 检查是否死亡
-        if (currentHealth <= 0)
+        if (statsManager.CurrentHealth <= 0)
         {
             Die();
         }
