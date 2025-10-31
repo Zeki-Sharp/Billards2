@@ -34,12 +34,6 @@ public class PlayerStatsManagerV2 : MonoBehaviour
     /// </summary>
     private RuntimeStatsManager runtimeStats;
     
-    /// <summary>
-    /// 修改器句柄映射（用于兼容旧系统）
-    /// Key: 旧的 StatModifier, Value: ModifierHandle
-    /// </summary>
-    private Dictionary<StatModifier, ModifierHandle> modifierHandleMap = new Dictionary<StatModifier, ModifierHandle>();
-    
     #endregion
     
     #region Unity 生命周期
@@ -153,145 +147,35 @@ public class PlayerStatsManagerV2 : MonoBehaviour
     
     #endregion
     
-    #region 公共接口（向后兼容）
+    #region 批量操作
     
     /// <summary>
-    /// 应用修饰器（兼容旧接口）
+    /// 移除指定来源的所有修饰器
     /// </summary>
-    public void ApplyModifier(StatModifier oldModifier)
+    public int RemoveModifiersBySource(object source)
     {
-        if (oldModifier == null)
+        int totalRemoved = runtimeStats.RemoveModifiersBySource(source);
+        
+        if (totalRemoved > 0)
         {
-            Debug.LogError("PlayerStatsManagerV2: 尝试应用空的修饰器");
-            return;
-        }
-        
-        // 转换为新系统
-        ModifierHandle handle = null;
-        
-        // 根据旧的修改器类型转换
-        bool isPercent = (oldModifier.type == StatModifierType.PercentAdd || 
-                          oldModifier.type == StatModifierType.PercentMult);
-        
-        // 创建新的 Modifier（轻量级）
-        Modifier newModifier = new Modifier(oldModifier.targetStat, oldModifier.value);
-        
-        // 根据旧修改器的属性选择创建方式
-        if (oldModifier.effectRemovalCondition != null)
-        {
-            // 带移除条件
-            handle = runtimeStats.AddConditionalModifier(
-                oldModifier.targetStat,
-                oldModifier.value,
-                isPercent,
-                oldModifier.effectRemovalCondition,
-                oldModifier.source
-            );
-        }
-        else if (oldModifier.duration > 0)
-        {
-            // 临时修改器
-            handle = runtimeStats.AddTemporaryModifier(
-                oldModifier.targetStat,
-                oldModifier.value,
-                isPercent,
-                oldModifier.duration,
-                oldModifier.source
-            );
-        }
-        else
-        {
-            // 永久修改器
-            if (isPercent)
-            {
-                handle = runtimeStats.AddPercentModifier(
-                    oldModifier.targetStat,
-                    oldModifier.value,
-                    oldModifier.source
-                );
-            }
-            else
-            {
-                handle = runtimeStats.AddConstantModifier(
-                    oldModifier.targetStat,
-                    oldModifier.value,
-                    oldModifier.source
-                );
-            }
-        }
-        
-        // 保存映射关系
-        if (handle != null)
-        {
-            modifierHandleMap[oldModifier] = handle;
-        }
-        
-        // 触发属性变化
-        OnStatChanged(oldModifier.targetStat);
-    }
-    
-    /// <summary>
-    /// 移除修饰器（兼容旧接口）
-    /// </summary>
-    public void RemoveModifier(StatModifier oldModifier)
-    {
-        if (oldModifier == null) return;
-        
-        // 查找对应的句柄
-        if (modifierHandleMap.TryGetValue(oldModifier, out var handle))
-        {
-            runtimeStats.RemoveModifier(oldModifier.targetStat, handle);
-            modifierHandleMap.Remove(oldModifier);
+            // 触发所有相关属性的变化事件
+            OnStatChanged("MaxHealth");
+            OnStatChanged("Damage");
+            OnStatChanged("MicroMoveSpeed");
+            OnStatChanged("AreaRadius");
             
-            // 触发属性变化
-            OnStatChanged(oldModifier.targetStat);
-        }
-        else
-        {
-            Debug.LogWarning($"PlayerStatsManagerV2: 未找到修改器句柄，无法移除");
-        }
-    }
-    
-    /// <summary>
-    /// 移除指定来源的所有修饰器（兼容旧接口）
-    /// </summary>
-    public void RemoveModifiersBySource(object source)
-    {
-        // 找到所有匹配来源的旧修改器
-        var modifiersToRemove = new List<StatModifier>();
-        foreach (var kvp in modifierHandleMap)
-        {
-            if (kvp.Value.Source == source)
+            if (enableDebugLog)
             {
-                modifiersToRemove.Add(kvp.Key);
+                Debug.Log($"PlayerStatsManagerV2: 移除来源 {source?.GetType().Name} 的 {totalRemoved} 个修饰器");
             }
         }
         
-        // 移除它们
-        foreach (var oldModifier in modifiersToRemove)
-        {
-            RemoveModifier(oldModifier);
-        }
-        
-        if (enableDebugLog && modifiersToRemove.Count > 0)
-        {
-            Debug.Log($"PlayerStatsManagerV2: 移除来源 {source?.GetType().Name} 的 {modifiersToRemove.Count} 个修饰器");
-        }
-    }
-    
-    /// <summary>
-    /// 检查修饰器是否存在于活跃列表中（兼容旧接口）
-    /// </summary>
-    /// <param name="modifier">要检查的修饰器</param>
-    /// <returns>是否存在</returns>
-    public bool HasModifier(StatModifier modifier)
-    {
-        return modifierHandleMap.ContainsKey(modifier);
+        return totalRemoved;
     }
     
     #endregion
     
-    #region 属性访问（向后兼容）
+    #region 属性访问
     
     /// <summary>
     /// 获取最终最大血量
@@ -419,10 +303,10 @@ public class PlayerStatsManagerV2 : MonoBehaviour
     
     #endregion
     
-    #region 新系统直接访问（推荐使用）
+    #region 修改器管理（核心接口）
     
     /// <summary>
-    /// 添加固定值修改器（新接口）
+    /// 添加固定值修改器
     /// </summary>
     /// <param name="statID">属性ID</param>
     /// <param name="value">修改值</param>
@@ -436,7 +320,7 @@ public class PlayerStatsManagerV2 : MonoBehaviour
     }
     
     /// <summary>
-    /// 添加百分比修改器（新接口）
+    /// 添加百分比修改器
     /// </summary>
     /// <param name="statID">属性ID</param>
     /// <param name="value">修改值（例如 0.5 = +50%）</param>
@@ -450,7 +334,7 @@ public class PlayerStatsManagerV2 : MonoBehaviour
     }
     
     /// <summary>
-    /// 添加临时修改器（新接口）
+    /// 添加临时修改器
     /// </summary>
     public ModifierHandle AddTemporary(string statID, float value, bool isPercent, float duration, object source = null)
     {
@@ -460,7 +344,17 @@ public class PlayerStatsManagerV2 : MonoBehaviour
     }
     
     /// <summary>
-    /// 移除修改器（新接口）
+    /// 添加带移除条件的修改器
+    /// </summary>
+    public ModifierHandle AddConditionalModifier(string statID, float value, bool isPercent, IEffectRemovalCondition removalCondition, object source = null)
+    {
+        var handle = runtimeStats.AddConditionalModifier(statID, value, isPercent, removalCondition, source);
+        OnStatChanged(statID);
+        return handle;
+    }
+    
+    /// <summary>
+    /// 移除修改器
     /// </summary>
     public bool RemoveModifier(string statID, ModifierHandle handle)
     {

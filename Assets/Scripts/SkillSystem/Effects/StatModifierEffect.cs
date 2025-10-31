@@ -20,8 +20,8 @@ public class StatModifierEffect : IEffect
     private bool allowStacking = true;    // 是否允许叠加
     private bool hasTriggered = false;    // 是否已经触发（用于非叠加效果）
     
-    // 修改器管理字段
-    private System.Collections.Generic.List<object> appliedModifiers = new System.Collections.Generic.List<object>(); // 应用的修饰器列表
+    // 修改器管理字段（新系统）
+    private System.Collections.Generic.List<ModifierHandle> appliedHandles = new System.Collections.Generic.List<ModifierHandle>(); // ✅ 使用轻量级句柄
     
     /// <summary>
     /// 是否允许执行（完全由重置条件控制）
@@ -91,35 +91,13 @@ public class StatModifierEffect : IEffect
     private IEffectRemovalCondition effectRemovalCondition; // 新的效果移除条件
     
     /// <summary>
-    /// 清理已失效的修改器
+    /// 清理已失效的修改器（新系统：简化版）
     /// </summary>
     private void CleanupInvalidModifiers()
     {
-        for (int i = appliedModifiers.Count - 1; i >= 0; i--)
-        {
-            var modifier = appliedModifiers[i];
-            bool shouldRemove = false;
-            
-            // 如果是攻击力修改器，检查是否应该移除
-            if (modifier is SkillDamageModifier skillModifier)
-            {
-                // 简化版本：SkillDamageModifier 总是启用，不需要检查
-                // 移除条件由 StatModifierEffect 的 Reset() 方法处理
-            }
-            // 如果是属性修改器，检查是否还在活跃列表中
-            else if (modifier is StatModifier statModifier && statsManager != null)
-            {
-                if (!statsManager.HasModifier(statModifier))
-                {
-                    shouldRemove = true;
-                }
-            }
-            
-            if (shouldRemove)
-            {
-                appliedModifiers.RemoveAt(i);
-            }
-        }
+        // ✅ 新系统中，生命周期由 PlayerStatsManagerV2 自动管理
+        // 只需要清理本地列表中的无效句柄
+        appliedHandles.RemoveAll(h => h == null);
     }
     
     /// <summary>
@@ -224,10 +202,11 @@ public class StatModifierEffect : IEffect
         // 注册到 DamageProcessor
         damageProcessor.RegisterDamageModifier(damageModifier);
         
-        // 保存引用用于后续移除
-        appliedModifiers.Add(damageModifier);
+        // ⚠️ SkillDamageModifier 不使用 ModifierHandle 系统
+        // 它有自己的生命周期管理（通过 DamageProcessor）
+        // 这里保持不变
         
-        Debug.Log($"[{EffectName}] 创建新的攻击力修改器: {modifierName}, 当前修改器数量: {appliedModifiers.Count}");
+        Debug.Log($"[{EffectName}] 创建新的攻击力修改器: {modifierName}");
         
         // 触发表现效果
         TriggerVisualEffect();
@@ -236,7 +215,7 @@ public class StatModifierEffect : IEffect
     }
     
     /// <summary>
-    /// 执行其他属性修改 - 使用原来的 StatModifier 方式
+    /// 执行其他属性修改 - ✅ 使用新的轻量级系统
     /// </summary>
     /// <returns>是否执行成功</returns>
     private bool ExecuteStatModification()
@@ -247,27 +226,42 @@ public class StatModifierEffect : IEffect
             return false;
         }
         
-        // 创建修饰器 - 使用配置中的实际类型和值
-        StatModifier statModifier = new StatModifier(
-            targetStat,                                    // 目标属性
-            modifierType,                                  // 从配置读取的类型
-            modifierValue,                                 // 从配置读取的值
-            this                                           // 来源
-        );
+        ModifierHandle handle = null;
         
-        // 设置移除条件（使用新接口）
+        // ✅ 根据修改器类型选择合适的方法
+        bool isPercent = (modifierType == StatModifierType.PercentAdd || modifierType == StatModifierType.PercentMult);
+        
+        // 如果有移除条件，使用带条件的方法
         if (effectRemovalCondition != null)
         {
-            statModifier.SetEffectRemovalCondition(effectRemovalCondition);
+            handle = statsManager.AddConditionalModifier(
+                targetStat,
+                modifierValue,
+                isPercent,
+                effectRemovalCondition,
+                this
+            );
+        }
+        else
+        {
+            // 永久修改器
+            if (isPercent)
+            {
+                handle = statsManager.AddPercent(targetStat, modifierValue, this);
+            }
+            else
+            {
+                handle = statsManager.AddConstant(targetStat, modifierValue, this);
+            }
         }
         
-        // 应用修饰器
-        statsManager.ApplyModifier(statModifier);
+        // 保存句柄
+        if (handle != null)
+        {
+            appliedHandles.Add(handle);
+        }
         
-        // 保存引用
-        appliedModifiers.Add(statModifier);
-        
-        Debug.Log($"[{EffectName}] 创建新的属性修改器: {targetStat}, 当前修改器数量: {appliedModifiers.Count}");
+        Debug.Log($"[{EffectName}] ✅ 创建新的属性修改器: {targetStat} {(isPercent ? $"+{modifierValue * 100}%" : $"+{modifierValue}")}, 当前句柄数量: {appliedHandles.Count}");
         
         // 触发表现效果
         TriggerVisualEffect();
@@ -332,38 +326,28 @@ public class StatModifierEffect : IEffect
     }
     
     /// <summary>
-    /// 移除效果（删除所有修改器，重置 hasTriggered 标志）
+    /// 移除效果（删除所有修改器，重置 hasTriggered 标志）- ✅ 使用新系统
     /// 注意：不重置 canExecute，因为它完全由重置条件控制
     /// </summary>
     public void RemoveEffect()
     {
-        Debug.Log($"[{EffectName}] 重置效果，删除所有修改器，当前数量: {appliedModifiers.Count}");
+        Debug.Log($"[{EffectName}] 重置效果，删除所有修改器，当前句柄数量: {appliedHandles.Count}");
         
-        // 删除所有应用的修改器
-        for (int i = appliedModifiers.Count - 1; i >= 0; i--)
+        // ✅ 使用新系统移除所有修改器
+        if (statsManager != null)
         {
-            var modifier = appliedModifiers[i];
-            
-            // 如果是攻击力修改，从 DamageProcessor 中移除
-            if (modifier is SkillDamageModifier skillModifier)
+            foreach (var handle in appliedHandles)
             {
-                DamageProcessor damageProcessor = DamageProcessor.Instance;
-                if (damageProcessor != null)
+                if (handle != null)
                 {
-                    damageProcessor.UnregisterDamageModifier(skillModifier);
-                    Debug.Log($"[{EffectName}] 删除攻击力修改器: {skillModifier.ModifierName}");
+                    statsManager.RemoveModifier(targetStat, handle);
+                    Debug.Log($"[{EffectName}] ✅ 删除属性修改器: {handle.GetDebugInfo()}");
                 }
-            }
-            // 如果是其他属性修改，从 PlayerStatsManager 中移除
-            else if (modifier is StatModifier statModifier && statsManager != null)
-            {
-                statsManager.RemoveModifier(statModifier);
-                Debug.Log($"[{EffectName}] 删除属性修改器: {statModifier.targetStat}");
             }
         }
         
-        // 清空修改器列表
-        appliedModifiers.Clear();
+        // 清空句柄列表
+        appliedHandles.Clear();
         
         // 重置触发状态（效果被移除时重置，允许重新触发）
         hasTriggered = false;
