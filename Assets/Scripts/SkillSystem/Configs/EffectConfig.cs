@@ -19,8 +19,9 @@ public class SkillEffectConfig
     
     [ShowIf("effectType", SkillEffectType.StatModifier)]
     [LabelText("修改倍数")]
-    [Tooltip("修改倍数（2.0 = +100%）")]
-    public float modifierValue = 2f;
+    [Tooltip("修改倍数（支持动态值）")]
+    [SerializeReference]
+    public PropertyGetFloat modifierValue;
     
     [ShowIf("effectType", SkillEffectType.StatModifier)]
     [LabelText("修改器类型")]
@@ -35,9 +36,9 @@ public class SkillEffectConfig
     
     [ShowIf("effectType", SkillEffectType.Heal)]
     [LabelText("治疗量")]
-    [Tooltip("治疗量（恢复的生命值）")]
-    [MinValue(0)]
-    public float healAmount = 20f;
+    [Tooltip("治疗量（支持动态值，如固定值、随机值、基于属性等）")]
+    [SerializeReference]
+    public PropertyGetFloat healAmount;
     
     [ShowIf("effectType", SkillEffectType.Transition)]
     [LabelText("最小 Transition 时间")]
@@ -121,7 +122,9 @@ public class SkillEffectConfig
         {
             case SkillEffectType.StatModifier:
                 var statModifierEffect = new StatModifierEffect();
-                statModifierEffect.SetModifier(targetStat, modifierValue, modifierType);
+                // ✅ 兼容性：如果没有设置 Property，使用默认固定值 2.0
+                var modifierProp = modifierValue ?? new ConstantFloat(2f);
+                statModifierEffect.SetModifier(targetStat, modifierProp, modifierType);
                 statModifierEffect.SetAllowStacking(allowStacking); // 设置是否允许叠加
                 // 设置新的效果移除条件
                 if (effectRemovalCondition != null)
@@ -132,7 +135,9 @@ public class SkillEffectConfig
                 
             case SkillEffectType.Heal:
                 var healEffect = new HealEffect();
-                healEffect.SetHealAmount(healAmount);
+                // ✅ 兼容性：如果没有设置 Property，使用默认固定值 20
+                var healProp = healAmount ?? new ConstantFloat(20f);
+                healEffect.SetHealAmount(healProp);
                 // 治疗是瞬时效果，不需要移除条件
                 return healEffect;
                 

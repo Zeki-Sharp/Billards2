@@ -10,7 +10,8 @@ public class StatModifierEffect : IEffect
     public string EffectName => "StatModifierEffect";
     
     private string targetStat = "Damage"; // 默认修改攻击力（使用新命名）
-    private float modifierValue = 1.5f;   // 默认+50%
+    // ✅ 使用 PropertyGetFloat 替代固定值
+    private PropertyGetFloat modifierValue;
     private StatModifierType modifierType = StatModifierType.PercentMult; // 默认百分比乘算
     private bool canExecute = true;       // 是否允许执行（完全由重置条件控制）
     private PlayerCore targetPlayer;      // 目标玩家
@@ -56,27 +57,28 @@ public class StatModifierEffect : IEffect
     }
     
     /// <summary>
-    /// 设置修改参数
+    /// 设置修改参数（Property 版本）
     /// </summary>
     /// <param name="stat">要修改的属性名</param>
-    /// <param name="modifier">修改值</param>
-    public void SetModifier(string stat, float modifier)
-    {
-        targetStat = stat;
-        modifierValue = modifier;
-    }
-    
-    /// <summary>
-    /// 设置修改参数（包含类型）
-    /// </summary>
-    /// <param name="stat">要修改的属性名</param>
-    /// <param name="modifier">修改值</param>
+    /// <param name="modifier">修改值 Property</param>
     /// <param name="type">修改器类型</param>
-    public void SetModifier(string stat, float modifier, StatModifierType type)
+    public void SetModifier(string stat, PropertyGetFloat modifier, StatModifierType type)
     {
         targetStat = stat;
         modifierValue = modifier;
         modifierType = type;
+    }
+    
+    /// <summary>
+    /// 初始化（确保有默认 Property）
+    /// </summary>
+    public void Initialize()
+    {
+        // ✅ 如果没有设置 Property，使用默认固定值
+        if (modifierValue == null)
+        {
+            modifierValue = new ConstantFloat(1.5f);
+        }
     }
     
     /// <summary>
@@ -98,14 +100,6 @@ public class StatModifierEffect : IEffect
         // ✅ 新系统中，生命周期由 PlayerStatsManagerV2 自动管理
         // 只需要清理本地列表中的无效句柄
         appliedHandles.RemoveAll(h => h == null);
-    }
-    
-    /// <summary>
-    /// 初始化效果
-    /// </summary>
-    public void Initialize()
-    {
-        // 延迟初始化：不在初始化时查找玩家，而是在执行时动态查找
     }
     
     /// <summary>
@@ -142,11 +136,11 @@ public class StatModifierEffect : IEffect
         bool result;
         if (targetStat == "Damage")
         {
-            result = ExecuteDamageModification();
+            result = ExecuteDamageModification(args);
         }
         else
         {
-            result = ExecuteStatModification();
+            result = ExecuteStatModification(args);
         }
         
         // 更新触发状态
@@ -169,7 +163,7 @@ public class StatModifierEffect : IEffect
     /// 执行攻击力修改 - 委托给 DamageProcessor
     /// </summary>
     /// <returns>是否执行成功</returns>
-    private bool ExecuteDamageModification()
+    private bool ExecuteDamageModification(SkillArgs args)
     {
         // 查找 DamageProcessor
         DamageProcessor damageProcessor = DamageProcessor.Instance;
@@ -179,11 +173,14 @@ public class StatModifierEffect : IEffect
             return false;
         }
         
+        // ✅ 动态获取修改值
+        float value = modifierValue.Get(args);
+        
         // 总是创建新的技能伤害修改器（支持叠加）
         string modifierName = $"技能攻击力修改_{targetStat}_{System.Guid.NewGuid().ToString("N").Substring(0, 8)}";
         SkillDamageModifier damageModifier = new SkillDamageModifier(
             modifierName,
-            modifierValue,
+            value,
             modifierType,
             effectRemovalCondition,
             true
@@ -218,13 +215,16 @@ public class StatModifierEffect : IEffect
     /// 执行其他属性修改 - ✅ 使用新的轻量级系统
     /// </summary>
     /// <returns>是否执行成功</returns>
-    private bool ExecuteStatModification()
+    private bool ExecuteStatModification(SkillArgs args)
     {
         if (statsManager == null)
         {
             Debug.LogError($"[{EffectName}] 属性管理器为空，无法执行效果");
             return false;
         }
+        
+        // ✅ 动态获取修改值
+        float value = modifierValue.Get(args);
         
         ModifierHandle handle = null;
         
@@ -236,7 +236,7 @@ public class StatModifierEffect : IEffect
         {
             handle = statsManager.AddConditionalModifier(
                 targetStat,
-                modifierValue,
+                value,
                 isPercent,
                 effectRemovalCondition,
                 this
@@ -247,11 +247,11 @@ public class StatModifierEffect : IEffect
             // 永久修改器
             if (isPercent)
             {
-                handle = statsManager.AddPercent(targetStat, modifierValue, this);
+                handle = statsManager.AddPercent(targetStat, value, this);
             }
             else
             {
-                handle = statsManager.AddConstant(targetStat, modifierValue, this);
+                handle = statsManager.AddConstant(targetStat, value, this);
             }
         }
         
@@ -261,7 +261,7 @@ public class StatModifierEffect : IEffect
             appliedHandles.Add(handle);
         }
         
-        Debug.Log($"[{EffectName}] ✅ 创建新的属性修改器: {targetStat} {(isPercent ? $"+{modifierValue * 100}%" : $"+{modifierValue}")}, 当前句柄数量: {appliedHandles.Count}");
+        Debug.Log($"[{EffectName}] ✅ 创建新的属性修改器: {targetStat} {(isPercent ? $"+{value * 100}%" : $"+{value}")}, 当前句柄数量: {appliedHandles.Count}");
         
         // 触发表现效果
         TriggerVisualEffect();

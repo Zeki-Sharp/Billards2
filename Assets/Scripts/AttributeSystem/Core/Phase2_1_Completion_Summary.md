@@ -756,8 +756,8 @@ GameSession（DontDestroyOnLoad 单例）
 - 🔄 准备重构为 GameSession 架构
 
 **Phase 2.1 - 三层属性系统基础 ✅ 完成！**
-**Phase 2.1.5 - GameSession 基础架构 ✅ 完成！**
-**Phase 2.1.6-2.1.8 - GameSession 集成和迁移 🔄 待执行**
+**Phase 2.1.5-2.1.8 - GameSession 重构和 PlayerCore 精简 ✅ 完成！**
+**Phase 2.2 - Property 动态值系统 ✅ 完成！**
 
 ---
 
@@ -890,7 +890,105 @@ bool isFromMap = session.IsFromMapSystem();
 
 **总计修改**：7 个文件，16 处调用点
 
-### 🎯 下一步：Phase 2.1.8
+### ✅ Phase 2.1.8 完成总结
 
-需要删除 GameRuntimeData 的血量/属性方法，保留游戏统计和地图系统（等待完全迁移后删除）。
+**PlayerCore 内部精简（事件系统优化）**
+
+#### Step 1: 事件系统统一化 ✅
+- ✅ PlayerStatsManagerV2 监听 RuntimeAttribute.OnValueChanged
+- ✅ 统一在 OnHealthValueChanged 发布 GameEventBus 事件
+- ✅ 删除 PlayerCore 中的 4 处事件发布代码
+- ✅ 删除 PublishInitialHealth() 方法
+
+#### Step 2: HealthBar 改为事件驱动 ✅
+- ✅ HealthBar.Start() 订阅 GameEventBus.OnHealthChanged
+- ✅ HealthBar.OnDestroy() 取消订阅
+- ✅ 删除 PlayerCore 的 healthBar 字段引用
+- ✅ 删除 InitializeHealthBar() 方法
+
+#### Step 3: 清理 PlayerCore 冗余代码 ✅
+- ✅ 简化 ApplyDamage() 方法（移除事件发布和 UI 更新）
+- ✅ 简化 ApplyHeal() 方法（移除事件发布和 UI 更新）
+- ✅ 简化 RestoreHealth() 方法（移除事件发布和 UI 更新）
+- ✅ 保持对外接口不变（TakeDamage/Heal/CurrentHealth 等）
+
+**成果**：
+- ✅ PlayerCore 代码量减少约 60 行
+- ✅ 职责更清晰：只负责业务逻辑，不负责 UI 更新和事件发布
+- ✅ HealthBar 完全解耦：可以有多个 UI 同时显示血量
+- ✅ 事件发布统一：唯一发布点在 PlayerStatsManagerV2
+
+**架构改进**：
+```
+旧架构（耦合）：
+  PlayerCore → healthBar.UpdateHealth()
+  PlayerCore → GameEventBus.PublishHealthChanged()
+  
+新架构（解耦）：
+  RuntimeAttribute.CurrentValue setter
+    → OnValueChanged 事件
+      → PlayerStatsManagerV2.OnHealthValueChanged
+        → GameEventBus.PublishHealthChanged
+          → HealthBar.OnHealthChanged（自动订阅）
+```
+
+### 🎯 GameRuntimeData 清理
+
+**现在可以安全删除**：
+- ✅ 所有功能已迁移到 GameSession
+- ✅ 所有调用点已更新
+- ✅ 只剩下文档中的引用
+
+**手动删除文件**：
+- `Assets/Scripts/Core/Data/GameRuntimeData.cs`
+- `Assets/Scripts/Core/Data/GameRuntimeData.cs.meta`
+
+---
+
+## 📦 Phase 2.2 完成总结
+
+### ✅ Property 动态值系统
+
+**创建的核心文件（6个）**：
+1. `PropertySystem/Core/PropertyGetFloat.cs` - 抽象基类
+2. `PropertySystem/Implementations/ConstantFloat.cs` - 固定值
+3. `PropertySystem/Implementations/RandomFloat.cs` - 随机值
+4. `PropertySystem/Implementations/AttributeRatioFloat.cs` - 基于属性百分比
+5. `PropertySystem/Implementations/StatBasedFloat.cs` - 基于属性值
+6. `PropertySystem/README_PropertySystem.md` - 使用指南
+
+**集成到技能系统**：
+1. ✅ `EffectConfig.cs` - healAmount 和 modifierValue 改为 PropertyGetFloat
+2. ✅ `HealEffect.cs` - 使用 property.Get(args) 动态获取治疗量
+3. ✅ `StatModifierEffect.cs` - 使用 property.Get(args) 动态获取修改值
+4. ✅ `PlayerStatsManagerV2.cs` - 添加 GetAttribute 公共接口
+
+**功能示例**：
+```
+【固定值】ConstantFloat(20)
+  → 总是回复 20 点血
+
+【随机值】RandomFloat(15, 25)
+  → 随机回复 15-25 点血
+
+【百分比】AttributeRatioFloat("Health", 0.2, MaxValue)
+  → 回复最大血量的 20%
+  → MaxHealth=100 时回复 20，MaxHealth=200 时回复 40
+
+【基于属性】StatBasedFloat("Damage", 0.5)
+  → 回复攻击力的 50%
+  → Damage=50 时回复 25，Damage=100 时回复 50
+```
+
+**技术特点**：
+- ✅ 使用 SerializeReference 支持多态
+- ✅ 运行时动态计算值
+- ✅ 向后兼容（null 时使用默认值）
+- ✅ 可在 Inspector 中配置（需要 Odin Inspector）
+
+**收益**：
+- ✅ 技能数值设计更灵活
+- ✅ 支持复杂的数值计算
+- ✅ 减少硬编码
+- ✅ 易于平衡调整
 

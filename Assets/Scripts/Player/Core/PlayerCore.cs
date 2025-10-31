@@ -36,15 +36,6 @@ public class PlayerCore : MonoBehaviour
     
     // 核心组件
     private BallPhysics ballPhysics;
-    private HealthBar healthBar;
-    
-    // 血量管理 - ✅ 迁移到 Attributes 层
-    // 通过 PlayerStatsManagerV2 的 Attributes 层管理
-    // private float currentHealth; // ❌ 旧的变量，已废弃
-    
-    
-    
-    // 事件 - 血量变化事件已统一到 GameEventBus
     
     /// <summary>
     /// 检查指定的球是否是当前玩家的球
@@ -181,28 +172,15 @@ public class PlayerCore : MonoBehaviour
         // 订阅 GameEventBus 物理事件
         GameEventBus.OnBallStopped += OnBallStoppedHandler;
         
-        // ✅ 初始化血量（使用 Attributes 层）
+        // 初始化血量系统（由 Attributes 层和 GameSession 自动管理）
         if (statsManager != null)
         {
-            // ✅ 血量已由 Attributes 层管理（在 RegisterBaseAttributes 中初始化为满血）
-            // 已废弃 GameRuntimeData 血量存储
-            Debug.Log($"[PlayerCore] ✅ 血量使用 Attributes 层管理，已初始化为满血");
-            
-            // 获取当前血量用于UI
-            float currentHealth = statsManager.CurrentHealth;
-            float maxHealth = statsManager.MaxHealth;
-            
-            InitializeHealthBar(currentHealth);
-            
-            Debug.Log($"[PlayerCore] ✅ 血量系统初始化完成（Attributes层）: {currentHealth:F1}/{maxHealth:F1}");
+            Debug.Log($"[PlayerCore] ✅ 血量系统初始化完成: {statsManager.CurrentHealth:F1}/{statsManager.MaxHealth:F1}");
         }
         else
         {
             Debug.LogError("[PlayerCore] statsManager 为空，无法初始化血量！");
         }
-        
-        // 发布初始血量事件（SkillManager 在 SYSTEM 层已初始化，无需延迟）
-        PublishInitialHealth();
         
         // 确保球体在初始化后完全停止
         if (ballPhysics != null)
@@ -502,38 +480,14 @@ public class PlayerCore : MonoBehaviour
     }
     
     /// <summary>
-    /// 应用恢复（共用的恢复逻辑）- ✅ 使用 Attributes 层
+    /// 应用恢复（共用的恢复逻辑）
     /// </summary>
     private void ApplyHeal(float healAmount)
     {
         if (statsManager == null) return;
         
-        // ✅ 使用 Attributes 层加血
         statsManager.AddHealth(healAmount);
-        
-        // 获取最新血量
-        float currentHealth = statsManager.CurrentHealth;
-        float maxHealth = statsManager.MaxHealth;
-        
-        Debug.Log($"PlayerCore: ✅ 回血完成（Attributes层），当前血量: {currentHealth:F1}/{maxHealth:F1}");
-        
-        // 更新血条
-        if (healthBar != null)
-        {
-            healthBar.UpdateHealth(currentHealth, maxHealth);
-            Debug.Log("PlayerCore: 血条已更新（恢复）");
-        }
-        else
-        {
-            Debug.LogWarning("PlayerCore: healthBar 为空，无法更新血条UI！");
-        }
-        
-        // 触发血量变化事件 - 统一使用 GameEventBus
-        GameEventBus.PublishHealthChanged(new HealthStateData
-        {
-            CurrentHealth = currentHealth,
-            MaxHealth = maxHealth
-        });
+        Debug.Log($"PlayerCore: ✅ 回血 {healAmount:F1}，当前血量: {statsManager.CurrentHealth:F1}/{statsManager.MaxHealth:F1}");
     }
     
     /// <summary>
@@ -547,34 +501,11 @@ public class PlayerCore : MonoBehaviour
             return;
         }
         
-        // ✅ 使用 Attributes 层扣血
         statsManager.SubtractHealth(damage);
-        
-        // 获取最新血量
-        float currentHealth = statsManager.CurrentHealth;
-        float maxHealth = statsManager.MaxHealth;
-        
-        Debug.Log($"PlayerCore: ✅ 扣血完成（Attributes层），当前血量: {currentHealth:F1}/{maxHealth:F1}");
-        
-        // 更新血条
-        if (healthBar != null)
-        {
-            healthBar.UpdateHealth(currentHealth, maxHealth);
-        }
-        else
-        {
-            Debug.LogWarning("PlayerCore: healthBar 为空，无法更新血条UI！");
-        }
-        
-        // 触发血量变化事件
-        GameEventBus.PublishHealthChanged(new HealthStateData
-        {
-            CurrentHealth = currentHealth,
-            MaxHealth = maxHealth
-        });
+        Debug.Log($"PlayerCore: 受到伤害 {damage:F1}，当前血量: {statsManager.CurrentHealth:F1}/{statsManager.MaxHealth:F1}");
         
         // 检查是否死亡
-        if (currentHealth <= 0)
+        if (statsManager.CurrentHealth <= 0)
         {
             Die();
         }
@@ -596,25 +527,6 @@ public class PlayerCore : MonoBehaviour
         return statsManager != null ? statsManager.HealthRatio : 1f;
     }
     
-    
-    /// <summary>
-    /// 发布初始血量事件
-    /// </summary>
-    private void PublishInitialHealth()
-    {
-        if (statsManager == null) return;
-        
-        float currentHealth = statsManager.CurrentHealth;
-        float maxHealth = statsManager.MaxHealth;
-        
-        Debug.Log($"[PlayerCore] ✅ 发布初始血量事件（Attributes层）: {currentHealth:F1}/{maxHealth:F1}");
-        
-        GameEventBus.PublishHealthChanged(new HealthStateData
-        {
-            CurrentHealth = currentHealth,
-            MaxHealth = maxHealth
-        });
-    }
     
     /// <summary>
     /// 是否存活
@@ -641,9 +553,8 @@ public class PlayerCore : MonoBehaviour
     }
     
     /// <summary>
-    /// 恢复血量（用于跨关卡数据保留）
+    /// 恢复血量
     /// </summary>
-    /// <param name="health">要恢复的血量值</param>
     public void RestoreHealth(float health)
     {
         if (health < 0)
@@ -652,25 +563,10 @@ public class PlayerCore : MonoBehaviour
             return;
         }
         
-        // ✅ 使用 Attributes 层设置血量
         if (statsManager != null)
         {
             statsManager.SetHealth(health);
-            
-            float currentHealth = statsManager.CurrentHealth;
-            float maxHealth = statsManager.MaxHealth;
-            
-            Debug.Log($"PlayerCore: ✅ 恢复满血（Attributes层）: {currentHealth:F1}/{maxHealth:F1}");
-            
-            // 更新血条显示
-            InitializeHealthBar(currentHealth);
-            
-            // 发布血量变化事件
-            GameEventBus.PublishHealthChanged(new HealthStateData
-            {
-                CurrentHealth = currentHealth,
-                MaxHealth = maxHealth
-            });
+            Debug.Log($"PlayerCore: 恢复血量: {statsManager.CurrentHealth:F1}/{statsManager.MaxHealth:F1}");
         }
     }
     
@@ -721,28 +617,6 @@ public class PlayerCore : MonoBehaviour
                 TakeDamage(processedData.FinalDamage);
                 Debug.Log($"PlayerCore: 受到攻击 {processedData.FinalDamage}（类型：{attackType}，有阶段检查）");
             }
-        }
-    }
-    
-    #endregion
-    
-    #region 血条系统
-    
-    /// <summary>
-    /// 初始化血条
-    /// </summary>
-    void InitializeHealthBar(float currentHealth)
-    {
-        // 查找血条组件
-        healthBar = GetComponentInChildren<HealthBar>();
-        if (healthBar != null)
-        {
-            float maxHealth = playerData != null ? playerData.maxHealth : 100f;
-            healthBar.UpdateHealth(currentHealth, maxHealth);
-        }
-        else
-        {
-            Debug.LogWarning("PlayerCore: 未找到HealthBar组件，请确保血条预制体包含HealthBar脚本");
         }
     }
     

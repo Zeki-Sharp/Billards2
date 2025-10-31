@@ -38,10 +38,12 @@ MonoBehaviour:
     effectConfig:
       effectType: 0
       targetStat: Damage
-      modifierValue: 5
+      modifierValue:
+        rid: 832807095810916629
       modifierType: 0
       allowStacking: 1
-      healAmount: 20
+      healAmount:
+        rid: -2
       minTransitionTime: 1
       maxTransitionTime: 5
       transitionThreshold: 0.3
@@ -107,10 +109,12 @@ MonoBehaviour:
     effectConfig:
       effectType: 0
       targetStat: Damage
-      modifierValue: 10
+      modifierValue:
+        rid: 832807095810916630
       modifierType: 0
       allowStacking: 1
-      healAmount: 20
+      healAmount:
+        rid: -2
       minTransitionTime: 1
       maxTransitionTime: 5
       transitionThreshold: 0.3
@@ -156,3 +160,16 @@ MonoBehaviour:
       dataExtractorType: 0
   requiredSkills: []
   isActive: 1
+  references:
+    version: 2
+    RefIds:
+    - rid: -2
+      type: {class: , ns: , asm: }
+    - rid: 832807095810916629
+      type: {class: ConstantFloat, ns: , asm: Assembly-CSharp}
+      data:
+        value: 5
+    - rid: 832807095810916630
+      type: {class: ConstantFloat, ns: , asm: Assembly-CSharp}
+      data:
+        value: 10

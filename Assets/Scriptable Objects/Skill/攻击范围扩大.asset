@@ -38,10 +38,12 @@ MonoBehaviour:
     effectConfig:
       effectType: 0
       targetStat: AreaRadius
-      modifierValue: 0.3
+      modifierValue:
+        rid: 832807095810916626
       modifierType: 0
       allowStacking: 0
-      healAmount: 20
+      healAmount:
+        rid: -2
       minTransitionTime: 1
       maxTransitionTime: 5
       transitionThreshold: 0.3
@@ -101,10 +103,12 @@ MonoBehaviour:
     effectConfig:
       effectType: 0
       targetStat: AreaRadius
-      modifierValue: 0.6
+      modifierValue:
+        rid: 832807095810916627
       modifierType: 0
       allowStacking: 0
-      healAmount: 20
+      healAmount:
+        rid: -2
       minTransitionTime: 1
       maxTransitionTime: 5
       transitionThreshold: 0.3
@@ -144,3 +148,16 @@ MonoBehaviour:
       dataExtractorType: 0
   requiredSkills: []
   isActive: 1
+  references:
+    version: 2
+    RefIds:
+    - rid: -2
+      type: {class: , ns: , asm: }
+    - rid: 832807095810916626
+      type: {class: ConstantFloat, ns: , asm: Assembly-CSharp}
+      data:
+        value: 0.2
+    - rid: 832807095810916627
+      type: {class: ConstantFloat, ns: , asm: Assembly-CSharp}
+      data:
+        value: 0.4

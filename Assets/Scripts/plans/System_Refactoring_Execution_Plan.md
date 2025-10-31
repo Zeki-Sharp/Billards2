@@ -961,3 +961,121 @@ Week 10+:   Phase 4 - 高级优化（按需）
 
 🔄 **准备进入 Phase 2.1.7 - 迁移 GameRuntimeData 功能**
 
+### 2024年12月 - Phase 2.1.7 完成 ✅
+
+**迁移 GameRuntimeData 到 GameSession**
+- ✅ 游戏统计迁移（LevelManager、VictoryPanel、GameOverPanel）
+- ✅ 地图系统迁移（MapPlayerTracker、MapSceneController、CharacterSelectionManager、LevelManager）
+- ✅ 清理方法迁移（SettingsPanel、VictoryPanel、GameOverPanel）
+- ✅ 共修改 7 个文件，16 处调用点
+- ✅ 系统编译通过，无语法错误
+
+**成果**
+- ✅ GameRuntimeData 功能完全迁移到 GameSession
+- ✅ 代码架构更清晰（Statistics/State 分离）
+- ✅ 为删除 GameRuntimeData 做好准备
+
+**迁移内容**
+- AddEnemyKill → Statistics.AddKill
+- GetTotalEnemyKills → Statistics.TotalEnemyKills
+- SetFromMapSystem/SetCurrentMapLayer → State.SetMapSystemState
+- IsFromMapSystem → State.FromMapSystem
+- ClearAllData → GameSession.Reset
+
+🔄 **Phase 2.1.5-2.1.7 全部完成！GameSession 重构成功！**
+
+### 2024年12月 - Phase 2.1.8 完成 ✅
+
+**PlayerCore 精简和事件系统优化**
+- ✅ 事件系统统一化（PlayerStatsManagerV2 统一发布）
+- ✅ HealthBar 改为事件驱动（完全解耦）
+- ✅ 清理 PlayerCore 冗余代码（减少约 60 行）
+- ✅ 删除 healthBar 字段引用
+- ✅ 删除 PublishInitialHealth 方法
+- ✅ 删除 InitializeHealthBar 方法
+- ✅ 简化 ApplyDamage/ApplyHeal/RestoreHealth 方法
+- ✅ 系统编译通过，无语法错误
+
+**成果**
+- ✅ PlayerCore 职责更清晰（只负责业务逻辑）
+- ✅ HealthBar 完全解耦（可多个 UI 同时显示）
+- ✅ 事件发布统一（唯一发布点在 PlayerStatsManagerV2）
+- ✅ 代码可维护性显著提升
+
+**架构改进**
+- 旧：PlayerCore → healthBar.UpdateHealth()
+- 新：RuntimeAttribute → PlayerStatsManagerV2 → GameEventBus → HealthBar
+
+🎉 **Phase 2.1 完全完成！包括所有优化和清理！**
+
+### Phase 2.1 总结
+
+**5 个子阶段全部完成**：
+- Phase 2.1.0: 三层属性系统创建（10个核心文件）
+- Phase 2.1.5: GameSession 基础架构（4个文件 + 序列化接口）
+- Phase 2.1.6: PlayerStatsManagerV2 集成（跨场景持久化）
+- Phase 2.1.7: GameRuntimeData 功能迁移（7个文件，16处调用）
+- Phase 2.1.8: PlayerCore 精简优化（代码减少 60 行）
+
+**核心成就**：
+1. ✅ 三层属性系统（Stats/Attributes/StatusEffects）完整实现
+2. ✅ GameSession 替代 GameRuntimeData（职责清晰）
+3. ✅ 跨场景数据持久化（血量、统计自动保留）
+4. ✅ 事件驱动 UI（HealthBar 完全解耦）
+5. ✅ 双倍回血 Bug 修复
+
+**待手动操作**：
+- 删除 `GameRuntimeData.cs` 文件（已被 GameSession 完全替代）
+
+---
+
+🔄 **准备进入 Phase 2.2 - Property 动态值系统**
+
+### 2024年12月 - Phase 2.2 完成 ✅
+
+**Property 动态值系统创建**
+- ✅ 创建 PropertyGetFloat 抽象基类
+- ✅ 实现 ConstantFloat（固定值）
+- ✅ 实现 RandomFloat（随机值）
+- ✅ 实现 AttributeRatioFloat（基于属性百分比）
+- ✅ 实现 StatBasedFloat（基于属性值）
+- ✅ 创建 README 使用指南
+- ✅ 系统编译通过，无语法错误
+
+**技能系统集成**
+- ✅ EffectConfig.healAmount → PropertyGetFloat
+- ✅ EffectConfig.modifierValue → PropertyGetFloat
+- ✅ HealEffect 改用 Property.Get(args)
+- ✅ StatModifierEffect 改用 Property.Get(args)
+- ✅ SkillDescriptionGenerator 改用 Property.Get()
+- ✅ 兼容性：null 时使用默认固定值
+
+**成果**
+- ✅ 技能配置支持动态值（固定/随机/基于属性）
+- ✅ 治疗量可以是"最大血量的 20%"
+- ✅ 修改器可以"基于击杀数增长"
+- ✅ 保持向后兼容（现有技能 SO 仍可用）
+
+**使用示例**
+- 固定值：ConstantFloat(20)
+- 随机值：RandomFloat(15, 25)
+- 百分比：AttributeRatioFloat("Health", 0.2, MaxValue)
+- 基于属性：StatBasedFloat("Damage", 0.5)
+
+🔄 **Phase 2 完成！准备进入 Phase 3 - 配置统一与优化**
+
+**⚠️ Bug 修复 - HealthBar 误订阅玩家事件**
+- ✅ 回滚 HealthBar.cs 的事件订阅代码
+- ✅ HealthBar 恢复为被动调用模式（敌人用）
+- ✅ TopBarController 保持事件驱动（玩家用）
+
+**问题原因**：
+- Phase 2.1.8 时误将敌人血条也改为事件驱动
+- 导致所有敌人血条都响应玩家血量事件
+
+**修复方案**：
+- HealthBar（敌人HUD）- 由 EnemyBehavior 直接调用 UpdateHealth()
+- TopBarController（玩家UI）- 订阅 GameEventBus.OnHealthChanged
+
+---
+

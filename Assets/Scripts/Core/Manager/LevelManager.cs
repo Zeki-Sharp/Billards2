@@ -511,10 +511,10 @@ public class LevelManager : SingletonManager<LevelManager>
     /// </summary>
     void SavePlayerState()
     {
-        // ✅ 数据已经在 GameRuntimeData 中，不需要额外保存
+        // ✅ 数据已经在 GameSession 中自动保存，不需要额外操作
         if (showDebugInfo)
         {
-            Debug.Log("LevelManager: 数据已保存在 GameRuntimeData 中");
+            Debug.Log("LevelManager: 玩家数据已自动保存在 GameSession 中");
         }
     }
     
@@ -523,10 +523,10 @@ public class LevelManager : SingletonManager<LevelManager>
     /// </summary>
     void RestorePlayerState()
     {
-        // ✅ 数据已经在 GameRuntimeData 中，不需要额外恢复
+        // ✅ 数据已经在 GameSession 中自动恢复，不需要额外操作
         if (showDebugInfo)
         {
-            Debug.Log("LevelManager: 数据已从 GameRuntimeData 中获取");
+            Debug.Log("LevelManager: 玩家数据已从 GameSession 中自动恢复");
         }
     }
     

@@ -1,6 +1,18 @@
 using UnityEngine;
 using UnityEngine.UI;
 
+/// <summary>
+/// 血条 UI 组件 - 敌人 HUD 血条
+/// 
+/// 【用途】：
+/// - 挂载在敌人预制体上
+/// - 由敌人脚本直接调用更新
+/// - 不订阅全局事件
+/// 
+/// 【注意】：
+/// - 玩家血条使用 TopBarController（事件驱动）
+/// - 敌人血条使用 HealthBar（直接调用）
+/// </summary>
 public class HealthBar : MonoBehaviour
 {
     [Header("血条设置")]

@@ -339,11 +339,12 @@ public static class SkillDescriptionGenerator
     /// </summary>
     private static string GetHealAmountWithComparison(SkillLevelConfig current, SkillLevelConfig previous)
     {
-        float currentAmount = current.effectConfig.healAmount;
+        // ✅ 使用 Property 的默认值（无 args 时）
+        float currentAmount = current.effectConfig.healAmount?.Get() ?? 20f;
         
         if (previous != null)
         {
-            float previousAmount = previous.effectConfig.healAmount;
+            float previousAmount = previous.effectConfig.healAmount?.Get() ?? 20f;
             if (!Mathf.Approximately(currentAmount, previousAmount))
             {
                 // 新数字绿色，括号里的旧数字红色
@@ -361,11 +362,12 @@ public static class SkillDescriptionGenerator
     private static string GetStatModifierDescriptionWithComparison(SkillLevelConfig current, SkillLevelConfig previous)
     {
         string statName = GetStatDisplayName(current.effectConfig.targetStat);
-        float currentValue = current.effectConfig.modifierValue;
+        // ✅ 使用 Property 的默认值（无 args 时）
+        float currentValue = current.effectConfig.modifierValue?.Get() ?? 2f;
         
         if (previous != null && previous.effectConfig.effectType == SkillEffectType.StatModifier)
         {
-            float previousValue = previous.effectConfig.modifierValue;
+            float previousValue = previous.effectConfig.modifierValue?.Get() ?? 2f;
             
             switch (current.effectConfig.modifierType)
             {
@@ -582,7 +584,9 @@ public static class SkillDescriptionGenerator
             {
                 if (firstLevel.effectConfig.effectType == SkillEffectType.Heal)
                 {
-                    return $"恢复{FormatNumberWithColor(firstLevel.effectConfig.healAmount, GREEN_COLOR)}点生命值的{itemName}";
+                    // ✅ 使用 Property 的默认值
+                    float healValue = firstLevel.effectConfig.healAmount?.Get() ?? 20f;
+                    return $"恢复{FormatNumberWithColor(healValue, GREEN_COLOR)}点生命值的{itemName}";
                 }
                 else if (firstLevel.effectConfig.effectType == SkillEffectType.StatModifier)
                 {
@@ -601,7 +605,8 @@ public static class SkillDescriptionGenerator
     private static string GetStatModifierDescription(SkillLevelConfig levelConfig)
     {
         string statName = GetStatDisplayName(levelConfig.effectConfig.targetStat);
-        float value = levelConfig.effectConfig.modifierValue;
+        // ✅ 使用 Property 的默认值
+        float value = levelConfig.effectConfig.modifierValue?.Get() ?? 2f;
         
         switch (levelConfig.effectConfig.modifierType)
         {

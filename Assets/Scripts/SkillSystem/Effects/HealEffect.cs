@@ -24,15 +24,16 @@ public class HealEffect : IEffect
         Debug.Log($"[{EffectName}] 设置执行权限: {value}");
     }
     
-    private float healAmount = 20f;
+    // ✅ 使用 PropertyGetFloat 替代固定值
+    private PropertyGetFloat healAmount;
     private PlayerCore targetPlayer;
     
     /// <summary>
-    /// 设置治疗量
+    /// 设置治疗量 Property
     /// </summary>
-    public void SetHealAmount(float amount)
+    public void SetHealAmount(PropertyGetFloat property)
     {
-        healAmount = amount;
+        healAmount = property;
     }
     
     /// <summary>
@@ -41,6 +42,12 @@ public class HealEffect : IEffect
     public void Initialize()
     {
         // 延迟初始化：不在初始化时查找玩家，而是在执行时动态查找
+        
+        // ✅ 如果没有设置 Property，使用默认固定值
+        if (healAmount == null)
+        {
+            healAmount = new ConstantFloat(20f);
+        }
     }
     
     /// <summary>
@@ -62,9 +69,12 @@ public class HealEffect : IEffect
             return false;
         }
         
+        // ✅ 动态获取治疗量
+        float amount = healAmount.Get(args);
+        
         // 执行治疗
-        targetPlayer.Heal(healAmount);
-        Debug.Log($"[技能] 治疗效果触发 +{healAmount}");
+        targetPlayer.Heal(amount);
+        Debug.Log($"[技能] 治疗效果触发 +{amount:F1} HP");
         
         // 触发治疗表现效果（可选）
         TriggerVisualEffect();

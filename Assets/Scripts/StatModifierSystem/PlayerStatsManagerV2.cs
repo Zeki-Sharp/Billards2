@@ -133,9 +133,35 @@ public class PlayerStatsManagerV2 : MonoBehaviour
             playerData.baseMaxHealth      // startValue（满血开始）
         );
         
+        // ✅ 订阅 Health 属性变化事件，统一发布到 GameEventBus
+        var healthAttribute = runtimeAttributes.GetAttribute("Health");
+        if (healthAttribute != null)
+        {
+            healthAttribute.OnValueChanged += OnHealthValueChanged;
+        }
+        
         if (enableDebugLog)
         {
             Debug.Log($"PlayerStatsManagerV2: 注册 Health 属性资源，最大值: {playerData.baseMaxHealth}");
+        }
+    }
+    
+    /// <summary>
+    /// Health 属性值变化回调（统一的事件发布点）
+    /// </summary>
+    private void OnHealthValueChanged(float oldValue, float newValue)
+    {
+        // ✅ 统一发布血量变化事件到 GameEventBus
+        GameEventBus.PublishHealthChanged(new HealthStateData
+        {
+            CurrentHealth = newValue,
+            MaxHealth = MaxHealth
+            // HealthPercentage 是计算属性，自动计算
+        });
+        
+        if (enableDebugLog)
+        {
+            Debug.Log($"[PlayerStatsManagerV2] 📢 血量变化: {oldValue:F1} → {newValue:F1} ({HealthRatio * 100:F0}%)");
         }
     }
     
@@ -180,6 +206,13 @@ public class PlayerStatsManagerV2 : MonoBehaviour
     {
         // ✅ 保存数据到 GameSession（跨场景持久化）
         SaveToGameSession();
+        
+        // ✅ 取消 Health 属性变化订阅
+        var healthAttribute = runtimeAttributes?.GetAttribute("Health");
+        if (healthAttribute != null)
+        {
+            healthAttribute.OnValueChanged -= OnHealthValueChanged;
+        }
         
         // 取消事件订阅
         GameEventBus.OnBallStopped -= HandleBallStopped;
@@ -245,7 +278,6 @@ public class PlayerStatsManagerV2 : MonoBehaviour
     /// </summary>
     public float GetFinalStat(string statName)
     {
-        // ✅ 直接从新系统获取（已废弃 GameRuntimeData 静态存储）
         return runtimeStats.GetStatValue(statName);
     }
     
@@ -304,14 +336,11 @@ public class PlayerStatsManagerV2 : MonoBehaviour
     /// </summary>
     private void OnStatChanged(string statName)
     {
-        // 计算最终值并保存到静态数据
         float finalValue = runtimeStats.GetStatValue(statName);
-        
-        // ✅ 已废弃 GameRuntimeData 静态存储，数值由 runtimeStats 直接管理
         
         if (enableDebugLog)
         {
-            Debug.Log($"PlayerStatsManagerV2: ✅ {statName} 变化，最终值: {finalValue:F2}");
+            Debug.Log($"PlayerStatsManagerV2: {statName} 变化，最终值: {finalValue:F2}");
         }
     }
     
@@ -429,6 +458,14 @@ public class PlayerStatsManagerV2 : MonoBehaviour
     public RuntimeAttribute GetHealthAttribute()
     {
         return runtimeAttributes.GetAttribute("Health");
+    }
+    
+    /// <summary>
+    /// 获取指定 Attribute（通用接口，供 Property 系统使用）
+    /// </summary>
+    public RuntimeAttribute GetAttribute(string attributeID)
+    {
+        return runtimeAttributes.GetAttribute(attributeID);
     }
     
     #endregion
