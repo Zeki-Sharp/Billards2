@@ -19,9 +19,9 @@ public class AlwaysTrueTrigger : ITrigger
     /// <summary>
     /// 检查事件 - 始终返回true
     /// </summary>
-    /// <param name="eventData">事件数据（忽略）</param>
+    /// <param name="args">技能参数（忽略）</param>
     /// <returns>始终返回true</returns>
-    public bool CheckEvent(object eventData)
+    public bool CheckEvent(SkillArgs args)
     {
         // 始终返回true，用于标记型技能
         // 这种技能不需要特定的触发条件，只需要被激活即可

@@ -56,9 +56,9 @@ public class ValueComparisonCondition : ICondition
     /// <summary>
     /// 检查条件是否满足
     /// </summary>
-    /// <param name="eventData">事件数据</param>
+    /// <param name="args">技能参数</param>
     /// <returns>条件是否满足</returns>
-    public bool CheckCondition(object eventData)
+    public bool CheckCondition(SkillArgs args)
     {
         if (valueExtractor == null)
         {
@@ -67,16 +67,16 @@ public class ValueComparisonCondition : ICondition
         }
         
         // 检查事件数据类型是否匹配
-        if (eventData != null)
+        if (args.EventData != null)
         {
             // 如果事件数据类型不匹配，直接返回false
-            if (eventData is System.Enum && !(eventData is HealthStateData || eventData is AttackData))
+            if (args.EventData is System.Enum && !(args.EventData is HealthStateData || args.EventData is AttackData))
             {
                 return false;
             }
         }
         
-        float currentValue = valueExtractor(eventData);
+        float currentValue = valueExtractor(args.EventData);
         
         bool result = false;
         switch (comparisonType)

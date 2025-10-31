@@ -90,7 +90,7 @@ public class WeakPointEffect : IEffect
     /// <summary>
     /// 执行效果（弱点效果是持续性的，不需要每次执行）
     /// </summary>
-    public bool ExecuteEffect(object eventData)
+    public bool ExecuteEffect(SkillArgs args)
     {
         // 检查执行权限（完全由重置条件控制）
         if (!canExecute)

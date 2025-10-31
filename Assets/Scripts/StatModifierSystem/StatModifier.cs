@@ -100,7 +100,8 @@ public class StatModifier
         // 基于条件的移除检查
         if (effectRemovalCondition != null)
         {
-            return effectRemovalCondition.ShouldRemoveEffect(eventData);
+            var args = SkillArgs.FromEventData(eventData);
+            return effectRemovalCondition.ShouldRemoveEffect(args);
         }
         
         return false;

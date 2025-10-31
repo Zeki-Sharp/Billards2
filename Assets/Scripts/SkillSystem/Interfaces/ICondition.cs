@@ -20,9 +20,9 @@ public interface ICondition
     /// <summary>
     /// 检查条件是否满足
     /// </summary>
-    /// <param name="eventData">事件数据</param>
+    /// <param name="args">技能参数（包含事件数据）</param>
     /// <returns>条件是否满足</returns>
-    bool CheckCondition(object eventData);
+    bool CheckCondition(SkillArgs args);
     
     /// <summary>
     /// 重置条件状态

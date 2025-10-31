@@ -18,9 +18,9 @@ public class AlwaysTrueCondition : ICondition
     /// <summary>
     /// 检查条件是否满足 - 总是返回true
     /// </summary>
-    /// <param name="eventData">事件数据</param>
+    /// <param name="args">技能参数</param>
     /// <returns>总是返回true</returns>
-    public bool CheckCondition(object eventData)
+    public bool CheckCondition(SkillArgs args)
     {
         return true;
     }

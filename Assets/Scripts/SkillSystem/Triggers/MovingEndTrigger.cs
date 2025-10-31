@@ -31,12 +31,12 @@ public class MovingEndTrigger : ITrigger
     /// <summary>
     /// 检查事件 - 检查是否球刚停止
     /// </summary>
-    /// <param name="eventData">事件数据（BallPhysics）</param>
+    /// <param name="args">技能参数</param>
     /// <returns>是否触发</returns>
-    public bool CheckEvent(object eventData)
+    public bool CheckEvent(SkillArgs args)
     {
         // 检查是否是球停止事件
-        if (eventData is BallPhysics ballPhysics)
+        if (args.TryGetEventData<BallPhysics>(out var ballPhysics))
         {
             // 检查是否是玩家球
             if (ballPhysics.gameObject.CompareTag("Player"))

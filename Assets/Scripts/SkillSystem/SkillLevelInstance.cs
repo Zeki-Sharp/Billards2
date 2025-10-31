@@ -75,22 +75,25 @@ public class SkillLevelInstance
     /// </summary>
     public bool ProcessEvent(object eventData)
     {
+        // 创建 SkillArgs（从旧的 eventData 转换）
+        SkillArgs args = SkillArgs.FromEventData(eventData);
+        
         // 第一步：检查触发器是否检测到事件
-        bool eventDetected = trigger.CheckEvent(eventData);
+        bool eventDetected = trigger.CheckEvent(args);
         if (!eventDetected)
         {
             return false;
         }
         
         // 第二步：检查条件是否满足
-        bool conditionMet = condition.CheckCondition(eventData);
+        bool conditionMet = condition.CheckCondition(args);
         if (!conditionMet)
         {
             return false;
         }
         
         // 第三步：执行效果
-        bool effectExecuted = effect.ExecuteEffect(eventData);
+        bool effectExecuted = effect.ExecuteEffect(args);
         
         if (effectExecuted)
         {
@@ -128,8 +131,11 @@ public class SkillLevelInstance
             // 只处理自己的事件
             if (skillEvent.SkillInstanceId == this.InstanceId)
             {
+                // 创建 SkillArgs
+                var args = SkillArgs.FromEventData(eventData);
+                
                 // 立即重置条件响应技能执行完毕事件
-                if (resetCondition?.ShouldReset(eventData) == true) {
+                if (resetCondition?.ShouldReset(args) == true) {
                     condition.Reset();         // 重置触发条件
                     effect.SetCanExecute(true); // 重新允许执行
                 }
@@ -146,6 +152,9 @@ public class SkillLevelInstance
         // 重置条件满足时：重置触发条件和 canExecute
         if (resetCondition != null)
         {
+            // 创建 SkillArgs
+            var args = SkillArgs.FromEventData(eventData);
+            
             // 检查重置条件是否需要特定类型的事件数据
             bool shouldReset = false;
             
@@ -155,13 +164,13 @@ public class SkillLevelInstance
                 // 检查事件是否与数据提取器类型相关
                 if (valueComparisonResetCondition.IsEventRelevant(eventData))
                 {
-                    shouldReset = resetCondition.ShouldReset(eventData);
+                    shouldReset = resetCondition.ShouldReset(args);
                 }
             }
             else
             {
                 // 其他类型的重置条件直接检查
-                shouldReset = resetCondition.ShouldReset(eventData);
+                shouldReset = resetCondition.ShouldReset(args);
             }
             
             if (shouldReset)
@@ -174,7 +183,8 @@ public class SkillLevelInstance
         // 移除条件满足时：只移除效果
         if (effectRemovalCondition != null)
         {
-            bool shouldRemove = effectRemovalCondition.ShouldRemoveEffect(eventData);
+            var args2 = SkillArgs.FromEventData(eventData);
+            bool shouldRemove = effectRemovalCondition.ShouldRemoveEffect(args2);
             if (shouldRemove)
             {
                 effect.RemoveEffect();  // 移除效果（删除修改器，不影响 canExecute）

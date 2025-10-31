@@ -42,10 +42,10 @@ public class ImmediateResetCondition : IResetCondition
     /// </summary>
     /// <param name="eventData">事件数据</param>
     /// <returns>只响应对应技能实例的技能执行完毕事件</returns>
-    public bool ShouldReset(object eventData)
+    public bool ShouldReset(SkillArgs args)
     {
         // 只响应技能执行完毕事件
-        if (eventData is SkillExecutedEventData skillEvent)
+        if (args.TryGetEventData<SkillExecutedEventData>(out var skillEvent))
         {
             // 只响应对应技能实例的事件
             return skillEvent.SkillInstanceId == targetSkillInstanceId;

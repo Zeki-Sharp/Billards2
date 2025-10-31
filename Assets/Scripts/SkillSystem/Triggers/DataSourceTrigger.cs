@@ -41,9 +41,9 @@ public class DataSourceTrigger : ITrigger
     /// <summary>
     /// 检查事件 - 处理初始化和生命值变化
     /// </summary>
-    /// <param name="eventData">事件数据</param>
+    /// <param name="args">技能参数</param>
     /// <returns>是否触发</returns>
-    public bool CheckEvent(object eventData)
+    public bool CheckEvent(SkillArgs args)
     {
         // 情况1：初始化时检查一次
         if (!hasInitialized)
@@ -53,7 +53,7 @@ public class DataSourceTrigger : ITrigger
         }
         
         // 情况2：生命值变化时触发
-        if (IsHealthDataChange(eventData))
+        if (IsHealthDataChange(args.EventData))
         {
             return true;
         }
@@ -75,13 +75,13 @@ public class DataSourceTrigger : ITrigger
     /// <summary>
     /// 获取当前值 - 供条件使用
     /// </summary>
-    /// <param name="eventData">事件数据</param>
+    /// <param name="args">技能参数</param>
     /// <returns>提取的数值</returns>
-    public float GetCurrentValue(object eventData)
+    public float GetCurrentValue(SkillArgs args)
     {
         if (dataExtractor != null)
         {
-            return dataExtractor(eventData);
+            return dataExtractor(args.EventData);
         }
         return 0f;
     }

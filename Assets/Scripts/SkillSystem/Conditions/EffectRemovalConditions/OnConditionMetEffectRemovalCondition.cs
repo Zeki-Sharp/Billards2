@@ -33,7 +33,7 @@ public class OnConditionMetEffectRemovalCondition : IEffectRemovalCondition
     /// </summary>
     /// <param name="eventData">事件数据</param>
     /// <returns>是否应该移除效果</returns>
-    public bool ShouldRemoveEffect(object eventData)
+    public bool ShouldRemoveEffect(SkillArgs args)
     {
         if (targetCondition == null)
         {
@@ -41,7 +41,7 @@ public class OnConditionMetEffectRemovalCondition : IEffectRemovalCondition
             return false;
         }
         
-        bool conditionMet = targetCondition.CheckCondition(eventData);
+        bool conditionMet = targetCondition.CheckCondition(args);
         if (conditionMet)
         {
             Debug.Log($"[{ConditionName}] 目标条件满足，移除效果");

@@ -52,7 +52,7 @@ public class CompositeResetCondition : IResetCondition
     /// </summary>
     /// <param name="eventData">事件数据</param>
     /// <returns>根据逻辑类型判断是否应该重置</returns>
-    public bool ShouldReset(object eventData)
+    public bool ShouldReset(SkillArgs args)
     {
         if (resetConditions.Count == 0)
         {
@@ -62,12 +62,12 @@ public class CompositeResetCondition : IResetCondition
         if (logicType == ResetLogicType.And)
         {
             // AND 逻辑：所有重置条件都必须满足
-            return resetConditions.All(resetCondition => resetCondition.ShouldReset(eventData));
+            return resetConditions.All(resetCondition => resetCondition.ShouldReset(args));
         }
         else
         {
             // OR 逻辑：任一重置条件满足即可
-            return resetConditions.Any(resetCondition => resetCondition.ShouldReset(eventData));
+            return resetConditions.Any(resetCondition => resetCondition.ShouldReset(args));
         }
     }
     

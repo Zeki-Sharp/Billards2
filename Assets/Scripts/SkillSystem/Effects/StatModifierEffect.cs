@@ -14,7 +14,7 @@ public class StatModifierEffect : IEffect
     private StatModifierType modifierType = StatModifierType.PercentMult; // 默认百分比乘算
     private bool canExecute = true;       // 是否允许执行（完全由重置条件控制）
     private PlayerCore targetPlayer;      // 目标玩家
-    private PlayerStatsManager statsManager; // 属性管理器
+    private PlayerStatsManagerV2 statsManager; // ✅ 属性管理器（轻量级系统）
     
     // 叠加控制字段
     private bool allowStacking = true;    // 是否允许叠加
@@ -135,7 +135,7 @@ public class StatModifierEffect : IEffect
     /// </summary>
     /// <param name="eventData">事件数据</param>
     /// <returns>效果是否执行成功</returns>
-    public bool ExecuteEffect(object eventData)
+    public bool ExecuteEffect(SkillArgs args)
     {
         // 只检查执行权限（完全由重置条件控制）
         if (!canExecute)
@@ -294,10 +294,10 @@ public class StatModifierEffect : IEffect
             if (targetPlayer != null)
             {
                 // 查找属性管理器
-                statsManager = targetPlayer.GetComponent<PlayerStatsManager>();
+                statsManager = targetPlayer.GetComponent<PlayerStatsManagerV2>();
                 if (statsManager == null)
                 {
-                    Debug.LogError($"[{EffectName}] 未找到PlayerStatsManager，无法应用效果");
+                    Debug.LogError($"[{EffectName}] 未找到PlayerStatsManagerV2，无法应用效果");
                     targetPlayer = null;
                     return false;
                 }

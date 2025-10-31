@@ -29,10 +29,10 @@ public class OnLevelCompletedEffectRemovalCondition : IEffectRemovalCondition
     /// </summary>
     /// <param name="eventData">事件数据</param>
     /// <returns>是否应该移除效果</returns>
-    public bool ShouldRemoveEffect(object eventData)
+    public bool ShouldRemoveEffect(SkillArgs args)
     {
         // 检查是否是关卡完成事件
-        if (eventData is LevelCompletedData levelCompletedData)
+        if (args.TryGetEventData<LevelCompletedData>(out var levelCompletedData))
         {
             Debug.Log($"[OnLevelCompletedEffectRemovalCondition] 关卡完成，移除效果 - 关卡: {levelCompletedData.LevelIndex}");
             return true;

@@ -40,7 +40,7 @@ public class Player : MonoBehaviour
     [Tooltip("如果为空，将自动从同一GameObject获取")]
     [SerializeField] private PlayerAttackManager attackManager;
     [SerializeField] private ChargeSystem chargeSystem;
-    [SerializeField] private PlayerStatsManager statsManager;
+    [SerializeField] private PlayerStatsManagerV2 statsManager; // ✅ 使用轻量级 Modifier 系统
     
     [Header("特效配置")]
     [Tooltip("玩家特效配置列表，在 Inspector 中直接拖拽 MMF_Player 组件")]
@@ -113,7 +113,7 @@ public class Player : MonoBehaviour
         if (chargeSystem == null)
             chargeSystem = GetComponent<ChargeSystem>();
         if (statsManager == null)
-            statsManager = GetComponent<PlayerStatsManager>();
+            statsManager = GetComponent<PlayerStatsManagerV2>();
         
         // 检查必需组件是否存在
         if (playerCore == null)
@@ -129,7 +129,7 @@ public class Player : MonoBehaviour
         if (chargeSystem == null)
             Debug.LogError("Player: 缺少 ChargeSystem 组件！请在Inspector中添加或在GameObject上添加。");
         if (statsManager == null)
-            Debug.LogError("Player: 缺少 PlayerStatsManager 组件！请在Inspector中添加或在GameObject上添加。");
+            Debug.LogError("Player: 缺少 PlayerStatsManagerV2 组件！请在Inspector中添加或在GameObject上添加。");
     }
     
     /// <summary>
@@ -325,7 +325,7 @@ public class Player : MonoBehaviour
     /// <summary>
     /// 获取数值管理器组件
     /// </summary>
-    public PlayerStatsManager GetStatsManager()
+    public PlayerStatsManagerV2 GetStatsManager()
     {
         return statsManager;
     }

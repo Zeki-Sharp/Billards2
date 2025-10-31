@@ -39,7 +39,7 @@ public class SpawnEffect : IEffect
     /// </summary>
     /// <param name="eventData">事件数据</param>
     /// <returns>总是返回true</returns>
-    public bool ExecuteEffect(object eventData)
+    public bool ExecuteEffect(SkillArgs args)
     {
         // 检查执行权限（完全由重置条件控制）
         if (!canExecute)

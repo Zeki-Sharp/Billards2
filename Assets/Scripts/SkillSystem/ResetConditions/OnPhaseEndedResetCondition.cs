@@ -21,16 +21,16 @@ public class OnPhaseEndedResetCondition : IResetCondition
     /// </summary>
     /// <param name="eventData">事件数据</param>
     /// <returns>是否应该重置触发条件</returns>
-    public bool ShouldReset(object eventData)
+    public bool ShouldReset(SkillArgs args)
     {
         // 检查事件类型是否为回合结束事件
-        if (eventData is GameFlowStateChangedData stateData)
+        if (args.TryGetEventData<GameFlowStateChangedData>(out var stateData))
         {
             return stateData.NewState == GameFlowState.PlayerPhaseEnd;
         }
         
         // 检查是否为GameFlowState枚举类型
-        if (eventData is GameFlowState gameFlowState)
+        if (args.EventData is GameFlowState gameFlowState)
         {
             return gameFlowState == GameFlowState.PlayerPhaseEnd;
         }

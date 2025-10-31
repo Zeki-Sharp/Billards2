@@ -20,9 +20,9 @@ public interface ITrigger
     /// <summary>
     /// 检查是否检测到事件
     /// </summary>
-    /// <param name="eventData">事件数据</param>
+    /// <param name="args">技能参数（包含事件数据）</param>
     /// <returns>是否检测到事件</returns>
-    bool CheckEvent(object eventData);
+    bool CheckEvent(SkillArgs args);
     
     /// <summary>
     /// 重置触发器状态

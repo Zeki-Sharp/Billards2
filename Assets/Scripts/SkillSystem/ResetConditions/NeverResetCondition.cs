@@ -21,7 +21,7 @@ public class NeverResetCondition : IResetCondition
     /// </summary>
     /// <param name="eventData">事件数据</param>
     /// <returns>总是返回false，表示永不复位触发条件</returns>
-    public bool ShouldReset(object eventData)
+    public bool ShouldReset(SkillArgs args)
     {
         Debug.Log($"[{ConditionName}] 检查重置条件: 永不复位");
         return false;

@@ -21,7 +21,7 @@ public class NeverEffectRemovalCondition : IEffectRemovalCondition
     /// </summary>
     /// <param name="eventData">事件数据</param>
     /// <returns>总是返回false，表示永不移除效果</returns>
-    public bool ShouldRemoveEffect(object eventData)
+    public bool ShouldRemoveEffect(SkillArgs args)
     {
         Debug.Log($"[{ConditionName}] 检查效果移除条件: 永不移除");
         return false;

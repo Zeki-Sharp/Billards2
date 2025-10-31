@@ -47,9 +47,9 @@ public class ValueComparisonEffectRemovalCondition : BaseValueMonitorCondition, 
     /// </summary>
     /// <param name="eventData">事件数据</param>
     /// <returns>是否应该移除效果</returns>
-    public bool ShouldRemoveEffect(object eventData)
+    public bool ShouldRemoveEffect(SkillArgs args)
     {
-        bool shouldRemove = CheckCondition(eventData);  // 调用基类方法
+        bool shouldRemove = CheckCondition(args);  // 调用基类方法
         
         if (shouldRemove)
         {

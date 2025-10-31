@@ -30,12 +30,12 @@ public class CollisionTrigger : ITrigger
     /// <summary>
     /// 检查是否检测到碰撞事件
     /// </summary>
-    /// <param name="eventData">事件数据，期望是 AttackData</param>
+    /// <param name="args">技能参数</param>
     /// <returns>是否检测到碰撞事件</returns>
-    public bool CheckEvent(object eventData)
+    public bool CheckEvent(SkillArgs args)
     {
         // 检查事件数据类型
-        if (eventData is AttackData attackData)
+        if (args.TryGetEventData<AttackData>(out var attackData))
         {
             // 【关键修复1】检查是否在玩家回合
             var gameFlowController = GameFlowController.Instance;

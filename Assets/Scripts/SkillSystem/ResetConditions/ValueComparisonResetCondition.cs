@@ -50,9 +50,9 @@ public class ValueComparisonResetCondition : BaseValueMonitorCondition, IResetCo
     /// </summary>
     /// <param name="eventData">事件数据</param>
     /// <returns>是否应该重置触发条件</returns>
-    public bool ShouldReset(object eventData)
+    public bool ShouldReset(SkillArgs args)
     {
-        bool shouldReset = CheckCondition(eventData);  // 调用基类方法
+        bool shouldReset = CheckCondition(args);  // 调用基类方法
         
         if (shouldReset)
         {

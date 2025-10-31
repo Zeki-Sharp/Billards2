@@ -78,7 +78,7 @@ public class DropItemEffect : IEffect
     /// </summary>
     /// <param name="eventData">事件数据，期望是DeathData</param>
     /// <returns>效果是否执行成功</returns>
-    public bool ExecuteEffect(object eventData)
+    public bool ExecuteEffect(SkillArgs args)
     {
         // 检查执行权限（完全由重置条件控制）
         if (!canExecute)
@@ -111,7 +111,7 @@ public class DropItemEffect : IEffect
         }
         
         // 获取掉落位置
-        Vector3 dropPosition = GetDropPosition(eventData);
+        Vector3 dropPosition = GetDropPosition(args.EventData);
         if (dropPosition == Vector3.zero)
         {
             Debug.LogError($"[{EffectName}] 无法获取有效的掉落位置");

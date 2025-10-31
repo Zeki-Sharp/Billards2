@@ -234,7 +234,8 @@ public class SkillDamageModifier : IDamageModifier
             Debug.Log($"[SkillDamageModifier] {modifierName} 检查移除条件 - 血量: {currentHealth.CurrentHealth}/{currentHealth.MaxHealth} ({currentHealth.HealthPercentage:P1})");
         }
         
-        return removalCondition.ShouldRemoveEffect(currentHealth);
+        var args = SkillArgs.FromEventData(currentHealth);
+        return removalCondition.ShouldRemoveEffect(args);
     }
     
     #endregion

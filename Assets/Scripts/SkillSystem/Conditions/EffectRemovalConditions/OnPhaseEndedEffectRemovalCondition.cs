@@ -21,10 +21,10 @@ public class OnPhaseEndedEffectRemovalCondition : IEffectRemovalCondition
     /// </summary>
     /// <param name="eventData">事件数据</param>
     /// <returns>是否应该移除效果</returns>
-    public bool ShouldRemoveEffect(object eventData)
+    public bool ShouldRemoveEffect(SkillArgs args)
     {
         // 检查事件类型是否为回合结束事件
-        if (eventData is GameFlowStateChangedData stateData)
+        if (args.TryGetEventData<GameFlowStateChangedData>(out var stateData))
         {
             bool shouldRemove = stateData.NewState == GameFlowState.PlayerPhaseEnd;
             if (shouldRemove)
@@ -35,7 +35,7 @@ public class OnPhaseEndedEffectRemovalCondition : IEffectRemovalCondition
         }
         
         // 检查是否为GameFlowState枚举类型
-        if (eventData is GameFlowState gameFlowState)
+        if (args.EventData is GameFlowState gameFlowState)
         {
             bool shouldRemove = gameFlowState == GameFlowState.PlayerPhaseEnd;
             if (shouldRemove)

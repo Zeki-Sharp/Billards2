@@ -48,9 +48,9 @@ public class CompositeCondition : ICondition
     /// <summary>
     /// 检查条件是否满足
     /// </summary>
-    /// <param name="eventData">事件数据</param>
+    /// <param name="args">技能参数</param>
     /// <returns>根据逻辑类型判断条件是否满足</returns>
-    public bool CheckCondition(object eventData)
+    public bool CheckCondition(SkillArgs args)
     {
         if (conditions.Count == 0)
         {
@@ -63,12 +63,12 @@ public class CompositeCondition : ICondition
         if (logicType == ConditionLogicType.And)
         {
             // AND 逻辑：所有条件都必须满足
-            result = conditions.All(condition => condition.CheckCondition(eventData));
+            result = conditions.All(condition => condition.CheckCondition(args));
         }
         else
         {
             // OR 逻辑：任一条件满足即可
-            result = conditions.Any(condition => condition.CheckCondition(eventData));
+            result = conditions.Any(condition => condition.CheckCondition(args));
         }
         
         return result;

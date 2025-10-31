@@ -33,9 +33,9 @@ public class CountCondition : ICondition
     /// <summary>
     /// 检查条件是否满足
     /// </summary>
-    /// <param name="eventData">事件数据（由触发器过滤，条件只负责计数）</param>
+    /// <param name="args">技能参数</param>
     /// <returns>条件是否满足</returns>
-    public bool CheckCondition(object eventData)
+    public bool CheckCondition(SkillArgs args)
     {
         // 不管什么事件，只要被调用就说明触发器检测到了事件
         // 直接计数即可

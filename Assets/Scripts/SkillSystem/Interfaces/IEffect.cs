@@ -20,9 +20,9 @@ public interface IEffect
     /// <summary>
     /// 执行效果
     /// </summary>
-    /// <param name="eventData">事件数据</param>
+    /// <param name="args">技能参数（包含事件数据）</param>
     /// <returns>效果是否执行成功</returns>
-    bool ExecuteEffect(object eventData);
+    bool ExecuteEffect(SkillArgs args);
     
     /// <summary>
     /// 移除效果（删除所有修改器，重置 hasTriggered 标志）

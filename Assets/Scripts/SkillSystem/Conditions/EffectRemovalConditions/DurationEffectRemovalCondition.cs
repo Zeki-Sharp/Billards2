@@ -36,7 +36,7 @@ public class DurationEffectRemovalCondition : IEffectRemovalCondition
     /// </summary>
     /// <param name="eventData">事件数据</param>
     /// <returns>是否应该移除效果</returns>
-    public bool ShouldRemoveEffect(object eventData)
+    public bool ShouldRemoveEffect(SkillArgs args)
     {
         if (!isInitialized)
         {

@@ -21,7 +21,7 @@ using System.Collections.Generic;
 /// 【设计原则】：
 /// - 专注攻击逻辑，不处理物理和状态管理
 /// - 通过 PlayerCore 获取必要的组件引用
-/// - 保持与 PlayerStatsManager 的兼容性
+/// - 保持与 PlayerStatsManagerV2 的兼容性
 /// </summary>
 public class PlayerAttackManager : MonoBehaviour
 {
@@ -35,7 +35,7 @@ public class PlayerAttackManager : MonoBehaviour
     // 数据和组件引用（由 Player 统一设置）
     private PlayerData playerData;
     private PlayerCore playerCore;
-    private PlayerStatsManager statsManager;
+    private PlayerStatsManagerV2 statsManager; // ✅ 使用轻量级 Modifier 系统
     
     // 范围攻击表现
     private GameObject currentAreaCircle;
@@ -94,7 +94,7 @@ public class PlayerAttackManager : MonoBehaviour
     void InitializeAttackManager()
     {
         // 获取 StatsManager 引用
-        statsManager = GetComponent<PlayerStatsManager>();
+        statsManager = GetComponent<PlayerStatsManagerV2>();
         
         if (playerCore == null)
         {
@@ -103,7 +103,7 @@ public class PlayerAttackManager : MonoBehaviour
         
         if (statsManager == null)
         {
-            Debug.LogError("PlayerAttackManager: 未找到 PlayerStatsManager 组件！");
+            Debug.LogError("PlayerAttackManager: 未找到 PlayerStatsManagerV2 组件！");
         }
         
         if (playerData == null)
@@ -121,7 +121,7 @@ public class PlayerAttackManager : MonoBehaviour
     /// </summary>
     public float GetCurrentAttackDamage()
     {
-        // 优先从 PlayerStatsManager 获取（包含技能修正）
+        // 优先从 PlayerStatsManagerV2 获取（包含技能修正）
         if (statsManager != null)
         {
             return statsManager.FinalDamage;
@@ -310,12 +310,12 @@ public class PlayerAttackManager : MonoBehaviour
     
     /// <summary>
     /// 获取最终的攻击范围（应用所有修改器后）
-    /// 从 PlayerStatsManager 获取
+    /// 从 PlayerStatsManagerV2 获取
     /// </summary>
     /// <returns>最终攻击范围</returns>
     public float GetFinalAreaRadius()
     {
-        // 优先从 PlayerStatsManager 获取（包含技能修正）
+        // 优先从 PlayerStatsManagerV2 获取（包含技能修正）
         if (statsManager != null)
         {
             float finalRadius = statsManager.FinalAreaRadius;

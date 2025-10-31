@@ -134,9 +134,9 @@ public abstract class BaseValueMonitorCondition
     /// <summary>
     /// 检查条件是否满足
     /// </summary>
-    protected bool CheckCondition(object eventData)
+    protected bool CheckCondition(SkillArgs args)
     {
-        return valueCondition?.CheckCondition(eventData) ?? false;
+        return valueCondition?.CheckCondition(args) ?? false;
     }
     
     // ========== 事件回调（根据 DataExtractorType 分发） ==========
@@ -146,7 +146,8 @@ public abstract class BaseValueMonitorCondition
     /// </summary>
     private void OnHealthChanged(HealthStateData healthData)
     {
-        if (CheckCondition(healthData))
+        var args = SkillArgs.FromEventData(healthData);
+        if (CheckCondition(args))
         {
             OnConditionMet(healthData);
         }

@@ -19,9 +19,9 @@ public interface IResetCondition
     /// <summary>
     /// 检查是否应该重置条件
     /// </summary>
-    /// <param name="eventData">事件数据</param>
+    /// <param name="args">技能参数（包含事件数据）</param>
     /// <returns>是否应该重置条件</returns>
-    bool ShouldReset(object eventData);
+    bool ShouldReset(SkillArgs args);
     
     /// <summary>
     /// 重置重置条件状态

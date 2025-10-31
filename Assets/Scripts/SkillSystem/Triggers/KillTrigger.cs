@@ -30,12 +30,12 @@ public class KillTrigger : ITrigger
     /// <summary>
     /// 检查是否检测到击杀事件
     /// </summary>
-    /// <param name="eventData">事件数据，期望是 DeathData</param>
+    /// <param name="args">技能参数</param>
     /// <returns>是否检测到击杀事件</returns>
-    public bool CheckEvent(object eventData)
+    public bool CheckEvent(SkillArgs args)
     {
         // 检查事件数据类型
-        if (eventData is DeathData deathData)
+        if (args.TryGetEventData<DeathData>(out var deathData))
         {
             // 检查目标标签是否匹配
             bool tagMatches = string.IsNullOrEmpty(targetTag) || deathData.DeadObjectTag == targetTag;
@@ -47,7 +47,7 @@ public class KillTrigger : ITrigger
         }
         else
         {
-            Debug.LogWarning($"[{TriggerName}] 收到非 DeathData 类型的事件: {eventData?.GetType()}");
+            Debug.LogWarning($"[{TriggerName}] 收到非 DeathData 类型的事件");
         }
         
         return false;

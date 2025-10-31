@@ -32,7 +32,7 @@ public class PlayerCore : MonoBehaviour
     private PlayerData playerData;
     private PlayerAttackManager attackManager;
     private ChargeSystem chargeSystem;
-    private PlayerStatsManager statsManager;
+    private PlayerStatsManagerV2 statsManager; // ✅ 使用轻量级 Modifier 系统
     
     // 核心组件
     private BallPhysics ballPhysics;
@@ -85,7 +85,7 @@ public class PlayerCore : MonoBehaviour
     /// <summary>
     /// 设置 StatsManager（由 Player 调用）
     /// </summary>
-    public void SetStatsManager(PlayerStatsManager manager)
+    public void SetStatsManager(PlayerStatsManagerV2 manager)
     {
         statsManager = manager;
         Debug.Log("PlayerCore: StatsManager 已设置");

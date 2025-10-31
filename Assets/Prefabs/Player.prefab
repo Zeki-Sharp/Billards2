@@ -7508,11 +7508,11 @@ GameObject:
   - component: {fileID: 4109773013413894966}
   - component: {fileID: 3655923765959461568}
   - component: {fileID: 7844486164170001436}
-  - component: {fileID: 1984854761051162356}
   - component: {fileID: 4836788210602037763}
-  - component: {fileID: 9045880017847663504}
   - component: {fileID: 8774563786934254085}
   - component: {fileID: 4113543951783293758}
+  - component: {fileID: 6836328097506818129}
+  - component: {fileID: 1161320384208938669}
   m_Layer: 3
   m_Name: Player
   m_TagString: Player
@@ -7672,12 +7672,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   playerData: {fileID: 11400000, guid: 9fa21c5d0e8b7b24d9ae0910aa7d5197, type: 2}
   playerCore: {fileID: 3655923765959461568}
-  stateMachine: {fileID: 9045880017847663504}
+  stateMachine: {fileID: 6836328097506818129}
   inputHandler: {fileID: 8774563786934254085}
   movementController: {fileID: 4113543951783293758}
   attackManager: {fileID: 4836788210602037763}
   chargeSystem: {fileID: 7844486164170001436}
-  statsManager: {fileID: 1984854761051162356}
+  statsManager: {fileID: 1161320384208938669}
   effects:
   - effectType: 2
     mmfPlayer: {fileID: 2097763790536435821}
@@ -7728,19 +7728,6 @@ MonoBehaviour:
   playerCore: {fileID: 3655923765959461568}
   targetCamera: {fileID: 0}
   showDebugInfo: 1
---- !u!114 &1984854761051162356
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3251294568684493535}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 8d445734808e3e3488b87acad09b41f7, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  enableDebugLog: 1
 --- !u!114 &4836788210602037763
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -7755,21 +7742,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   areaCirclePrefab: {fileID: 5385583857073481511, guid: 80d37609a5c83304092f963f43215c22, type: 3}
   circleDisplayDuration: 0.5
---- !u!114 &9045880017847663504
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3251294568684493535}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 0aacbe80a7058234bb9f82db60917280, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  initialState: 0
-  showDebugInfo: 1
-  movingStateTimeout: 0.2
 --- !u!114 &8774563786934254085
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -7798,6 +7770,34 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dc9dadbfaafbeaa47a17372a28c440f1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &6836328097506818129
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3251294568684493535}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0aacbe80a7058234bb9f82db60917280, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  initialState: 0
+  showDebugInfo: 1
+  movingStateTimeout: 0.2
+--- !u!114 &1161320384208938669
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3251294568684493535}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8daa3d5270111b742bd943f36e3be841, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  enableDebugLog: 1
 --- !u!1 &3901620891104444660
 GameObject:
   m_ObjectHideFlags: 0

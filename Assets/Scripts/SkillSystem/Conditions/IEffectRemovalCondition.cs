@@ -19,9 +19,9 @@ public interface IEffectRemovalCondition
     /// <summary>
     /// 检查是否应该移除效果
     /// </summary>
-    /// <param name="eventData">事件数据</param>
+    /// <param name="args">技能参数（包含事件数据）</param>
     /// <returns>是否应该移除效果</returns>
-    bool ShouldRemoveEffect(object eventData);
+    bool ShouldRemoveEffect(SkillArgs args);
     
     /// <summary>
     /// 重置效果移除条件状态
