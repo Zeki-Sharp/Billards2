@@ -92,13 +92,3 @@ public enum HealthComparisonType
     GreaterThan, // 大于
     Equal        // 等于
 }
-
-/// <summary>
-/// 条件逻辑类型
-/// </summary>
-public enum ConditionLogicType
-{
-    And,    // 所有条件都必须满足
-    Or      // 任一条件满足即可
-}
-

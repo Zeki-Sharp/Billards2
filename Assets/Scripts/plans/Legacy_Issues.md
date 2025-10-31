@@ -6,7 +6,35 @@
 
 ## 🔧 待清理问题（按优先级排序）
 
-### 1. 向后兼容桥接属性清理 ⭐⭐⭐
+### 1. ConditionConfig 容器类问题 ⭐⭐
+
+**问题描述**：
+- `ConditionConfig.cs` 是一个复合条件容器，支持多条件 AND/OR 组合
+- 命名错误：实际是 `CompositeConditionConfig`，但叫 `ConditionConfig` 容易误解
+- 架构不统一：为什么只有 Condition 需要容器，而 Trigger/Effect 不需要？
+- 可能过度设计：多条件组合功能是否真的需要？
+
+**当前使用**：
+- `SkillLevelConfig.conditionConfig` 字段使用此类
+- 包含 `logicType`（AND/OR）和 `List<ConditionBase> conditions`
+
+**潜在解决方案**：
+1. **方案A**：改名为 `CompositeConditionConfig`，作为一个多态 Condition 类型
+2. **方案B**：直接改为单一条件 `ConditionBase conditionConfig`，删除容器
+3. **方案C**：统一设计，为所有系统添加复合配置容器（过度设计）
+
+**清理时机**：
+- Phase 3.3 多态化完成后评估
+- 如果从未使用多条件组合，删除容器改为单一条件
+- 如果确实需要，改名并规范化
+
+**命名冲突问题**：
+- 无法使用 `CompositeCondition` 命名（与运行时类 `CompositeCondition : ICondition` 冲突）
+- 需要保留 `Config` 后缀：`CompositeConditionConfig`
+
+---
+
+### 2. 向后兼容桥接属性清理 ⭐⭐⭐
 
 **问题描述**：
 - Phase 3.1 完成后，保留了大量向后兼容属性

@@ -123,16 +123,3 @@ public class ValueComparisonCondition : ICondition
         // 值比较条件不需要重置，因为它是基于当前值的即时比较
     }
 }
-
-/// <summary>
-/// 比较类型枚举
-/// </summary>
-public enum ComparisonType
-{
-    GreaterThanOrEqual,  // >=
-    LessThanOrEqual,     // <=
-    LessThan,            // <
-    GreaterThan,         // >
-    Equal,               // ==
-    InRange              // 范围内
-}
