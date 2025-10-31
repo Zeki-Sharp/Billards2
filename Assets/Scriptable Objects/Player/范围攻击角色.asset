@@ -12,10 +12,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e034a424d47a464448426d1bf0a3aaf4, type: 3}
   m_Name: "\u8303\u56F4\u653B\u51FB\u89D2\u8272"
   m_EditorClassIdentifier: 
-  playerName: "\u8303\u56F4\u653B\u51FB\u89D2\u8272"
+  info:
+    name: "\u8303\u56F4\u653B\u51FB\u89D2\u8272"
+    acronym: 
+    description: "\u8FD0\u52A8\u505C\u6B62\u65F6\u9020\u6210\u8303\u56F4\u4F24\u5BB3"
+    icon: {fileID: -8265326783544323283, guid: 36d1de35597400f479eca08ebb1188e9, type: 3}
+    color: {r: 1, g: 1, b: 1, a: 1}
+    characterClass: 
+    rarity: "\u666E\u901A"
   playerPrefab: {fileID: 3251294568684493535, guid: 2d86053af5e50c446a06f75cbdecb65b, type: 3}
-  playerIcon: {fileID: -8265326783544323283, guid: 36d1de35597400f479eca08ebb1188e9, type: 3}
-  characterDescription: "\u5728\u6BCF\u6B21\u53D1\u5C04\u505C\u6B62\u8FD0\u52A8\u540E\u624D\u9020\u6210\u4F24\u5BB3"
   ballData: {fileID: 11400000, guid: 5753a6296cab86e45ba7c2b9bfd00e6e, type: 2}
   baseMaxHealth: 100
   attackMode: 1

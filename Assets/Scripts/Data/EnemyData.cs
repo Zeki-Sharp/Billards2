@@ -4,9 +4,12 @@ using Sirenix.OdinInspector;
 [CreateAssetMenu(fileName = "EnemyData", menuName = "Game/Enemy Data")]
 public class EnemyData : ScriptableObject
 {
-    [BoxGroup("敌人基本信息")]
-    [LabelText("敌人名称")]
-    public string enemyName;
+    [BoxGroup("显示信息")]
+    [LabelText("敌人信息")]
+    [Tooltip("显示信息（名称、图标、描述等）")]
+    [InlineProperty]
+    [HideLabel]
+    public EnemyInfo info = new EnemyInfo();
     
     [BoxGroup("敌人基本信息")]
     [LabelText("敌人预制体")]
@@ -14,9 +17,19 @@ public class EnemyData : ScriptableObject
     [Required]
     public GameObject enemyContainerPrefab;
     
-    [BoxGroup("敌人基本信息")]
-    [LabelText("敌人图标")]
-    public Sprite enemyIcon;
+    #region 向后兼容属性（从 Info 读取）
+    
+    /// <summary>
+    /// 敌人名称（向后兼容，从 Info 读取）
+    /// </summary>
+    public string enemyName => info?.name ?? "";
+    
+    /// <summary>
+    /// 敌人图标（向后兼容，从 Info 读取）
+    /// </summary>
+    public Sprite enemyIcon => info?.icon;
+    
+    #endregion
     
     [BoxGroup("物理数据")]
     [LabelText("球体数据")]

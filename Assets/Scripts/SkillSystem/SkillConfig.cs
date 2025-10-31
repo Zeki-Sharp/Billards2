@@ -12,28 +12,36 @@ using System.Linq;
 [CreateAssetMenu(fileName = "SkillConfig", menuName = "Game/Skill Config")]
 public class SkillConfig : ScriptableObject
 {
-    [BoxGroup("技能基本信息")]
-    [LabelText("技能名称")]
-    [Tooltip("技能名称")]
-    public string skillName = "碰撞连击";
+    [BoxGroup("显示信息")]
+    [LabelText("技能信息")]
+    [Tooltip("显示信息（名称、图标、描述等）")]
+    [InlineProperty]
+    [HideLabel]
+    public SkillInfo info = new SkillInfo();
     
-    [BoxGroup("技能基本信息")]
-    [LabelText("技能描述")]
-    [Tooltip("技能描述")]
-    [TextArea(3, 5)]
-    public string description = "碰撞敌人2次后，攻击力提升100%";
+    #region 向后兼容属性（从 Info 读取）
     
-    [BoxGroup("技能基本信息")]
-    [LabelText("技能标签")]
-    [Tooltip("技能所属的标签，用于区分通用技能和角色专属技能")]
-    [ValueDropdown("GetAvailableTags")]
-    public string skillTag = "default";
+    /// <summary>
+    /// 技能名称（向后兼容，从 Info 读取）
+    /// </summary>
+    public string skillName => info?.name ?? "";
     
-    // 技能图标暂时移除，简化配置界面
-    // [BoxGroup("技能基本信息")]
-    // [LabelText("技能图标")]
-    // [Tooltip("技能图标")]
-    // public Sprite skillIcon;
+    /// <summary>
+    /// 技能描述（向后兼容，从 Info 读取）
+    /// </summary>
+    public string description => info?.description ?? "";
+    
+    /// <summary>
+    /// 技能标签（向后兼容，从 Info 读取）
+    /// </summary>
+    public string skillTag => info?.tag ?? "default";
+    
+    /// <summary>
+    /// 技能图标（向后兼容，从 Info 读取）
+    /// </summary>
+    public Sprite skillIcon => info?.icon;
+    
+    #endregion
     
     [BoxGroup("技能等级配置")]
     [LabelText("技能等级列表")]

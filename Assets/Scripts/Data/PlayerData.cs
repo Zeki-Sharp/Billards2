@@ -9,24 +9,37 @@ public class PlayerData : ScriptableObject
         Collision,    // 碰撞攻击
         Area          // 范围攻击
     }
-    [BoxGroup("玩家基本信息")]
-    [LabelText("玩家名称")]
-    public string playerName;
+    
+    [BoxGroup("显示信息")]
+    [LabelText("玩家信息")]
+    [Tooltip("显示信息（名称、图标、描述等）")]
+    [InlineProperty]
+    [HideLabel]
+    public PlayerInfo info = new PlayerInfo();
     
     [BoxGroup("玩家基本信息")]
     [LabelText("玩家预制体")]
     [Required]
     public GameObject playerPrefab;
     
-    [BoxGroup("玩家基本信息")]
-    [LabelText("玩家图标")]
-    public Sprite playerIcon;
+    #region 向后兼容属性（从 Info 读取）
     
-    [BoxGroup("玩家基本信息")]
-    [LabelText("角色描述")]
-    [MultiLineProperty(3)]
-    [Tooltip("角色的详细描述信息")]
-    public string characterDescription;
+    /// <summary>
+    /// 玩家名称（向后兼容，从 Info 读取）
+    /// </summary>
+    public string playerName => info?.name ?? "";
+    
+    /// <summary>
+    /// 玩家图标（向后兼容，从 Info 读取）
+    /// </summary>
+    public Sprite playerIcon => info?.icon;
+    
+    /// <summary>
+    /// 角色描述（向后兼容，从 Info 读取）
+    /// </summary>
+    public string characterDescription => info?.description ?? "";
+    
+    #endregion
     
     [BoxGroup("物理数据")]
     [LabelText("球体数据")]

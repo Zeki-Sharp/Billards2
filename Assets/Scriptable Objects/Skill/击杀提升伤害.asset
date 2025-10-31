@@ -12,9 +12,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: efc89a18d420d744da9894a9f7094350, type: 3}
   m_Name: "\u51FB\u6740\u63D0\u5347\u4F24\u5BB3"
   m_EditorClassIdentifier: 
-  skillName: "\u6B7B\u4EA1\u63D0\u5347"
-  description: "\u6740\u6B7B\u654C\u4EBA\u540E\u4F24\u5BB3\u4E0A\u5347"
-  skillTag: common
+  info:
+    name: "\u51FB\u6740\u4F24\u5BB3\u63D0\u5347"
+    acronym: 
+    description: 1
+    icon: {fileID: 0}
+    color: {r: 1, g: 1, b: 1, a: 1}
+    skillType: 
+    rarity: "\u666E\u901A"
+    tag: common
+  _skillName: 
+  _description: 
+  _skillTag: 
   skillLevels:
   - level: 1
     isActive: 1

@@ -12,9 +12,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: efc89a18d420d744da9894a9f7094350, type: 3}
   m_Name: "\u9AD8\u8840\u91CF\u65F6\u4F24\u5BB3\u589E\u52A0"
   m_EditorClassIdentifier: 
-  skillName: "\u9AD8\u8840\u91CF\u4F24\u5BB3\u63D0\u5347"
-  description: "\u5F53\u73A9\u5BB6\u4E3A\u6EE1\u8840\u65F6\u653B\u51FB\u529B\u63D0\u5347"
-  skillTag: common
+  info:
+    name: "\u9AD8\u8840\u91CF\u65F6\u4F24\u5BB3\u589E\u52A0"
+    acronym: 
+    description: 1
+    icon: {fileID: 0}
+    color: {r: 1, g: 1, b: 1, a: 1}
+    skillType: 
+    rarity: "\u666E\u901A"
+    tag: default
   skillLevels:
   - level: 1
     isActive: 1
@@ -38,10 +44,12 @@ MonoBehaviour:
     effectConfig:
       effectType: 0
       targetStat: Damage
-      modifierValue: 10
+      modifierValue:
+        rid: -2
       modifierType: 0
       allowStacking: 0
-      healAmount: 20
+      healAmount:
+        rid: -2
       minTransitionTime: 1
       maxTransitionTime: 5
       transitionThreshold: 0.3
@@ -101,10 +109,12 @@ MonoBehaviour:
     effectConfig:
       effectType: 0
       targetStat: Damage
-      modifierValue: 15
+      modifierValue:
+        rid: -2
       modifierType: 0
       allowStacking: 0
-      healAmount: 20
+      healAmount:
+        rid: -2
       minTransitionTime: 1
       maxTransitionTime: 5
       transitionThreshold: 0.3
@@ -144,3 +154,8 @@ MonoBehaviour:
       dataExtractorType: 0
   requiredSkills: []
   isActive: 0
+  references:
+    version: 2
+    RefIds:
+    - rid: -2
+      type: {class: , ns: , asm: }
