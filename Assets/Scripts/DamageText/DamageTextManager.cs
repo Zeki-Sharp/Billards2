@@ -79,14 +79,14 @@ public class DamageTextManager : SingletonManager<DamageTextManager>
     
     void OnEnable()
     {
-        // 订阅伤害处理完成事件 - 使用最终处理后的伤害值
-        GameEventBus.OnDamageProcessed += HandleDamageProcessed;
+        // ✅ 订阅新伤害系统事件
+        GameEventBus.OnDamage += HandleDamage;
     }
     
     void OnDisable()
     {
-        // 取消订阅伤害处理完成事件
-        GameEventBus.OnDamageProcessed -= HandleDamageProcessed;
+        // 取消订阅伤害事件
+        GameEventBus.OnDamage -= HandleDamage;
     }
     
     /// <summary>
@@ -286,20 +286,20 @@ public class DamageTextManager : SingletonManager<DamageTextManager>
     }
     
     /// <summary>
-    /// 事件监听 - 处理伤害处理完成事件中的伤害数字显示
+    /// 事件监听 - 处理新伤害系统的伤害事件
     /// </summary>
-    /// <param name="processedData">处理完成的伤害数据</param>
-    private void HandleDamageProcessed(ProcessedDamageData processedData)
+    /// <param name="damageEvt">伤害事件数据</param>
+    private void HandleDamage(DamageEvent damageEvt)
     {
         // 检查是否有伤害值且大于0
-        if (processedData.FinalDamage > 0f)
+        if (damageEvt.FinalDamage > 0f)
         {
-            // 显示伤害数字 - 使用最终处理后的伤害值
-            ShowDamageText(processedData.OriginalData.Position, processedData.FinalDamage, processedData.OriginalData.Target);
+            // 显示伤害数字 - 使用最终伤害值
+            ShowDamageText(damageEvt.HitPosition, damageEvt.FinalDamage, damageEvt.Target);
             
             if (enableDebugLog)
             {
-                Debug.Log($"DamageTextManager: 显示最终伤害数字 {processedData.FinalDamage} (原始: {processedData.OriginalData.Damage})");
+                Debug.Log($"DamageTextManager: 显示伤害数字 {damageEvt.FinalDamage}");
             }
         }
     }
