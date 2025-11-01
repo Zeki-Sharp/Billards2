@@ -22,24 +22,6 @@ public class PlayerData : ScriptableObject
     [Required]
     public GameObject playerPrefab;
     
-    #region 向后兼容属性（从 Info 读取）
-    
-    /// <summary>
-    /// 玩家名称（向后兼容，从 Info 读取）
-    /// </summary>
-    public string playerName => info?.name ?? "";
-    
-    /// <summary>
-    /// 玩家图标（向后兼容，从 Info 读取）
-    /// </summary>
-    public Sprite playerIcon => info?.icon;
-    
-    /// <summary>
-    /// 角色描述（向后兼容，从 Info 读取）
-    /// </summary>
-    public string characterDescription => info?.description ?? "";
-    
-    #endregion
     
     [BoxGroup("物理数据")]
     [LabelText("球体数据")]

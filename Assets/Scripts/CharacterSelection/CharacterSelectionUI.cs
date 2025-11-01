@@ -146,7 +146,7 @@ public class CharacterSelectionUI : MonoBehaviour
         // 更新选中角色文本
         if (selectedCharacterText != null)
         {
-            selectedCharacterText.text = string.Format(characterSelectedTextFormat, characterData.playerName);
+            selectedCharacterText.text = string.Format(characterSelectedTextFormat, characterData.info.name);
         }
         
         // 播放选择动画
@@ -157,7 +157,7 @@ public class CharacterSelectionUI : MonoBehaviour
         
         if (showDebugInfo)
         {
-            Debug.Log($"CharacterSelectionUI: 角色选择 - {characterData.playerName}");
+            Debug.Log($"CharacterSelectionUI: 角色选择 - {characterData.info.name}");
         }
     }
     
@@ -176,7 +176,7 @@ public class CharacterSelectionUI : MonoBehaviour
         
         if (showDebugInfo)
         {
-            Debug.Log($"CharacterSelectionUI: 开始游戏 - {characterData.playerName}");
+            Debug.Log($"CharacterSelectionUI: 开始游戏 - {characterData.info.name}");
         }
     }
     
@@ -201,7 +201,7 @@ public class CharacterSelectionUI : MonoBehaviour
             if (hasSelectedCharacter)
             {
                 var selectedCharacter = selectionManager.GetSelectedCharacter();
-                selectedCharacterText.text = string.Format(characterSelectedTextFormat, selectedCharacter.playerName);
+                selectedCharacterText.text = string.Format(characterSelectedTextFormat, selectedCharacter.info.name);
             }
             else
             {

@@ -124,7 +124,7 @@ public class TopBarController : MonoBehaviour
     {
         if (showDebugInfo)
         {
-            Debug.Log($"TopBarController: 角色选择完成，显示TopBar - {character.playerName}");
+            Debug.Log($"TopBarController: 角色选择完成，显示TopBar - {character.info.name}");
         }
         
         // 更新角色头像
@@ -194,21 +194,21 @@ public class TopBarController : MonoBehaviour
     {
         if (playerPortrait != null && character != null)
         {
-            if (character.playerIcon != null)
+            if (character.info.icon != null)
             {
-                playerPortrait.sprite = character.playerIcon;
+                playerPortrait.sprite = character.info.icon;
                 playerPortrait.enabled = true;
                 playerPortrait.gameObject.SetActive(true);
                 
                 if (showDebugInfo)
                 {
-                    Debug.Log($"TopBarController: 角色头像已更新 - {character.playerName}");
+                    Debug.Log($"TopBarController: 角色头像已更新 - {character.info.name}");
                 }
             }
             else
             {
                 playerPortrait.enabled = false;
-                Debug.LogWarning($"TopBarController: 角色 {character.playerName} 没有配置头像");
+                Debug.LogWarning($"TopBarController: 角色 {character.info.name} 没有配置头像");
             }
         }
         else if (playerPortrait == null)

@@ -51,7 +51,7 @@ public class SceneTransitionManager : SingletonManager<SceneTransitionManager>
         
         if (Instance != null && Instance.showDebugInfo)
         {
-            Debug.Log($"SceneTransitionManager: 设置选中角色 - {characterData?.playerName ?? "null"}");
+            Debug.Log($"SceneTransitionManager: 设置选中角色 - {characterData?.info.name ?? "null"}");
         }
     }
     
@@ -90,7 +90,7 @@ public class SceneTransitionManager : SingletonManager<SceneTransitionManager>
         
         if (showDebugInfo)
         {
-            Debug.Log($"SceneTransitionManager: 开始加载Level1场景，选中角色: {selectedCharacterData.playerName}");
+            Debug.Log($"SceneTransitionManager: 开始加载Level1场景，选中角色: {selectedCharacterData.info.name}");
         }
         
         // 异步加载场景
@@ -136,7 +136,7 @@ public class SceneTransitionManager : SingletonManager<SceneTransitionManager>
     {
         if (selectedCharacterData != null)
         {
-            Debug.Log($"当前选中角色: {selectedCharacterData.playerName} (攻击模式: {selectedCharacterData.attackMode})");
+            Debug.Log($"当前选中角色: {selectedCharacterData.info.name} (攻击模式: {selectedCharacterData.attackMode})");
         }
         else
         {

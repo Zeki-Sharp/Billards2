@@ -74,9 +74,9 @@ public class SkillInfo : TInfo
             {
                 foreach (var character in characterData.availableCharacters)
                 {
-                    if (character != null && !string.IsNullOrEmpty(character.playerName))
+                    if (character != null && !string.IsNullOrEmpty(character.info.name))
                     {
-                        string characterTag = character.playerName;
+                        string characterTag = character.info.name;
                         if (!tags.Contains(characterTag))
                         {
                             tags.Add(characterTag);

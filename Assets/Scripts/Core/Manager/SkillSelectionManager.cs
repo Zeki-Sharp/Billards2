@@ -138,9 +138,9 @@ public class SkillSelectionManager : SingletonManager<SkillSelectionManager>
     {
         PlayerData currentCharacter = SceneTransitionManager.GetSelectedCharacter();
         
-        if (currentCharacter != null && !string.IsNullOrEmpty(currentCharacter.playerName))
+        if (currentCharacter != null && !string.IsNullOrEmpty(currentCharacter.info.name))
         {
-            return currentCharacter.playerName;
+            return currentCharacter.info.name;
         }
         
         if (showDebugInfo)

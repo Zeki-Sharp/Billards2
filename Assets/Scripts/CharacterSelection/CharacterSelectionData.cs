@@ -36,7 +36,7 @@ public class CharacterSelectionData : ScriptableObject
                     Debug.LogError($"CharacterSelectionData: 角色列表第 {i} 项为空！");
                     isValid = false;
                 }
-                else if (string.IsNullOrEmpty(availableCharacters[i].playerName))
+                else if (string.IsNullOrEmpty(availableCharacters[i].info.name))
                 {
                     Debug.LogError($"CharacterSelectionData: 角色 {availableCharacters[i].name} 的名称为空！");
                     isValid = false;
@@ -73,7 +73,7 @@ public class CharacterSelectionData : ScriptableObject
     {
         return availableCharacters != null && 
                availableCharacters.Count > 0 && 
-               !availableCharacters.Exists(data => data == null || string.IsNullOrEmpty(data.playerName));
+               !availableCharacters.Exists(data => data == null || string.IsNullOrEmpty(data.info.name));
     }
     
     /// <summary>
@@ -90,7 +90,7 @@ public class CharacterSelectionData : ScriptableObject
         for (int i = 0; i < availableCharacters.Count; i++)
         {
             var character = availableCharacters[i];
-            info += $"{i + 1}. {character.playerName} ({character.attackMode})\n";
+            info += $"{i + 1}. {character.info.name} ({character.attackMode})\n";
         }
         
         return info;

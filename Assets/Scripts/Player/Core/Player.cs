@@ -354,7 +354,7 @@ public class Player : MonoBehaviour
         
         if (showDebugInfo)
         {
-            Debug.Log($"Player: 设置新的PlayerData - {newPlayerData.playerName} (攻击模式: {newPlayerData.attackMode})");
+            Debug.Log($"Player: 设置新的PlayerData - {newPlayerData.info.name} (攻击模式: {newPlayerData.attackMode})");
         }
         
         // 重新分发数据给各个组件

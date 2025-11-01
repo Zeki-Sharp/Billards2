@@ -282,7 +282,7 @@ public class EnemyBehavior : MonoBehaviour, IDamageable
     /// </summary>
     public void SetEnemyData(EnemyData data, int level = 1)
     {
-        Debug.Log($"EnemyBehavior {name}: SetEnemyData 被调用，传入数据: {(data != null ? data.enemyName : "null")}, 等级: {level}");
+        Debug.Log($"EnemyBehavior {name}: SetEnemyData 被调用，传入数据: {(data != null ? data.info.name : "null")}, 等级: {level}");
         enemyData = data;
         currentLevel = level;  // ✅ 保存等级
         
@@ -294,7 +294,7 @@ public class EnemyBehavior : MonoBehaviour, IDamageable
                 return;
             }
             
-            Debug.Log($"EnemyBehavior {name}: 设置敌人数据成功 - {enemyData.enemyName} Lv{level}，移动类型: {CurrentLevelConfig.movementType}");
+            Debug.Log($"EnemyBehavior {name}: 设置敌人数据成功 - {enemyData.info.name} Lv{level}，移动类型: {CurrentLevelConfig.movementType}");
             // 重新初始化（传递等级参数）
             InitializeHealth(level);
             InitializeBehavior();

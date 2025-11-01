@@ -243,9 +243,9 @@ public class SkillConfig : ScriptableObject
                 // 添加所有角色名称
                 foreach (var character in characterSelectionData.availableCharacters)
                 {
-                    if (character != null && !string.IsNullOrEmpty(character.playerName))
+                    if (character != null && !string.IsNullOrEmpty(character.info.name))
                     {
-                        tags.Add(character.playerName);
+                        tags.Add(character.info.name);
                     }
                 }
             }
@@ -260,9 +260,9 @@ public class SkillConfig : ScriptableObject
                 string path = UnityEditor.AssetDatabase.GUIDToAssetPath(guid);
                 var playerData = UnityEditor.AssetDatabase.LoadAssetAtPath<PlayerData>(path);
                 
-                if (playerData != null && !string.IsNullOrEmpty(playerData.playerName))
+                if (playerData != null && !string.IsNullOrEmpty(playerData.info.name))
                 {
-                    tags.Add(playerData.playerName);
+                    tags.Add(playerData.info.name);
                 }
             }
         }

@@ -112,6 +112,6 @@ public class EnemySpawn
         {
             return "未设置敌人数据";
         }
-        return $"{enemyData.enemyName} Lv{level} x{count}";
+        return $"{enemyData.info.name} Lv{level} x{count}";
     }
 }

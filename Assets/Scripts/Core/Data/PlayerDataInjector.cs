@@ -61,7 +61,7 @@ public class PlayerDataInjector : MonoBehaviour
         
         if (showDebugInfo)
         {
-            Debug.Log($"PlayerDataInjector: 找到Player组件，准备注入角色数据 - {selectedCharacter.playerName}");
+            Debug.Log($"PlayerDataInjector: 找到Player组件，准备注入角色数据 - {selectedCharacter.info.name}");
         }
         
         // 注入角色数据
@@ -69,7 +69,7 @@ public class PlayerDataInjector : MonoBehaviour
         
         if (showDebugInfo)
         {
-            Debug.Log($"PlayerDataInjector: 角色数据注入完成 - {selectedCharacter.playerName} (攻击模式: {selectedCharacter.attackMode})");
+            Debug.Log($"PlayerDataInjector: 角色数据注入完成 - {selectedCharacter.info.name} (攻击模式: {selectedCharacter.attackMode})");
         }
     }
     
@@ -91,7 +91,7 @@ public class PlayerDataInjector : MonoBehaviour
         
         if (showDebugInfo)
         {
-            Debug.Log($"PlayerDataInjector: 已为Player设置角色数据 - {characterData.playerName}");
+            Debug.Log($"PlayerDataInjector: 已为Player设置角色数据 - {characterData.info.name}");
         }
     }
     
@@ -138,9 +138,9 @@ public class PlayerDataInjector : MonoBehaviour
         Player player = FindFirstObjectByType<Player>();
         
         Debug.Log($"PlayerDataInjector 状态:\n" +
-                 $"选中角色: {(selectedCharacter != null ? selectedCharacter.playerName : "无")}\n" +
+                 $"选中角色: {(selectedCharacter != null ? selectedCharacter.info.name : "无")}\n" +
                  $"场景中的Player: {(player != null ? "找到" : "未找到")}\n" +
-                 $"Player的PlayerData: {(player != null && player.GetPlayerData() != null ? player.GetPlayerData().playerName : "无")}");
+                 $"Player的PlayerData: {(player != null && player.GetPlayerData() != null ? player.GetPlayerData().info.name : "无")}");
     }
     
     #region 事件处理

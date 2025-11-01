@@ -94,16 +94,21 @@ Blackboard（共享数据）：
 
 ---
 
-### 2.3 攻击系统不可配置
+### 2.3 攻击系统不可配置 ✅ 已解决
 
-**问题**：每种攻击组合需要写新类（详见伤害系统文档）
+**原问题**：每种攻击组合需要写新类 
 
-**表现**：
+**原表现**：
 - 碰撞伤害、停止伤害、间隔伤害分散在各处
 - 新增攻击组合需要写新 AttackBehavior 类
 - 触发条件硬编码
 
-**解决方案**：Trigger-based 攻击系统（详见 `Damage_System_Architecture_Analysis.md`）
+**✅ 当前解决方案**：规则驱动的 DamageSystem
+- **DamageRuleConfig**：通过配置定义攻击条件（Trigger、Tag、State、Damage）
+- **DamageProfile**：组合多个规则形成攻击配置集
+- **支持的触发类型**：Collision（碰撞/范围）、Stopped（停止）
+- **状态条件**：requireSourceState、requireTargetNotState（支持复杂条件判断）
+- **详见**：`Damage_System_Architecture_Analysis.md`、`NewDamageSystem_Migration_Guide.md`
 
 ---
 
@@ -201,9 +206,59 @@ Sequence {
 
 ## 四、优化建议（按优先级）
 
+### ✅ 已完成项
+
+#### 1. Blackboard 模式 ✅
+- **状态**：已完成（新伤害系统迁移）
+- **实现**：
+  ```csharp
+  Blackboard {
+      Set<T>(key, value), Get<T>(key), TryGet<T>(key, out value)
+      SetOwner(GameObject)  // 关联所有者
+  }
+  BlackboardExtensions {
+      GetBlackboard()  // 自动创建
+      TryGetBlackboard()  // 不自动创建
+  }
+  ```
+- **应用**：
+  - `CanAttack` 状态控制（玩家/敌人攻击时机）
+  - `IsTrap` 状态控制（敌人陷阱无敌）
+  - DamageSystem 规则判断
+
+#### 2. 规则驱动的伤害系统 ✅
+- **状态**：已完成（Phase 0-5 全部完成）
+- **实现**：
+  - DamageRuleConfig（规则配置）
+  - DamageProfile（规则集合）
+  - DamageSystem（规则判断引擎）
+  - CollisionEvent/StoppedEvent（事件抽象）
+- **应用**：
+  - 玩家碰撞/范围攻击
+  - 敌人近战/远程/陷阱攻击
+  - 状态条件判断（requireSourceState、requireTargetNotState）
+
+---
+
 ### ⭐⭐⭐ 高优先级（1-2 周，立即实施）
 
-#### 1. 提取 RuntimeState 类
+#### 3. 统一行为返回值（BehaviorStatus）
+- **目标**：支持行为组合判断
+- **工作量**：中
+- **影响**：IMovementBehavior、IAttackBehavior
+- **产出**：
+  ```csharp
+  public enum BehaviorStatus {
+      Success, Failure, Running, Ready
+  }
+  
+  public interface IMovementBehavior {
+      BehaviorStatus Execute(...);  // 替换 void
+  }
+  ```
+- **前置条件**：无（独立功能）
+
+#### 4. 提取 RuntimeState 类
 - **目标**：状态与行为分离
 - **工作量**：小
 - **影响**：EnemyBehavior、PlayerBehavior
@@ -214,32 +269,7 @@ Sequence {
       isMoving, isDead, currentDirection
   }
   ```
-
-#### 2. 引入 Blackboard 模式
-- **目标**：解决状态绑定问题
-- **工作量**：小
-- **影响**：行为系统、伤害系统
-- **产出**：
-  ```csharp
-  Blackboard {
-      Set(key, value), Get<T>(key), TryGet<T>(key, out value)
-  }
-  ```
-
-#### 3. 统一行为返回值（BehaviorStatus）
-- **目标**：支持行为组合判断
-- **工作量**：中
-- **影响**：IMovementBehavior、IAttackBehavior
-- **产出**：
-  ```csharp
-  BehaviorStatus Execute(...);  // 替换 void
-  ```
-
-#### 4. （暂不实施）
-- **说明**：攻击触发逻辑由 DamageSystem 统一处理
-- **原有计划**：Trigger-based 攻击系统
-- **现状**：DamageSystem 已包含攻击触发，无需额外系统
-- **详见**：`Refactoring_Execution_Order_Analysis.md`
+- **前置条件**：无（可与 BehaviorStatus 并行）
 
 ---
 
@@ -325,28 +355,27 @@ Blackboard（基础设施，1天）
 
 ### 5.2 实施路线图
 
-#### **Phase 0：Blackboard 基础设施（Day 1）**
+#### **Phase 0：Blackboard 基础设施** ✅ 已完成
 ```
-- [ ] 实现 Blackboard 类（Get/Set/TryGet）
-- [ ] MonoBehaviour 扩展（GetBlackboard()）
-- [ ] 单元测试
-```
-
-#### **Phase 1：伤害系统重构（Day 2-10，详见伤害系统文档）**
-```
-Week 1:
-- Day 2-3: 伤害系统核心
-- Day 4-5: 规则系统 + DamageProcessor 整合
-
-Week 2:
-- Day 6-7: 碰撞重构
-- Day 8-9: 场景实现
-- Day 10: 缓冲
-
-产出：✅ 伤害系统完整可用，解决冲撞/撞墙场景
+- [x] 实现 Blackboard 类（Get/Set/TryGet）
+- [x] MonoBehaviour 扩展（GetBlackboard/TryGetBlackboard）
+- [x] SetOwner 机制（关联所有者）
 ```
 
-#### **Phase 2：行为系统重构（Day 11-20）**
+#### **Phase 1：伤害系统重构** ✅ 已完成
+```
+阶段 1-5 全部完成：
+- [x] 玩家碰撞攻击迁移
+- [x] 敌人近战攻击迁移（主动检测）
+- [x] 敌人陷阱攻击迁移（状态控制）
+- [x] 玩家范围攻击迁移（Stopped 事件）
+- [x] 远程攻击简化（跟随敌人移动）
+- [x] 旧系统完全清理
+
+产出：✅ 伤害系统完整可用，所有战斗伤害统一由 DamageSystem 处理
+```
+
+#### **Phase 2：行为系统重构（接下来实施）**
 ```
 Week 3:
 - Day 11-13: RuntimeState + BehaviorStatus（3 天）
@@ -359,6 +388,8 @@ Week 4:
 产出：✅ 行为系统松耦合、可组合
 ```
 
+**Phase 0-1 已完成**：伤害系统重构（约 6-10 天）
+**Phase 2 待实施**：行为系统重构（预计 10 天）
 **总时长**：20 天（4 周）
 
 #### **Phase 3：可选优化（Week 5+）**
@@ -373,19 +404,23 @@ Week 4:
 
 ## 六、预期收益
 
-### 技术收益
-- ✅ **可维护性提升 40%**：状态分离、逻辑解耦
-- ✅ **开发效率提升 30%**：行为复用、配置驱动
-- ✅ **扩展性提升 50%**：组合模式、规则驱动、修改器链
+### 技术收益（当前已实现）
+- ✅ **伤害系统解耦**：规则驱动，新增攻击模式无需修改代码
+- ✅ **状态管理统一**：Blackboard 统一状态查询，避免组件依赖
+- ✅ **事件驱动架构**：CollisionEvent/StoppedEvent/DamageEvent 分层清晰
+- ✅ **双重伤害消除**：规则层过滤，无需运行时缓存
 
-### 功能收益
-- ✅ **新增冲刺行为**：通过 Blackboard 轻松实现
-- ✅ **复合攻击模式**：通过规则配置组合
-- ✅ **行为复用**：原子行为可在多处使用
+### 功能收益（当前已实现）
+- ✅ **复合攻击模式**：通过 DamageProfile 配置组合多种攻击
+- ✅ **状态条件控制**：CanAttack、IsTrap 等状态精确控制伤害时机
+- ✅ **攻击范围动态读取**：支持从 PlayerData 动态读取攻击范围
+- ✅ **主动检测机制**：范围攻击不依赖被动触发，精确控制攻击时机
 
-### 性能收益
-- ✅ **集中更新优化**：BehaviorManager 统一管理
-- ✅ **状态查询优化**：Blackboard 字典查询
+### 待实现收益（行为系统重构后）
+- ⏳ **可维护性提升 40%**：RuntimeState 分离（待实施）
+- ⏳ **开发效率提升 30%**：行为复用、BehaviorStatus（待实施）
+- ⏳ **行为复用**：原子行为可在多处使用（待实施）
+- ⏳ **集中更新优化**：BehaviorManager 统一管理（可选）
 
 ---
 
@@ -416,10 +451,12 @@ Week 4:
 
 ---
 
-**文档版本**：v4.0  
+**文档版本**：v5.0  
 **创建日期**：2025-11-01  
+**最后更新**：2025-11-01  
 **维护者**：AI Assistant  
 **变更记录**：
+- v5.0: 伤害系统重构完成，更新当前状态，重新调整优先级和路线图
 - v4.0: 澄清概念混淆，移除不必要系统，明确先伤害后行为的执行顺序
 - v3.0: 精简内容，去除重复示例，添加优先级明确的优化建议
 - v2.0: 补充复合行为拆解、Blackboard 解决方案

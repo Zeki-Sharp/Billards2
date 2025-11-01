@@ -48,19 +48,6 @@ public class EnemyData : ScriptableObject
         #endif
     }
     
-    #region 向后兼容属性（从 Info 读取）
-    
-    /// <summary>
-    /// 敌人名称（向后兼容，从 Info 读取）
-    /// </summary>
-    public string enemyName => info?.name ?? "";
-    
-    /// <summary>
-    /// 敌人图标（向后兼容，从 Info 读取）
-    /// </summary>
-    public Sprite enemyIcon => info?.icon;
-    
-    #endregion
     
     [BoxGroup("共享配置")]
     [LabelText("球体数据")]

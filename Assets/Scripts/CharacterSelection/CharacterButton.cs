@@ -74,13 +74,13 @@ public class CharacterButton : MonoBehaviour
         // 设置角色名称
         if (characterNameText != null)
         {
-            characterNameText.text = characterData.playerName;
+            characterNameText.text = characterData.info.name;
         }
         
         // 设置角色图标
-        if (characterIconImage != null && characterData.playerIcon != null)
+        if (characterIconImage != null && characterData.info.icon != null)
         {
-            characterIconImage.sprite = characterData.playerIcon;
+            characterIconImage.sprite = characterData.info.icon;
             characterIconImage.enabled = true;
         }
         else if (characterIconImage != null)
@@ -91,9 +91,9 @@ public class CharacterButton : MonoBehaviour
         // 设置角色描述文本
         if (characterDescriptionText != null)
         {
-            if (!string.IsNullOrEmpty(characterData.characterDescription))
+            if (!string.IsNullOrEmpty(characterData.info.description))
             {
-                characterDescriptionText.text = characterData.characterDescription;
+                characterDescriptionText.text = characterData.info.description;
                 characterDescriptionText.enabled = true;
             }
             else
@@ -103,7 +103,7 @@ public class CharacterButton : MonoBehaviour
             }
         }
         
-        Debug.Log($"CharacterButton: 设置角色 {characterData.playerName}");
+        Debug.Log($"CharacterButton: 设置角色 {characterData.info.name}");
     }
     
     
@@ -156,7 +156,7 @@ public class CharacterButton : MonoBehaviour
             return;
         }
         
-        Debug.Log($"CharacterButton: 选择角色 {characterData.playerName}");
+        Debug.Log($"CharacterButton: 选择角色 {characterData.info.name}");
         
         // 通知选择管理器
         selectionManager.SelectCharacter(characterData);
@@ -202,8 +202,8 @@ public class CharacterButton : MonoBehaviour
         if (characterData != null)
         {
             Debug.Log($"角色信息:\n" +
-                     $"名称: {characterData.playerName}\n" +
-                     $"描述: {characterData.characterDescription}\n" +
+                     $"名称: {characterData.info.name}\n" +
+                     $"描述: {characterData.info.description}\n" +
                      $"攻击模式: {characterData.attackMode}\n" +
                      $"选中状态: {isSelected}");
         }

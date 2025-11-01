@@ -135,7 +135,7 @@ public class CharacterSelectionManager : MonoBehaviour
         
         if (showDebugInfo)
         {
-            Debug.Log($"CharacterSelectionManager: 创建角色按钮 - {characterData.playerName}");
+            Debug.Log($"CharacterSelectionManager: 创建角色按钮 - {characterData.info.name}");
         }
     }
     
@@ -193,7 +193,7 @@ public class CharacterSelectionManager : MonoBehaviour
         
         if (showDebugInfo)
         {
-            Debug.Log($"CharacterSelectionManager: 选择角色 - {selectedCharacter.playerName}");
+            Debug.Log($"CharacterSelectionManager: 选择角色 - {selectedCharacter.info.name}");
         }
     }
     
@@ -222,7 +222,7 @@ public class CharacterSelectionManager : MonoBehaviour
         {
             if (selectedCharacter != null)
             {
-                selectedCharacterText.text = $"已选择: {selectedCharacter.playerName}";
+                selectedCharacterText.text = $"已选择: {selectedCharacter.info.name}";
             }
             else
             {
@@ -250,7 +250,7 @@ public class CharacterSelectionManager : MonoBehaviour
         
         if (showDebugInfo)
         {
-            Debug.Log($"CharacterSelectionManager: 开始游戏 - {selectedCharacter.playerName}");
+            Debug.Log($"CharacterSelectionManager: 开始游戏 - {selectedCharacter.info.name}");
         }
         
         // 触发开始游戏事件
@@ -270,7 +270,7 @@ public class CharacterSelectionManager : MonoBehaviour
     {
         if (showDebugInfo)
         {
-            Debug.Log($"CharacterSelectionManager: 准备加载地图场景，选中角色: {selectedCharacter.playerName}");
+            Debug.Log($"CharacterSelectionManager: 准备加载地图场景，选中角色: {selectedCharacter.info.name}");
         }
         
         // ✅ 清除地图系统标记（确保MapSceneController识别为首次进入）
@@ -341,7 +341,7 @@ public class CharacterSelectionManager : MonoBehaviour
                  $"按钮容器: {(buttonContainer != null ? "已配置" : "未配置")}\n" +
                  $"开始游戏按钮: {(startGameButton != null ? "已配置" : "未配置")}\n" +
                  $"角色按钮数量: {characterButtons.Count}\n" +
-                 $"选中角色: {(selectedCharacter != null ? selectedCharacter.playerName : "无")}");
+                 $"选中角色: {(selectedCharacter != null ? selectedCharacter.info.name : "无")}");
     }
     
     #endregion

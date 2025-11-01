@@ -251,7 +251,7 @@ public class Enemy : MonoBehaviour
     /// </summary>
     public void SetEnemyData(EnemyData data, int level = 1)
     {
-        Debug.Log($"Enemy {name}: SetEnemyData 被调用，传入数据: {(data != null ? data.enemyName : "null")}, 等级: {level}");
+        Debug.Log($"Enemy {name}: SetEnemyData 被调用，传入数据: {(data != null ? data.info.name : "null")}, 等级: {level}");
         
         // 如果 enemyBehavior 还没有初始化，先尝试获取
         if (enemyBehavior == null)
