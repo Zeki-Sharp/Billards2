@@ -17,6 +17,9 @@ public class MeleeAttackBehavior : BaseAttackBehavior
             return;
         }
         
+        // ✅ 新伤害系统：不在 Telegraph 阶段设置 CanAttack
+        // 因为 Telegraph 是最后一个阶段，应该在 Attack 阶段设置
+        
         // 近战攻击：AttackRange 在预制体中已经是敌人子物体，保持预制体中的父子关系和位置
         // 只需要显示攻击预告，不改变任何位置
         attackRange.ShowTelegraph();
@@ -37,30 +40,34 @@ public class MeleeAttackBehavior : BaseAttackBehavior
         // 使用预告阶段保存的朝向
         attackRange.ApplyTelegraphedDirection();
         
-        Debug.Log($"MeleeAttackBehavior: 执行近战攻击");
+        // ✅ 新伤害系统：在 Attack 阶段设置 CanAttack 状态
+        var blackboard = enemyTransform.gameObject.GetBlackboard();
+        blackboard.Set("CanAttack", true);
         
         // 播放攻击特效
         PlayAttackEffect(attackEffect, enemyTransform.name);
         
-        // 获取攻击范围内的目标
+        // ✅ 新伤害系统：主动检测范围内的玩家并发布碰撞事件
         var targets = attackRange.GetTargetsInRange();
         
         foreach (var target in targets)
         {
             if (target.CompareTag("Player"))
             {
-                DealDamageToPlayer(target, levelConfig, enemyTransform);
+                // 使用 AttackRange 作为 source（Tag = EnemyAttackRange）
+                CollisionEvent evt = CollisionEvent.CreateFromTrigger(attackRange.gameObject, target.GetComponent<Collider2D>());
+                GameEventBus.PublishCollision(evt);
             }
         }
     }
     
     /// <summary>
-    /// 清理攻击状态
+    /// 清理攻击状态（Move 阶段开始时调用）
     /// </summary>
     public override void CleanupAttack(Transform enemyTransform, AttackRange attackRange)
     {
-        // 近战攻击不需要清理，AttackRange 始终作为敌人子物体，保持预制体中的原始配置
-        // 不做任何操作
-        Debug.Log($"MeleeAttackBehavior: 近战攻击无需清理");
+        // ✅ 新伤害系统：在 Move 阶段清理 CanAttack 状态
+        var blackboard = enemyTransform.gameObject.GetBlackboard();
+        blackboard.Set("CanAttack", false);
     }
 }

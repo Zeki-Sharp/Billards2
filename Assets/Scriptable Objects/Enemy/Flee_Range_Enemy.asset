@@ -23,7 +23,6 @@ MonoBehaviour:
   enemyContainerPrefab: {fileID: 7420645124294310907, guid: 50bfb40ad89c21846ada038ab29a9551, type: 3}
   enemyLevels:
   - level: 1
-    isActive: 1
     enemyImage: {fileID: 0}
     maxHealth: 40
     damage: 10
@@ -68,7 +67,6 @@ MonoBehaviour:
       minDistance: 1
       triggerDistance: 3
   - level: 2
-    isActive: 1
     enemyImage: {fileID: 0}
     maxHealth: 60
     damage: 10
@@ -113,49 +111,4 @@ MonoBehaviour:
       minDistance: 1
       triggerDistance: 3
   ballData: {fileID: 11400000, guid: d1c30c129175ecf48a42f1070d15a627, type: 2}
-  maxHealth: 40
-  damage: 10
-  attackCooldown: 1
-  moveSpeed: 3
-  attackRange: 3
-  attackType: 1
-  rangedConfig:
-    detectionRange: 8
-    projectionDistance: 0
-    useRandomOffset: 1
-    randomOffsetRange: 3
-    showParabolicIndicator: 1
-  thornConfig:
-    activeRounds: 1
-    cooldownRounds: 0
-    damageInterval: 0.5
-    showCooldownState: 1
-    activeColor: {r: 1, g: 0.2, b: 0.2, a: 0.8}
-    cooldownColor: {r: 0.3, g: 0.3, b: 0.3, a: 0.5}
-  enableAI: 1
-  movementType: 1
-  followConfig:
-    moveSpeed: 2
-    moveDistance: 3
-    minDistance: 1
-  fleeConfig:
-    moveSpeed: 4
-    moveDistance: 2
-    triggerDistance: 4.5
-    approachWhenFar: 1
-    approachDistance: 8
-    approachSpeed: 3
-    approachMoveDistance: 2
-  intervalConfig:
-    movementMode: 0
-    idleRounds: 2
-    moveRounds: 3
-    startWithIdle: 1
-    moveSpeed: 2
-    moveDistance: 3
-    minDistance: 1
-    triggerDistance: 3
-  spawnWeight: 1
-  spawnCost: 1
-  isBoss: 0
-  experienceValue: 10
+  damageProfile: {fileID: 11400000, guid: 7af91d7f47a4d5a4bbe2003bd670c84e, type: 2}

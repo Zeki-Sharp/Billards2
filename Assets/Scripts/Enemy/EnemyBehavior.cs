@@ -87,6 +87,17 @@ public class EnemyBehavior : MonoBehaviour, IDamageable
         // ✅ 新伤害系统：订阅伤害事件
         GameEventBus.OnDamage += OnDamageReceived;
         
+        // ✅ 新伤害系统：注册到 DamageSystem
+        if (enemyData != null && enemyData.damageProfile != null)
+        {
+            DamageSystem.Instance.RegisterEntity(gameObject, enemyData.damageProfile);
+            Debug.Log($"[EnemyBehavior] {name} 注册到 DamageSystem，Profile: {enemyData.damageProfile.profileName}");
+        }
+        else
+        {
+            Debug.LogWarning($"[EnemyBehavior] {name} 未配置 DamageProfile，无法主动攻击");
+        }
+        
         Debug.Log($"EnemyBehavior {name}: Start 完成 (订阅伤害事件)");
     }
     
@@ -97,6 +108,12 @@ public class EnemyBehavior : MonoBehaviour, IDamageable
         
         // ✅ 新伤害系统：取消订阅
         GameEventBus.OnDamage -= OnDamageReceived;
+        
+        // ✅ 新伤害系统：从 DamageSystem 注销
+        if (DamageSystem.HasInstance)
+        {
+            DamageSystem.Instance.UnregisterEntity(gameObject);
+        }
     }
     
     void Update()

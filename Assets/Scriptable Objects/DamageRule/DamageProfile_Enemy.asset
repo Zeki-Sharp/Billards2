@@ -16,3 +16,4 @@ MonoBehaviour:
   description: "\u654C\u4EBA\u7684\u57FA\u7840\u78B0\u649E\u653B\u51FB"
   rules:
   - {fileID: 11400000, guid: d175e358c4fc28347bd062174b5d7dd1, type: 2}
+  - {fileID: 11400000, guid: 876123498e8c7364ca89d9b153243ba9, type: 2}

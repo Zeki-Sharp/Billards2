@@ -25,6 +25,12 @@ public class BlackboardComponent : MonoBehaviour
         // 获取或创建 Blackboard
         blackboard = this.GetBlackboard();
         
+        // 设置 Owner 用于调试日志
+        if (blackboard != null)
+        {
+            blackboard.SetOwner(gameObject);
+        }
+        
         if (showDebugInfo)
         {
             Debug.Log($"[BlackboardComponent] {gameObject.name} Blackboard 初始化");

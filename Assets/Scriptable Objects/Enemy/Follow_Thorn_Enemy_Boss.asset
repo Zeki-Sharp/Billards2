@@ -12,53 +12,59 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 680835e44d1251848acb0e09b9c418ff, type: 3}
   m_Name: Follow_Thorn_Enemy_Boss
   m_EditorClassIdentifier: 
-  enemyName: Follow_Thorn_Enemy
+  info:
+    name: 
+    acronym: 
+    description: 
+    icon: {fileID: 0}
+    color: {r: 1, g: 1, b: 1, a: 1}
+    enemyType: 
+    threatLevel: "\u4F4E"
   enemyContainerPrefab: {fileID: 7420645124294310907, guid: 97c2d30d8e601d74594ba4569744f695, type: 3}
-  enemyIcon: {fileID: 0}
-  ballData: {fileID: 11400000, guid: d1c30c129175ecf48a42f1070d15a627, type: 2}
-  maxHealth: 200
-  damage: 20
-  attackCooldown: 1
-  moveSpeed: 3
-  attackRange: 3
-  attackType: 2
-  rangedConfig:
-    detectionRange: 8
-    projectionDistance: 2
-    useRandomOffset: 1
-    randomOffsetRange: 1
-    showParabolicIndicator: 1
-  thornConfig:
-    activeRounds: 1
-    cooldownRounds: 1
-    damageInterval: 0.5
-    showCooldownState: 1
-    activeColor: {r: 0.6301887, g: 0.15100746, b: 0.15100746, a: 0.8}
-    cooldownColor: {r: 0.3, g: 0.3, b: 0.3, a: 0.5}
-  enableAI: 1
-  movementType: 2
-  followConfig:
-    moveSpeed: 3
-    moveDistance: 1.5
-    minDistance: 1.5
-  fleeConfig:
-    moveSpeed: 3
-    moveDistance: 2
-    triggerDistance: 5
-    approachWhenFar: 0
-    approachDistance: 8
-    approachSpeed: 3
-    approachMoveDistance: 3
-  intervalConfig:
-    movementMode: 0
-    idleRounds: 1
-    moveRounds: 1
-    startWithIdle: 0
+  enemyLevels:
+  - level: 1
+    enemyImage: {fileID: 0}
+    maxHealth: 100
+    damage: 10
     moveSpeed: 2
-    moveDistance: 2
-    minDistance: 1.5
-    triggerDistance: 3
-  spawnWeight: 1
-  spawnCost: 1
-  isBoss: 0
-  experienceValue: 10
+    attackCooldown: 1
+    attackRange: 3
+    attackType: 0
+    rangedConfig:
+      detectionRange: 8
+      projectionDistance: 2
+      useRandomOffset: 1
+      randomOffsetRange: 1
+      showParabolicIndicator: 1
+    thornConfig:
+      activeRounds: 1
+      cooldownRounds: 0
+      damageInterval: 0.5
+      showCooldownState: 1
+      activeColor: {r: 1, g: 0.2, b: 0.2, a: 0.8}
+      cooldownColor: {r: 0.3, g: 0.3, b: 0.3, a: 0.5}
+    enableAI: 1
+    movementType: 0
+    followConfig:
+      moveSpeed: 2
+      moveDistance: 3
+      minDistance: 1
+    fleeConfig:
+      moveSpeed: 2
+      moveDistance: 4
+      triggerDistance: 3
+      approachWhenFar: 0
+      approachDistance: 8
+      approachSpeed: 3
+      approachMoveDistance: 3
+    intervalConfig:
+      movementMode: 0
+      idleRounds: 2
+      moveRounds: 3
+      startWithIdle: 1
+      moveSpeed: 2
+      moveDistance: 3
+      minDistance: 1
+      triggerDistance: 3
+  ballData: {fileID: 11400000, guid: d1c30c129175ecf48a42f1070d15a627, type: 2}
+  damageProfile: {fileID: 11400000, guid: 7af91d7f47a4d5a4bbe2003bd670c84e, type: 2}

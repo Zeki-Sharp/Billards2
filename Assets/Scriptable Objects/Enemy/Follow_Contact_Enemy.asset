@@ -111,3 +111,4 @@ MonoBehaviour:
       minDistance: 1
       triggerDistance: 3
   ballData: {fileID: 11400000, guid: d1c30c129175ecf48a42f1070d15a627, type: 2}
+  damageProfile: {fileID: 11400000, guid: 7af91d7f47a4d5a4bbe2003bd670c84e, type: 2}

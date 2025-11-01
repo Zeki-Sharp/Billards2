@@ -46,7 +46,7 @@ public struct CollisionEvent
     public float CollisionTime;         // 碰撞时间戳
     
     /// <summary>
-    /// 创建碰撞事件
+    /// 创建碰撞事件（物理碰撞）
     /// </summary>
     public static CollisionEvent Create(GameObject source, Collision2D collision)
     {
@@ -58,6 +58,27 @@ public struct CollisionEvent
             Target = collision.gameObject,
             ContactPoint = collision.contacts.Length > 0 ? collision.contacts[0].point : Vector2.zero,
             ContactNormal = collision.contacts.Length > 0 ? collision.contacts[0].normal : Vector2.zero,
+            Velocity = rb != null ? rb.linearVelocity.magnitude : 0f,
+            CollisionTime = Time.time
+        };
+    }
+    
+    /// <summary>
+    /// 从 Trigger 碰撞创建碰撞事件
+    /// 用于 OnTriggerEnter2D 的场景（如 AttackRange）
+    /// </summary>
+    public static CollisionEvent CreateFromTrigger(GameObject source, Collider2D targetCollider)
+    {
+        Rigidbody2D rb = source.GetComponent<Rigidbody2D>();
+        Vector2 sourcePos = source.transform.position;
+        Vector2 targetPos = targetCollider.transform.position;
+        
+        return new CollisionEvent
+        {
+            Source = source,
+            Target = targetCollider.gameObject,
+            ContactPoint = targetCollider.ClosestPoint(sourcePos),
+            ContactNormal = (sourcePos - targetPos).normalized,
             Velocity = rb != null ? rb.linearVelocity.magnitude : 0f,
             CollisionTime = Time.time
         };

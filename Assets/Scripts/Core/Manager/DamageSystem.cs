@@ -121,14 +121,33 @@ public class DamageSystem : SingletonManager<DamageSystem>
     }
     
     /// <summary>
-    /// 获取实体的伤害配置
+    /// 获取实体的伤害配置（支持向上查找父级）
     /// </summary>
     private DamageProfile GetDamageProfile(GameObject entity)
     {
         if (entity == null) return null;
         
-        entityProfiles.TryGetValue(entity, out DamageProfile profile);
-        return profile;
+        // 先尝试从当前对象获取
+        if (entityProfiles.TryGetValue(entity, out DamageProfile profile))
+        {
+            Debug.Log($"[DamageSystem] 在 {entity.name} 找到伤害配置: {profile.profileName}");
+            return profile;
+        }
+        
+        // 如果没有，尝试从父级获取
+        Transform current = entity.transform.parent;
+        while (current != null)
+        {
+            if (entityProfiles.TryGetValue(current.gameObject, out profile))
+            {
+                Debug.Log($"[DamageSystem] 在父级 {current.name} 找到伤害配置: {profile.profileName}");
+                return profile;
+            }
+            current = current.parent;
+        }
+        
+        Debug.LogWarning($"[DamageSystem] ⚠️ {entity.name} 及其所有父级都未注册伤害配置");
+        return null;
     }
     
     #endregion
@@ -140,24 +159,19 @@ public class DamageSystem : SingletonManager<DamageSystem>
     /// </summary>
     private void HandleCollisionEvent(CollisionEvent evt)
     {
-        if (!systemEnabled) return;
+        if (!systemEnabled)
+        {
+            Debug.LogWarning($"[DamageSystem] 系统未启用，跳过碰撞事件");
+            return;
+        }
         
         totalCollisions++;
-        
-        if (showRuleMatching)
-        {
-            Debug.Log($"[DamageSystem] 碰撞事件: {evt.Source.name} → {evt.Target.name}, 速度: {evt.Velocity:F2}");
-        }
         
         // 获取 source 的伤害配置
         DamageProfile profile = GetDamageProfile(evt.Source);
         
         if (profile == null)
         {
-            if (showRuleMatching)
-            {
-                Debug.Log($"[DamageSystem] {evt.Source.name} 无伤害配置，跳过");
-            }
             return;
         }
         
@@ -190,10 +204,6 @@ public class DamageSystem : SingletonManager<DamageSystem>
         {
             if (!target.CompareTag(rule.targetTag))
             {
-                if (showRuleMatching)
-                {
-                    Debug.Log($"[DamageSystem] 规则 '{rule.ruleName}' 不匹配：目标标签 {target.tag} != {rule.targetTag}");
-                }
                 return false;
             }
         }
@@ -203,10 +213,6 @@ public class DamageSystem : SingletonManager<DamageSystem>
         {
             if (!source.CompareTag(rule.sourceTag))
             {
-                if (showRuleMatching)
-                {
-                    Debug.Log($"[DamageSystem] 规则 '{rule.ruleName}' 不匹配：来源标签 {source.tag} != {rule.sourceTag}");
-                }
                 return false;
             }
         }
@@ -214,15 +220,18 @@ public class DamageSystem : SingletonManager<DamageSystem>
         // 检查攻击者状态要求
         if (!string.IsNullOrEmpty(rule.requireSourceState))
         {
-            Blackboard blackboard = source.GetBlackboard();
+            // 尝试获取 Blackboard，如果没有则向上查找父级
+            Blackboard blackboard = GetBlackboard(source);
+            
+            if (blackboard == null)
+            {
+                return false;
+            }
+            
             bool stateActive = blackboard.Get<bool>(rule.requireSourceState);
             
             if (!stateActive)
             {
-                if (showRuleMatching)
-                {
-                    Debug.Log($"[DamageSystem] 规则 '{rule.ruleName}' 不匹配：需要状态 '{rule.requireSourceState}'");
-                }
                 return false;
             }
         }
@@ -230,7 +239,18 @@ public class DamageSystem : SingletonManager<DamageSystem>
         // 检查目标状态要求
         if (!string.IsNullOrEmpty(rule.requireTargetState))
         {
-            Blackboard blackboard = target.GetBlackboard();
+            // 尝试获取 Blackboard，如果没有则向上查找父级
+            Blackboard blackboard = GetBlackboard(target);
+            
+            if (blackboard == null)
+            {
+                if (showRuleMatching)
+                {
+                    Debug.Log($"[DamageSystem] 规则 '{rule.ruleName}' 不匹配：{target.name} 及其父级无 Blackboard");
+                }
+                return false;
+            }
+            
             bool stateActive = blackboard.Get<bool>(rule.requireTargetState);
             
             if (!stateActive)
@@ -262,6 +282,37 @@ public class DamageSystem : SingletonManager<DamageSystem>
         }
         
         return true;
+    }
+    
+    /// <summary>
+    /// 获取 Blackboard，如果当前对象没有则向上查找父级
+    /// </summary>
+    private Blackboard GetBlackboard(GameObject obj)
+    {
+        if (obj == null) return null;
+        
+        // 使用 TryGetBlackboard，不自动创建
+        Blackboard blackboard = obj.TryGetBlackboard();
+        
+        if (blackboard != null)
+        {
+            return blackboard;
+        }
+        
+        // 如果没有，向上查找父级
+        Transform current = obj.transform.parent;
+        while (current != null)
+        {
+            blackboard = current.gameObject.TryGetBlackboard();
+            if (blackboard != null)
+            {
+                return blackboard;
+            }
+            
+            current = current.parent;
+        }
+        
+        return null;
     }
     
     #endregion

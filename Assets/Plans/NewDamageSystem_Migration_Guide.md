@@ -60,42 +60,63 @@
 
 ---
 
-### **阶段 2：敌人近战攻击迁移（2-3 天）**⭐ 核心
+### **阶段 2：敌人近战攻击迁移（2-3 天）**✅ 已完成
 
-**目标**：敌人近战攻击使用新系统
+**目标**：敌人近战攻击（范围攻击）使用新系统
 
-#### **Step 2.1：创建敌人规则配置（Unity）**
-- [ ] 创建 `DamageRule_EnemyMeleeAttack`
+**关键设计**：
+- ✅ 通过 `EnemyAttackRange` Tag 区分攻击来源（AttackRange vs 敌人主体）
+- ✅ **主动检测**：在 Attack 阶段调用 `GetTargetsInRange()` 主动检测玩家
+- ✅ 复用 CollisionEvent 机制（新增 CreateFromTrigger 方法）
+- ✅ 通过 Blackboard 的 `CanAttack` 状态控制攻击时机
+- ✅ BlackboardExtensions 添加 `TryGetBlackboard()`，避免自动创建
+
+#### **Step 2.1：Unity 配置**✅ 已完成
+- [x] 给所有敌人的 `AttackArea` 添加 Tag：`EnemyAttackRange`
+- [x] 创建 `DamageRule_EnemyMeleeAttack`
   - Trigger Type: Collision
-  - Source Tag: Enemy
+  - Source Tag: **EnemyAttackRange**
   - Target Tag: Player
-  - Require Source State: CanAttack  ← 关键
+  - Require Source State: CanAttack
   - Base Damage: 10
+- [x] 添加到 `DamageProfile_Enemy`
+- [x] 给 `EnemyData` 配置 `damageProfile`
 
-- [ ] 创建 `DamageProfile_Enemy`
-  - 添加规则到列表
+#### **Step 2.2：添加 CollisionEvent.CreateFromTrigger（代码）**✅ 已完成
+- [x] 在 `DamageSystemEvents.cs` 添加静态方法
+- [x] 处理范围检测转换为 CollisionEvent
 
-#### **Step 2.2：修改 EnemyData（代码）**
-- [ ] 添加 `DamageProfile damageProfile` 字段
-- [ ] 在 Inspector 中配置 DamageProfile
+#### **Step 2.3：修改 DamageSystem（代码）**✅ 已完成
+- [x] 添加 `GetBlackboard()` 辅助方法，使用 `TryGetBlackboard()` 避免自动创建
+- [x] 支持向上查找父级 Blackboard（循环查找所有父级）
+- [x] 清理冗余日志
 
-#### **Step 2.3：修改 EnemyBehavior（代码）**
-- [ ] 添加 OnCollisionEnter2D（发布碰撞事件）
-- [ ] 在 Start() 注册到 DamageSystem
+#### **Step 2.4：修改 BlackboardExtensions（代码）**✅ 已完成
+- [x] 添加 `TryGetBlackboard()` 方法（不自动创建）
+- [x] `GetBlackboard()` 创建时调用 `SetOwner()`
 
-#### **Step 2.4：修改 MeleeAttackBehavior（代码）**
-- [ ] 在 ExecuteAttack() 开始时设置 `CanAttack = true`
-- [ ] 延迟清理：攻击结束后设置 `CanAttack = false`
-- [ ] 移除旧的 `PublishAttack()` 调用
+#### **Step 2.5：修改 MeleeAttackBehavior（代码）**✅ 已完成
+- [x] 在 `ExecuteAttack()` 设置 `CanAttack = true`
+- [x] 主动调用 `GetTargetsInRange()` 检测玩家
+- [x] 向检测到的玩家发布 `CollisionEvent`
+- [x] 在 `CleanupAttack()` 清理 `CanAttack = false`
 
-#### **Step 2.5：处理攻击范围碰撞**
-- [ ] 确认 AttackRange 子对象能触发碰撞
-- [ ] 或在 AttackRange 中转发碰撞事件给父级
+#### **Step 2.6：测试和验证**✅ 已完成
+- [x] Attack 阶段伤害生效
+- [x] Telegraph 阶段不造成伤害（只是预告）
+- [x] 没有双重伤害
+- [x] 特效正常触发
 
 **验收标准**：
-- ✅ 敌人攻击阶段碰到玩家 → 玩家受伤
-- ✅ 敌人移动阶段碰到玩家 → 玩家不受伤
-- ✅ 没有双重伤害
+- ✅ 敌人 Attack 阶段，玩家在范围内 → 玩家受伤
+- ✅ 敌人 Telegraph 阶段，玩家在范围内 → 玩家不受伤（只是预告）
+- ✅ 没有双重伤害（旧系统已禁用）
+- ✅ 特效正常触发（攻击、受击、全局）
+
+**关键设计决策**：
+- ❌ 不使用 OnTriggerEnter2D 被动检测（会在 Telegraph 阶段误触发）
+- ✅ 使用 GetTargetsInRange() 主动检测（精确控制在 Attack 阶段）
+- ✅ BlackboardExtensions.TryGetBlackboard() 避免自动创建导致的 Blackboard 冲突
 
 ---
 
@@ -124,13 +145,18 @@
 
 ---
 
-### **阶段 4：玩家范围攻击迁移（1-2 天）**
+### **阶段 4：玩家范围攻击迁移（1-2 天）**⚠️ 可选延后
 
 **目标**：球停止后的范围攻击使用新系统
 
+**重要说明**：
+- 需要新增 `Stopped` 触发类型（当前系统仅支持 `Collision`）
+- 可以延后实现，不影响核心功能迁移
+- 建议在阶段 1-3 完成后评估是否必要
+
 #### **Step 4.1：创建范围伤害规则（Unity）**
 - [ ] 创建 `DamageRule_PlayerAreaAttack`
-  - Trigger Type: Stopped  ← 新触发类型
+  - Trigger Type: Stopped  ← 新触发类型，需要先实现
   - Source Tag: Player
   - Target Tag: Enemy
   - Base Damage: 15
@@ -138,17 +164,20 @@
 - [ ] 添加规则到 `DamageProfile_Player`
 
 #### **Step 4.2：实现 Stopped 触发类型（代码）**
-- [ ] 在 DamageSystem 添加 OnBallStopped 事件监听
-- [ ] 创建 StoppedEvent 数据结构
-- [ ] 实现规则匹配逻辑
+- [ ] 在 `DamageSystemEvents.cs` 添加 `StoppedEvent` 数据结构
+- [ ] 在 `DamageRuleConfig.cs` 确认 `DamageTriggerType` 包含 `Stopped`
+- [ ] 在 `DamageSystem.cs` 添加 `OnBallStopped` 事件监听
+- [ ] 实现规则匹配逻辑（类似 `HandleCollisionEvent`）
 
-#### **Step 4.3：禁用旧的范围攻击（代码）**
-- [ ] 在 `PlayerAttackManager.HandleAreaAttack()` 禁用
-- [ ] 测试确认没有双重伤害
+#### **Step 4.3：发布 Stopped 事件（代码）**
+- [ ] 在 `PlayerBehavior` 或 `PlayerStateMachine` 监听球停止事件
+- [ ] 球停止时发布 `StoppedEvent`
+- [ ] 禁用旧的范围攻击逻辑
 
 **验收标准**：
 - ✅ 球停止后范围内敌人受伤
 - ✅ 球移动中停止无伤害（如果需要状态控制）
+- ✅ 没有双重伤害（旧系统已禁用）
 
 ---
 
@@ -187,10 +216,15 @@
     ↓
 阶段 3（敌人陷阱）→ 并行于阶段 2，独立状态
     ↓
-阶段 4（玩家范围）→ 需要新的触发类型，独立实现
+阶段 4（玩家范围）→ 可选，需要新的触发类型（Stopped），可延后实现
     ↓
 阶段 5（清理优化）→ 所有功能迁移完成后
 ```
+
+**重要说明**：
+- ✅ 阶段 1-3 只需 Collision 触发类型（Trigger 也使用 Collision 机制）
+- ⚠️ 阶段 4 需要新增 Stopped 触发类型，可以延后实现
+- ✅ 不需要实现 Manual/Interval 等复杂触发类型
 
 ---
 
@@ -226,32 +260,34 @@
 - 使用全局阶段状态（`InPlayerPhase` / `InEnemyPhase`）
 - 在 GameFlowController 中统一管理
 
-### 4. 攻击范围的碰撞
+### 4. 攻击范围的碰撞（Trigger）
 
-**问题**：攻击范围通常是子对象，碰撞来源可能不正确
+**问题**：AttackRange 使用 Trigger Collider（OnTriggerEnter2D），不是物理碰撞
 
-**解决**：
-- 在 AttackRange 中获取父级 EnemyBehavior
-- 使用父级作为 CollisionEvent 的 source
-- 或者在 EnemyBehavior 的 OnCollisionEnter2D 中统一处理
+**解决方案**：
+- AttackRange 的 `OnTriggerEnter2D` 获取父级 `EnemyBehavior` 的 GameObject
+- 使用父级作为 `CollisionEvent` 的 source，触发对象作为 target
+- 复用现有的 `CollisionEvent` 机制（不区分 Trigger 和 Collision）
+- 通过 Blackboard 状态（`CanAttack`）控制攻击时机
 
 ---
 
 ## 📊 迁移时间估算
 
-| 阶段 | 工作量 | 依赖 | 风险 |
-|------|--------|------|------|
-| **阶段 1** | 1-2 天 | 无 | 低 |
-| **阶段 2** | 2-3 天 | 阶段 1 | 中 |
-| **阶段 3** | 1 天 | 阶段 2 | 低 |
-| **阶段 4** | 1-2 天 | 阶段 1 | 中 |
-| **阶段 5** | 1-2 天 | 全部 | 低 |
-| **总计** | **6-10 天** | - | - |
+| 阶段 | 工作量 | 依赖 | 风险 | 优先级 |
+|------|--------|------|------|--------|
+| **阶段 1** | 1-2 天 | 无 | 低 | ✅ 已完成 |
+| **阶段 2** | 2-3 天 | 阶段 1 | 中 | 🔥 核心 |
+| **阶段 3** | 1 天 | 阶段 2 | 低 | ⚡ 高 |
+| **阶段 4** | 1-2 天 | 阶段 1 | 中 | ⚠️ 可选 |
+| **阶段 5** | 1-2 天 | 全部 | 低 | ✅ 必须 |
+| **总计（核心）** | **5-8 天** | - | - | - |
+| **总计（包含可选）** | **6-10 天** | - | - | - |
 
 **建议分配**：
-- Week 1：阶段 1-2（玩家和敌人碰撞攻击）
-- Week 2：阶段 3-4（陷阱和范围攻击）
-- Week 3：阶段 5 + 行为系统重构
+- **Week 1**：阶段 1（已完成）+ 阶段 2（敌人近战攻击）⭐
+- **Week 2**：阶段 3（陷阱攻击）+ 阶段 5（清理优化）
+- **Week 3**：阶段 4（可选，范围攻击）+ 行为系统重构
 
 ---
 
@@ -264,10 +300,11 @@
 - [ ] 测试：Moving 状态攻击生效，其他状态无效
 
 ### 阶段 2 完成标准
-- [ ] 敌人配置了 DamageProfile
-- [ ] MeleeAttackBehavior 设置 CanAttack 状态
-- [ ] EnemyBehavior 发布碰撞事件
-- [ ] 测试：攻击阶段伤害生效，其他阶段无效
+- [x] 敌人配置了 DamageProfile
+- [x] MeleeAttackBehavior 在 Attack 阶段主动检测并发布 CollisionEvent
+- [x] MeleeAttackBehavior 设置 CanAttack 状态（攻击时 true，Move 阶段清理）
+- [x] 旧的 DealDamageToPlayer 调用已禁用
+- [x] 测试：Attack 阶段玩家受伤，Telegraph 阶段无效
 
 ### 阶段 3 完成标准
 - [ ] 陷阱规则已配置
@@ -357,5 +394,23 @@ DamageSystem.Instance.showRuleMatching = true;
 **创建日期**：2025-11-01  
 **维护者**：AI Assistant
 
-**下一步**：开始执行阶段 1（玩家碰撞攻击迁移）
+**下一步**：开始执行阶段 3（敌人陷阱攻击迁移）⭐
+
+---
+
+## 📝 更新日志
+
+### v1.1 (2025-11-01)
+- ✅ 更新阶段 2：明确 AttackRange 使用 Trigger Collider
+- ✅ 说明复用现有 CollisionEvent 机制（不区分 Trigger 和 Collision）
+- ✅ 更新阶段 4：标记为可选，需要新增 Stopped 触发类型
+- ✅ 更新依赖关系：说明不需要实现 Manual/Interval 等复杂触发类型
+- ✅ 优化时间估算：区分核心功能和可选功能
+
+### v1.2 (2025-11-01)
+- ✅ 阶段 2 完成：敌人近战攻击迁移成功
+- ✅ 关键修复：从 OnTriggerEnter2D 被动检测改为主动检测
+- ✅ 避免 Telegraph 阶段误触发伤害
+- ✅ 修复 BlackboardExtensions 自动创建导致的 Blackboard 冲突
+- ✅ 删除 AttackRangeTrigger.cs（不再需要）
 

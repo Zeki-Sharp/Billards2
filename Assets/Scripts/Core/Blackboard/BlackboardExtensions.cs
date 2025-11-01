@@ -41,9 +41,23 @@ public static class BlackboardExtensions
         if (!blackboards.TryGetValue(instanceId, out Blackboard blackboard))
         {
             blackboard = new Blackboard();
+            blackboard.SetOwner(go);  // 设置 Owner 用于调试
             blackboards[instanceId] = blackboard;
         }
         
+        return blackboard;
+    }
+    
+    /// <summary>
+    /// 尝试获取 GameObject 的 Blackboard 实例
+    /// 如果不存在则返回 null（不自动创建）
+    /// </summary>
+    public static Blackboard TryGetBlackboard(this GameObject go)
+    {
+        if (go == null) return null;
+        
+        int instanceId = go.GetInstanceID();
+        blackboards.TryGetValue(instanceId, out Blackboard blackboard);
         return blackboard;
     }
     

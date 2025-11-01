@@ -68,6 +68,11 @@ public class EnemyData : ScriptableObject
     [Required]
     public BallData ballData;
     
+    [BoxGroup("新伤害系统配置")]
+    [LabelText("伤害配置")]
+    [Tooltip("敌人的伤害规则配置（新伤害系统）")]
+    public DamageProfile damageProfile;
+    
     #region 多等级配置管理
     
     /// <summary>

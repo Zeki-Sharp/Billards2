@@ -27,6 +27,16 @@ public class Blackboard
     
     #region 基础操作
     
+    private GameObject gameObject; // 添加引用用于日志
+    
+    /// <summary>
+    /// 设置所属的 GameObject（用于调试日志）
+    /// </summary>
+    public void SetOwner(GameObject owner)
+    {
+        this.gameObject = owner;
+    }
+    
     /// <summary>
     /// 设置键值
     /// </summary>
@@ -37,6 +47,7 @@ public class Blackboard
             Debug.LogWarning("[Blackboard] 尝试设置空键");
             return;
         }
+        
         
         data[key] = value;
     }

@@ -10,6 +10,7 @@ TagManager:
   - Range
   - Trap
   - Item
+  - EnemyAttackRange
   layers:
   - Default
   - TransparentFX
