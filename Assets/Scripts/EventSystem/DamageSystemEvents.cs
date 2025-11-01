@@ -87,6 +87,33 @@ public struct CollisionEvent
 
 #endregion
 
+#region 停止事件
+
+/// <summary>
+/// 停止事件 - 用于球停止后的范围攻击
+/// </summary>
+public struct StoppedEvent
+{
+    public GameObject Source;           // 停止的对象（玩家）
+    public Vector2 StoppedPosition;     // 停止位置
+    public float StoppedTime;           // 停止时间戳
+    
+    /// <summary>
+    /// 创建停止事件
+    /// </summary>
+    public static StoppedEvent Create(GameObject source, Vector2 position)
+    {
+        return new StoppedEvent
+        {
+            Source = source,
+            StoppedPosition = position,
+            StoppedTime = Time.time
+        };
+    }
+}
+
+#endregion
+
 #region 伤害事件
 
 /// <summary>

@@ -145,7 +145,7 @@
 
 ---
 
-### **阶段 4：玩家范围攻击迁移（1-2 天）**⚠️ 可选延后
+### **阶段 4：玩家范围攻击迁移（1-2 天）**✅ 已完成
 
 **目标**：球停止后的范围攻击使用新系统
 
@@ -154,30 +154,37 @@
 - 可以延后实现，不影响核心功能迁移
 - 建议在阶段 1-3 完成后评估是否必要
 
-#### **Step 4.1：创建范围伤害规则（Unity）**
-- [ ] 创建 `DamageRule_PlayerAreaAttack`
-  - Trigger Type: Stopped  ← 新触发类型，需要先实现
+#### **Step 4.1：创建范围伤害规则（Unity）**✅ 已完成
+- [x] 创建 `DamageRule_PlayerAreaAttack`
+  - Trigger Type: Stopped
   - Source Tag: Player
   - Target Tag: Enemy
+  - Attack Range: 0（从 PlayerData.areaRadius 读取）
   - Base Damage: 15
 
-- [ ] 添加规则到 `DamageProfile_Player`
+- [x] 添加规则到 `DamageProfile_Player`
 
-#### **Step 4.2：实现 Stopped 触发类型（代码）**
-- [ ] 在 `DamageSystemEvents.cs` 添加 `StoppedEvent` 数据结构
-- [ ] 在 `DamageRuleConfig.cs` 确认 `DamageTriggerType` 包含 `Stopped`
-- [ ] 在 `DamageSystem.cs` 添加 `OnBallStopped` 事件监听
-- [ ] 实现规则匹配逻辑（类似 `HandleCollisionEvent`）
+#### **Step 4.2：实现 Stopped 触发类型（代码）**✅ 已完成
+- [x] 在 `DamageSystemEvents.cs` 添加 `StoppedEvent` 数据结构
+- [x] 在 `GameEventBus.cs` 添加 `OnStopped` 事件和 `PublishStopped` 方法
+- [x] 在 `DamageSystem.cs` 订阅 `OnStopped` 事件
+- [x] 实现 `HandleStoppedEvent` 和 `ProcessStoppedDamage` 方法
+- [x] 在 `DamageRuleConfig.cs` 添加 `attackRange` 字段
+- [x] 在 `PlayerBehavior.cs` 添加 `PlayerData` 公共访问器
 
-#### **Step 4.3：发布 Stopped 事件（代码）**
-- [ ] 在 `PlayerBehavior` 或 `PlayerStateMachine` 监听球停止事件
-- [ ] 球停止时发布 `StoppedEvent`
-- [ ] 禁用旧的范围攻击逻辑
+#### **Step 4.3：发布 Stopped 事件（代码）**✅ 已完成
+- [x] 在 `PlayerAttackManager.ProcessBallStopped` 发布 `StoppedEvent`
+- [x] 旧的 `HandleAreaAttack` 暂时保留（测试后可删除）
+
+#### **Step 4.4：修复双重伤害问题（代码）**✅ 已完成
+- [x] 禁用 `EnemyBehavior.OnDamageProcessed`（旧系统事件处理）
+- [x] 清理冗余日志
 
 **验收标准**：
 - ✅ 球停止后范围内敌人受伤
-- ✅ 球移动中停止无伤害（如果需要状态控制）
+- ✅ 攻击范围从 PlayerData.areaRadius 动态读取
 - ✅ 没有双重伤害（旧系统已禁用）
+- ✅ 伤害计算正确（20 伤害 = 40 血量 → 20 血量）
 
 ---
 
@@ -277,12 +284,12 @@
 | 阶段 | 工作量 | 依赖 | 风险 | 优先级 |
 |------|--------|------|------|--------|
 | **阶段 1** | 1-2 天 | 无 | 低 | ✅ 已完成 |
-| **阶段 2** | 2-3 天 | 阶段 1 | 中 | 🔥 核心 |
-| **阶段 3** | 1 天 | 阶段 2 | 低 | ⚡ 高 |
-| **阶段 4** | 1-2 天 | 阶段 1 | 中 | ⚠️ 可选 |
-| **阶段 5** | 1-2 天 | 全部 | 低 | ✅ 必须 |
-| **总计（核心）** | **5-8 天** | - | - | - |
-| **总计（包含可选）** | **6-10 天** | - | - | - |
+| **阶段 2** | 2-3 天 | 阶段 1 | 中 | ✅ 已完成 |
+| **阶段 3** | 1 天 | 阶段 2 | 低 | ⏳ 待迁移 |
+| **阶段 4** | 1-2 天 | 阶段 1 | 中 | ✅ 已完成 |
+| **阶段 5** | 1-2 天 | 全部 | 低 | ⏳ 待执行 |
+| **总计（已完成）** | **4-6 天** | - | - | - |
+| **总计（全部）** | **6-10 天** | - | - | - |
 
 **建议分配**：
 - **Week 1**：阶段 1（已完成）+ 阶段 2（敌人近战攻击）⭐
@@ -312,9 +319,11 @@
 - [ ] 测试：陷阱激活时伤害生效
 
 ### 阶段 4 完成标准
-- [ ] 范围攻击规则已配置
-- [ ] DamageSystem 支持 Stopped 触发类型
-- [ ] 测试：球停止范围攻击生效
+- [x] 范围攻击规则已配置
+- [x] DamageSystem 支持 Stopped 触发类型
+- [x] 从 PlayerData.areaRadius 动态读取攻击范围
+- [x] 测试：球停止范围攻击生效
+- [x] 修复双重伤害问题（旧系统已禁用）
 
 ### 阶段 5 完成标准
 - [ ] 所有旧系统代码已清理
@@ -394,7 +403,9 @@ DamageSystem.Instance.showRuleMatching = true;
 **创建日期**：2025-11-01  
 **维护者**：AI Assistant
 
-**下一步**：开始执行阶段 3（敌人陷阱攻击迁移）⭐
+**下一步**：
+- 可选：阶段 3（敌人陷阱攻击迁移）
+- 推荐：阶段 5（清理和优化）⭐
 
 ---
 
@@ -413,4 +424,12 @@ DamageSystem.Instance.showRuleMatching = true;
 - ✅ 避免 Telegraph 阶段误触发伤害
 - ✅ 修复 BlackboardExtensions 自动创建导致的 Blackboard 冲突
 - ✅ 删除 AttackRangeTrigger.cs（不再需要）
+
+### v1.3 (2025-11-01)
+- ✅ 阶段 4 完成：玩家范围攻击迁移成功
+- ✅ 实现 Stopped 触发类型（球停止范围攻击）
+- ✅ 添加 StoppedEvent 数据结构和事件系统
+- ✅ DamageRuleConfig 添加 attackRange 字段
+- ✅ 动态从 PlayerData.areaRadius 读取攻击范围
+- ✅ 修复双重伤害问题：禁用 EnemyBehavior.OnDamageProcessed（旧系统）
 

@@ -89,6 +89,11 @@ public static class GameEventBus
     /// </summary>
     public static event System.Action<CollisionEvent> OnCollision;
     
+    /// <summary>
+    /// 停止事件（新伤害系统 - 球停止范围攻击）
+    /// </summary>
+    public static event System.Action<StoppedEvent> OnStopped;
+    
     #endregion
     
     #region 新伤害系统事件
@@ -345,6 +350,11 @@ public static class GameEventBus
     /// 发布统一碰撞事件（新伤害系统）
     /// </summary>
     public static void PublishCollision(CollisionEvent collisionEvent) => OnCollision?.Invoke(collisionEvent);
+    
+    /// <summary>
+    /// 发布停止事件（新伤害系统）
+    /// </summary>
+    public static void PublishStopped(StoppedEvent stoppedEvent) => OnStopped?.Invoke(stoppedEvent);
     
     /// <summary>
     /// 发布伤害事件（新伤害系统）

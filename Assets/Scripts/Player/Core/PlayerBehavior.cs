@@ -38,6 +38,9 @@ public class PlayerBehavior : MonoBehaviour, IDamageable
     // 核心组件
     private BallPhysics ballPhysics;
     
+    // 公共访问器（用于新伤害系统）
+    public PlayerData PlayerData => playerData;
+    
     /// <summary>
     /// 检查指定的球是否是当前玩家的球
     /// </summary>

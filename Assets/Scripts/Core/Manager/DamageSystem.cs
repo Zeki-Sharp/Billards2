@@ -55,9 +55,12 @@ public class DamageSystem : SingletonManager<DamageSystem>
         // 订阅碰撞事件
         GameEventBus.OnCollision += HandleCollisionEvent;
         
+        // 订阅停止事件
+        GameEventBus.OnStopped += HandleStoppedEvent;
+        
         if (enableDebugLog)
         {
-            Debug.Log("[DamageSystem] 初始化完成，订阅碰撞事件");
+            Debug.Log("[DamageSystem] 初始化完成，订阅碰撞和停止事件");
         }
     }
     
@@ -65,6 +68,7 @@ public class DamageSystem : SingletonManager<DamageSystem>
     {
         // 取消订阅
         GameEventBus.OnCollision -= HandleCollisionEvent;
+        GameEventBus.OnStopped -= HandleStoppedEvent;
         
         if (enableDebugLog)
         {
@@ -187,6 +191,86 @@ public class DamageSystem : SingletonManager<DamageSystem>
                 // 计算并发布伤害
                 ProcessDamage(rule, evt);
             }
+        }
+    }
+    
+    /// <summary>
+    /// 处理停止事件（球停止范围攻击）
+    /// </summary>
+    private void HandleStoppedEvent(StoppedEvent evt)
+    {
+        if (!systemEnabled) return;
+        
+        // 获取 source 的伤害配置
+        DamageProfile profile = GetDamageProfile(evt.Source);
+        
+        if (profile == null) return;
+        
+        // 遍历规则，检查匹配
+        foreach (var rule in profile.rules)
+        {
+            if (rule == null) continue;
+            if (rule.triggerType != DamageTriggerType.Stopped) continue;
+            
+            // 对于 Stopped 类型，需要范围检测
+            ProcessStoppedDamage(rule, evt);
+        }
+    }
+    
+    /// <summary>
+    /// 处理停止伤害（范围检测）
+    /// </summary>
+    private void ProcessStoppedDamage(DamageRuleConfig rule, StoppedEvent evt)
+    {
+        // 确定攻击范围
+        float range = rule.attackRange;
+        
+        // 如果规则未配置范围，从 PlayerData 读取
+        if (range <= 0f)
+        {
+            var playerBehavior = evt.Source.GetComponent<PlayerBehavior>();
+            if (playerBehavior != null && playerBehavior.PlayerData != null)
+            {
+                range = playerBehavior.PlayerData.areaRadius;
+            }
+            else
+            {
+                Debug.LogWarning($"[DamageSystem] Stopped 规则 '{rule.ruleName}' 未配置范围，且无法从 PlayerData 读取");
+                return;
+            }
+        }
+        
+        // 使用 Physics2D.OverlapCircleAll 检测范围内的目标
+        Collider2D[] colliders = Physics2D.OverlapCircleAll(evt.StoppedPosition, range);
+        
+        foreach (var collider in colliders)
+        {
+            GameObject target = collider.gameObject;
+            
+            // 检查目标标签
+            if (!string.IsNullOrEmpty(rule.targetTag))
+            {
+                if (!target.CompareTag(rule.targetTag)) continue;
+            }
+            
+            // 检查来源标签
+            if (!string.IsNullOrEmpty(rule.sourceTag))
+            {
+                if (!evt.Source.CompareTag(rule.sourceTag)) continue;
+            }
+            
+            // 创建模拟的碰撞事件用于伤害计算
+            CollisionEvent collisionEvt = new CollisionEvent
+            {
+                Source = evt.Source,
+                Target = target,
+                ContactPoint = evt.StoppedPosition,
+                ContactNormal = (target.transform.position - (Vector3)evt.StoppedPosition).normalized,
+                Velocity = 0f,
+                CollisionTime = evt.StoppedTime
+            };
+            
+            ProcessDamage(rule, collisionEvt);
         }
     }
     
@@ -358,12 +442,6 @@ public class DamageSystem : SingletonManager<DamageSystem>
         PublishDamageEvent(attackData, rule, evt);
         
         totalDamageEvents++;
-        
-        if (enableDebugLog)
-        {
-            Debug.Log($"[DamageSystem] 伤害处理: {evt.Source.name} → {damageTarget.name}, " +
-                     $"规则: {rule.ruleName}, 最终伤害: {attackData.Damage:F1}");
-        }
     }
     
     /// <summary>

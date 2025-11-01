@@ -44,6 +44,10 @@ public class DamageRuleConfig : ScriptableObject
     [Tooltip("速度倍率（0 表示不使用速度加成）")]
     public float velocityMultiplier = 0f;
     
+    [Header("范围配置（Stopped 类型专用）")]
+    [Tooltip("攻击范围（仅 Stopped 类型使用，0 表示从 PlayerData 读取）")]
+    public float attackRange = 0f;
+    
     [Header("伤害计算")]
     [Tooltip("基础伤害")]
     public float baseDamage = 10f;

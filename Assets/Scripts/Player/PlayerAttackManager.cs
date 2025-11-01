@@ -279,6 +279,11 @@ public class PlayerAttackManager : MonoBehaviour
     /// </summary>
     public void ProcessBallStopped(Vector3 ballPosition)
     {
+        // ✅ 新伤害系统：发布停止事件
+        StoppedEvent stoppedEvent = StoppedEvent.Create(gameObject, ballPosition);
+        GameEventBus.PublishStopped(stoppedEvent);
+        
+        // ❌ 旧系统：暂时保留，待测试后禁用
         HandleAreaAttack(ballPosition);
     }
     

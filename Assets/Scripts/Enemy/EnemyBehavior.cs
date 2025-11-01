@@ -403,12 +403,14 @@ public class EnemyBehavior : MonoBehaviour, IDamageable
     }
     
     /// <summary>
-    /// 敌人受击处理
+    /// 敌人受击处理（旧伤害系统）
     /// </summary>
     private void OnDamageProcessed(ProcessedDamageData processedData)
     {
-        Debug.Log($"EnemyBehavior {name}: 接收到伤害处理完成事件 - 目标: {processedData.OriginalData.Target?.name}, 最终伤害: {processedData.FinalDamage}, 攻击者: {processedData.OriginalData.Attacker?.name}");
+        // ❌ 旧系统已禁用：避免双重伤害
+        return;
         
+        /*
         // 检查自己是否是攻击目标
         if (processedData.OriginalData.Target == gameObject && processedData.FinalDamage > 0f)
         {
@@ -421,6 +423,7 @@ public class EnemyBehavior : MonoBehaviour, IDamageable
         {
             Debug.Log($"EnemyBehavior {name}: 不是攻击目标，忽略伤害处理完成事件");
         }
+        */
     }
     
     /// <summary>
@@ -436,14 +439,11 @@ public class EnemyBehavior : MonoBehaviour, IDamageable
         
         if (isDead)
         {
-            Debug.Log($"EnemyBehavior {name}: 敌人已死亡，无法受到伤害");
             return;
         }
         
         // ✅ 使用 EnemyStats 扣除血量
         statsManager.SubtractHealth(damage);
-        
-        Debug.Log($"EnemyBehavior {name}: 受到 {damage} 点伤害，当前血量: {statsManager.CurrentHealth}/{statsManager.MaxHealth}");
         
         // 更新血条UI
         if (healthBar != null)

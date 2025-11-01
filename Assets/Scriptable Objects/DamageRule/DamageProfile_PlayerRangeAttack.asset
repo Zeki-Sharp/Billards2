@@ -1,0 +1,18 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 0}
+  m_Name: DamageProfile_PlayerRangeAttack
+  m_EditorClassIdentifier: Assembly-CSharp::DamageProfile
+  profileName: "\u73A9\u5BB6\u8FDC\u7A0B\u653B\u51FB\u914D\u7F6E"
+  description: 
+  rules:
+  - {fileID: 11400000, guid: b3d9605cfb3335641819fbc094e32ab5, type: 2}
