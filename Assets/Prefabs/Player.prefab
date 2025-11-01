@@ -7671,7 +7671,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   playerData: {fileID: 11400000, guid: 9fa21c5d0e8b7b24d9ae0910aa7d5197, type: 2}
-  playerCore: {fileID: 3655923765959461568}
+  playerBehavior: {fileID: 3655923765959461568}
   stateMachine: {fileID: 6836328097506818129}
   inputHandler: {fileID: 8774563786934254085}
   movementController: {fileID: 4113543951783293758}
@@ -7725,7 +7725,7 @@ MonoBehaviour:
   minPullDistance: 0.5
   scrollSensitivity: 0.06
   launchForceThreshold: 2
-  playerCore: {fileID: 3655923765959461568}
+  playerBehavior: {fileID: 3655923765959461568}
   targetCamera: {fileID: 0}
   showDebugInfo: 1
 --- !u!114 &4836788210602037763

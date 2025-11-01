@@ -84,6 +84,20 @@ public static class GameEventBus
     /// </summary>
     public static event System.Action<BallPhysics, BallPhysics> OnBallCollision;
     
+    /// <summary>
+    /// 统一碰撞事件（新伤害系统）
+    /// </summary>
+    public static event System.Action<CollisionEvent> OnCollision;
+    
+    #endregion
+    
+    #region 新伤害系统事件
+    
+    /// <summary>
+    /// 伤害事件（新伤害系统）
+    /// </summary>
+    public static event System.Action<DamageEvent> OnDamage;
+    
     #endregion
     
     #region 玩家状态事件
@@ -326,6 +340,16 @@ public static class GameEventBus
     /// 发布球碰撞事件
     /// </summary>
     public static void PublishBallCollision(BallPhysics ball1, BallPhysics ball2) => OnBallCollision?.Invoke(ball1, ball2);
+    
+    /// <summary>
+    /// 发布统一碰撞事件（新伤害系统）
+    /// </summary>
+    public static void PublishCollision(CollisionEvent collisionEvent) => OnCollision?.Invoke(collisionEvent);
+    
+    /// <summary>
+    /// 发布伤害事件（新伤害系统）
+    /// </summary>
+    public static void PublishDamage(DamageEvent damageEvent) => OnDamage?.Invoke(damageEvent);
     
     /// <summary>
     /// 发布玩家状态变化事件

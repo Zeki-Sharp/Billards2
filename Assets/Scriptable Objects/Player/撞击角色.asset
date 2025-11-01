@@ -27,6 +27,7 @@ MonoBehaviour:
   collisionDamage: 20
   areaDamage: 15
   areaRadius: 2.5
+  damageProfile: {fileID: 11400000, guid: 20b5ac402948daf47a5a9dbf26f7d43e, type: 2}
   enemyLayerMask:
     serializedVersion: 2
     m_Bits: 64

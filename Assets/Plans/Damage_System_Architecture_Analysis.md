@@ -630,32 +630,38 @@ Blackboard（基础设施）→ 被伤害系统和行为系统共同使用
 - [ ] MonoBehaviour 扩展方法
 - [ ] 单元测试
 
-#### Phase 1：伤害系统核心（9 天）
+#### Phase 1：伤害系统核心（9 天）✅ 已完成（阶段 1）
 
 **Day 2-3：伤害系统核心**
-- [ ] 定义 DamageEvent、DamageRuleConfig、CollisionEvent
-- [ ] 实现 DamageSystem 骨架
+- [x] 定义 DamageEvent、DamageRuleConfig、CollisionEvent
+- [x] 实现 DamageSystem 骨架
 
 **Day 4-5：规则系统**
-- [ ] 规则匹配逻辑（规则层过滤，无需缓存）
-- [ ] 基础伤害计算
-- [ ] 集成 DamageProcessor
+- [x] 规则匹配逻辑（规则层过滤，无需缓存）
+- [x] 基础伤害计算
+- [x] 集成 DamageProcessor
 
 **Day 6-7：碰撞重构**
-- [ ] 统一发布 CollisionEvent
-- [ ] 移除硬编码伤害判断
+- [x] 统一发布 CollisionEvent（PlayerBehavior）
+- [x] 禁用旧系统碰撞逻辑
 
 **Day 8-9：场景实现**
-- [ ] 冲刺撞击场景（配置规则 + Blackboard 查询）
-- [ ] 撞墙受伤场景（速度伤害）
-- [ ] 测试和修复
+- [x] 玩家碰撞攻击场景（配置规则 + Blackboard 状态）
+- [x] IDamageable 接口实现
+- [x] 特效系统集成（EffectManager）
+- [x] 子对象碰撞处理（EnemyItem）
 
-**Day 10：缓冲时间**
+**已完成功能**：
+- ✅ 玩家碰撞攻击敌人（阶段 1）
+- ✅ 规则驱动伤害判断
+- ✅ Blackboard 状态控制（CanAttack）
+- ✅ 特效正常触发
+- ✅ 子对象碰撞支持
 
-**验收标准**：
-- ✅ 规则自然过滤，无重复伤害
-- ✅ DamageProcessor 修改器正常工作
-- ✅ 冲撞、撞墙场景完整可用
+**待迁移**：
+- ⚠️ 敌人近战攻击（阶段 2）
+- ⚠️ 陷阱攻击（阶段 3）
+- ⚠️ 范围攻击（阶段 4）
 
 ---
 

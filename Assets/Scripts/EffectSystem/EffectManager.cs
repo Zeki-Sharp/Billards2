@@ -75,12 +75,13 @@ namespace DeepSpaceLabs.SAM
         
         // ✅ 订阅事件（从 OnEnable 移到这里，确保只订阅一次）
         GameEventBus.OnEffect += OnEffectEvent;
-        GameEventBus.OnAttack += OnAttackEvent;
+        GameEventBus.OnAttack += OnAttackEvent;  // 旧系统（保留，过渡期）
+        GameEventBus.OnDamage += OnDamageEvent;  // ✅ 新伤害系统
         GameEventBus.OnDeath += OnDeathEvent;
         
         if (enableDebugLog)
         {
-            Debug.Log("[EffectManager] 单例创建成功（SYSTEM 层）");
+            Debug.Log("[EffectManager] 单例创建成功（SYSTEM 层），订阅新旧伤害事件");
         }
     }
     
@@ -89,6 +90,7 @@ namespace DeepSpaceLabs.SAM
         // ✅ 取消订阅事件
         GameEventBus.OnEffect -= OnEffectEvent;
         GameEventBus.OnAttack -= OnAttackEvent;
+        GameEventBus.OnDamage -= OnDamageEvent;  // ✅ 新伤害系统
         GameEventBus.OnDeath -= OnDeathEvent;
     }
     
@@ -325,17 +327,41 @@ namespace DeepSpaceLabs.SAM
             mmfPlayer = null;
             
             if (effectObj == null || string.IsNullOrEmpty(effectKey))
-                return false;
-            
-            if (!effectObjMMPlayerMap.TryGetValue(effectObj, out var playerMap) ||
-                !playerMap.TryGetValue(effectKey, out mmfPlayer) ||
-                mmfPlayer == null ||
-                !effectObj.activeInHierarchy)
             {
+                if (enableDebugLog)
+                {
+                    Debug.Log($"[EffectManager] TryGetEffect 失败: effectObj 或 effectKey 为空");
+                }
                 return false;
             }
             
-            return true;
+            // 先尝试在自己身上查找
+            if (effectObjMMPlayerMap.TryGetValue(effectObj, out var playerMap) && 
+                playerMap.TryGetValue(effectKey, out mmfPlayer) && 
+                mmfPlayer != null && 
+                effectObj.activeInHierarchy)
+            {
+                return true;
+            }
+            
+            // 如果自己没有，尝试在父对象上查找（处理子对象碰撞）
+            Transform parent = effectObj.transform.parent;
+            while (parent != null)
+            {
+                GameObject parentObj = parent.gameObject;
+                
+                if (effectObjMMPlayerMap.TryGetValue(parentObj, out playerMap) && 
+                    playerMap.TryGetValue(effectKey, out mmfPlayer) && 
+                    mmfPlayer != null && 
+                    parentObj.activeInHierarchy)
+                {
+                    return true;
+                }
+                
+                parent = parent.parent;
+            }
+            
+            return false;
         }
         
         /// <summary>
@@ -451,11 +477,38 @@ namespace DeepSpaceLabs.SAM
         }
     
     /// <summary>
-    /// 处理攻击事件（GameEventBus订阅）
+    /// 处理攻击事件（GameEventBus订阅，旧系统）
     /// 直接使用 AttackData 参数播放特效，避免重复传递
     /// </summary>
     public void OnAttackEvent(AttackData attackData)
     {
+        PlayAttackerEffect(attackData);
+        PlayGlobalEffect(attackData);
+        PlayTargetEffect(attackData);
+    }
+    
+    /// <summary>
+    /// 处理伤害事件（新伤害系统）
+    /// 将 DamageEvent 转换为 AttackData 并复用现有特效逻辑
+    /// </summary>
+    public void OnDamageEvent(DamageEvent damageEvent)
+    {
+        // 转换为 AttackData 格式（复用现有特效逻辑）
+        AttackData attackData = new AttackData
+        {
+            Attacker = damageEvent.Source,
+            Target = damageEvent.Target,
+            Position = damageEvent.HitPosition,
+            Direction = damageEvent.HitDirection,
+            AttackType = "Hit",
+            Damage = damageEvent.FinalDamage,
+            AttackTime = damageEvent.EventTime,
+            AttackerTag = damageEvent.Source != null ? damageEvent.Source.tag : "",
+            TargetTag = damageEvent.Target != null ? damageEvent.Target.tag : "",
+            HitSpeed = damageEvent.VelocityAtHit
+        };
+        
+        // 复用现有特效播放逻辑
         PlayAttackerEffect(attackData);
         PlayGlobalEffect(attackData);
         PlayTargetEffect(attackData);

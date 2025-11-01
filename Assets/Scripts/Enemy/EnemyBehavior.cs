@@ -4,8 +4,9 @@ using MoreMountains.Feedbacks;
 
 /// <summary>
 /// 敌人行为脚本 - 纯行为逻辑
+/// 实现 IDamageable 接口（新伤害系统）
 /// </summary>
-public class EnemyBehavior : MonoBehaviour
+public class EnemyBehavior : MonoBehaviour, IDamageable
 {
     [Header("数据设置")]
     [Tooltip("敌人数据配置。手动放置的敌人需要在此配置，通过 EnemySpawner 生成的敌人会自动设置")]
@@ -83,13 +84,19 @@ public class EnemyBehavior : MonoBehaviour
         // 订阅伤害处理完成事件 - 应用最终伤害
         GameEventBus.OnDamageProcessed += OnDamageProcessed;
         
-        Debug.Log($"EnemyBehavior {name}: Start 完成 (订阅伤害处理完成事件)");
+        // ✅ 新伤害系统：订阅伤害事件
+        GameEventBus.OnDamage += OnDamageReceived;
+        
+        Debug.Log($"EnemyBehavior {name}: Start 完成 (订阅伤害事件)");
     }
     
     void OnDestroy()
     {
         // 取消订阅伤害处理完成事件
         GameEventBus.OnDamageProcessed -= OnDamageProcessed;
+        
+        // ✅ 新伤害系统：取消订阅
+        GameEventBus.OnDamage -= OnDamageReceived;
     }
     
     void Update()
@@ -400,7 +407,7 @@ public class EnemyBehavior : MonoBehaviour
     }
     
     /// <summary>
-    /// 敌人受到伤害
+    /// 敌人受到伤害（私有方法，内部使用）
     /// </summary>
     private void TakeDamage(float damage)
     {
@@ -432,6 +439,54 @@ public class EnemyBehavior : MonoBehaviour
         {
             Die();
         }
+    }
+    
+    /// <summary>
+    /// 接收伤害（新伤害系统，IDamageable 接口实现）
+    /// </summary>
+    public void OnDamageReceived(DamageEvent damageEvent)
+    {
+        // 检查是否是针对自己或自己的子对象的伤害
+        bool isTargetSelf = damageEvent.Target == gameObject;
+        bool isTargetChild = damageEvent.Target != null && damageEvent.Target.transform.IsChildOf(transform);
+        
+        if (!isTargetSelf && !isTargetChild)
+        {
+            return;
+        }
+        
+        // 检查是否可以受伤
+        if (!CanTakeDamage())
+        {
+            return;
+        }
+        
+        // 应用伤害（复用现有逻辑）
+        TakeDamage(damageEvent.FinalDamage);
+    }
+    
+    /// <summary>
+    /// 是否可以受伤（IDamageable 接口实现）
+    /// </summary>
+    public bool CanTakeDamage()
+    {
+        return !isDead && statsManager != null;
+    }
+    
+    /// <summary>
+    /// 获取当前血量（IDamageable 接口实现）
+    /// </summary>
+    public float GetCurrentHealth()
+    {
+        return statsManager != null ? statsManager.CurrentHealth : 0f;
+    }
+    
+    /// <summary>
+    /// 获取最大血量（IDamageable 接口实现）
+    /// </summary>
+    public float GetMaxHealth()
+    {
+        return statsManager != null ? statsManager.MaxHealth : 100f;
     }
     
     /// <summary>

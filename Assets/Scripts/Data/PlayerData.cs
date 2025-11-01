@@ -78,6 +78,11 @@ public class PlayerData : ScriptableObject
     [MinValue(0.1f)]
     public float areaRadius = 2f;
     
+    [BoxGroup("新伤害系统配置")]
+    [LabelText("伤害配置")]
+    [Tooltip("玩家的伤害规则配置（新伤害系统）")]
+    public DamageProfile damageProfile;
+    
     [BoxGroup("战斗配置")]
     [ShowIf("attackMode", AttackMode.Area)]
     [LabelText("敌人层遮罩")]

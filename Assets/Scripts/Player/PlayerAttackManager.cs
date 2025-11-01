@@ -159,10 +159,15 @@ public class PlayerAttackManager : MonoBehaviour
     #region 攻击处理
     
     /// <summary>
-    /// 处理碰撞攻击
+    /// 处理碰撞攻击（已迁移到新伤害系统）
     /// </summary>
     public void HandleCollisionAttack(Collision2D collision)
     {
+        // ❌ 旧系统已禁用：使用新伤害系统
+        Debug.Log("[PlayerAttackManager] 碰撞攻击已迁移到新伤害系统，旧逻辑已禁用");
+        return;
+        
+        /* 旧代码保留（备份）
         if (playerData == null)
         {
             Debug.LogError("PlayerAttackManager: PlayerData 未配置，无法执行碰撞攻击！");
@@ -189,6 +194,7 @@ public class PlayerAttackManager : MonoBehaviour
             gameObject.PublishAttack("Hit", collision.contacts[0].point, enemy.gameObject, finalDamage);
             Debug.Log($"[PlayerAttackManager] 碰撞攻击命中 {enemy.name}，造成伤害: {finalDamage}");
         }
+        */
     }
     
     /// <summary>

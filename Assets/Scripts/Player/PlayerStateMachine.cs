@@ -170,6 +170,9 @@ public class PlayerStateMachine : MonoBehaviour
     /// </summary>
     void EnterState(PlayerState state)
     {
+        // ✅ 新伤害系统：更新 Blackboard 攻击状态
+        UpdateAttackState(state);
+        
         switch (state)
         {
             case PlayerState.Idle:
@@ -187,6 +190,33 @@ public class PlayerStateMachine : MonoBehaviour
                 // 启动协程处理 MovingEnd 阶段
                 StartCoroutine(ExecuteMovingEndPhase());
                 break;
+        }
+    }
+    
+    /// <summary>
+    /// 更新攻击状态（新伤害系统）
+    /// </summary>
+    void UpdateAttackState(PlayerState state)
+    {
+        if (playerBehavior == null) return;
+        
+        var blackboard = playerBehavior.GetBlackboard();
+        
+        if (state == PlayerState.Moving)
+        {
+            blackboard.Set("CanAttack", true);
+            if (showDebugInfo)
+            {
+                Debug.Log("[PlayerStateMachine] ✅ 设置 CanAttack = true (Moving 状态)");
+            }
+        }
+        else
+        {
+            blackboard.Set("CanAttack", false);
+            if (showDebugInfo)
+            {
+                Debug.Log($"[PlayerStateMachine] ❌ 设置 CanAttack = false ({state} 状态)");
+            }
         }
     }
     

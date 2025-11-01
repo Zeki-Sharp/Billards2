@@ -19,8 +19,9 @@ using UnityEngine;
 /// - 专注核心业务逻辑，不处理输入和状态管理
 /// - 通过事件与其他组件通信
 /// - 作为Player系统的业务逻辑中心
+/// - 实现 IDamageable 接口（新伤害系统）
 /// </summary>
-public class PlayerBehavior : MonoBehaviour
+public class PlayerBehavior : MonoBehaviour, IDamageable
 {
     [Header("数据设置")]
     // PlayerData 现在通过 Player 统一分发
@@ -129,18 +130,45 @@ public class PlayerBehavior : MonoBehaviour
             Debug.LogWarning("PlayerCore: Player 尚未调用 Initialize，自动初始化");
             InitializeCore();
         }
+        
+        // ✅ 新伤害系统：在 Start() 注册到 DamageSystem（确保 DamageSystem 已初始化）
+        RegisterToDamageSystem();
+    }
+    
+    /// <summary>
+    /// 注册到新伤害系统
+    /// </summary>
+    void RegisterToDamageSystem()
+    {
+        if (playerData != null && playerData.damageProfile != null && DamageSystem.Instance != null)
+        {
+            DamageSystem.Instance.RegisterEntity(gameObject, playerData.damageProfile);
+        }
     }
     
     void OnEnable()
     {
         // 订阅伤害处理完成事件 - 应用最终伤害
         GameEventBus.OnDamageProcessed += HandleDamageProcessed;
+        
+        // ✅ 新伤害系统：订阅伤害事件
+        GameEventBus.OnDamage += OnDamageReceived;
     }
     
     void OnDisable()
     {
         // 取消订阅伤害处理完成事件
         GameEventBus.OnDamageProcessed -= HandleDamageProcessed;
+        
+        // ✅ 新伤害系统：取消订阅
+        GameEventBus.OnDamage -= OnDamageReceived;
+        
+        // ✅ 新伤害系统：注销实体
+        var damageSystem = DamageSystem.Instance;
+        if (damageSystem != null)
+        {
+            damageSystem.UnregisterEntity(gameObject);
+        }
     }
     
     #region 初始化
@@ -318,69 +346,34 @@ public class PlayerBehavior : MonoBehaviour
     
     void OnCollisionEnter2D(Collision2D collision)
     {
-        // 检查是否碰到敌人或其子物体
+        // ✅ 新伤害系统：统一发布碰撞事件
+        GameEventBus.PublishCollision(CollisionEvent.Create(gameObject, collision));
+        
+        // ⚠️ 保留旧逻辑（过渡期）：陷阱模式特殊处理
         EnemyBehavior enemy = collision.gameObject.GetComponent<EnemyBehavior>();
         if (enemy == null)
         {
             enemy = collision.gameObject.GetComponentInParent<EnemyBehavior>();
         }
         
-        if (enemy != null)
+        if (enemy != null && enemy.IsTrapMode)
         {
-            // 检查是否处于陷阱模式
-            if (enemy.IsTrapMode)
-            {
-                // 陷阱模式：让敌人对玩家造成陷阱伤害
-                Debug.Log($"PlayerCore: 碰到陷阱模式的敌人 {collision.gameObject.name}，触发陷阱伤害");
-                Vector3 hitPosition = collision.contacts[0].point;
-                enemy.DealTrapDamageToPlayer(gameObject, hitPosition);
-                return; // 陷阱伤害玩家，玩家不攻击敌人
-            }
-            
-            // 正常敌人，玩家可能攻击
-            Debug.Log($"PlayerCore: 碰到敌人 {collision.gameObject.name}");
-            
-            // 检查玩家状态，只在Moving状态处理碰撞
-            PlayerStateMachine playerStateMachine = FindFirstObjectByType<PlayerStateMachine>();
-            if (playerStateMachine != null)
-            {
-                Debug.Log($"PlayerCore: 当前玩家状态: {playerStateMachine.CurrentState}");
-                
-                if (playerStateMachine.CurrentState == PlayerStateMachine.PlayerState.Moving)
-                {
-                    // Moving状态：委托给 AttackManager 处理
-                    if (attackManager != null)
-                    {
-                        attackManager.ProcessCollision(collision);
-                    }
-                    else
-                    {
-                        Debug.LogError("PlayerCore: AttackManager 未配置，无法处理碰撞攻击！");
-                    }
-                }
-                else
-                {
-                    // 在其他状态，不处理碰撞
-                    Debug.Log("PlayerCore: 不在Moving状态，不处理碰撞");
-                }
-            }
-            else
-            {
-                Debug.LogWarning("PlayerCore: PlayerStateMachine 未找到！");
-            }
+            // 陷阱模式：让敌人对玩家造成陷阱伤害（旧逻辑，待迁移）
+            Debug.Log($"PlayerCore: 碰到陷阱模式的敌人 {collision.gameObject.name}，触发陷阱伤害");
+            Vector3 hitPosition = collision.contacts[0].point;
+            enemy.DealTrapDamageToPlayer(gameObject, hitPosition);
             return;
         }
         
-        // 撞击边界时的处理
+        // ❌ 旧逻辑已禁用：使用新伤害系统
+        // if (enemy != null) { attackManager.ProcessCollision(collision); }
+        
+        // 撞击边界时的处理（保留，非伤害逻辑）
         if (collision.gameObject.CompareTag("Wall"))
         {
-            // 检查是否还能获得充能力（基于速度）
             if (CanGetBoost())
             {
-                // 计算撞墙方向（从墙壁指向白球）
                 Vector2 wallDirection = ((Vector2)transform.position - collision.contacts[0].point).normalized;
-                
-                // 给白球添加撞墙充能力
                 Vector2 wallBoostForce = wallDirection * playerData.ballData.hitBoostForce * playerData.ballData.hitBoostMultiplier;
                 ballPhysics.ApplyForce(wallBoostForce);
             }
@@ -618,6 +611,48 @@ public class PlayerBehavior : MonoBehaviour
                 Debug.Log($"PlayerCore: 受到攻击 {processedData.FinalDamage}（类型：{attackType}，有阶段检查）");
             }
         }
+    }
+    
+    /// <summary>
+    /// 接收伤害（新伤害系统，IDamageable 接口实现）
+    /// </summary>
+    public void OnDamageReceived(DamageEvent damageEvent)
+    {
+        // 检查是否是针对自己的伤害
+        if (damageEvent.Target != gameObject)
+        {
+            return;
+        }
+        
+        // 检查是否可以受伤
+        if (!CanTakeDamage())
+        {
+            return;
+        }
+        
+        // 应用伤害（复用现有逻辑）
+        ApplyDamage(damageEvent.FinalDamage);
+        
+        // TODO: 附加效果（击退、眩晕等）
+        if (damageEvent.KnockbackForce > 0)
+        {
+            // 击退逻辑（待实现）
+        }
+    }
+    
+    /// <summary>
+    /// 是否可以受伤（IDamageable 接口实现）
+    /// </summary>
+    public bool CanTakeDamage()
+    {
+        // 检查是否已死亡
+        if (statsManager != null && statsManager.CurrentHealth <= 0)
+        {
+            return false;
+        }
+        
+        // TODO: 检查无敌帧、护盾等
+        return true;
     }
     
     #endregion

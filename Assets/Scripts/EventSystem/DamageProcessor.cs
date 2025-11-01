@@ -126,10 +126,19 @@ public class DamageProcessor : SingletonManager<DamageProcessor>
     #region 伤害处理
     
     /// <summary>
-    /// 处理攻击伤害
+    /// 处理攻击伤害（公开接口，供 DamageSystem 调用）
     /// </summary>
-    /// <param name="attackData">攻击数据</param>
-    private void ProcessAttackDamage(AttackData attackData)
+    /// <param name="attackData">攻击数据（引用传递，会被修改）</param>
+    public void ProcessDamage(ref AttackData attackData)
+    {
+        ProcessAttackDamage(ref attackData);
+    }
+    
+    /// <summary>
+    /// 处理攻击伤害（内部实现，支持引用传递）
+    /// </summary>
+    /// <param name="attackData">攻击数据（引用传递）</param>
+    private void ProcessAttackDamage(ref AttackData attackData)
     {
         // 总是显示处理开始信息
         Debug.Log($"[DamageProcessor] 开始处理攻击伤害: {attackData.AttackType}, 原始伤害: {attackData.Damage}, 目标: {attackData.Target?.name}");
@@ -152,11 +161,9 @@ public class DamageProcessor : SingletonManager<DamageProcessor>
         
         if (damageModifiers.Count == 0)
         {
-            Debug.LogWarning("[DamageProcessor] 没有注册的伤害修改器，直接发布原始伤害");
+            Debug.LogWarning("[DamageProcessor] 没有注册的伤害修改器，直接使用当前伤害");
+            return; // 提前返回，避免创建不必要的 ProcessedDamageData
         }
-        
-        // 创建处理数据
-        ProcessedDamageData processedData = new ProcessedDamageData(attackData);
         
         // 按优先级顺序处理伤害修改
         foreach (var modifier in damageModifiers)
@@ -169,19 +176,12 @@ public class DamageProcessor : SingletonManager<DamageProcessor>
             
             try
             {
-                // 创建攻击数据的副本用于修改
-                AttackData modifiedData = attackData;
-                
                 Debug.Log($"[DamageProcessor] 调用修改器: {modifier.ModifierName}");
-                bool processed = modifier.ProcessDamage(ref modifiedData);
+                bool processed = modifier.ProcessDamage(ref attackData);
                 
                 if (processed)
                 {
-                    // 更新处理数据
-                    processedData.AddModifier(modifier.ModifierName);
-                    attackData = modifiedData; // 更新原始数据
-                    
-                    Debug.Log($"[DamageProcessor] {modifier.ModifierName} 修改伤害: {processedData.OriginalData.Damage} → {modifiedData.Damage}");
+                    Debug.Log($"[DamageProcessor] {modifier.ModifierName} 修改伤害: 最终 {attackData.Damage}");
                 }
                 else
                 {
@@ -194,8 +194,21 @@ public class DamageProcessor : SingletonManager<DamageProcessor>
             }
         }
         
-        // 更新最终伤害
-        processedData.FinalDamage = attackData.Damage;
+        Debug.Log($"[DamageProcessor] 伤害处理完成，最终伤害: {attackData.Damage}");
+    }
+    
+    /// <summary>
+    /// 处理攻击伤害（旧接口，保持兼容）
+    /// </summary>
+    private void ProcessAttackDamage(AttackData attackData)
+    {
+        // 临时变量，用于引用传递
+        AttackData mutableData = attackData;
+        ProcessAttackDamage(ref mutableData);
+        
+        // 创建处理数据（保持旧流程兼容）
+        ProcessedDamageData processedData = new ProcessedDamageData(attackData);
+        processedData.FinalDamage = mutableData.Damage;
         
         // 更新统计
         totalProcessedCount++;
@@ -206,8 +219,6 @@ public class DamageProcessor : SingletonManager<DamageProcessor>
         
         // 发布处理完成的伤害数据
         GameEventBus.PublishDamageProcessed(processedData);
-        
-        Debug.Log($"[DamageProcessor] 伤害处理完成: {processedData.GetDebugInfo()}");
         
         // 显示处理统计
         if (showProcessingStats)
