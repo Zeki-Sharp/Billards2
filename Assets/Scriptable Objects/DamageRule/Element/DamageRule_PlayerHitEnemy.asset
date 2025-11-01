@@ -19,8 +19,10 @@ MonoBehaviour:
   targetTag: Enemy
   requireSourceState: CanAttack
   requireTargetState: 
+  requireTargetNotState: IsTrap
   minVelocity: 0
   velocityMultiplier: 0
+  attackRange: 0
   baseDamage: 10
   damageMultiplier: 1
   damageType: 0

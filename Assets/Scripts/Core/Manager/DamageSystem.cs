@@ -347,6 +347,26 @@ public class DamageSystem : SingletonManager<DamageSystem>
             }
         }
         
+        // 检查目标"不应处于"的状态要求（例如：陷阱无敌、无敌技能）
+        if (!string.IsNullOrEmpty(rule.requireTargetNotState))
+        {
+            Blackboard blackboard = GetBlackboard(target);
+            
+            // 如果目标没有 Blackboard，认为没有该状态，规则通过
+            if (blackboard != null)
+            {
+                // 尝试获取状态值，如果状态存在且为 true，则规则不匹配
+                if (blackboard.TryGet<bool>(rule.requireTargetNotState, out bool stateValue) && stateValue)
+                {
+                    if (showRuleMatching)
+                    {
+                        Debug.Log($"[DamageSystem] 规则 '{rule.ruleName}' 不匹配：目标处于 '{rule.requireTargetNotState}' 状态（无敌）");
+                    }
+                    return false;
+                }
+            }
+        }
+        
         // 检查速度要求
         if (rule.minVelocity > 0f)
         {

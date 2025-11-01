@@ -277,7 +277,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6705874672420933745, guid: 92bb8c5569acb9348bf9d53ecaefe6fb, type: 3}
       propertyPath: m_TagString
-      value: Trap
+      value: EnemyAttackRange
       objectReference: {fileID: 0}
     - target: {fileID: 7021882736556563581, guid: 92bb8c5569acb9348bf9d53ecaefe6fb, type: 3}
       propertyPath: m_Layer
@@ -340,6 +340,7 @@ PrefabInstance:
     - {fileID: 4383696704770730940, guid: 92bb8c5569acb9348bf9d53ecaefe6fb, type: 3}
     - {fileID: 2471774516533131186, guid: 92bb8c5569acb9348bf9d53ecaefe6fb, type: 3}
     - {fileID: 8847496780498689127, guid: 92bb8c5569acb9348bf9d53ecaefe6fb, type: 3}
+    - {fileID: 8045854704801666855, guid: 92bb8c5569acb9348bf9d53ecaefe6fb, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects:
     - targetCorrespondingSourceObject: {fileID: 4015076163512018273, guid: 92bb8c5569acb9348bf9d53ecaefe6fb, type: 3}

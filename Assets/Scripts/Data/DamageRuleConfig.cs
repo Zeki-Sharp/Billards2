@@ -37,6 +37,9 @@ public class DamageRuleConfig : ScriptableObject
     [Tooltip("要求目标处于特定状态（Blackboard 键名，留空表示无要求）")]
     public string requireTargetState = "";
     
+    [Tooltip("要求目标不处于特定状态（Blackboard 键名，留空表示无要求）\n例如：IsTrap（陷阱无敌）、IsInvincible（无敌技能）")]
+    public string requireTargetNotState = "";
+    
     [Header("速度要求（可选）")]
     [Tooltip("最小速度要求（0 表示无要求）")]
     public float minVelocity = 0f;

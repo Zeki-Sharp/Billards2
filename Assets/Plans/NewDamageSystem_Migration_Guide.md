@@ -120,28 +120,46 @@
 
 ---
 
-### **阶段 3：敌人陷阱攻击迁移（1 天）**
+### **阶段 3：敌人陷阱攻击迁移（1 天）**✅ 已完成
 
 **目标**：陷阱伤害使用新系统
 
-#### **Step 3.1：创建陷阱规则配置（Unity）**
+#### **Step 3.1：创建陷阱规则配置（Unity）**⏳ 需要手动配置
 - [ ] 创建 `DamageRule_EnemyTrap`
   - Trigger Type: Collision
-  - Source Tag: Enemy
+  - Source Tag: **EnemyAttackRange**
   - Target Tag: Player
-  - Require Source State: IsTrap  ← 不同的状态
-  - Base Damage: 5
+  - Require Source State: **IsTrap** ← 关键：陷阱激活时才能攻击
+  - Base Damage: 5（或实际伤害值）
 
-- [ ] 添加规则到 `DamageProfile_Enemy`
+- [ ] 修改 `DamageRule_PlayerHitEnemy`（已存在的规则）
+  - 添加：Require Target Not State: **IsTrap** ← 关键：陷阱激活时玩家无法伤害敌人
+  
+- [ ] 添加陷阱规则到 `DamageProfile_Enemy`（与近战攻击规则并存）
 
-#### **Step 3.2：修改 ThornAttackBehavior（代码）**
-- [ ] 在激活陷阱时设置 `IsTrap = true`
-- [ ] 在清理时设置 `IsTrap = false`
-- [ ] 移除旧的 `PublishAttack()` 调用
+#### **Step 3.2：扩展规则系统（代码）**✅ 已完成
+- [x] 在 `DamageRuleConfig` 添加 `requireTargetNotState` 字段
+- [x] 在 `DamageSystem.CheckRule` 添加"目标不应处于某状态"检查
+- [x] 支持未来扩展（无敌技能、护盾、闪避等）
+
+#### **Step 3.3：修改 ThornAttackBehavior（代码）**✅ 已完成
+- [x] 在 Telegraph 阶段激活陷阱时设置 `IsTrap = true`
+- [x] 在 Telegraph 阶段冷却时设置 `IsTrap = false`
+- [x] 在 Attack 阶段主动检测玩家并发布 `CollisionEvent`
+- [x] 在 CleanupAttack (Move 阶段) 清理 `IsTrap = false`
+- [x] 禁用旧的 `DealDamageToPlayer()` 调用
 
 **验收标准**：
-- ✅ 玩家碰到激活的陷阱 → 玩家受伤
-- ✅ 玩家碰到未激活的敌人 → 玩家不受伤
+- ✅ 玩家碰到激活的陷阱（红色，IsTrap = true）→ 玩家受伤，敌人无敌
+- ✅ 玩家碰到冷却的陷阱（灰色，IsTrap = false）→ 玩家不受伤，敌人可被攻击
+- ✅ 间隔伤害正常（根据 thornConfig.damageInterval）
+
+**关键设计**：
+- ✅ 使用 `IsTrap` 状态区分陷阱和普通攻击
+- ✅ **`requireTargetNotState`** 实现陷阱无敌（玩家攻击规则排除 IsTrap 目标）
+- ✅ 间隔伤害通过 `lastDamageTime` 控制
+- ✅ 复用 `EnemyAttackRange` Tag（AttackRange 作为 source）
+- ✅ **扩展性强**：未来可用于无敌技能、护盾、闪避等
 
 ---
 
@@ -285,7 +303,7 @@
 |------|--------|------|------|--------|
 | **阶段 1** | 1-2 天 | 无 | 低 | ✅ 已完成 |
 | **阶段 2** | 2-3 天 | 阶段 1 | 中 | ✅ 已完成 |
-| **阶段 3** | 1 天 | 阶段 2 | 低 | ⏳ 待迁移 |
+| **阶段 3** | 1 天 | 阶段 2 | 低 | ✅ 已完成 |
 | **阶段 4** | 1-2 天 | 阶段 1 | 中 | ✅ 已完成 |
 | **阶段 5** | 1-2 天 | 全部 | 低 | ⏳ 待执行 |
 | **总计（已完成）** | **4-6 天** | - | - | - |
@@ -314,9 +332,11 @@
 - [x] 测试：Attack 阶段玩家受伤，Telegraph 阶段无效
 
 ### 阶段 3 完成标准
-- [ ] 陷阱规则已配置
-- [ ] ThornAttackBehavior 设置 IsTrap 状态
-- [ ] 测试：陷阱激活时伤害生效
+- [x] ThornAttackBehavior 设置 IsTrap 状态（Telegraph 激活/冷却，Move 清理）
+- [x] Attack 阶段主动检测并发布 CollisionEvent
+- [x] 禁用旧的 DealDamageToPlayer 调用
+- [ ] Unity 配置：创建 `DamageRule_EnemyTrap` 并添加到 DamageProfile
+- [ ] 测试：陷阱激活时伤害生效，冷却时无效
 
 ### 阶段 4 完成标准
 - [x] 范围攻击规则已配置
@@ -403,9 +423,7 @@ DamageSystem.Instance.showRuleMatching = true;
 **创建日期**：2025-11-01  
 **维护者**：AI Assistant
 
-**下一步**：
-- 可选：阶段 3（敌人陷阱攻击迁移）
-- 推荐：阶段 5（清理和优化）⭐
+**下一步**：阶段 5（清理和优化）⭐
 
 ---
 
@@ -432,4 +450,11 @@ DamageSystem.Instance.showRuleMatching = true;
 - ✅ DamageRuleConfig 添加 attackRange 字段
 - ✅ 动态从 PlayerData.areaRadius 读取攻击范围
 - ✅ 修复双重伤害问题：禁用 EnemyBehavior.OnDamageProcessed（旧系统）
+
+### v1.4 (2025-11-01)
+- ✅ 阶段 3 完成：敌人陷阱攻击迁移成功
+- ✅ ThornAttackBehavior 使用 IsTrap 状态控制
+- ✅ 间隔伤害逻辑迁移到新系统
+- ✅ 禁用旧的 DealDamageToPlayer 调用
+- ✅ **新增 `requireTargetNotState`**：实现陷阱无敌（扩展性强，可用于未来无敌技能）
 

@@ -28,8 +28,9 @@ public class ThornAttackBehavior : BaseAttackBehavior
         int roundsSinceLastActivate = currentRound - lastActivateRound;
         bool isInCooldown = roundsSinceLastActivate <= config.cooldownRounds;
         
-        // 获取 EnemyBehavior 组件
+        // 获取 EnemyBehavior 组件和 Blackboard
         EnemyBehavior enemyBehavior = enemyTransform.GetComponent<EnemyBehavior>();
+        var blackboard = enemyTransform.gameObject.GetBlackboard();
         
         // 确保攻击范围始终显示
         attackRange.gameObject.SetActive(true);
@@ -40,7 +41,10 @@ public class ThornAttackBehavior : BaseAttackBehavior
             // 冷却中
             isThornActive = false;
             
-            // 关闭陷阱模式
+            // ✅ 新伤害系统：清除 IsTrap 状态
+            blackboard.Set("IsTrap", false);
+            
+            // 关闭陷阱模式（保留，用于其他逻辑）
             if (enemyBehavior != null)
             {
                 enemyBehavior.SetTrapMode(false);
@@ -61,7 +65,10 @@ public class ThornAttackBehavior : BaseAttackBehavior
         isThornActive = true;
         lastDamageTime = 0f;  // 重置伤害时间
         
-        // 开启陷阱模式
+        // ✅ 新伤害系统：设置 IsTrap 状态
+        blackboard.Set("IsTrap", true);
+        
+        // 开启陷阱模式（保留，用于其他逻辑）
         if (enemyBehavior != null)
         {
             enemyBehavior.SetTrapMode(true);
@@ -96,12 +103,16 @@ public class ThornAttackBehavior : BaseAttackBehavior
                 if (Time.time - lastDamageTime >= levelConfig.thornConfig.damageInterval)
                 {
                     lastDamageTime = Time.time;
-                    DealDamageToPlayer(target, levelConfig, enemyTransform);
+                    
+                    // ✅ 新伤害系统：发布碰撞事件
+                    CollisionEvent evt = CollisionEvent.CreateFromTrigger(attackRange.gameObject, target.GetComponent<Collider2D>());
+                    GameEventBus.PublishCollision(evt);
+                    
+                    // ❌ 旧系统已禁用
+                    // DealDamageToPlayer(target, levelConfig, enemyTransform);
                     
                     // 播放伤害特效（只在造成伤害时）
                     PlayAttackEffect(attackEffect, enemyTransform.name);
-                    
-                    Debug.Log($"ThornAttackBehavior: 棘刺造成伤害");
                 }
             }
         }
@@ -114,16 +125,17 @@ public class ThornAttackBehavior : BaseAttackBehavior
     /// </summary>
     public override void CleanupAttack(Transform enemyTransform, AttackRange attackRange)
     {
+        // ✅ 新伤害系统：清除 IsTrap 状态
+        var blackboard = enemyTransform.gameObject.GetBlackboard();
+        blackboard.Set("IsTrap", false);
+        
         // 获取 EnemyBehavior 组件
         EnemyBehavior enemyBehavior = enemyTransform.GetComponent<EnemyBehavior>();
         
-        // 在移动阶段关闭陷阱模式
-        // 这样敌人移动时撞到玩家不会造成陷阱伤害
-        // 刺的视觉状态保持不变，等到下一回合 Telegraph 阶段再更新
+        // 在移动阶段关闭陷阱模式（保留，用于其他逻辑）
         if (enemyBehavior != null)
         {
             enemyBehavior.SetTrapMode(false);
-            Debug.Log($"ThornAttackBehavior: 移动阶段，关闭陷阱模式（IsTrapMode = false）");
         }
     }
     
