@@ -158,121 +158,6 @@ public class PlayerAttackManager : MonoBehaviour
     
     #region 攻击处理
     
-    /// <summary>
-    /// 处理碰撞攻击（已迁移到新伤害系统）
-    /// </summary>
-    public void HandleCollisionAttack(Collision2D collision)
-    {
-        // ❌ 旧系统已禁用：使用新伤害系统
-        Debug.Log("[PlayerAttackManager] 碰撞攻击已迁移到新伤害系统，旧逻辑已禁用");
-        return;
-        
-        /* 旧代码保留（备份）
-        if (playerData == null)
-        {
-            Debug.LogError("PlayerAttackManager: PlayerData 未配置，无法执行碰撞攻击！");
-            return;
-        }
-        
-        // 检查是否是碰撞攻击模式
-        if (playerData.attackMode != PlayerData.AttackMode.Collision)
-        {
-            Debug.Log("PlayerAttackManager: 当前不是碰撞攻击模式，跳过碰撞攻击");
-            return;
-        }
-        
-        // 检查碰撞对象是否是敌人（包括父物体）
-        EnemyBehavior enemy = collision.gameObject.GetComponent<EnemyBehavior>();
-        if (enemy == null)
-        {
-            enemy = collision.gameObject.GetComponentInParent<EnemyBehavior>();
-        }
-        
-        if (enemy != null)
-        {
-            float finalDamage = GetCurrentAttackDamage();
-            gameObject.PublishAttack("Hit", collision.contacts[0].point, enemy.gameObject, finalDamage);
-            Debug.Log($"[PlayerAttackManager] 碰撞攻击命中 {enemy.name}，造成伤害: {finalDamage}");
-        }
-        */
-    }
-    
-    /// <summary>
-    /// 处理范围攻击
-    /// </summary>
-    public void HandleAreaAttack(Vector3 ballPosition)
-    {
-        if (playerData == null)
-        {
-            Debug.LogError("PlayerAttackManager: PlayerData 未配置，无法执行范围攻击！");
-            return;
-        }
-        
-        // 检查是否是范围攻击模式
-        if (playerData.attackMode != PlayerData.AttackMode.Area)
-        {
-            Debug.Log("PlayerAttackManager: 当前不是范围攻击模式，跳过范围攻击");
-            return;
-        }
-        
-        // 显示范围攻击圈
-        ShowAreaCircle(ballPosition);
-        
-        Collider2D[] enemies = Physics2D.OverlapCircleAll(
-            ballPosition, 
-            GetFinalAreaRadius(),  // 使用最终攻击范围（应用修改器后）
-            playerData.enemyLayerMask
-        );
-        
-        float finalDamage = GetCurrentAttackDamage();
-        
-        int hitCount = 0;
-        foreach (Collider2D enemyCollider in enemies)
-        {
-            // 检查敌人组件（包括父物体）
-            EnemyBehavior enemy = enemyCollider.GetComponent<EnemyBehavior>();
-            if (enemy == null)
-            {
-                enemy = enemyCollider.GetComponentInParent<EnemyBehavior>();
-            }
-            
-            if (enemy != null)
-            {
-                gameObject.PublishAttack("Hit", ballPosition, enemy.gameObject, finalDamage);
-                hitCount++;
-                Debug.Log($"[PlayerAttackManager] 范围攻击命中 {enemy.name}，造成伤害: {finalDamage}");
-            }
-        }
-        
-        if (hitCount > 0)
-        {
-            Debug.Log($"[PlayerAttackManager] 范围攻击完成，命中 {hitCount} 个敌人，范围: {GetFinalAreaRadius()}");
-        }
-        else
-        {
-            Debug.Log("[PlayerAttackManager] 范围攻击未命中任何敌人");
-        }
-        
-        // 延迟隐藏范围圈
-        StartCoroutine(HideAreaCircleAfterDelay());
-    }
-    
-    /// <summary>
-    /// 处理碰撞事件（由 PlayerCore 调用）
-    /// </summary>
-    public void ProcessCollision(Collision2D collision)
-    {
-        // 检查玩家状态，只在Moving状态处理碰撞
-        PlayerStateMachine playerStateMachine = FindFirstObjectByType<PlayerStateMachine>();
-        if (playerStateMachine != null && playerStateMachine.CurrentState == PlayerStateMachine.PlayerState.Moving)
-        {
-            HandleCollisionAttack(collision);
-        }
-        else
-        {
-            Debug.Log("PlayerAttackManager: 不在Moving状态，不处理碰撞攻击");
-        }
-    }
     
     /// <summary>
     /// 处理球停止事件（由 PlayerCore 调用）
@@ -283,8 +168,34 @@ public class PlayerAttackManager : MonoBehaviour
         StoppedEvent stoppedEvent = StoppedEvent.Create(gameObject, ballPosition);
         GameEventBus.PublishStopped(stoppedEvent);
         
-        // ❌ 旧系统：暂时保留，待测试后禁用
-        HandleAreaAttack(ballPosition);
+        // ✅ 根据 DamageProfile 配置决定是否显示范围圈
+        if (ShouldShowAreaCircle())
+        {
+            ShowAreaCircle(ballPosition);
+            StartCoroutine(HideAreaCircleAfterDelay());
+        }
+    }
+    
+    /// <summary>
+    /// 检查是否应该显示范围圈（根据 DamageProfile 配置）
+    /// </summary>
+    private bool ShouldShowAreaCircle()
+    {
+        if (playerData == null || playerData.damageProfile == null)
+        {
+            return false;
+        }
+        
+        // 检查 DamageProfile 中是否有 Stopped 类型的规则
+        foreach (var rule in playerData.damageProfile.rules)
+        {
+            if (rule != null && rule.triggerType == DamageTriggerType.Stopped)
+            {
+                return true;
+            }
+        }
+        
+        return false;
     }
     
     #endregion

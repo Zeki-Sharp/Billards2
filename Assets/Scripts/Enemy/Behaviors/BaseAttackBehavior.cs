@@ -60,27 +60,6 @@ public abstract class BaseAttackBehavior : IAttackBehavior
         return true;
     }
     
-    /// <summary>
-    /// 对玩家造成伤害
-    /// </summary>
-    protected void DealDamageToPlayer(GameObject playerObject, EnemyLevelConfig levelConfig, Transform enemyTransform)
-    {
-        if (playerObject == null || levelConfig == null)
-        {
-            return;
-        }
-        
-        // 从等级配置读取伤害值
-        float damage = levelConfig.damage;
-        
-        // 只发布攻击事件，让 DamageProcessor 统一处理伤害应用
-        if (enemyTransform != null)
-        {
-            enemyTransform.gameObject.PublishAttack("EnemyAttack", enemyTransform.position, playerObject, damage);
-        }
-        
-        Debug.Log($"BaseAttackBehavior: 发布攻击事件（类型：EnemyAttack），伤害: {damage}");
-    }
     
     /// <summary>
     /// 播放攻击特效

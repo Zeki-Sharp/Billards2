@@ -151,22 +151,16 @@ public class PlayerBehavior : MonoBehaviour, IDamageable
     
     void OnEnable()
     {
-        // 订阅伤害处理完成事件 - 应用最终伤害
-        GameEventBus.OnDamageProcessed += HandleDamageProcessed;
-        
-        // ✅ 新伤害系统：订阅伤害事件
+        // 订阅新伤害系统事件
         GameEventBus.OnDamage += OnDamageReceived;
     }
     
     void OnDisable()
     {
-        // 取消订阅伤害处理完成事件
-        GameEventBus.OnDamageProcessed -= HandleDamageProcessed;
-        
-        // ✅ 新伤害系统：取消订阅
+        // 取消订阅伤害事件
         GameEventBus.OnDamage -= OnDamageReceived;
         
-        // ✅ 新伤害系统：注销实体
+        // 注销实体
         var damageSystem = DamageSystem.Instance;
         if (damageSystem != null)
         {
@@ -349,29 +343,10 @@ public class PlayerBehavior : MonoBehaviour, IDamageable
     
     void OnCollisionEnter2D(Collision2D collision)
     {
-        // ✅ 新伤害系统：统一发布碰撞事件
+        // 发布碰撞事件
         GameEventBus.PublishCollision(CollisionEvent.Create(gameObject, collision));
         
-        // ⚠️ 保留旧逻辑（过渡期）：陷阱模式特殊处理
-        EnemyBehavior enemy = collision.gameObject.GetComponent<EnemyBehavior>();
-        if (enemy == null)
-        {
-            enemy = collision.gameObject.GetComponentInParent<EnemyBehavior>();
-        }
-        
-        if (enemy != null && enemy.IsTrapMode)
-        {
-            // 陷阱模式：让敌人对玩家造成陷阱伤害（旧逻辑，待迁移）
-            Debug.Log($"PlayerCore: 碰到陷阱模式的敌人 {collision.gameObject.name}，触发陷阱伤害");
-            Vector3 hitPosition = collision.contacts[0].point;
-            enemy.DealTrapDamageToPlayer(gameObject, hitPosition);
-            return;
-        }
-        
-        // ❌ 旧逻辑已禁用：使用新伤害系统
-        // if (enemy != null) { attackManager.ProcessCollision(collision); }
-        
-        // 撞击边界时的处理（保留，非伤害逻辑）
+        // 撞击边界时的处理（非伤害逻辑）
         if (collision.gameObject.CompareTag("Wall"))
         {
             if (CanGetBoost())
@@ -584,37 +559,6 @@ public class PlayerBehavior : MonoBehaviour, IDamageable
         // 状态机已直接订阅GameEventBus，无需触发额外事件
     }
     
-    /// <summary>
-    /// 处理攻击事件（C# Action 实现）
-    /// </summary>
-    private void HandleDamageProcessed(ProcessedDamageData processedData)
-    {
-        // 检查自己是否是攻击目标
-        if (processedData.OriginalData.Target == gameObject && processedData.FinalDamage > 0f)
-        {
-            // 根据攻击类型决定处理方式
-            string attackType = processedData.OriginalData.AttackType;
-            
-            if (attackType == "Trap")
-            {
-                // 陷阱伤害无视阶段限制（任何时候撞到都会扣血）
-                TakeDamageIgnorePhase(processedData.FinalDamage);
-                Debug.Log($"PlayerCore: 受到陷阱伤害 {processedData.FinalDamage}（类型：Trap，无视阶段）");
-            }
-            else if (attackType == "EnemyAttack")
-            {
-                // 敌人主动攻击，保持阶段检查（防止双向扣血）
-                TakeDamage(processedData.FinalDamage);
-                Debug.Log($"PlayerCore: 受到敌人攻击 {processedData.FinalDamage}（类型：EnemyAttack，有阶段检查）");
-            }
-            else
-            {
-                // 其他类型（如 "Hit"），保持阶段检查
-                TakeDamage(processedData.FinalDamage);
-                Debug.Log($"PlayerCore: 受到攻击 {processedData.FinalDamage}（类型：{attackType}，有阶段检查）");
-            }
-        }
-    }
     
     /// <summary>
     /// 接收伤害（新伤害系统，IDamageable 接口实现）

@@ -108,9 +108,6 @@ public class ThornAttackBehavior : BaseAttackBehavior
                     CollisionEvent evt = CollisionEvent.CreateFromTrigger(attackRange.gameObject, target.GetComponent<Collider2D>());
                     GameEventBus.PublishCollision(evt);
                     
-                    // ❌ 旧系统已禁用
-                    // DealDamageToPlayer(target, levelConfig, enemyTransform);
-                    
                     // 播放伤害特效（只在造成伤害时）
                     PlayAttackEffect(attackEffect, enemyTransform.name);
                 }

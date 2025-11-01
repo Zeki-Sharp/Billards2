@@ -52,21 +52,6 @@ MonoBehaviour:
       rid: -2
     effectRemovalConfig:
       rid: -2
-  - level: 3
-    isActive: 1
-    levelDescription: 
-    triggerConfig:
-      rid: -2
-    conditionConfig:
-      logicType: 0
-      conditions:
-      - rid: -2
-    effectConfig:
-      rid: 832807104352092322
-    resetConditionConfig:
-      rid: 832807104352092325
-    effectRemovalConfig:
-      rid: 832807104352092326
   requiredSkills: []
   isActive: 1
   references:
@@ -108,7 +93,7 @@ MonoBehaviour:
         targetStat: Damage
         modifierValue:
           rid: 832807104352092289
-        modifierType: 2
+        modifierType: 0
         allowStacking: 1
     - rid: 832807104352092289
       type: {class: ConstantFloat, ns: , asm: Assembly-CSharp}
@@ -118,23 +103,5 @@ MonoBehaviour:
       type: {class: OnPhaseEndedResetConditionConfig, ns: , asm: Assembly-CSharp}
       data: 
     - rid: 832807104352092321
-      type: {class: OnPhaseEndedEffectRemovalConditionConfig, ns: , asm: Assembly-CSharp}
-      data: 
-    - rid: 832807104352092322
-      type: {class: StatModifierEffectConfig, ns: , asm: Assembly-CSharp}
-      data:
-        targetStat: Damage
-        modifierValue:
-          rid: 832807104352092324
-        modifierType: 0
-        allowStacking: 1
-    - rid: 832807104352092324
-      type: {class: ConstantFloat, ns: , asm: Assembly-CSharp}
-      data:
-        value: 10
-    - rid: 832807104352092325
-      type: {class: OnPhaseEndedResetConditionConfig, ns: , asm: Assembly-CSharp}
-      data: 
-    - rid: 832807104352092326
       type: {class: OnPhaseEndedEffectRemovalConditionConfig, ns: , asm: Assembly-CSharp}
       data: 

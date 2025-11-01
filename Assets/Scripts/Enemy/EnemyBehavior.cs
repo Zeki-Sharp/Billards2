@@ -81,9 +81,6 @@ public class EnemyBehavior : MonoBehaviour, IDamageable
             Debug.LogWarning($"EnemyBehavior {name}: 未找到玩家！");
         }
         
-        // 订阅伤害处理完成事件 - 应用最终伤害
-        GameEventBus.OnDamageProcessed += OnDamageProcessed;
-        
         // ✅ 新伤害系统：订阅伤害事件
         GameEventBus.OnDamage += OnDamageReceived;
         
@@ -103,9 +100,6 @@ public class EnemyBehavior : MonoBehaviour, IDamageable
     
     void OnDestroy()
     {
-        // 取消订阅伤害处理完成事件
-        GameEventBus.OnDamageProcessed -= OnDamageProcessed;
-        
         // ✅ 新伤害系统：取消订阅
         GameEventBus.OnDamage -= OnDamageReceived;
         
@@ -140,26 +134,6 @@ public class EnemyBehavior : MonoBehaviour, IDamageable
         }
     }
     
-    /// <summary>
-    /// 对玩家造成伤害
-    /// </summary>
-    private void DealDamageToPlayer(GameObject player)
-    {
-        Debug.Log($"EnemyBehavior {name}: DealDamageToPlayer 被调用，enemyData 状态: {(enemyData != null ? $"已设置({enemyData.enemyName})" : "未设置")}");
-        if (CurrentLevelConfig == null)
-        {
-            Debug.LogError($"【攻击范围检测】EnemyBehavior {name}: Level {currentLevel} 配置未找到，无法造成伤害！");
-            return;
-        }
-        
-        // 从等级配置读取伤害值
-        float damage = CurrentLevelConfig.damage;
-        
-        // 只发布攻击事件，让 DamageProcessor 统一处理伤害应用
-        gameObject.PublishAttack("Hit", transform.position, player, damage);
-        
-        Debug.Log($"EnemyBehavior {name}: 发布攻击事件，伤害: {damage}");
-    }
     
     /// <summary>
     /// 执行预告阶段
@@ -402,29 +376,6 @@ public class EnemyBehavior : MonoBehaviour, IDamageable
         }
     }
     
-    /// <summary>
-    /// 敌人受击处理（旧伤害系统）
-    /// </summary>
-    private void OnDamageProcessed(ProcessedDamageData processedData)
-    {
-        // ❌ 旧系统已禁用：避免双重伤害
-        return;
-        
-        /*
-        // 检查自己是否是攻击目标
-        if (processedData.OriginalData.Target == gameObject && processedData.FinalDamage > 0f)
-        {
-            Debug.Log($"EnemyBehavior {name}: 受到 {processedData.FinalDamage} 点伤害！");
-            
-            // 处理敌人受击逻辑
-            TakeDamage(processedData.FinalDamage);
-        }
-        else
-        {
-            Debug.Log($"EnemyBehavior {name}: 不是攻击目标，忽略伤害处理完成事件");
-        }
-        */
-    }
     
     /// <summary>
     /// 敌人受到伤害（私有方法，内部使用）
@@ -515,25 +466,6 @@ public class EnemyBehavior : MonoBehaviour, IDamageable
         Debug.Log($"EnemyBehavior {name}: 陷阱模式设置为 {(trapMode ? "开启" : "关闭")}");
     }
     
-    /// <summary>
-    /// 对玩家造成陷阱伤害（由 PlayerCore 触发碰撞时调用）
-    /// 攻击者是敌人，受击者是玩家
-    /// </summary>
-    public void DealTrapDamageToPlayer(GameObject playerObject, Vector3 hitPosition)
-    {
-        if (CurrentLevelConfig == null)
-        {
-            Debug.LogWarning($"EnemyBehavior {name}: Level {currentLevel} 配置未找到，无法造成陷阱伤害");
-            return;
-        }
-        
-        float damage = CurrentLevelConfig.damage;
-        
-        // 只发布攻击事件，让 DamageProcessor 统一处理伤害应用
-        gameObject.PublishAttack("Trap", hitPosition, playerObject, damage);
-        
-        Debug.Log($"EnemyBehavior {name}: 陷阱发布攻击事件（类型：Trap），伤害: {damage}");
-    }
     
     /// <summary>
     /// 敌人死亡

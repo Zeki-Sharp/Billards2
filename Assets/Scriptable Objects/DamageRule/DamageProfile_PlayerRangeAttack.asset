@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 0}
   m_Name: DamageProfile_PlayerRangeAttack
   m_EditorClassIdentifier: Assembly-CSharp::DamageProfile
-  profileName: "\u73A9\u5BB6\u8FDC\u7A0B\u653B\u51FB\u914D\u7F6E"
+  profileName: "\u73A9\u5BB6\u8FDC\u7A0B\u653B\u51FB"
   description: 
   rules:
   - {fileID: 11400000, guid: b3d9605cfb3335641819fbc094e32ab5, type: 2}
