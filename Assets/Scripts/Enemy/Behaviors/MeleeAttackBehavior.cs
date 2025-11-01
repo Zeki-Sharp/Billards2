@@ -10,31 +10,29 @@ public class MeleeAttackBehavior : BaseAttackBehavior
     /// <summary>
     /// 执行预告阶段
     /// </summary>
-    public override void ExecuteTelegraph(Transform enemyTransform, Transform playerTransform, EnemyData enemyData, EnemyLevelConfig levelConfig, AttackRange attackRange)
+    public override BehaviorStatus ExecuteTelegraph(Transform enemyTransform, Transform playerTransform, EnemyData enemyData, EnemyLevelConfig levelConfig, AttackRange attackRange, EnemyRuntimeState runtimeState)
     {
         if (!ValidateAttackParams(enemyTransform, playerTransform, enemyData, levelConfig, attackRange))
         {
-            return;
+            return BehaviorStatus.Failure;
         }
-        
-        // ✅ 新伤害系统：不在 Telegraph 阶段设置 CanAttack
-        // 因为 Telegraph 是最后一个阶段，应该在 Attack 阶段设置
         
         // 近战攻击：AttackRange 在预制体中已经是敌人子物体，保持预制体中的父子关系和位置
         // 只需要显示攻击预告，不改变任何位置
         attackRange.ShowTelegraph();
         
-        Debug.Log($"MeleeAttackBehavior: 显示近战攻击预告，AttackRange作为子物体跟随敌人");
+        runtimeState.currentAttackState = "Telegraph";
+        return BehaviorStatus.Success;
     }
     
     /// <summary>
     /// 执行攻击阶段
     /// </summary>
-    public override void ExecuteAttack(Transform enemyTransform, Transform playerTransform, EnemyData enemyData, EnemyLevelConfig levelConfig, AttackRange attackRange, MMFeedbacks attackEffect)
+    public override BehaviorStatus ExecuteAttack(Transform enemyTransform, Transform playerTransform, EnemyData enemyData, EnemyLevelConfig levelConfig, AttackRange attackRange, MMFeedbacks attackEffect, EnemyRuntimeState runtimeState)
     {
         if (!ValidateAttackParams(enemyTransform, playerTransform, enemyData, levelConfig, attackRange))
         {
-            return;
+            return BehaviorStatus.Failure;
         }
         
         // 使用预告阶段保存的朝向
@@ -59,15 +57,22 @@ public class MeleeAttackBehavior : BaseAttackBehavior
                 GameEventBus.PublishCollision(evt);
             }
         }
+        
+        runtimeState.currentAttackState = "Attacking";
+        runtimeState.lastAttackTime = Time.time;
+        return BehaviorStatus.Success;
     }
     
     /// <summary>
     /// 清理攻击状态（Move 阶段开始时调用）
     /// </summary>
-    public override void CleanupAttack(Transform enemyTransform, AttackRange attackRange)
+    public override BehaviorStatus CleanupAttack(Transform enemyTransform, AttackRange attackRange, EnemyRuntimeState runtimeState)
     {
         // ✅ 新伤害系统：在 Move 阶段清理 CanAttack 状态
         var blackboard = enemyTransform.gameObject.GetBlackboard();
         blackboard.Set("CanAttack", false);
+        
+        runtimeState.currentAttackState = "";
+        return BehaviorStatus.Success;
     }
 }

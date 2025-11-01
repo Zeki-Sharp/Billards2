@@ -14,18 +14,18 @@ public class RangedAttackBehavior : BaseAttackBehavior
     /// <summary>
     /// 执行预告阶段
     /// </summary>
-    public override void ExecuteTelegraph(Transform enemyTransform, Transform playerTransform, EnemyData enemyData, EnemyLevelConfig levelConfig, AttackRange attackRange)
+    public override BehaviorStatus ExecuteTelegraph(Transform enemyTransform, Transform playerTransform, EnemyData enemyData, EnemyLevelConfig levelConfig, AttackRange attackRange, EnemyRuntimeState runtimeState)
     {
         if (!ValidateAttackParams(enemyTransform, playerTransform, enemyData, levelConfig, attackRange))
         {
-            return;
+            return BehaviorStatus.Failure;
         }
         
         // 检测玩家是否在检测范围内
         float distanceToPlayer = Vector2.Distance(enemyTransform.position, playerTransform.position);
         if (distanceToPlayer > levelConfig.rangedConfig.detectionRange)
         {
-            return;
+            return BehaviorStatus.Failure; // 玩家不在范围，攻击失败
         }
         
         // 保存原始本地位置（用于恢复）
@@ -47,16 +47,19 @@ public class RangedAttackBehavior : BaseAttackBehavior
         {
             ShowParabolicIndicator(enemyTransform, attackRange.transform, levelConfig.rangedConfig);
         }
+        
+        runtimeState.currentAttackState = "Telegraph";
+        return BehaviorStatus.Success;
     }
     
     /// <summary>
     /// 执行攻击阶段
     /// </summary>
-    public override void ExecuteAttack(Transform enemyTransform, Transform playerTransform, EnemyData enemyData, EnemyLevelConfig levelConfig, AttackRange attackRange, MMFeedbacks attackEffect)
+    public override BehaviorStatus ExecuteAttack(Transform enemyTransform, Transform playerTransform, EnemyData enemyData, EnemyLevelConfig levelConfig, AttackRange attackRange, MMFeedbacks attackEffect, EnemyRuntimeState runtimeState)
     {
         if (!ValidateAttackParams(enemyTransform, playerTransform, enemyData, levelConfig, attackRange))
         {
-            return;
+            return BehaviorStatus.Failure;
         }
         
         // 使用预告阶段保存的朝向
@@ -81,12 +84,16 @@ public class RangedAttackBehavior : BaseAttackBehavior
                 GameEventBus.PublishCollision(evt);
             }
         }
+        
+        runtimeState.currentAttackState = "Attacking";
+        runtimeState.lastAttackTime = Time.time;
+        return BehaviorStatus.Success;
     }
     
     /// <summary>
     /// 清理攻击状态
     /// </summary>
-    public override void CleanupAttack(Transform enemyTransform, AttackRange attackRange)
+    public override BehaviorStatus CleanupAttack(Transform enemyTransform, AttackRange attackRange, EnemyRuntimeState runtimeState)
     {
         // ✅ 新伤害系统：清理 CanAttack 状态
         var blackboard = enemyTransform.gameObject.GetBlackboard();
@@ -94,7 +101,7 @@ public class RangedAttackBehavior : BaseAttackBehavior
         
         if (attackRange == null)
         {
-            return;
+            return BehaviorStatus.Failure;
         }
         
         // 隐藏并清理抛物线指示器
@@ -102,6 +109,9 @@ public class RangedAttackBehavior : BaseAttackBehavior
         
         // ✅ 简化方案：恢复原始本地位置
         attackRange.transform.localPosition = originalLocalPosition;
+        
+        runtimeState.currentAttackState = "";
+        return BehaviorStatus.Success;
     }
     
     /// <summary>

@@ -22,7 +22,20 @@ public static class BehaviorFactory
                 return new FleeBehavior();
                 
             case MovementType.IntervalMovement:
+                // 检查是否使用 V2 配置（留空则使用旧系统）
+                // 注意：此处无法访问 levelConfig，由调用方决定使用哪个版本
+                // 默认返回旧系统，新系统需要手动指定
                 return new IntervalMovementBehavior();
+                
+            // ===== 原子行为 =====
+            case MovementType.MoveTowards:
+                return new MoveTowardsBehavior();
+                
+            case MovementType.MoveAway:
+                return new MoveAwayBehavior();
+                
+            case MovementType.Idle:
+                return new IdleBehavior();
                 
             default:
                 Debug.LogError($"BehaviorFactory: 未知的移动类型: {movementType}，使用默认的跟随玩家行为");
@@ -39,7 +52,10 @@ public static class BehaviorFactory
     {
         return movementType == MovementType.FollowPlayer || 
                movementType == MovementType.Flee || 
-               movementType == MovementType.IntervalMovement;
+               movementType == MovementType.IntervalMovement ||
+               movementType == MovementType.MoveTowards ||
+               movementType == MovementType.MoveAway ||
+               movementType == MovementType.Idle;
     }
     
     /// <summary>
@@ -48,7 +64,14 @@ public static class BehaviorFactory
     /// <returns>支持的移动类型数组</returns>
     public static MovementType[] GetSupportedMovementTypes()
     {
-        return new MovementType[] { MovementType.FollowPlayer, MovementType.Flee, MovementType.IntervalMovement };
+        return new MovementType[] { 
+            MovementType.FollowPlayer, 
+            MovementType.Flee, 
+            MovementType.IntervalMovement,
+            MovementType.MoveTowards,
+            MovementType.MoveAway,
+            MovementType.Idle
+        };
     }
     
     /// <summary>

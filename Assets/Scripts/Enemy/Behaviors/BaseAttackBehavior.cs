@@ -4,23 +4,24 @@ using MoreMountains.Feedbacks;
 /// <summary>
 /// 攻击行为抽象基类
 /// 提供通用的攻击行为实现
+/// 状态管理已迁移到 EnemyRuntimeState
 /// </summary>
 public abstract class BaseAttackBehavior : IAttackBehavior
 {
     /// <summary>
     /// 执行预告阶段 - 抽象方法，由子类实现
     /// </summary>
-    public abstract void ExecuteTelegraph(Transform enemyTransform, Transform playerTransform, EnemyData enemyData, EnemyLevelConfig levelConfig, AttackRange attackRange);
+    public abstract BehaviorStatus ExecuteTelegraph(Transform enemyTransform, Transform playerTransform, EnemyData enemyData, EnemyLevelConfig levelConfig, AttackRange attackRange, EnemyRuntimeState runtimeState);
     
     /// <summary>
     /// 执行攻击阶段 - 抽象方法，由子类实现
     /// </summary>
-    public abstract void ExecuteAttack(Transform enemyTransform, Transform playerTransform, EnemyData enemyData, EnemyLevelConfig levelConfig, AttackRange attackRange, MMFeedbacks attackEffect);
+    public abstract BehaviorStatus ExecuteAttack(Transform enemyTransform, Transform playerTransform, EnemyData enemyData, EnemyLevelConfig levelConfig, AttackRange attackRange, MMFeedbacks attackEffect, EnemyRuntimeState runtimeState);
     
     /// <summary>
     /// 清理攻击状态 - 抽象方法，由子类实现
     /// </summary>
-    public abstract void CleanupAttack(Transform enemyTransform, AttackRange attackRange);
+    public abstract BehaviorStatus CleanupAttack(Transform enemyTransform, AttackRange attackRange, EnemyRuntimeState runtimeState);
     
     /// <summary>
     /// 验证攻击参数

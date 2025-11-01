@@ -15,11 +15,11 @@ public class ThornAttackBehavior : BaseAttackBehavior
     /// <summary>
     /// 执行预告阶段
     /// </summary>
-    public override void ExecuteTelegraph(Transform enemyTransform, Transform playerTransform, 
-                                         EnemyData enemyData, EnemyLevelConfig levelConfig, AttackRange attackRange)
+    public override BehaviorStatus ExecuteTelegraph(Transform enemyTransform, Transform playerTransform, 
+                                         EnemyData enemyData, EnemyLevelConfig levelConfig, AttackRange attackRange, EnemyRuntimeState runtimeState)
     {
         if (!ValidateAttackParams(enemyTransform, playerTransform, enemyData, levelConfig, attackRange))
-            return;
+            return BehaviorStatus.Failure;
         
         currentRound++;
         ThornAttackConfig config = levelConfig.thornConfig;
@@ -56,8 +56,8 @@ public class ThornAttackBehavior : BaseAttackBehavior
             // 禁用碰撞体（冷却时玩家可以攻击敌人）
             SetColliderEnabled(attackRange, false);
             
-            Debug.Log($"ThornAttackBehavior: 冷却中 ({roundsSinceLastActivate}/{config.cooldownRounds}) - 显示灰色，碰撞体禁用");
-            return;
+            runtimeState.currentAttackState = "Cooldown";
+            return BehaviorStatus.Success; // 冷却也是正常状态
         }
         
         // 激活棘刺
@@ -80,17 +80,19 @@ public class ThornAttackBehavior : BaseAttackBehavior
         // 启用碰撞体（激活时触发陷阱伤害）
         SetColliderEnabled(attackRange, true);
         
-        Debug.Log($"ThornAttackBehavior: 棘刺激活 - 回合 {currentRound} - 显示红色，碰撞体启用");
+        runtimeState.currentAttackState = "Active";
+        return BehaviorStatus.Success;
     }
     
     /// <summary>
     /// 执行攻击阶段
     /// 棘刺攻击通过持续碰撞检测造成伤害
     /// </summary>
-    public override void ExecuteAttack(Transform enemyTransform, Transform playerTransform, 
-                                      EnemyData enemyData, EnemyLevelConfig levelConfig, AttackRange attackRange, MMFeedbacks attackEffect)
+    public override BehaviorStatus ExecuteAttack(Transform enemyTransform, Transform playerTransform, 
+                                      EnemyData enemyData, EnemyLevelConfig levelConfig, AttackRange attackRange, MMFeedbacks attackEffect, EnemyRuntimeState runtimeState)
     {
-        if (!isThornActive) return;
+        if (!isThornActive)
+            return BehaviorStatus.Success; // 未激活时跳过攻击，仍视为成功
         
         // 检测玩家是否在棘刺范围内
         var targets = attackRange.GetTargetsInRange();
@@ -113,14 +115,17 @@ public class ThornAttackBehavior : BaseAttackBehavior
                 }
             }
         }
-
+        
+        runtimeState.currentAttackState = "Attacking";
+        runtimeState.lastAttackTime = Time.time;
+        return BehaviorStatus.Success;
     }
     
     /// <summary>
     /// 清理攻击状态
     /// 移动阶段关闭陷阱模式，防止敌人移动时撞到玩家造成伤害
     /// </summary>
-    public override void CleanupAttack(Transform enemyTransform, AttackRange attackRange)
+    public override BehaviorStatus CleanupAttack(Transform enemyTransform, AttackRange attackRange, EnemyRuntimeState runtimeState)
     {
         // ✅ 新伤害系统：清除 IsTrap 状态
         var blackboard = enemyTransform.gameObject.GetBlackboard();
@@ -134,6 +139,9 @@ public class ThornAttackBehavior : BaseAttackBehavior
         {
             enemyBehavior.SetTrapMode(false);
         }
+        
+        runtimeState.currentAttackState = "";
+        return BehaviorStatus.Success;
     }
     
     /// <summary>

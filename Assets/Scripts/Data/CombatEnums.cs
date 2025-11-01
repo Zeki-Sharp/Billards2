@@ -17,5 +17,10 @@ public enum MovementType
 {
     FollowPlayer,   // 追随玩家（现有实现）
     Flee,          // 逃跑（远离玩家）
-    IntervalMovement // 间歇移动（交替静止和移动）
+    IntervalMovement, // 间歇移动（交替静止和移动）
+    
+    // ===== 原子行为 =====
+    MoveTowards,    // 向目标靠近（原子行为）
+    MoveAway,       // 远离目标（原子行为）
+    Idle            // 保持静止（原子行为）
 }

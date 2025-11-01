@@ -51,6 +51,9 @@ public class EnemyBehavior : MonoBehaviour, IDamageable
     /// </summary>
     public bool IsTrapMode => isTrapMode;
     
+    [Header("运行时状态")]
+    private EnemyRuntimeState runtimeState = new EnemyRuntimeState(); // 运行时状态数据
+    
     /// <summary>
     /// Awake - 初始化组件引用（确保在 SetEnemyData 调用前完成）
     /// </summary>
@@ -123,10 +126,16 @@ public class EnemyBehavior : MonoBehaviour, IDamageable
         // 使用攻击行为系统执行攻击
         if (attackBehavior != null && attackRange != null && CurrentLevelConfig != null)
         {
-            attackBehavior.ExecuteAttack(transform, player, enemyData, CurrentLevelConfig, attackRange, attackEffect);
-            Debug.Log($"EnemyBehavior {name}: 执行攻击 - 攻击类型: {CurrentLevelConfig.attackType}");
+            BehaviorStatus status = attackBehavior.ExecuteAttack(transform, player, enemyData, CurrentLevelConfig, attackRange, attackEffect, runtimeState);
             
-            // 注意：清理将在移动阶段开始时执行，避免在攻击特效播放时立即恢复位置
+            if (status == BehaviorStatus.Success)
+            {
+                Debug.Log($"EnemyBehavior {name}: 执行攻击成功 - 攻击类型: {CurrentLevelConfig.attackType}");
+            }
+            else
+            {
+                Debug.LogWarning($"EnemyBehavior {name}: 执行攻击失败 - 状态: {status}");
+            }
         }
         else
         {
@@ -150,8 +159,16 @@ public class EnemyBehavior : MonoBehaviour, IDamageable
         // 使用攻击行为系统执行预告
         if (attackBehavior != null && attackRange != null && CurrentLevelConfig != null)
         {
-            attackBehavior.ExecuteTelegraph(transform, player, enemyData, CurrentLevelConfig, attackRange);
-            Debug.Log($"EnemyBehavior {name}: 执行攻击预告 - 攻击类型: {CurrentLevelConfig.attackType}");
+            BehaviorStatus status = attackBehavior.ExecuteTelegraph(transform, player, enemyData, CurrentLevelConfig, attackRange, runtimeState);
+            
+            if (status == BehaviorStatus.Success)
+            {
+                Debug.Log($"EnemyBehavior {name}: 执行攻击预告成功 - 攻击类型: {CurrentLevelConfig.attackType}");
+            }
+            else
+            {
+                Debug.LogWarning($"EnemyBehavior {name}: 执行攻击预告失败 - 状态: {status}");
+            }
         }
         else
         {
@@ -164,28 +181,34 @@ public class EnemyBehavior : MonoBehaviour, IDamageable
     /// </summary>
     public void ExecuteMovePhase()
     {
-        Debug.Log($"EnemyBehavior {name}: 执行移动阶段 - 行为类型: {CurrentLevelConfig?.movementType}");
-        
         // 在移动阶段开始时清理上一个攻击阶段的状态
         if (attackBehavior != null && attackRange != null)
         {
-            attackBehavior.CleanupAttack(transform, attackRange);
-            Debug.Log($"EnemyBehavior {name}: 移动阶段开始，清理攻击状态");
+            BehaviorStatus cleanupStatus = attackBehavior.CleanupAttack(transform, attackRange, runtimeState);
+            
+            if (cleanupStatus == BehaviorStatus.Success)
+            {
+                Debug.Log($"EnemyBehavior {name}: 清理攻击状态成功");
+            }
         }
-        
-        Debug.Log($"EnemyBehavior {name}: 移动前位置: {transform.position}");
         
         if (player != null && movementBehavior != null && CurrentLevelConfig != null)
         {
             // 使用行为系统执行移动
-            Vector2 targetPosition = movementBehavior.ExecuteMovement(transform, player, enemyData, CurrentLevelConfig);
-            currentMovementDirection = movementBehavior.GetMovementDirection();
+            BehaviorStatus status = movementBehavior.ExecuteMovement(transform, player, enemyData, CurrentLevelConfig, runtimeState, out Vector2 targetPosition);
             
-            // 设置移动状态（由 BaseMovementBehavior 管理）
-            movementBehavior.SetMoving(true);
-            
-            // 开始平滑移动
-            StartCoroutine(MoveToTarget(targetPosition));
+            if (status == BehaviorStatus.Success || status == BehaviorStatus.Running)
+            {
+                // 从 RuntimeState 读取移动方向
+                currentMovementDirection = runtimeState.currentDirection;
+                
+                // 开始平滑移动
+                StartCoroutine(MoveToTarget(targetPosition));
+            }
+            else
+            {
+                Debug.LogWarning($"EnemyBehavior {name}: 移动行为执行失败 - 状态: {status}");
+            }
         }
         else
         {
@@ -221,8 +244,8 @@ public class EnemyBehavior : MonoBehaviour, IDamageable
         // 确保最终位置准确
         transform.position = targetPosition;
         
-        // 重置移动状态（由 BaseMovementBehavior 管理）
-        movementBehavior?.SetMoving(false);
+        // 重置移动状态（通过 RuntimeState 管理）
+        runtimeState.isMoving = false;
         
         Debug.Log($"EnemyBehavior {name}: 移动完成，最终位置: {transform.position}");
     }
@@ -232,7 +255,7 @@ public class EnemyBehavior : MonoBehaviour, IDamageable
     /// </summary>
     public Vector2 GetCurrentMovementDirection()
     {
-        return movementBehavior?.GetMovementDirection() ?? currentMovementDirection;
+        return runtimeState.currentDirection;
     }
     
     /// <summary>
@@ -240,7 +263,7 @@ public class EnemyBehavior : MonoBehaviour, IDamageable
     /// </summary>
     public bool IsMoving()
     {
-        return movementBehavior?.IsMoving() ?? false;
+        return runtimeState.isMoving;
     }
     
     /// <summary>
@@ -248,13 +271,7 @@ public class EnemyBehavior : MonoBehaviour, IDamageable
     /// </summary>
     private float GetCurrentMoveSpeed()
     {
-        // 优先使用移动行为提供的速度（支持动态速度变化）
-        if (movementBehavior != null)
-        {
-            return movementBehavior.GetCurrentMoveSpeed();
-        }
-        
-        // 降级：如果移动行为未初始化，使用配置中的默认速度
+        // 从配置读取速度
         if (enemyData == null) return 3f;
         
         switch (CurrentLevelConfig.movementType)
@@ -262,7 +279,12 @@ public class EnemyBehavior : MonoBehaviour, IDamageable
             case MovementType.FollowPlayer:
                 return CurrentLevelConfig.followConfig.moveSpeed;
             case MovementType.Flee:
+                // Flee 根据当前移动状态选择速度
+                if (runtimeState.currentMovementState == "Approaching")
+                    return CurrentLevelConfig.fleeConfig.approachSpeed;
                 return CurrentLevelConfig.fleeConfig.moveSpeed;
+            case MovementType.IntervalMovement:
+                return CurrentLevelConfig.intervalConfig.moveSpeed;
             default:
                 return 3f;
         }
@@ -318,8 +340,20 @@ public class EnemyBehavior : MonoBehaviour, IDamageable
         }
         
         // 根据配置创建移动行为
-        movementBehavior = BehaviorFactory.CreateMovementBehavior(CurrentLevelConfig.movementType);
-        Debug.Log($"EnemyBehavior {name}: 初始化移动行为 - 移动类型: {CurrentLevelConfig.movementType}");
+        // 特殊处理 IntervalMovement：如果配置了 V2，使用新系统
+        if (CurrentLevelConfig.movementType == MovementType.IntervalMovement && 
+            CurrentLevelConfig.intervalConfig_V2 != null && 
+            CurrentLevelConfig.intervalConfig_V2.phases != null && 
+            CurrentLevelConfig.intervalConfig_V2.phases.Length > 0)
+        {
+            movementBehavior = new IntervalMovementBehavior_V2();
+            Debug.Log($"EnemyBehavior {name}: 初始化移动行为 - 使用 IntervalMovement V2（新系统）");
+        }
+        else
+        {
+            movementBehavior = BehaviorFactory.CreateMovementBehavior(CurrentLevelConfig.movementType);
+            Debug.Log($"EnemyBehavior {name}: 初始化移动行为 - 移动类型: {CurrentLevelConfig.movementType}");
+        }
         
         // 根据配置创建攻击行为
         attackBehavior = BehaviorFactory.CreateAttackBehavior(CurrentLevelConfig.attackType);
@@ -504,7 +538,7 @@ public class EnemyBehavior : MonoBehaviour, IDamageable
             else
             {
                 // AttackRange 是子物体（近战攻击或已清理的远程攻击），正常清理
-                attackBehavior.CleanupAttack(transform, attackRange);
+                attackBehavior.CleanupAttack(transform, attackRange, runtimeState);
                 Debug.Log($"EnemyBehavior {name}: 死亡时清理攻击状态");
             }
         }
@@ -534,7 +568,7 @@ public class EnemyBehavior : MonoBehaviour, IDamageable
         // 使用攻击行为系统执行预告
         if (attackBehavior != null && attackRange != null && CurrentLevelConfig != null)
         {
-            attackBehavior.ExecuteTelegraph(transform, player, enemyData, CurrentLevelConfig, attackRange);
+            attackBehavior.ExecuteTelegraph(transform, player, enemyData, CurrentLevelConfig, attackRange, runtimeState);
             Debug.Log($"EnemyBehavior {name}: ShowAttackRange 调用攻击行为系统");
         }
         else if (attackRange != null)

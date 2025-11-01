@@ -242,8 +242,8 @@ Sequence {
 
 ### ⭐⭐⭐ 高优先级（1-2 周，立即实施）
 
-#### 3. 统一行为返回值（BehaviorStatus）
-- **目标**：支持行为组合判断
+#### 3. 统一行为返回值（BehaviorStatus）✅
+- **状态**：已完成（Week 3）
 - **工作量**：中
 - **影响**：IMovementBehavior、IAttackBehavior
 - **产出**：
@@ -253,23 +253,35 @@ Sequence {
   }
   
   public interface IMovementBehavior {
-      BehaviorStatus Execute(...);  // 替换 void
+      BehaviorStatus ExecuteMovement(EnemyRuntimeState runtimeState, ...);
+  }
+  public interface IAttackBehavior {
+      BehaviorStatus ExecuteTelegraph(EnemyRuntimeState runtimeState, ...);
+      BehaviorStatus ExecuteAttack(EnemyRuntimeState runtimeState, ...);
+      BehaviorStatus CleanupAttack(EnemyRuntimeState runtimeState, ...);
   }
   ```
-- **前置条件**：无（独立功能）
+- **实现文件**：
+  - `BehaviorStatus.cs`（枚举定义）
+  - 所有 Behavior 类已更新签名
 
-#### 4. 提取 RuntimeState 类
-- **目标**：状态与行为分离
+#### 4. 提取 RuntimeState 类 ✅
+- **状态**：已完成（Week 3）
 - **工作量**：小
 - **影响**：EnemyBehavior、PlayerBehavior
 - **产出**：
   ```csharp
   EnemyRuntimeState {
-      currentPhase, currentState, lastActionTime,
-      isMoving, isDead, currentDirection
+      currentPhase, currentMovementState, currentAttackState,
+      lastActionTime, lastAttackTime, lastMoveTime,
+      isMoving, isDead, currentDirection, targetPosition,
+      intervalCurrentRound, intervalIsInIdlePhase,
+      isTrapMode, thornCurrentRound, thornLastActivateRound,
+      thornLastDamageTime
   }
   ```
-- **前置条件**：无（可与 BehaviorStatus 并行）
+- **实现文件**：`EnemyRuntimeState.cs`
+- **应用**：所有 Movement/Attack Behavior 已使用 runtimeState 参数
 
 ---
 
@@ -375,21 +387,29 @@ Blackboard（基础设施，1天）
 产出：✅ 伤害系统完整可用，所有战斗伤害统一由 DamageSystem 处理
 ```
 
-#### **Phase 2：行为系统重构（接下来实施）**
+#### **Phase 2：行为系统重构（进行中）**
 ```
-Week 3:
-- Day 11-13: RuntimeState + BehaviorStatus（3 天）
-- Day 14-15: 原子行为定义（2 天）
+Week 3: ✅ 已完成
+- [x] Day 11-13: RuntimeState + BehaviorStatus（3 天）
+  - 创建 BehaviorStatus 枚举
+  - 创建 EnemyRuntimeState 类
+  - 更新 IMovementBehavior/IAttackBehavior 接口
+  - 迁移所有 Behavior 实现类
 
-Week 4:
-- Day 16-18: IntervalMovement 重构（3 天）
-- Day 19-20: Flee 重构 + 测试（2 天）
+Week 4: 🔄 进行中
+- [x] Day 14-16: IntervalMovement V2 重构（✅ 完成）
+  - 创建 IntervalMovementConfig_V2 配置类
+  - 实现 IntervalMovementBehavior_V2（Sequence + Repeat + Atomic）
+  - 修复原子行为返回值（Running → Success）
+  - 测试通过：移动-静止循环正常
+- [ ] Day 17-18: FleeBehavior V2 重构（待实施）
+- [ ] Day 19-20: 测试 + 文档更新
 
-产出：✅ 行为系统松耦合、可组合
+产出：✅ IntervalMovement 完全解耦、可配置
 ```
 
 **Phase 0-1 已完成**：伤害系统重构（约 6-10 天）
-**Phase 2 待实施**：行为系统重构（预计 10 天）
+**Phase 2 进行中**：行为系统重构（Week 3 完成，Week 4 待实施）
 **总时长**：20 天（4 周）
 
 #### **Phase 3：可选优化（Week 5+）**
@@ -417,9 +437,10 @@ Week 4:
 - ✅ **主动检测机制**：范围攻击不依赖被动触发，精确控制攻击时机
 
 ### 待实现收益（行为系统重构后）
-- ⏳ **可维护性提升 40%**：RuntimeState 分离（待实施）
-- ⏳ **开发效率提升 30%**：行为复用、BehaviorStatus（待实施）
-- ⏳ **行为复用**：原子行为可在多处使用（待实施）
+- ✅ **可维护性提升**：RuntimeState 分离（已完成 Week 3）
+- ✅ **统一状态接口**：BehaviorStatus 返回值（已完成 Week 3）
+- ⏳ **行为复用**：原子行为拆解（Week 4 待实施）
+- ⏳ **全局阶段冲突解决**：Behavior Sequence System（Week 4 待实施）
 - ⏳ **集中更新优化**：BehaviorManager 统一管理（可选）
 
 ---
@@ -451,11 +472,13 @@ Week 4:
 
 ---
 
-**文档版本**：v5.0  
+**文档版本**：v7.0  
 **创建日期**：2025-11-01  
 **最后更新**：2025-11-01  
 **维护者**：AI Assistant  
 **变更记录**：
+- v7.0: Week 4 Phase 4 完成（IntervalMovement V2），修复原子行为返回值问题
+- v6.0: Week 3 完成（RuntimeState + BehaviorStatus），标记陷阱攻击问题（Legacy Issue #1）
 - v5.0: 伤害系统重构完成，更新当前状态，重新调整优先级和路线图
 - v4.0: 澄清概念混淆，移除不必要系统，明确先伤害后行为的执行顺序
 - v3.0: 精简内容，去除重复示例，添加优先级明确的优化建议

@@ -78,6 +78,28 @@ public class EnemyLevelConfig
     [ShowIf("movementType", MovementType.IntervalMovement)]
     public IntervalMovementConfig intervalConfig = new IntervalMovementConfig();
     
+    [BoxGroup("AI配置")]
+    [ShowIf("movementType", MovementType.IntervalMovement)]
+    [LabelText("间歇移动配置 V2（新系统）")]
+    [Tooltip("基于阶段序列的灵活配置，留空则使用旧系统")]
+    public IntervalMovementConfig_V2 intervalConfig_V2;
+    
+    // ===== 原子行为配置 =====
+    [BoxGroup("AI配置")]
+    [ShowIf("movementType", MovementType.MoveTowards)]
+    [LabelText("向目标靠近配置")]
+    public MoveTowardsConfig moveTowardsConfig = new MoveTowardsConfig();
+    
+    [BoxGroup("AI配置")]
+    [ShowIf("movementType", MovementType.MoveAway)]
+    [LabelText("远离目标配置")]
+    public MoveAwayConfig moveAwayConfig = new MoveAwayConfig();
+    
+    [BoxGroup("AI配置")]
+    [ShowIf("movementType", MovementType.Idle)]
+    [LabelText("静止配置")]
+    public IdleConfig idleConfig = new IdleConfig();
+    
     /// <summary>
     /// 验证配置是否有效
     /// </summary>
