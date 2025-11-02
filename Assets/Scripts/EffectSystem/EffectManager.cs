@@ -73,24 +73,20 @@ namespace DeepSpaceLabs.SAM
         // ✅ 初始化特效字典
         effectObjMMPlayerMap = new Dictionary<GameObject, Dictionary<string, MMF_Player>>();
         
-        // ✅ 订阅事件（从 OnEnable 移到这里，确保只订阅一次）
         GameEventBus.OnEffect += OnEffectEvent;
-        GameEventBus.OnAttack += OnAttackEvent;  // 旧系统（保留，过渡期）
-        GameEventBus.OnDamage += OnDamageEvent;  // ✅ 新伤害系统
+        GameEventBus.OnDamage += OnDamageEvent;
         GameEventBus.OnDeath += OnDeathEvent;
         
         if (enableDebugLog)
         {
-            Debug.Log("[EffectManager] 单例创建成功（SYSTEM 层），订阅新旧伤害事件");
+            Debug.Log("[EffectManager] 单例创建成功（SYSTEM 层），订阅伤害和死亡事件");
         }
     }
     
     protected override void OnManagerDestroyed()
     {
-        // ✅ 取消订阅事件
         GameEventBus.OnEffect -= OnEffectEvent;
-        GameEventBus.OnAttack -= OnAttackEvent;
-        GameEventBus.OnDamage -= OnDamageEvent;  // ✅ 新伤害系统
+        GameEventBus.OnDamage -= OnDamageEvent;
         GameEventBus.OnDeath -= OnDeathEvent;
     }
     
@@ -477,19 +473,7 @@ namespace DeepSpaceLabs.SAM
         }
     
     /// <summary>
-    /// 处理攻击事件（GameEventBus订阅，旧系统）
-    /// 直接使用 AttackData 参数播放特效，避免重复传递
-    /// </summary>
-    public void OnAttackEvent(AttackData attackData)
-    {
-        PlayAttackerEffect(attackData);
-        PlayGlobalEffect(attackData);
-        PlayTargetEffect(attackData);
-    }
-    
-    /// <summary>
-    /// 处理伤害事件（新伤害系统）
-    /// 将 DamageEvent 转换为 AttackData 并复用现有特效逻辑
+    /// 处理伤害事件
     /// </summary>
     public void OnDamageEvent(DamageEvent damageEvent)
     {

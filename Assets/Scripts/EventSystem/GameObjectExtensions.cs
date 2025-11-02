@@ -7,19 +7,6 @@ using UnityEngine;
 public static class GameObjectExtensions
 {
     /// <summary>
-    /// 发布攻击事件
-    /// </summary>
-    /// <param name="attacker">攻击者</param>
-    /// <param name="attackType">攻击类型</param>
-    /// <param name="position">攻击位置</param>
-    /// <param name="target">目标</param>
-    /// <param name="damage">伤害值</param>
-    public static void PublishAttack(this GameObject attacker, string attackType, Vector3 position, GameObject target, float damage = 0f)
-    {
-        GameEventBus.PublishSimpleAttack(attackType, position, attacker, target, damage);
-    }
-    
-    /// <summary>
     /// 发布死亡事件
     /// </summary>
     /// <param name="deadObject">死亡对象</param>

@@ -1,8 +1,7 @@
 using UnityEngine;
 
 /// <summary>
-/// 碰撞触发器 - 技能系统第一阶段最小验证
-/// 监听 GameEventBus.OnAttack 事件，检测碰撞事件是否发生
+/// 碰撞触发器 - 技能系统碰撞事件检测
 /// 只负责检测碰撞事件，不处理触发逻辑
 /// </summary>
 public class CollisionTrigger : ITrigger
@@ -34,26 +33,27 @@ public class CollisionTrigger : ITrigger
     /// <returns>是否检测到碰撞事件</returns>
     public bool CheckEvent(SkillArgs args)
     {
-        // 检查事件数据类型
-        if (args.TryGetEventData<AttackData>(out var attackData))
+        // 检查 CollisionEvent
+        if (args.TryGetEventData<CollisionEvent>(out var collisionEvent))
         {
-            // 【关键修复1】检查是否在玩家回合
+            // 检查是否在玩家回合
             var gameFlowController = GameFlowController.Instance;
-            bool isPlayerPhase = gameFlowController != null && gameFlowController.IsPlayerPhase;
-            
-            // 【关键修复2】检查攻击者是否是玩家
-            bool isPlayerAttacker = attackData.Attacker != null && attackData.Attacker.CompareTag("Player");
-            
-            // 检查目标标签是否匹配
-            bool tagMatches = string.IsNullOrEmpty(targetTag) || attackData.TargetTag == targetTag;
-            
-            // 只有当在玩家回合、攻击者是玩家且目标标签匹配时才触发
-            if (isPlayerPhase && isPlayerAttacker && tagMatches)
+            if (gameFlowController == null || !gameFlowController.IsPlayerPhase)
             {
-                return true;
+                return false;
             }
             
-            return false;
+            // 检查碰撞发起者是否是玩家
+            if (collisionEvent.Source == null || !collisionEvent.Source.CompareTag("Player"))
+            {
+                return false;
+            }
+            
+            // 检查目标标签是否匹配
+            bool tagMatches = string.IsNullOrEmpty(targetTag) || 
+                             (collisionEvent.Target != null && collisionEvent.Target.CompareTag(targetTag));
+            
+            return tagMatches;
         }
         
         return false;

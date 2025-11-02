@@ -140,8 +140,7 @@ public class SkillManager : SingletonManager<SkillManager>
     /// </summary>
     void SubscribeToEvents()
     {
-        // 订阅伤害处理完成事件（在伤害修改完成后处理技能效果）
-        GameEventBus.OnDamageProcessed += HandleDamageProcessedEvent;
+        GameEventBus.OnCollision += HandleCollisionEvent;
         GameEventBus.OnDeath += HandleDeathEvent;
         GameEventBus.OnHealthChanged += HandleHealthChangedEvent;
         GameEventBus.OnGameFlowStateChanged += HandleGameFlowStateChanged;
@@ -149,7 +148,7 @@ public class SkillManager : SingletonManager<SkillManager>
         
         if (enableDebugLog)
         {
-            Debug.Log("SkillManager: 已订阅伤害处理完成事件、死亡事件、发射开始事件、生命值变化事件、游戏流程状态变化事件和球停止事件");
+            Debug.Log("SkillManager: 已订阅所有相关事件");
         }
     }
     
@@ -158,7 +157,7 @@ public class SkillManager : SingletonManager<SkillManager>
     /// </summary>
     void UnsubscribeFromEvents()
     {
-        GameEventBus.OnDamageProcessed -= HandleDamageProcessedEvent;
+        GameEventBus.OnCollision -= HandleCollisionEvent;
         GameEventBus.OnDeath -= HandleDeathEvent;
         GameEventBus.OnHealthChanged -= HandleHealthChangedEvent;
         GameEventBus.OnGameFlowStateChanged -= HandleGameFlowStateChanged;
@@ -175,24 +174,25 @@ public class SkillManager : SingletonManager<SkillManager>
     #region 事件处理
     
     /// <summary>
-    /// 处理伤害处理完成事件
+    /// 处理碰撞事件
     /// </summary>
-    void HandleDamageProcessedEvent(ProcessedDamageData processedData)
+    void HandleCollisionEvent(CollisionEvent collisionEvent)
     {
-        if (enableDebugLog)
+        // 只处理玩家发起的碰撞
+        if (collisionEvent.Source == null || !collisionEvent.Source.CompareTag("Player"))
         {
-            Debug.Log($"[SkillManager] 收到伤害处理完成事件: {processedData.OriginalData.AttackType} at {processedData.OriginalData.Position}, 最终伤害: {processedData.FinalDamage}");
+            return;
         }
         
-        // 只处理攻击相关的技能
+        // 遍历所有技能实例，检查是否需要处理此碰撞事件
         foreach (var skillInstance in skillInstances.Values)
         {
-            if (IsEventRelevantForSkill(processedData.OriginalData, skillInstance))
+            if (IsEventRelevantForSkill(collisionEvent, skillInstance))
             {
-                bool processed = skillInstance.ProcessEvent(processedData.OriginalData);
+                bool processed = skillInstance.ProcessEvent(collisionEvent);
                 if (processed && enableDebugLog)
                 {
-                    Debug.Log($"[SkillManager] 技能 {skillInstance.config.skillName} 被触发");
+                    Debug.Log($"[SkillManager] 技能 {skillInstance.config.skillName} 被触发（碰撞事件）");
                 }
             }
         }
@@ -328,8 +328,7 @@ public class SkillManager : SingletonManager<SkillManager>
         }
         else if (trigger is CollisionTrigger)
         {
-            // CollisionTrigger 只对攻击事件有效
-            return eventData is AttackData;
+            return eventData is CollisionEvent;
         }
         else if (trigger is KillTrigger)
         {

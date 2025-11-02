@@ -36,12 +36,11 @@ public class DamageProcessor : SingletonManager<DamageProcessor>
     
     protected override void OnManagerCreated()
     {
-        GameEventBus.OnAttack += ProcessAttackDamage;
+        // 现在通过 DamageSystem.ProcessDamage() 公开接口调用
     }
     
     protected override void OnManagerDestroyed()
     {
-        GameEventBus.OnAttack -= ProcessAttackDamage;
     }
     
     #endregion
@@ -195,36 +194,6 @@ public class DamageProcessor : SingletonManager<DamageProcessor>
         }
         
         Debug.Log($"[DamageProcessor] 伤害处理完成，最终伤害: {attackData.Damage}");
-    }
-    
-    /// <summary>
-    /// 处理攻击伤害（旧接口，保持兼容）
-    /// </summary>
-    private void ProcessAttackDamage(AttackData attackData)
-    {
-        // 临时变量，用于引用传递
-        AttackData mutableData = attackData;
-        ProcessAttackDamage(ref mutableData);
-        
-        // 创建处理数据（保持旧流程兼容）
-        ProcessedDamageData processedData = new ProcessedDamageData(attackData);
-        processedData.FinalDamage = mutableData.Damage;
-        
-        // 更新统计
-        totalProcessedCount++;
-        if (processedData.WasModified)
-        {
-            modifiedCount++;
-        }
-        
-        // 发布处理完成的伤害数据
-        GameEventBus.PublishDamageProcessed(processedData);
-        
-        // 显示处理统计
-        if (showProcessingStats)
-        {
-            ShowProcessingStats();
-        }
     }
     
     #endregion

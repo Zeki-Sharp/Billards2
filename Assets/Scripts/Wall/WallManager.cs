@@ -116,9 +116,7 @@ public class WallManager : MonoBehaviour
         BallPhysics ballPhysics = hitObject.GetComponent<BallPhysics>();
         float currentSpeed = ballPhysics != null ? ballPhysics.GetSpeed() : 0f;
         
-        // ========================================
-        // 【重要】计算撞墙信息（所有撞墙都需要，不受防抖影响）
-        // ========================================
+        // 计算撞墙信息（所有撞墙都需要，不受防抖影响）
         Vector3 wallHitPosition = collision.contacts[0].point;
         Vector3 wallHitDirection = ((Vector2)hitObject.transform.position - collision.contacts[0].point).normalized;
         Vector3 hitNormal = collision.contacts[0].normal;
@@ -139,53 +137,47 @@ public class WallManager : MonoBehaviour
             positionOffset = positionController.CalculatePositionOffset(wallHitPosition, hitNormal, wallHitDirection, currentSpeed);
         }
         
-        // 创建 AttackData（所有撞墙都创建，用于技能系统）
-        var attackData = new AttackData
-        {
-            AttackType = "Hit",
-            Position = wallHitPosition,
-            Direction = wallHitDirection,
-            Attacker = hitObject,
-            Target = wallTransform.gameObject,
-            Damage = 0f,
-            AttackTime = Time.time,
-            AttackerTag = hitObject.tag,
-            TargetTag = wallTransform.gameObject.tag,
-            HitNormal = hitNormal,
-            HitSpeed = currentSpeed,
-            WallHitRotationAngle = rotationAngle,
-            WallHitPositionOffset = positionOffset
-        };
-        
-        // ========================================
-        // 【关键修复】总是发布OnAttack事件（技能系统需要所有撞墙事件）
-        // ========================================
-        GameEventBus.PublishAttack(attackData);
-        
-        // ========================================
-        // 【防抖控制】只控制特效播放，不影响事件发布
-        // ========================================
+        // 特效播放
         if (ShouldPlayWallHitEffect(hitObject, currentSpeed))
         {
-            // 添加位置验证日志
-            Debug.Log($"WallManager碰撞位置验证 - 实际碰撞点: {wallHitPosition}, " +
-                     $"碰撞对象位置: {hitObject.transform.position}, " +
-                     $"墙壁位置: {wallTransform.position}");
+            // 创建 AttackData（仅用于特效参数，不发布事件）
+            var attackData = new AttackData
+            {
+                AttackType = "Hit",
+                Position = wallHitPosition,
+                Direction = wallHitDirection,
+                Attacker = hitObject,
+                Target = wallTransform.gameObject,
+                Damage = 0f,
+                AttackTime = Time.time,
+                AttackerTag = hitObject.tag,
+                TargetTag = wallTransform.gameObject.tag,
+                HitNormal = hitNormal,
+                HitSpeed = currentSpeed,
+                WallHitRotationAngle = rotationAngle,
+                WallHitPositionOffset = positionOffset
+            };
             
-            Debug.Log($"🔧 [DEBUG] AttackData 创建完成 - WallHitRotationAngle: {attackData.WallHitRotationAngle:F2}°, " +
-                     $"WallHitPositionOffset: {attackData.WallHitPositionOffset}, HitSpeed: {attackData.HitSpeed:F2}");
+            // 播放完整的撞墙特效组
             
-            // 播放墙壁自己的受击特效
+            // 1. 攻击者特效（玩家的碰撞特效）
+            if (hitObject != null)
+            {
+                EffectManager.Instance.PlayEffect(hitObject, EffectType.Hit, attackData: attackData);
+            }
+            
+            // 2. 全局特效（镜头震动等）
+            if (hitObject.CompareTag("Player"))
+            {
+                EffectManager.Instance.PlayEffect(EffectManager.Instance.gameObject, EffectType.GlobalHitAttack, attackData: attackData);
+            }
+            
+            // 3. 目标特效（墙壁受击特效 - 位移）
             EffectManager.Instance.PlayEffect(gameObject, EffectType.BeHit, attackData: attackData);
             
             if (enableDebugLog)
             {
-                Debug.Log($"触发墙壁受击特效: {wallTransform.name} <- {hitObject.name}, 速度: {currentSpeed:F2}, 旋转角度: {rotationAngle:F2}, 位置偏移: {positionOffset}");
-            }
-            
-            if (enableDebugLog)
-            {
-                Debug.Log($"触发撞墙特效: {wallTransform.name} <- {hitObject.name}, 速度: {currentSpeed:F2}, 旋转角度: {rotationAngle:F2}, 位置偏移: {positionOffset}");
+                Debug.Log($"触发撞墙完整特效组: {wallTransform.name} <- {hitObject.name}, 速度: {currentSpeed:F2}");
             }
             
             // 更新最后撞墙时间（用于下次防抖判断）

@@ -10323,7 +10323,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   wallHitEffectCooldown: 0.2
-  minWallHitSpeed: 0.5
+  minWallHitSpeed: 1
   effects:
   - effectType: 2
     mmfPlayer: {fileID: 1398340947}

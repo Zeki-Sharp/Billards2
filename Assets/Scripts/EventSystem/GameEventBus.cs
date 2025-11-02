@@ -46,16 +46,6 @@ public static class GameEventBus
     #region 核心游戏事件
     
     /// <summary>
-    /// 攻击事件
-    /// </summary>
-    public static event System.Action<AttackData> OnAttack;
-    
-    /// <summary>
-    /// 伤害处理完成事件
-    /// </summary>
-    public static event System.Action<ProcessedDamageData> OnDamageProcessed;
-    
-    /// <summary>
     /// 死亡事件
     /// </summary>
     public static event System.Action<DeathData> OnDeath;
@@ -275,16 +265,6 @@ public static class GameEventBus
     #endregion
     
     #region 事件发布方法
-    
-    /// <summary>
-    /// 发布攻击事件
-    /// </summary>
-    public static void PublishAttack(AttackData attackData) => OnAttack?.Invoke(attackData);
-    
-    /// <summary>
-    /// 发布伤害处理完成事件
-    /// </summary>
-    public static void PublishDamageProcessed(ProcessedDamageData processedData) => OnDamageProcessed?.Invoke(processedData);
     
     /// <summary>
     /// 发布死亡事件
@@ -509,35 +489,6 @@ public static class GameEventBus
     #region 简化工厂方法
     
     /// <summary>
-    /// 发布简单攻击事件
-    /// </summary>
-    /// <param name="attackType">攻击类型</param>
-    /// <param name="position">攻击位置</param>
-    /// <param name="attacker">攻击者</param>
-    /// <param name="target">目标</param>
-    /// <param name="damage">伤害值</param>
-    public static void PublishSimpleAttack(string attackType, Vector3 position, GameObject attacker, GameObject target, float damage = 0f)
-    {
-        var attackData = new AttackData
-        {
-            AttackType = attackType,
-            Position = position,
-            Direction = Vector3.zero,
-            Attacker = attacker,
-            Target = target,
-            Damage = damage,
-            AttackTime = Time.time,
-            AttackerTag = attacker?.tag ?? "",
-            TargetTag = target?.tag ?? "",
-            HitNormal = Vector3.zero,
-            HitSpeed = 0f,
-            WallHitRotationAngle = 0f,
-            WallHitPositionOffset = Vector3.zero
-        };
-        PublishAttack(attackData);
-    }
-    
-    /// <summary>
     /// 发布简单死亡事件
     /// </summary>
     /// <param name="deathType">死亡类型</param>
@@ -583,8 +534,6 @@ public static class GameEventBus
     public static string GetEventStats()
     {
         return $"GameEventBus 事件订阅统计:\n" +
-               $"- OnAttack: {OnAttack?.GetInvocationList()?.Length ?? 0} 订阅者\n" +
-               $"- OnDamageProcessed: {OnDamageProcessed?.GetInvocationList()?.Length ?? 0} 订阅者\n" +
                $"- OnDeath: {OnDeath?.GetInvocationList()?.Length ?? 0} 订阅者\n" +
                $"- OnAimDirectionChanged: {OnAimDirectionChanged?.GetInvocationList()?.Length ?? 0} 订阅者\n" +
                $"- OnAimVisibilityChanged: {OnAimVisibilityChanged?.GetInvocationList()?.Length ?? 0} 订阅者\n" +
