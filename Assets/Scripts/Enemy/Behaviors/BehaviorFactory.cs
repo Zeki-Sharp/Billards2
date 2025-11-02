@@ -7,7 +7,8 @@ using UnityEngine;
 public static class BehaviorFactory
 {
     /// <summary>
-    /// 根据MovementType创建对应的移动行为
+    /// 根据MovementType创建对应的移动行为（原子行为）
+    /// 注意：复杂行为序列应使用 PhaseSequenceMovementBehavior
     /// </summary>
     /// <param name="movementType">移动类型</param>
     /// <returns>移动行为实例</returns>
@@ -15,19 +16,6 @@ public static class BehaviorFactory
     {
         switch (movementType)
         {
-            case MovementType.FollowPlayer:
-                return new FollowPlayerBehavior();
-                
-            case MovementType.Flee:
-                return new FleeBehavior();
-                
-            case MovementType.IntervalMovement:
-                // 检查是否使用 V2 配置（留空则使用旧系统）
-                // 注意：此处无法访问 levelConfig，由调用方决定使用哪个版本
-                // 默认返回旧系统，新系统需要手动指定
-                return new IntervalMovementBehavior();
-                
-            // ===== 原子行为 =====
             case MovementType.MoveTowards:
                 return new MoveTowardsBehavior();
                 
@@ -38,36 +26,30 @@ public static class BehaviorFactory
                 return new IdleBehavior();
                 
             default:
-                Debug.LogError($"BehaviorFactory: 未知的移动类型: {movementType}，使用默认的跟随玩家行为");
-                return new FollowPlayerBehavior();
+                Debug.LogError($"BehaviorFactory: 未知的移动类型: {movementType}");
+                return null;
         }
     }
     
     /// <summary>
-    /// 验证移动类型是否有效
+    /// 验证移动类型是否有效（原子行为）
     /// </summary>
     /// <param name="movementType">移动类型</param>
     /// <returns>是否有效</returns>
     public static bool IsValidMovementType(MovementType movementType)
     {
-        return movementType == MovementType.FollowPlayer || 
-               movementType == MovementType.Flee || 
-               movementType == MovementType.IntervalMovement ||
-               movementType == MovementType.MoveTowards ||
+        return movementType == MovementType.MoveTowards ||
                movementType == MovementType.MoveAway ||
                movementType == MovementType.Idle;
     }
     
     /// <summary>
-    /// 获取所有支持的移动类型
+    /// 获取所有支持的原子移动类型
     /// </summary>
     /// <returns>支持的移动类型数组</returns>
     public static MovementType[] GetSupportedMovementTypes()
     {
         return new MovementType[] { 
-            MovementType.FollowPlayer, 
-            MovementType.Flee, 
-            MovementType.IntervalMovement,
             MovementType.MoveTowards,
             MovementType.MoveAway,
             MovementType.Idle

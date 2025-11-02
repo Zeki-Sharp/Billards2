@@ -11,15 +11,11 @@ public enum AttackType
 }
 
 /// <summary>
-/// 移动方式枚举
+/// 移动类型枚举（原子行为）
+/// 复杂行为序列请使用 PhaseSequenceConfig
 /// </summary>
 public enum MovementType
 {
-    FollowPlayer,   // 追随玩家（现有实现）
-    Flee,          // 逃跑（远离玩家）
-    IntervalMovement, // 间歇移动（交替静止和移动）
-    
-    // ===== 原子行为 =====
     MoveTowards,    // 向目标靠近（原子行为）
     MoveAway,       // 远离目标（原子行为）
     Idle            // 保持静止（原子行为）

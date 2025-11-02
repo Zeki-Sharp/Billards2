@@ -63,40 +63,24 @@ public class EnemyLevelConfig
     public bool enableAI = true;
     
     [BoxGroup("AI配置")]
-    [LabelText("移动类型")]
-    public MovementType movementType = MovementType.FollowPlayer;
-    
-    [BoxGroup("AI配置")]
-    [ShowIf("movementType", MovementType.FollowPlayer)]
-    public FollowMovementConfig followConfig = new FollowMovementConfig();
-    
-    [BoxGroup("AI配置")]
-    [ShowIf("movementType", MovementType.Flee)]
-    public FleeMovementConfig fleeConfig = new FleeMovementConfig();
-    
-    [BoxGroup("AI配置")]
-    [ShowIf("movementType", MovementType.IntervalMovement)]
-    public IntervalMovementConfig intervalConfig = new IntervalMovementConfig();
-    
-    [BoxGroup("AI配置")]
     [LabelText("阶段序列配置（统一系统）⭐")]
-    [Tooltip("统一的阶段序列系统，支持 Sequential（顺序）和 Conditional（条件）模式。配置此字段后，将覆盖上方的旧配置")]
+    [Tooltip("统一的阶段序列系统，支持 Sequential（顺序）和 Conditional（条件）模式")]
     public PhaseSequenceConfig phaseSequenceConfig;
     
-    // ===== 原子行为配置 =====
+    // ===== 原子行为全局配置（可被 PhaseSequenceConfig 中的阶段配置覆盖）=====
     [BoxGroup("AI配置")]
-    [ShowIf("movementType", MovementType.MoveTowards)]
-    [LabelText("向目标靠近配置")]
+    [LabelText("向目标靠近配置（全局）")]
+    [Tooltip("全局配置，当阶段配置中未指定时使用")]
     public MoveTowardsConfig moveTowardsConfig = new MoveTowardsConfig();
     
     [BoxGroup("AI配置")]
-    [ShowIf("movementType", MovementType.MoveAway)]
-    [LabelText("远离目标配置")]
+    [LabelText("远离目标配置（全局）")]
+    [Tooltip("全局配置，当阶段配置中未指定时使用")]
     public MoveAwayConfig moveAwayConfig = new MoveAwayConfig();
     
     [BoxGroup("AI配置")]
-    [ShowIf("movementType", MovementType.Idle)]
-    [LabelText("静止配置")]
+    [LabelText("静止配置（全局）")]
+    [Tooltip("全局配置，当阶段配置中未指定时使用")]
     public IdleConfig idleConfig = new IdleConfig();
     
     /// <summary>
@@ -116,7 +100,7 @@ public class EnemyLevelConfig
     /// </summary>
     public string GetDebugInfo()
     {
-        return $"Lv{level}: HP={maxHealth}, Dmg={damage}, Spd={moveSpeed}, Type={attackType}/{movementType}";
+        return $"Lv{level}: HP={maxHealth}, Dmg={damage}, Spd={moveSpeed}, AttackType={attackType}";
     }
 }
 

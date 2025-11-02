@@ -155,29 +155,29 @@ MonoBehaviour:
       minDistance: 1
       triggerDistance: 3
     phaseSequenceConfig:
-      selectionMode: 0
+      selectionMode: 1
       phases:
-      - behaviorType: 0
-        roundCount: 2
+      - behaviorType: 2
+        roundCount: 1
         condition:
           type: 0
           op: 0
-          value: 2
+          value: 5
           blackboardKey: 
         moveTowardsConfig:
           moveSpeed: 3
-          minDistance: 1
-          moveDistance: 2
+          minDistance: 1.5
+          moveDistance: 3
         moveAwayConfig:
           moveSpeed: 3
           triggerDistance: 5
           moveDistance: 2
       - behaviorType: 1
-        roundCount: 3
+        roundCount: 2
         condition:
           type: 0
-          op: 0
-          value: 2
+          op: 1
+          value: 7
           blackboardKey: 
         moveTowardsConfig:
           moveSpeed: 3

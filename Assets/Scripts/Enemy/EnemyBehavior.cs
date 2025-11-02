@@ -271,41 +271,21 @@ public class EnemyBehavior : MonoBehaviour, IDamageable
     
     /// <summary>
     /// 获取当前移动速度
+    /// PhaseSequence 系统会通过 PhaseAtomicBehaviorWrapper 临时替换全局配置
+    /// 因此直接从全局配置读取即可
     /// </summary>
     private float GetCurrentMoveSpeed()
     {
-        // 从配置读取速度
-        if (enemyData == null) return 3f;
+        if (CurrentLevelConfig == null) return 3f;
         
-        switch (CurrentLevelConfig.movementType)
-        {
-            case MovementType.FollowPlayer:
-                return CurrentLevelConfig.followConfig.moveSpeed;
-            case MovementType.Flee:
-                // PhaseSequence 统一系统：从临时配置读取速度
-                if (CurrentLevelConfig.phaseSequenceConfig != null &&
-                    CurrentLevelConfig.phaseSequenceConfig.phases != null &&
-                    CurrentLevelConfig.phaseSequenceConfig.phases.Length > 0)
-                {
-                    // 从临时设置的配置中读取速度
-                    if (CurrentLevelConfig.moveTowardsConfig != null)
-                        return CurrentLevelConfig.moveTowardsConfig.moveSpeed;
-                    if (CurrentLevelConfig.moveAwayConfig != null)
-                        return CurrentLevelConfig.moveAwayConfig.moveSpeed;
-                }
-                // 旧系统：从 fleeConfig 读取速度
-                if (runtimeState.currentMovementState == "Approaching")
-                    return CurrentLevelConfig.fleeConfig.approachSpeed;
-                return CurrentLevelConfig.fleeConfig.moveSpeed;
-            case MovementType.IntervalMovement:
-                return CurrentLevelConfig.intervalConfig.moveSpeed;
-            case MovementType.MoveTowards:
-                return CurrentLevelConfig.moveTowardsConfig?.moveSpeed ?? 3f;
-            case MovementType.MoveAway:
-                return CurrentLevelConfig.moveAwayConfig?.moveSpeed ?? 3f;
-            default:
-                return 3f;
-        }
+        // 根据当前运动状态读取对应配置的速度
+        if (CurrentLevelConfig.moveTowardsConfig != null)
+            return CurrentLevelConfig.moveTowardsConfig.moveSpeed;
+        if (CurrentLevelConfig.moveAwayConfig != null)
+            return CurrentLevelConfig.moveAwayConfig.moveSpeed;
+        
+        // 默认速度
+        return 3f;
     }
     
     /// <summary>
@@ -334,7 +314,7 @@ public class EnemyBehavior : MonoBehaviour, IDamageable
                 return;
             }
             
-            Debug.Log($"EnemyBehavior {name}: 设置敌人数据成功 - {enemyData.info.name} Lv{level}，移动类型: {CurrentLevelConfig.movementType}");
+            Debug.Log($"EnemyBehavior {name}: 设置敌人数据成功 - {enemyData.info.name} Lv{level}");
             // 重新初始化（传递等级参数）
             InitializeHealth(level);
             InitializeBehavior();
@@ -357,19 +337,17 @@ public class EnemyBehavior : MonoBehaviour, IDamageable
             return;
         }
         
-        // 根据配置创建移动行为
-        // 优先使用统一的 PhaseSequence 系统
+        // 创建移动行为 - 使用统一的 PhaseSequence 系统
         if (CurrentLevelConfig.phaseSequenceConfig != null && 
             CurrentLevelConfig.phaseSequenceConfig.phases != null && 
             CurrentLevelConfig.phaseSequenceConfig.phases.Length > 0)
         {
             movementBehavior = new PhaseSequenceMovementBehavior();
-            Debug.Log($"EnemyBehavior {name}: 初始化移动行为 - 使用 PhaseSequence（统一系统）");
+            Debug.Log($"EnemyBehavior {name}: 初始化移动行为 - PhaseSequence 系统");
         }
         else
         {
-            movementBehavior = BehaviorFactory.CreateMovementBehavior(CurrentLevelConfig.movementType);
-            Debug.Log($"EnemyBehavior {name}: 初始化移动行为 - 使用旧系统，类型: {CurrentLevelConfig.movementType}");
+            Debug.LogError($"EnemyBehavior {name}: 未配置 PhaseSequenceConfig，敌人将无法移动！");
         }
         
         // 根据配置创建攻击行为
