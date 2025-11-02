@@ -147,6 +147,10 @@ public class PlayerBehavior : MonoBehaviour, IDamageable
         {
             DamageSystem.Instance.RegisterEntity(gameObject, playerData.damageProfile);
         }
+        else
+        {
+            Debug.LogWarning($"[PlayerBehavior] 无法注册到 DamageSystem - playerData: {playerData != null}, damageProfile: {(playerData != null ? (playerData.damageProfile != null).ToString() : "N/A")}");
+        }
     }
     
     void OnEnable()
@@ -358,6 +362,15 @@ public class PlayerBehavior : MonoBehaviour, IDamageable
         }
     }
     
+    /// <summary>
+    /// 处理 Trigger 碰撞（如敌人攻击范围、陷阱等）
+    /// </summary>
+    void OnTriggerEnter2D(Collider2D other)
+    {
+        // 发布 Trigger 碰撞事件
+        // 注意：source 是玩家，target 是触碰到的 Trigger（如 AttackRange）
+        GameEventBus.PublishCollision(CollisionEvent.CreateFromTrigger(gameObject, other));
+    }
     
     /// <summary>
     /// 检查是否还能获得充能力（基于速度）

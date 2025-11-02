@@ -9,10 +9,11 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 0}
-  m_Name: DamageProfile_PlayerRangeAttack
-  m_EditorClassIdentifier: Assembly-CSharp::DamageProfile
-  profileName: "\u73A9\u5BB6\u8FDC\u7A0B\u653B\u51FB"
+  m_Script: {fileID: 11500000, guid: df787d4428d94d04bb44b3440407a185, type: 3}
+  m_Name: Player_DamageProfile
+  m_EditorClassIdentifier: 
+  profileName: "\u73A9\u5BB6\u4F24\u5BB3\u89C4\u5219\u96C6"
   description: 
   rules:
+  - {fileID: 11400000, guid: 1ec0d94fa63fedf4fb886aeefed356cd, type: 2}
   - {fileID: 11400000, guid: b3d9605cfb3335641819fbc094e32ab5, type: 2}

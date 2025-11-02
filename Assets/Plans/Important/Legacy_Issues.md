@@ -39,16 +39,7 @@
 
 ## 🔧 待清理问题（按优先级排序）
 
-### 1. 棘刺陷阱攻击失效 ⭐⭐⭐
-
-**问题**：棘刺敌人的陷阱攻击在 Telegraph 阶段激活状态，但 Attack 阶段读取状态时已失效，导致玩家进入陷阱不受伤。  
-**方案**：①将激活逻辑从 Telegraph 移到 Attack 阶段 ②引入行为序列系统，让陷阱使用独立的行为序列（推荐）  
-**影响**：高影响，核心战斗功能失效。当前全局阶段系统（Telegraph→Attack→Move）与陷阱的持续攻击模式不兼容。  
-**时机**：Week 4 行为序列系统重构完成后修复，当前暂时将激活逻辑移到 Attack 阶段应急。
-
----
-
-### 2. 多态配置文件夹整理 ⭐⭐
+### 1. 多态配置文件夹整理 ⭐⭐
 
 **问题**：23个多态配置文件平铺在 `Configs/Polymorphic/`，层级过深且不易查找。  
 **方案**：上移 `Polymorphic` 到 `SkillSystem/`，内部创建5个子文件夹按类型分类（Triggers、Conditions、Effects、ResetConditions、RemovalConditions）。  
@@ -57,7 +48,7 @@
 
 ---
 
-### 3. ConditionConfig 容器类优化 ⭐⭐
+### 2. ConditionConfig 容器类优化 ⭐⭐
 
 **问题**：`ConditionConfig` 实为多条件容器，但命名易误解为单一条件配置；架构不统一（只有 Condition 有容器）。  
 **方案**：①改名为 `CompositeConditionConfig` ②改为单一条件删除容器 ③评估是否真正需要多条件组合。  
@@ -66,7 +57,7 @@
 
 ---
 
-### 4. 配置层命名规范化 ⭐⭐
+### 3. 配置层命名规范化 ⭐⭐
 
 **问题**：配置类命名不符合 GC2 规范（应为 `PlayerClass` 而非 `PlayerData`）。  
 **方案**：使用 Unity F2 重命名 `PlayerData` → `PlayerClass`、`EnemyData` → `EnemyClass`、`SkillConfig` → `SkillClass`。  
@@ -75,7 +66,7 @@
 
 ---
 
-### 5. 旧攻击事件系统共存 ⭐⭐
+### 4. 旧攻击事件系统共存 ⭐⭐
 
 **问题**：新战斗伤害系统已迁移到 `OnDamage` 事件，但墙壁/技能系统仍依赖旧 `OnAttack` 事件。  
 **当前使用旧事件的系统**：
@@ -90,7 +81,7 @@
 
 ---
 
-### 6. 字符串引用更新 ⭐
+### 5. 字符串引用更新 ⭐
 
 **问题**：日志和注释中仍使用旧名称 `PlayerStatsManagerV2`（已改为 `PlayerStats`）。  
 **方案**：全局搜索替换 `PlayerStatsManagerV2` → `PlayerStats`。  

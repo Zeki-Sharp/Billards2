@@ -52,10 +52,15 @@ public struct CollisionEvent
     {
         Rigidbody2D rb = source.GetComponent<Rigidbody2D>();
         
+        // ✅ 修复：使用实际碰撞的 Collider 的 GameObject
+        // collision.gameObject 返回有 Rigidbody2D 的父级（如 EnemyItem）
+        // collision.collider.gameObject 返回实际碰撞的 Collider 所属的 GameObject（如 AttackRange/Image）
+        GameObject targetObject = collision.collider != null ? collision.collider.gameObject : collision.gameObject;
+        
         return new CollisionEvent
         {
             Source = source,
-            Target = collision.gameObject,
+            Target = targetObject,  // ✅ 使用实际碰撞的 Collider 的 GameObject
             ContactPoint = collision.contacts.Length > 0 ? collision.contacts[0].point : Vector2.zero,
             ContactNormal = collision.contacts.Length > 0 ? collision.contacts[0].normal : Vector2.zero,
             Velocity = rb != null ? rb.linearVelocity.magnitude : 0f,

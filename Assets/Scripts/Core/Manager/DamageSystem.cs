@@ -165,7 +165,6 @@ public class DamageSystem : SingletonManager<DamageSystem>
     {
         if (!systemEnabled)
         {
-            Debug.LogWarning($"[DamageSystem] 系统未启用，跳过碰撞事件");
             return;
         }
         
@@ -380,11 +379,6 @@ public class DamageSystem : SingletonManager<DamageSystem>
             }
         }
         
-        if (showRuleMatching)
-        {
-            Debug.Log($"[DamageSystem] ✅ 规则 '{rule.ruleName}' 匹配成功");
-        }
-        
         return true;
     }
     
@@ -440,25 +434,30 @@ public class DamageSystem : SingletonManager<DamageSystem>
         // 3. 确定伤害目标（SelfDamage 检查）
         GameObject damageTarget = rule.selfDamage ? evt.Source : evt.Target;
         
-        // 4. 创建 AttackData（兼容现有 DamageProcessor）
+        // 4. 确定攻击者（SelfDamage 时，攻击者应该是 Target 而不是 Source）
+        // 例如：玩家撞陷阱，Source=Player, Target=AttackRange, selfDamage=true
+        // → 伤害目标是 Player，攻击者应该是 AttackRange（敌人）
+        GameObject attacker = rule.selfDamage ? evt.Target : evt.Source;
+        
+        // 5. 创建 AttackData（兼容现有 DamageProcessor）
         AttackData attackData = new AttackData
         {
-            Attacker = evt.Source,
+            Attacker = attacker,  // ✅ 修复：使用正确的攻击者
             Target = damageTarget,
             Damage = baseDamage,
             AttackType = rule.triggerType.ToString(),
             Position = evt.ContactPoint,
             Direction = evt.ContactNormal,
             AttackTime = Time.time,
-            AttackerTag = evt.Source.tag,
+            AttackerTag = attacker.tag,  // ✅ 使用攻击者的 Tag
             TargetTag = damageTarget.tag,
             HitSpeed = evt.Velocity
         };
         
-        // 5. 调用 DamageProcessor 应用修改器
+        // 6. 调用 DamageProcessor 应用修改器
         DamageProcessor.Instance.ProcessDamage(ref attackData);
         
-        // 6. 发布最终伤害事件
+        // 7. 发布最终伤害事件
         PublishDamageEvent(attackData, rule, evt);
         
         totalDamageEvents++;

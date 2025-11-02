@@ -123,22 +123,14 @@ public class ThornAttackBehavior : BaseAttackBehavior
     
     /// <summary>
     /// 清理攻击状态
-    /// 移动阶段关闭陷阱模式，防止敌人移动时撞到玩家造成伤害
+    /// 注意：IsTrap 状态不在这里清除，而是在下次 Telegraph 阶段根据冷却状态更新
+    /// 这样可以保证玩家回合移动时撞到激活的刺仍会受伤
     /// </summary>
     public override BehaviorStatus CleanupAttack(Transform enemyTransform, AttackRange attackRange, EnemyRuntimeState runtimeState)
     {
-        // ✅ 新伤害系统：清除 IsTrap 状态
-        var blackboard = enemyTransform.gameObject.GetBlackboard();
-        blackboard.Set("IsTrap", false);
-        
-        // 获取 EnemyBehavior 组件
-        EnemyBehavior enemyBehavior = enemyTransform.GetComponent<EnemyBehavior>();
-        
-        // 在移动阶段关闭陷阱模式（保留，用于其他逻辑）
-        if (enemyBehavior != null)
-        {
-            enemyBehavior.SetTrapMode(false);
-        }
+        // ✅ 修复：不在这里清除 IsTrap 状态
+        // IsTrap 状态会在下次 Telegraph 阶段根据冷却情况更新
+        // 这样玩家回合撞到激活的刺时，状态仍然有效
         
         runtimeState.currentAttackState = "";
         return BehaviorStatus.Success;
