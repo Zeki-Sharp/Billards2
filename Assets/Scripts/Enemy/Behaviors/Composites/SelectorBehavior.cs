@@ -10,7 +10,7 @@ public class SelectorBehavior : BaseMovementBehavior
 {
     [Header("组合器配置")]
     [Tooltip("子行为列表（按优先级顺序）")]
-    [SerializeField] private List<BaseMovementBehavior> childBehaviors = new List<BaseMovementBehavior>();
+    private List<IMovementBehavior> childBehaviors = new List<IMovementBehavior>();
     
     // 当前执行索引（存储在 RuntimeState 中）
     private const string SELECTOR_INDEX_KEY = "SelectorBehavior_CurrentIndex";
@@ -41,7 +41,7 @@ public class SelectorBehavior : BaseMovementBehavior
         // 从当前索引开始尝试所有子行为
         for (int i = currentIndex; i < childBehaviors.Count; i++)
         {
-            BaseMovementBehavior currentBehavior = childBehaviors[i];
+            IMovementBehavior currentBehavior = childBehaviors[i];
             if (currentBehavior == null)
             {
                 Debug.LogWarning($"[SelectorBehavior] 子行为 [{i}] 为空");
@@ -84,11 +84,11 @@ public class SelectorBehavior : BaseMovementBehavior
     /// <summary>
     /// 添加子行为（用于代码配置）
     /// </summary>
-    public void AddChildBehavior(BaseMovementBehavior behavior)
+    public void AddChildBehavior(IMovementBehavior behavior)
     {
         if (childBehaviors == null)
         {
-            childBehaviors = new List<BaseMovementBehavior>();
+            childBehaviors = new List<IMovementBehavior>();
         }
         childBehaviors.Add(behavior);
     }
@@ -96,7 +96,7 @@ public class SelectorBehavior : BaseMovementBehavior
     /// <summary>
     /// 设置子行为列表（用于代码配置）
     /// </summary>
-    public void SetChildBehaviors(List<BaseMovementBehavior> behaviors)
+    public void SetChildBehaviors(List<IMovementBehavior> behaviors)
     {
         childBehaviors = behaviors;
     }

@@ -331,112 +331,164 @@ FleeBehavior_V2 = SelectorBehavior {
 
 ### 5.3 重构步骤
 
-#### **Step 1：创建配置类**（10分钟）
+#### **Step 1：扩展条件系统**（30分钟）
+
+**新增类型**：
+```csharp
+public enum ConditionType { Distance, State, Always }
+public enum ComparisonOperator { LessThan, GreaterThan, Equal, NotEqual }
+
+public class ConditionConfig {
+    public ConditionType type;
+    public ComparisonOperator op;
+    public float value;
+}
+```
+
+**更新 ConditionalDecorator**：支持条件配置
+
+---
+
+#### **Step 2：创建配置类**（20分钟）
 
 **文件**：`MovementConfig.cs`
 
 **新增配置**：
-```
-FleeMovementConfig_V2 {
-    ├── approachDistance (接近距离阈值)
-    ├── triggerDistance (逃离距离阈值)
-    ├── moveTowardsConfig (靠近时的配置)
-    ├── moveAwayConfig (逃离时的配置)
-    └── enableApproach (是否启用接近模式)
+```csharp
+public class FleeMovementConfig_V2 {
+    public FleePhaseConfig[] phases;  // 按优先级配置
+}
+
+public class FleePhaseConfig {
+    public ConditionConfig condition;
+    public AtomicMovementType actionType;
+    public MoveTowardsConfig moveTowardsConfig;
+    public MoveAwayConfig moveAwayConfig;
 }
 ```
 
 ---
 
-#### **Step 2：实现 FleeBehavior_V2**（20分钟）
+#### **Step 3：实现 FleeBehavior_V2**（45分钟）
 
 **文件**：`FleeBehavior_V2.cs`
 
-**核心逻辑**：
-```
-ExecuteMovement() {
-    1. 初始化时：
-       - 创建 SelectorBehavior
-       - 添加 Conditional(接近) + MoveTowards
-       - 添加 Conditional(逃离) + MoveAway
-       - 添加 Idle（默认）
-    
-    2. 执行时：
-       - 调用 SelectorBehavior.ExecuteMovement()
-       - Selector 自动选择第一个满足条件的行为
-}
-```
-
-**伪代码**：
-```
-Step 1: 构建选择器
-selector = new SelectorBehavior();
-if (config.enableApproach) {
-    approachBehavior = new ConditionalDecorator(
-        new MoveTowardsBehavior(),
-        condition: distance > approachDistance
-    );
-    selector.AddChild(approachBehavior);
-}
-fleeBehavior = new ConditionalDecorator(
-    new MoveAwayBehavior(),
-    condition: distance < triggerDistance
-);
-selector.AddChild(fleeBehavior);
-selector.AddChild(new IdleBehavior());
-
-Step 2: 执行
-return selector.ExecuteMovement(...);
-```
+**核心逻辑**：构建 Selector + Conditional + Atomic，缓存到 Blackboard
 
 ---
 
-#### **Step 3：测试验证**（15分钟）
+#### **Step 4：配置与测试**（30分钟）
 
-**测试场景**：
-1. **场景 1**：玩家距离 10 单位 → 敌人靠近
-2. **场景 2**：玩家距离 2 单位 → 敌人逃离
-3. **场景 3**：玩家距离 5 单位 → 敌人静止
+**Inspector 配置**：
+```
+Flee Config V2:
+  Phases:
+    - Condition: Distance < 2, Action: MoveAway
+    - Condition: Distance > 5, Action: MoveTowards
+    - Condition: Always, Action: Idle
+```
 
-**验证点**：
-- ✅ 行为切换流畅
-- ✅ 无抖动现象
-- ✅ 距离阈值生效
+**测试验证**：玩家靠近/远离时敌人正确响应
 
 ---
 
-### 5.4 预期收益
+---
 
-| 维度 | 改进 | 说明 |
+## 📋 Phase 6：架构统一（MovementType 简化）
+
+### 6.1 设计目标
+
+**核心理念**：统一所有移动行为为"有条件的原子行为序列"
+
+**统一方案**：
+- `PhaseSequence` 取代 `IntervalMovement`、`Flee`、`FollowPlayer`
+- 新增 `PhaseSelectionMode`：Sequential（顺序）、Conditional（条件选择）
+
+### 6.2 配置示例
+
+**间歇移动**（Sequential）：
+```
+phases: [Idle x2, MoveTowards x3], loop: true
+```
+
+**逃离行为**（Conditional）：
+```
+phases: [
+  MoveAway x1 (Distance<2),
+  MoveTowards x1 (Distance>5),
+  Idle x1 (Always)
+], loop: true
+```
+
+### 6.3 实施步骤
+
+| 步骤 | 内容 | 时间 |
 |------|------|------|
-| **代码行数** | -30% | 移除多重 if-else |
-| **可读性** | +40% | Selector 结构清晰 |
-| **可扩展性** | +60% | 添加新条件只需 AddChild |
+| 1 | 重命名 IntervalMovement_V2 → PhaseSequence | 15分钟 |
+| 2 | 移除冗余 MovementType | 10分钟 |
+| 3 | 统一 EnemyLevelConfig 配置字段 | 10分钟 |
+| 4 | 简化 BehaviorFactory | 20分钟 |
+| 5 | 迁移现有配置 | 30分钟 |
+| 6 | 测试验证 | 30分钟 |
+| **总计** | | **1小时55分钟** |
 
 ---
 
-## 📋 Phase 6：清理与优化
+## 📋 Phase 7：NodeCanvas 可视化（可选）
 
-### 6.1 旧系统清理
+### 7.1 实施策略
 
-**时机**：Phase 4-5 完成并稳定运行 1 周后
+**前提**：Phase 6 完成，SO 配置系统已统一
+
+**目标**：将 SO 配置的行为树迁移到 NodeCanvas 图形化编辑器
+
+**优势**：
+- ✅ SO 配置作为保底，零风险
+- ✅ NodeCanvas 提供更直观的可视化编辑
+- ✅ 支持运行时调试（节点高亮）
+
+### 7.2 集成步骤
+
+| 步骤 | 内容 | 工作量 |
+|------|------|--------|
+| 1 | 创建自定义 Task 节点（MoveTowards/Away/Idle） | 1-1.5天 |
+| 2 | 创建自定义 Condition 节点（Distance/State） | 1天 |
+| 3 | EnemyBehavior 集成 BehaviourTreeOwner | 1-2天 |
+| 4 | Blackboard 命名冲突处理 | 0.5-1天 |
+| 5 | 迁移配置到图形化 | 0.5-1天 |
+| 6 | 测试验证 | 1天 |
+| **总计** | | **5-7天** |
+
+### 7.3 Blackboard 冲突解决
+
+**冲突**：
+```csharp
+using YourProject;  // 你的 Blackboard
+using NodeCanvas.Framework;  // NC Blackboard
+```
+
+**解决方案**：命名空间别名
+```csharp
+using NCBlackboard = NodeCanvas.Framework.Blackboard;
+using ProjectBlackboard = Blackboard;  // 你的 Blackboard
+```
+
+---
+
+## 📋 Phase 8：清理与优化
+
+### 8.1 旧系统清理
+
+**时机**：Phase 6 完成并稳定运行 1 周后（或 Phase 7 完成后）
 
 **清理内容**：
-1. **标记废弃**：
-   - `IntervalMovementBehavior` → `[Obsolete]`
-   - `FleeBehavior` → `[Obsolete]`
-
-2. **迁移现有配置**：
-   - 将所有使用旧系统的敌人迁移到 V2
-   - 更新 `BehaviorFactory` 移除旧分支
-
-3. **删除旧代码**：
-   - 确认无引用后删除旧文件
-   - 更新文档移除旧系统说明
+1. 标记废弃旧行为类（`[Obsolete]`）
+2. 迁移所有配置到 PhaseSequence（或 NodeCanvas）
+3. 删除旧代码
 
 ---
 
-### 6.2 性能优化
+### 8.2 性能优化
 
 **优化点 1：行为树缓存**
 - 避免每回合重建行为树
@@ -456,14 +508,17 @@ return selector.ExecuteMovement(...);
 
 | 阶段 | 任务 | 预估时间 | 人员 |
 |------|------|---------|------|
-| **Week 4-1** | Phase 4: IntervalMovement 重构 | 2 天 | 开发 |
-| **Week 4-2** | Phase 5: Flee 重构 | 1 天 | 开发 |
-| **Week 4-3** | 测试与验证 | 1 天 | 开发+测试 |
-| **Week 4-4** | 文档更新与总结 | 0.5 天 | 开发 |
-| **Week 5** | 稳定运行观察 | 5 天 | 全员 |
-| **Week 6** | Phase 6: 旧系统清理 | 1 天 | 开发 |
+| **Week 4-1** | Phase 4: IntervalMovement V2 | ✅ 已完成 | 开发 |
+| **Week 4-2** | Phase 5: Flee V2 + 条件系统 | ⏳ 进行中 | 开发 |
+| **Week 4-3** | Phase 6: 架构统一（PhaseSequence） | 1-2 天 | 开发 |
+| **Week 4-4** | 测试与验证 | 0.5 天 | 开发+测试 |
+| **Week 5-6** | Phase 7: NodeCanvas 可视化（可选） | 5-7 天 | 开发 |
+| **Week 7** | Phase 8: 旧系统清理 | 1 天 | 开发 |
 
-**总计**：约 2 周完成核心重构，3 周完成清理
+**核心路线**：
+- **必须完成**：Phase 4-6（SO 配置系统）→ 约 1 周
+- **可选升级**：Phase 7（NodeCanvas 可视化）→ 额外 1-1.5 周
+- **清理优化**：Phase 8 → 稳定后执行
 
 ---
 
@@ -507,9 +562,10 @@ return selector.ExecuteMovement(...);
 | M1: 原子行为测试通过 | ✅ 已完成 | Week 3 |
 | M2: IntervalMovement_V2 可用 | ✅ 已完成 | Week 4 Day 2 |
 | M3: FleeBehavior_V2 可用 | 功能完整、测试通过 | Week 4 Day 3 |
-| M4: 全面测试通过 | 所有敌人正常工作 | Week 4 Day 4 |
-| M5: 文档完善 | 架构文档更新 | Week 4 Day 5 |
-| M6: 旧系统清理 | 旧代码删除 | Week 6 |
+| M4: 架构统一（PhaseSequence） | 移除冗余 MovementType | Week 4 Day 4-5 |
+| M5: SO 配置系统完成 | 所有敌人正常工作 | Week 4 结束 |
+| M6: NodeCanvas 可视化（可选） | 图形化编辑器集成 | Week 5-6 |
+| M7: 旧系统清理 | 旧代码删除 | Week 7 |
 
 ---
 
@@ -521,12 +577,13 @@ return selector.ExecuteMovement(...);
 
 ---
 
-**文档版本**：v2.0  
+**文档版本**：v3.0  
 **创建日期**：2025-11-01  
-**最后更新**：2025-11-01  
+**最后更新**：2025-11-02  
 **维护者**：AI Assistant  
-**状态**：Phase 4 已完成 → Phase 5 待执行  
+**状态**：Phase 5 进行中 → Phase 6-7 规划完成  
 **变更记录**：
+- v3.0: 添加 Phase 7（NodeCanvas 可视化）规划，更新实施路线
 - v2.0: Phase 4 (IntervalMovement V2) 完成并测试通过
 - v1.0: 初始版本，规划文档创建
 

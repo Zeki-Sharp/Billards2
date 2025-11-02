@@ -91,6 +91,9 @@ public class IntervalMovementConfig
 public class MoveTowardsConfig
 {
     [Header("向目标靠近配置")]
+    [Tooltip("移动速度（单位/秒）")]
+    public float moveSpeed = 3.0f;
+    
     [Tooltip("最小距离（到达此距离后停止）")]
     public float minDistance = 1.0f;
     
@@ -105,6 +108,9 @@ public class MoveTowardsConfig
 public class MoveAwayConfig
 {
     [Header("远离目标配置")]
+    [Tooltip("移动速度（单位/秒）")]
+    public float moveSpeed = 3.0f;
+    
     [Tooltip("触发距离（只有目标在此距离内才逃离）")]
     public float triggerDistance = 5.0f;
     
@@ -128,8 +134,18 @@ public class IdleConfig
 // ===============================================
 
 /// <summary>
+/// 阶段选择模式
+/// 定义如何选择和执行阶段
+/// </summary>
+public enum PhaseSelectionMode
+{
+    Sequential,   // 顺序执行（IntervalMovement 模式）
+    Conditional   // 条件选择（Flee 模式）
+}
+
+/// <summary>
 /// 阶段行为类型枚举
-/// 用于定义间歇移动的每个阶段使用哪种原子行为
+/// 用于定义每个阶段使用哪种原子行为
 /// </summary>
 public enum PhaseMovementType
 {
@@ -139,8 +155,8 @@ public enum PhaseMovementType
 }
 
 /// <summary>
-/// 单个阶段配置
-/// 定义一个阶段的行为类型和持续回合数
+/// 单个阶段配置（统一版本）
+/// 定义一个阶段的行为类型、持续回合数和触发条件
 /// </summary>
 [System.Serializable]
 public class MovementPhaseConfig
@@ -149,9 +165,13 @@ public class MovementPhaseConfig
     [Tooltip("此阶段使用的移动行为")]
     public PhaseMovementType behaviorType = PhaseMovementType.Idle;
     
-    [Tooltip("此阶段持续的回合数")]
+    [Tooltip("此阶段持续的回合数（Sequential 模式用）")]
     [UnityEngine.Min(1)]
     public int roundCount = 2;
+    
+    [Header("条件配置（Conditional 模式用）")]
+    [Tooltip("触发此阶段的条件（仅 Conditional 模式需要）")]
+    public BehaviorConditionConfig condition = null;
     
     [Header("行为参数")]
     [Tooltip("向目标靠近配置（仅当 behaviorType = MoveTowards 时生效）")]
@@ -164,14 +184,19 @@ public class MovementPhaseConfig
 }
 
 /// <summary>
-/// 间歇移动配置 V2
-/// 基于阶段序列的灵活配置系统
+/// 阶段序列配置（统一系统）
+/// 支持顺序执行（Sequential）和条件选择（Conditional）两种模式
+/// 统一 IntervalMovement、Flee、FollowPlayer 等所有移动行为
 /// </summary>
 [System.Serializable]
-public class IntervalMovementConfig_V2
+public class PhaseSequenceConfig
 {
+    [Header("选择模式")]
+    [Tooltip("阶段选择模式：\n• Sequential = 顺序执行（Phase 1 → Phase 2 → ...）\n• Conditional = 并列选择（每回合重新判断所有 Phase 的条件，执行第一个满足的）")]
+    public PhaseSelectionMode selectionMode = PhaseSelectionMode.Sequential;
+    
     [Header("阶段序列配置")]
-    [Tooltip("移动阶段列表（按顺序执行）")]
+    [Tooltip("移动阶段列表：\n• Sequential 模式：按顺序执行\n• Conditional 模式：并列选择（非序列！），每回合找第一个满足条件的执行")]
     public MovementPhaseConfig[] phases = new MovementPhaseConfig[]
     {
         new MovementPhaseConfig { behaviorType = PhaseMovementType.Idle, roundCount = 2 },

@@ -82,8 +82,9 @@ public class SequenceBehavior : BaseMovementBehavior
             return BehaviorStatus.Success; // 所有行为完成
         }
         
-        // 还有更多行为要执行
-        return BehaviorStatus.Running;
+        // 回合制游戏：当前回合行为已完成，返回 Success
+        // 下一回合会继续执行序列中的下一个行为（通过 currentIndex）
+        return BehaviorStatus.Success;
     }
     
     /// <summary>

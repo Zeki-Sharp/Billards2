@@ -79,10 +79,9 @@ public class EnemyLevelConfig
     public IntervalMovementConfig intervalConfig = new IntervalMovementConfig();
     
     [BoxGroup("AI配置")]
-    [ShowIf("movementType", MovementType.IntervalMovement)]
-    [LabelText("间歇移动配置 V2（新系统）")]
-    [Tooltip("基于阶段序列的灵活配置，留空则使用旧系统")]
-    public IntervalMovementConfig_V2 intervalConfig_V2;
+    [LabelText("阶段序列配置（统一系统）⭐")]
+    [Tooltip("统一的阶段序列系统，支持 Sequential（顺序）和 Conditional（条件）模式。配置此字段后，将覆盖上方的旧配置")]
+    public PhaseSequenceConfig phaseSequenceConfig;
     
     // ===== 原子行为配置 =====
     [BoxGroup("AI配置")]

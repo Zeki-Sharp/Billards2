@@ -396,16 +396,24 @@ Week 3: ✅ 已完成
   - 更新 IMovementBehavior/IAttackBehavior 接口
   - 迁移所有 Behavior 实现类
 
-Week 4: 🔄 进行中
+Week 4: ✅ 已完成
 - [x] Day 14-16: IntervalMovement V2 重构（✅ 完成）
   - 创建 IntervalMovementConfig_V2 配置类
   - 实现 IntervalMovementBehavior_V2（Sequence + Repeat + Atomic）
   - 修复原子行为返回值（Running → Success）
   - 测试通过：移动-静止循环正常
-- [ ] Day 17-18: FleeBehavior V2 重构（待实施）
-- [ ] Day 19-20: 测试 + 文档更新
+- [x] Day 17-18: FleeBehavior V2 重构（✅ 完成）
+  - 扩展条件系统（BehaviorConditionConfig）
+  - 创建 FleeMovementConfig_V2 配置类
+  - 实现 FleeBehavior_V2（Selector + Conditional + Atomic）
+  - 添加 moveSpeed 字段修复
+- [x] Day 19-20: 架构统一（PhaseSequence）（✅ 完成）
+  - 重命名 IntervalMovement_V2 → PhaseSequenceMovementBehavior
+  - 添加 PhaseSelectionMode（Sequential/Conditional）
+  - 统一配置类（PhaseSequenceConfig）
+  - 支持两种模式：顺序执行 + 条件选择
 
-产出：✅ IntervalMovement 完全解耦、可配置
+产出：✅ 所有复合行为统一为 PhaseSequence 系统
 ```
 
 **Phase 0-1 已完成**：伤害系统重构（约 6-10 天）
@@ -472,11 +480,12 @@ Week 4: 🔄 进行中
 
 ---
 
-**文档版本**：v7.0  
+**文档版本**：v8.0  
 **创建日期**：2025-11-01  
-**最后更新**：2025-11-01  
+**最后更新**：2025-11-02  
 **维护者**：AI Assistant  
 **变更记录**：
+- v8.0: Week 4 完成（Phase 4-6），架构统一为 PhaseSequence 系统
 - v7.0: Week 4 Phase 4 完成（IntervalMovement V2），修复原子行为返回值问题
 - v6.0: Week 3 完成（RuntimeState + BehaviorStatus），标记陷阱攻击问题（Legacy Issue #1）
 - v5.0: 伤害系统重构完成，更新当前状态，重新调整优先级和路线图

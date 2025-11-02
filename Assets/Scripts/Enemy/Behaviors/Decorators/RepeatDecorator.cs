@@ -8,7 +8,7 @@ public class RepeatDecorator : BaseMovementBehavior
 {
     [Header("装饰器配置")]
     [Tooltip("要装饰的子行为")]
-    [SerializeField] private BaseMovementBehavior childBehavior;
+    private IMovementBehavior childBehavior;
     
     [Tooltip("重复次数（回合数）")]
     [SerializeField] private int repeatCount = 3;
@@ -74,7 +74,9 @@ public class RepeatDecorator : BaseMovementBehavior
             // 还需要继续重复
             currentCount++;
             blackboard.Set(REPEAT_COUNT_KEY, currentCount);
-            return BehaviorStatus.Running; // 继续执行
+            // 回合制游戏：当前回合的行为已完成，返回 Success
+            // 下一回合会继续执行（通过 currentCount 跟踪进度）
+            return BehaviorStatus.Success;
         }
     }
     
@@ -89,7 +91,7 @@ public class RepeatDecorator : BaseMovementBehavior
     /// <summary>
     /// 设置子行为（用于代码配置）
     /// </summary>
-    public void SetChildBehavior(BaseMovementBehavior behavior)
+    public void SetChildBehavior(IMovementBehavior behavior)
     {
         childBehavior = behavior;
     }

@@ -224,6 +224,9 @@ public class EnemyBehavior : MonoBehaviour, IDamageable
         Vector2 startPosition = transform.position;
         float distance = Vector2.Distance(startPosition, targetPosition);
         
+        // 标记开始移动（即使距离为0，也要标记，以便 Enemy.cs 正确等待）
+        runtimeState.isMoving = true;
+        
         // 根据行为类型获取对应的移动速度
         float currentMoveSpeed = GetCurrentMoveSpeed();
         float moveTime = distance / currentMoveSpeed;
@@ -279,12 +282,27 @@ public class EnemyBehavior : MonoBehaviour, IDamageable
             case MovementType.FollowPlayer:
                 return CurrentLevelConfig.followConfig.moveSpeed;
             case MovementType.Flee:
-                // Flee 根据当前移动状态选择速度
+                // PhaseSequence 统一系统：从临时配置读取速度
+                if (CurrentLevelConfig.phaseSequenceConfig != null &&
+                    CurrentLevelConfig.phaseSequenceConfig.phases != null &&
+                    CurrentLevelConfig.phaseSequenceConfig.phases.Length > 0)
+                {
+                    // 从临时设置的配置中读取速度
+                    if (CurrentLevelConfig.moveTowardsConfig != null)
+                        return CurrentLevelConfig.moveTowardsConfig.moveSpeed;
+                    if (CurrentLevelConfig.moveAwayConfig != null)
+                        return CurrentLevelConfig.moveAwayConfig.moveSpeed;
+                }
+                // 旧系统：从 fleeConfig 读取速度
                 if (runtimeState.currentMovementState == "Approaching")
                     return CurrentLevelConfig.fleeConfig.approachSpeed;
                 return CurrentLevelConfig.fleeConfig.moveSpeed;
             case MovementType.IntervalMovement:
                 return CurrentLevelConfig.intervalConfig.moveSpeed;
+            case MovementType.MoveTowards:
+                return CurrentLevelConfig.moveTowardsConfig?.moveSpeed ?? 3f;
+            case MovementType.MoveAway:
+                return CurrentLevelConfig.moveAwayConfig?.moveSpeed ?? 3f;
             default:
                 return 3f;
         }
@@ -340,19 +358,18 @@ public class EnemyBehavior : MonoBehaviour, IDamageable
         }
         
         // 根据配置创建移动行为
-        // 特殊处理 IntervalMovement：如果配置了 V2，使用新系统
-        if (CurrentLevelConfig.movementType == MovementType.IntervalMovement && 
-            CurrentLevelConfig.intervalConfig_V2 != null && 
-            CurrentLevelConfig.intervalConfig_V2.phases != null && 
-            CurrentLevelConfig.intervalConfig_V2.phases.Length > 0)
+        // 优先使用统一的 PhaseSequence 系统
+        if (CurrentLevelConfig.phaseSequenceConfig != null && 
+            CurrentLevelConfig.phaseSequenceConfig.phases != null && 
+            CurrentLevelConfig.phaseSequenceConfig.phases.Length > 0)
         {
-            movementBehavior = new IntervalMovementBehavior_V2();
-            Debug.Log($"EnemyBehavior {name}: 初始化移动行为 - 使用 IntervalMovement V2（新系统）");
+            movementBehavior = new PhaseSequenceMovementBehavior();
+            Debug.Log($"EnemyBehavior {name}: 初始化移动行为 - 使用 PhaseSequence（统一系统）");
         }
         else
         {
             movementBehavior = BehaviorFactory.CreateMovementBehavior(CurrentLevelConfig.movementType);
-            Debug.Log($"EnemyBehavior {name}: 初始化移动行为 - 移动类型: {CurrentLevelConfig.movementType}");
+            Debug.Log($"EnemyBehavior {name}: 初始化移动行为 - 使用旧系统，类型: {CurrentLevelConfig.movementType}");
         }
         
         // 根据配置创建攻击行为

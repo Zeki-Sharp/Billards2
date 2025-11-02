@@ -50,7 +50,7 @@ MonoBehaviour:
       moveDistance: 3
       minDistance: 1
     fleeConfig:
-      moveSpeed: 4
+      moveSpeed: 2
       moveDistance: 2
       triggerDistance: 4.5
       approachWhenFar: 0
@@ -66,6 +66,50 @@ MonoBehaviour:
       moveDistance: 3
       minDistance: 1
       triggerDistance: 3
+    phaseSequenceConfig:
+      selectionMode: 1
+      phases:
+      - behaviorType: 2
+        roundCount: 1
+        condition:
+          type: 0
+          op: 0
+          value: 5
+          blackboardKey: 
+        moveTowardsConfig:
+          moveSpeed: 3
+          minDistance: 1
+          moveDistance: 2
+        moveAwayConfig:
+          moveSpeed: 3
+          triggerDistance: 5
+          moveDistance: 2
+      - behaviorType: 1
+        roundCount: 3
+        condition:
+          type: 0
+          op: 1
+          value: 7
+          blackboardKey: 
+        moveTowardsConfig:
+          moveSpeed: 3
+          minDistance: 1
+          moveDistance: 3
+        moveAwayConfig:
+          moveSpeed: 3
+          triggerDistance: 5
+          moveDistance: 2
+      loopPhases: 1
+    moveTowardsConfig:
+      moveSpeed: 3
+      minDistance: 1
+      moveDistance: 2
+    moveAwayConfig:
+      moveSpeed: 3
+      triggerDistance: 5
+      moveDistance: 2
+    idleConfig:
+      placeholder: 1
   - level: 2
     enemyImage: {fileID: 0}
     maxHealth: 60
@@ -110,5 +154,49 @@ MonoBehaviour:
       moveDistance: 3
       minDistance: 1
       triggerDistance: 3
+    phaseSequenceConfig:
+      selectionMode: 0
+      phases:
+      - behaviorType: 0
+        roundCount: 2
+        condition:
+          type: 0
+          op: 0
+          value: 2
+          blackboardKey: 
+        moveTowardsConfig:
+          moveSpeed: 3
+          minDistance: 1
+          moveDistance: 2
+        moveAwayConfig:
+          moveSpeed: 3
+          triggerDistance: 5
+          moveDistance: 2
+      - behaviorType: 1
+        roundCount: 3
+        condition:
+          type: 0
+          op: 0
+          value: 2
+          blackboardKey: 
+        moveTowardsConfig:
+          moveSpeed: 3
+          minDistance: 1
+          moveDistance: 2
+        moveAwayConfig:
+          moveSpeed: 3
+          triggerDistance: 5
+          moveDistance: 2
+      loopPhases: 1
+    moveTowardsConfig:
+      moveSpeed: 3
+      minDistance: 1
+      moveDistance: 2
+    moveAwayConfig:
+      moveSpeed: 3
+      triggerDistance: 5
+      moveDistance: 2
+    idleConfig:
+      placeholder: 1
   ballData: {fileID: 11400000, guid: d1c30c129175ecf48a42f1070d15a627, type: 2}
   damageProfile: {fileID: 11400000, guid: 7af91d7f47a4d5a4bbe2003bd670c84e, type: 2}
