@@ -15,5 +15,4 @@ MonoBehaviour:
   availableCharacters:
   - {fileID: 11400000, guid: 9fa21c5d0e8b7b24d9ae0910aa7d5197, type: 2}
   - {fileID: 11400000, guid: 81d30639ef52a824eaa9b3cc9a99404b, type: 2}
-  characterButtonPrefab: {fileID: 2735802933560132947, guid: 4c1d6c99c8d502a4293f850debb61e87, type: 3}
-  buttonContainer: {fileID: 0}
+  - {fileID: 11400000, guid: 26bf2367547e4a44e8d8a5a84958899a, type: 2}

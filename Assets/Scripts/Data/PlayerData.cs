@@ -1,5 +1,6 @@
 using UnityEngine;
 using Sirenix.OdinInspector;
+using System.Collections.Generic;
 
 [CreateAssetMenu(fileName = "PlayerData", menuName = "Game/Player Data")]
 public class PlayerData : ScriptableObject
@@ -61,9 +62,15 @@ public class PlayerData : ScriptableObject
     public float areaRadius = 2f;
     
     [BoxGroup("新伤害系统配置")]
-    [LabelText("伤害配置")]
-    [Tooltip("玩家的伤害规则配置（新伤害系统）")]
-    public DamageProfile damageProfile;
+    [LabelText("伤害配置列表")]
+    [Tooltip("玩家的伤害规则配置列表（新伤害系统），支持组合多个 Profile 实现规则复用")]
+    [ListDrawerSettings(ShowIndexLabels = true)]
+    public List<DamageProfile> damageProfiles = new List<DamageProfile>();
+    
+    /// <summary>
+    /// 向后兼容：返回第一个 Profile
+    /// </summary>
+    public DamageProfile damageProfile => damageProfiles != null && damageProfiles.Count > 0 ? damageProfiles[0] : null;
     
     [BoxGroup("战斗配置")]
     [ShowIf("attackMode", AttackMode.Area)]

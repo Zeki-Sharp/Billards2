@@ -96,6 +96,7 @@ public struct CollisionEvent
 
 /// <summary>
 /// 停止事件 - 用于球停止后的范围攻击
+/// 【三角形攻击扩展】：添加了轨迹数据，支持动态形状范围攻击
 /// </summary>
 public struct StoppedEvent
 {
@@ -103,8 +104,13 @@ public struct StoppedEvent
     public Vector2 StoppedPosition;     // 停止位置
     public float StoppedTime;           // 停止时间戳
     
+    // 【三角形攻击】轨迹数据（可选）
+    public Vector2? LaunchPosition;     // 发射起点（nullable）
+    public Vector2? FirstCollisionPoint; // 第一碰撞点（nullable）
+    public bool HasCollision;           // 是否发生碰撞
+    
     /// <summary>
-    /// 创建停止事件
+    /// 创建停止事件（简单版本，向后兼容）
     /// </summary>
     public static StoppedEvent Create(GameObject source, Vector2 position)
     {
@@ -112,7 +118,30 @@ public struct StoppedEvent
         {
             Source = source,
             StoppedPosition = position,
-            StoppedTime = Time.time
+            StoppedTime = Time.time,
+            LaunchPosition = null,
+            FirstCollisionPoint = null,
+            HasCollision = false
+        };
+    }
+    
+    /// <summary>
+    /// 创建停止事件（带轨迹数据，用于三角形攻击）
+    /// </summary>
+    public static StoppedEvent CreateWithTrajectory(
+        GameObject source, 
+        Vector2 stoppedPos, 
+        Vector2? launchPos, 
+        Vector2? firstCollisionPos)
+    {
+        return new StoppedEvent
+        {
+            Source = source,
+            StoppedPosition = stoppedPos,
+            StoppedTime = Time.time,
+            LaunchPosition = launchPos,
+            FirstCollisionPoint = firstCollisionPos,
+            HasCollision = firstCollisionPos.HasValue
         };
     }
 }

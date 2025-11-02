@@ -10,7 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5037b3c987730d84ab57aac9a2f5788e, type: 3}
-  m_Name: DamageRule_EnemyMeleeAttack
+  m_Name: Range
   m_EditorClassIdentifier: 
   ruleName: "\u654C\u4EBA\u8303\u56F4\u653B\u51FB\u89C4\u5219"
   priority: 0

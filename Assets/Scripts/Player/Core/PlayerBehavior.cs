@@ -38,6 +38,11 @@ public class PlayerBehavior : MonoBehaviour, IDamageable
     // 核心组件
     private BallPhysics ballPhysics;
     
+    // 【三角形攻击】轨迹记录
+    private Vector2? launchPosition;          // 发射起点
+    private Vector2? firstCollisionPoint;     // 第一碰撞点
+    private bool hasRecordedFirstCollision;   // 是否已记录第一次碰撞
+    
     // 公共访问器（用于新伤害系统）
     public PlayerData PlayerData => playerData;
     
@@ -139,17 +144,31 @@ public class PlayerBehavior : MonoBehaviour, IDamageable
     }
     
     /// <summary>
-    /// 注册到新伤害系统
+    /// 注册到新伤害系统（支持多 Profile 组合）
     /// </summary>
     void RegisterToDamageSystem()
     {
-        if (playerData != null && playerData.damageProfile != null && DamageSystem.Instance != null)
+        if (playerData == null || DamageSystem.Instance == null)
+        {
+            Debug.LogWarning($"[PlayerBehavior] 无法注册到 DamageSystem - playerData 或 DamageSystem 为空");
+            return;
+        }
+        
+        // 优先使用多 Profile 列表
+        if (playerData.damageProfiles != null && playerData.damageProfiles.Count > 0)
+        {
+            DamageSystem.Instance.RegisterEntity(gameObject, playerData.damageProfiles);
+            Debug.Log($"[PlayerBehavior] 注册到 DamageSystem，Profile 数量: {playerData.damageProfiles.Count}");
+        }
+        // 回退到单 Profile（向后兼容）
+        else if (playerData.damageProfile != null)
         {
             DamageSystem.Instance.RegisterEntity(gameObject, playerData.damageProfile);
+            Debug.Log($"[PlayerBehavior] 注册到 DamageSystem（单 Profile）");
         }
         else
         {
-            Debug.LogWarning($"[PlayerBehavior] 无法注册到 DamageSystem - playerData: {playerData != null}, damageProfile: {(playerData != null ? (playerData.damageProfile != null).ToString() : "N/A")}");
+            Debug.LogWarning($"[PlayerBehavior] 无法注册到 DamageSystem - 未配置任何 DamageProfile");
         }
     }
     
@@ -323,6 +342,11 @@ public class PlayerBehavior : MonoBehaviour, IDamageable
             return;
         }
         
+        // 【三角形攻击】记录发射起点并重置碰撞记录
+        launchPosition = transform.position;
+        firstCollisionPoint = null;
+        hasRecordedFirstCollision = false;
+        
         // 触发发射特效事件
         gameObject.PublishEffect("Launch", transform.position, direction);
         
@@ -347,6 +371,13 @@ public class PlayerBehavior : MonoBehaviour, IDamageable
     
     void OnCollisionEnter2D(Collision2D collision)
     {
+        // 【三角形攻击】记录第一次碰撞点（仅记录一次）
+        if (!hasRecordedFirstCollision && collision.contacts.Length > 0)
+        {
+            firstCollisionPoint = collision.contacts[0].point;
+            hasRecordedFirstCollision = true;
+        }
+        
         // 发布碰撞事件
         GameEventBus.PublishCollision(CollisionEvent.Create(gameObject, collision));
         
@@ -390,8 +421,11 @@ public class PlayerBehavior : MonoBehaviour, IDamageable
         {
             // 获取球的实际停止位置，而不是 PlayerCore 的位置
             Vector3 ballPosition = ballPhysics != null ? ballPhysics.transform.position : transform.position;
-            attackManager.ProcessBallStopped(ballPosition);
-            Debug.Log($"PlayerCore: 球停止，委托 AttackManager 处理攻击 - 位置: {ballPosition}");
+            
+            // 【三角形攻击】传递轨迹数据
+            attackManager.ProcessBallStopped(ballPosition, launchPosition, firstCollisionPoint);
+            
+            Debug.Log($"PlayerCore: 球停止，委托 AttackManager 处理攻击 - 位置: {ballPosition}, 有碰撞: {firstCollisionPoint.HasValue}");
         }
         else
         {

@@ -7741,6 +7741,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   areaCirclePrefab: {fileID: 5385583857073481511, guid: 80d37609a5c83304092f963f43215c22, type: 3}
+  dynamicShapeEffectPrefab: {fileID: 5796714708122259328, guid: 38b3e2b9df3e55343a7a9687c791ab0d, type: 3}
   circleDisplayDuration: 0.5
 --- !u!114 &8774563786934254085
 MonoBehaviour:

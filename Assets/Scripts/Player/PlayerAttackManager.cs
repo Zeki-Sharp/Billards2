@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Collections.Generic;
+using DeepSpaceLabs.SAM;
 
 /// <summary>
 /// 玩家攻击管理器 - 负责处理所有攻击相关的逻辑
@@ -30,6 +31,7 @@ public class PlayerAttackManager : MonoBehaviour
     
     [Header("范围攻击表现")]
     [SerializeField] private GameObject areaCirclePrefab;
+    [SerializeField] private GameObject dynamicShapeEffectPrefab;  // ← 新增：动态形状特效预制体
     [SerializeField] private float circleDisplayDuration = 0.5f;
     
     // 数据和组件引用（由 Player 统一设置）
@@ -39,6 +41,10 @@ public class PlayerAttackManager : MonoBehaviour
     
     // 范围攻击表现
     private GameObject currentAreaCircle;
+    
+    // 【三角形攻击】轨迹数据缓存（从 PlayerBehavior 传递过来）
+    private Vector2? cachedLaunchPos;
+    private Vector2? cachedFirstCollisionPos;
     
     /// <summary>
     /// 初始化攻击管理器（由 Player 调用）
@@ -162,41 +168,134 @@ public class PlayerAttackManager : MonoBehaviour
     /// <summary>
     /// 处理球停止事件（由 PlayerCore 调用）
     /// </summary>
-    public void ProcessBallStopped(Vector3 ballPosition)
+    /// <param name="ballPosition">球停止位置</param>
+    /// <param name="launchPos">发射起点（可选，用于三角形攻击）</param>
+    /// <param name="firstCollisionPos">第一碰撞点（可选，用于三角形攻击）</param>
+    public void ProcessBallStopped(Vector3 ballPosition, Vector2? launchPos = null, Vector2? firstCollisionPos = null)
     {
-        // ✅ 新伤害系统：发布停止事件
-        StoppedEvent stoppedEvent = StoppedEvent.Create(gameObject, ballPosition);
+        // 【三角形攻击】缓存轨迹数据
+        cachedLaunchPos = launchPos;
+        cachedFirstCollisionPos = firstCollisionPos;
+        
+        // ✅ 新伤害系统：发布停止事件（带轨迹数据）
+        StoppedEvent stoppedEvent = StoppedEvent.CreateWithTrajectory(
+            gameObject, 
+            ballPosition, 
+            launchPos, 
+            firstCollisionPos
+        );
         GameEventBus.PublishStopped(stoppedEvent);
         
-        // ✅ 根据 DamageProfile 配置决定是否显示范围圈
-        if (ShouldShowAreaCircle())
+        // ✅ 根据 DamageProfile 配置决定显示哪种范围特效
+        ShowAreaEffect(ballPosition);
+    }
+    
+    /// <summary>
+    /// 显示范围攻击特效（根据规则的形状类型）
+    /// </summary>
+    private void ShowAreaEffect(Vector3 ballPosition)
+    {
+        if (playerData == null) return;
+        
+        // 遍历所有 DamageProfile，查找 Stopped 类型的规则
+        DamageRuleConfig stoppedRule = null;
+        
+        // 支持多 Profile 组合
+        if (playerData.damageProfiles != null && playerData.damageProfiles.Count > 0)
         {
-            ShowAreaCircle(ballPosition);
-            StartCoroutine(HideAreaCircleAfterDelay());
+            foreach (var profile in playerData.damageProfiles)
+            {
+                if (profile == null || profile.rules == null) continue;
+                
+                foreach (var rule in profile.rules)
+                {
+                    if (rule != null && rule.triggerType == DamageTriggerType.Stopped)
+                    {
+                        stoppedRule = rule;
+                        break;
+                    }
+                }
+                
+                if (stoppedRule != null) break;
+            }
+        }
+        // 回退到单 Profile（向后兼容）
+        else if (playerData.damageProfile != null)
+        {
+            foreach (var rule in playerData.damageProfile.rules)
+            {
+                if (rule != null && rule.triggerType == DamageTriggerType.Stopped)
+                {
+                    stoppedRule = rule;
+                    break;
+                }
+            }
+        }
+        
+        // 如果没有 Stopped 规则，不显示特效
+        if (stoppedRule == null) return;
+        
+        // 根据形状类型显示不同特效
+        if (stoppedRule.rangeShape == RangeShapeType.Triangle)
+        {
+            ShowTriangleEffect(ballPosition);
+        }
+        else // Circle (默认)
+        {
+            ShowCircleEffect(ballPosition);
         }
     }
     
     /// <summary>
-    /// 检查是否应该显示范围圈（根据 DamageProfile 配置）
+    /// 显示三角形攻击特效
     /// </summary>
-    private bool ShouldShowAreaCircle()
+    private void ShowTriangleEffect(Vector3 ballPosition)
     {
-        if (playerData == null || playerData.damageProfile == null)
+        // 检查是否有碰撞记录
+        if (!cachedFirstCollisionPos.HasValue || !cachedLaunchPos.HasValue)
         {
-            return false;
+            Debug.Log("[PlayerAttackManager] 无碰撞记录，不显示三角形特效");
+            return;
         }
         
-        // 检查 DamageProfile 中是否有 Stopped 类型的规则
-        foreach (var rule in playerData.damageProfile.rules)
+        if (dynamicShapeEffectPrefab == null)
         {
-            if (rule != null && rule.triggerType == DamageTriggerType.Stopped)
-            {
-                return true;
-            }
+            Debug.LogWarning("[PlayerAttackManager] 动态形状特效预制体未配置");
+            return;
         }
         
-        return false;
+        // 实例化特效预制体
+        GameObject effectObj = Instantiate(dynamicShapeEffectPrefab);
+        
+        // 获取控制器组件
+        ShapeEffectController controller = effectObj.GetComponent<ShapeEffectController>();
+        if (controller != null)
+        {
+            // 传递三个顶点，生成三角形
+            Vector3 p1 = cachedLaunchPos.Value;
+            Vector3 p2 = cachedFirstCollisionPos.Value;
+            Vector3 p3 = ballPosition;
+            
+            controller.SetTriangle(p1, p2, p3);
+            
+            Debug.Log($"[PlayerAttackManager] 显示三角形特效: [{p1}, {p2}, {p3}]");
+        }
+        else
+        {
+            Debug.LogError("[PlayerAttackManager] 预制体缺少 ShapeEffectController 组件");
+            Destroy(effectObj);
+        }
     }
+    
+    /// <summary>
+    /// 显示圆形攻击特效（原有逻辑，重命名）
+    /// </summary>
+    private void ShowCircleEffect(Vector3 ballPosition)
+    {
+        ShowAreaCircle(ballPosition);
+        StartCoroutine(HideAreaCircleAfterDelay());
+    }
+    
     
     #endregion
     

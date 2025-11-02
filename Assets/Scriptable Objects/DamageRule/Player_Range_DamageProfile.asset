@@ -10,10 +10,9 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: df787d4428d94d04bb44b3440407a185, type: 3}
-  m_Name: Player_DamageProfile
+  m_Name: Player_Range_DamageProfile
   m_EditorClassIdentifier: 
-  profileName: "\u73A9\u5BB6\u4F24\u5BB3\u89C4\u5219\u96C6"
+  profileName: "\u73A9\u5BB6\u8303\u56F4\u4F24\u5BB3"
   description: 
   rules:
-  - {fileID: 11400000, guid: 1ec0d94fa63fedf4fb886aeefed356cd, type: 2}
-  - {fileID: 11400000, guid: f434cc98f4d7d674c9224b64f7433a6b, type: 2}
+  - {fileID: 11400000, guid: b3d9605cfb3335641819fbc094e32ab5, type: 2}

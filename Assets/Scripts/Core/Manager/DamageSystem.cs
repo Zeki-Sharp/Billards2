@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Collections.Generic;
+using System.Linq;
 
 /// <summary>
 /// 伤害系统 - 规则驱动的伤害判断和计算
@@ -36,7 +37,10 @@ public class DamageSystem : SingletonManager<DamageSystem>
     
     #region 私有字段
     
-    // 实体伤害配置注册表
+    // 实体伤害配置注册表（多 Profile 支持）
+    private Dictionary<GameObject, List<DamageProfile>> entityMultiProfiles = new Dictionary<GameObject, List<DamageProfile>>();
+    
+    // 向后兼容：单 Profile 注册表 
     private Dictionary<GameObject, DamageProfile> entityProfiles = new Dictionary<GameObject, DamageProfile>();
     
     // 统计数据
@@ -81,7 +85,7 @@ public class DamageSystem : SingletonManager<DamageSystem>
     #region 实体注册
     
     /// <summary>
-    /// 注册实体和其伤害配置
+    /// 注册实体和其伤害配置（单 Profile，向后兼容）
     /// </summary>
     public void RegisterEntity(GameObject entity, DamageProfile damageProfile)
     {
@@ -109,23 +113,123 @@ public class DamageSystem : SingletonManager<DamageSystem>
     }
     
     /// <summary>
+    /// 注册实体和其伤害配置（多 Profile 组合）
+    /// </summary>
+    public void RegisterEntity(GameObject entity, List<DamageProfile> damageProfiles)
+    {
+        if (entity == null)
+        {
+            Debug.LogWarning("[DamageSystem] 尝试注册空实体");
+            return;
+        }
+        
+        if (damageProfiles == null || damageProfiles.Count == 0)
+        {
+            if (enableDebugLog)
+            {
+                Debug.Log($"[DamageSystem] {entity.name} 注册时未提供伤害配置（无攻击能力）");
+            }
+            return;
+        }
+        
+        // 过滤掉空的 Profile
+        var validProfiles = damageProfiles.Where(p => p != null).ToList();
+        if (validProfiles.Count == 0)
+        {
+            Debug.LogWarning($"[DamageSystem] {entity.name} 的所有 Profile 都为空");
+            return;
+        }
+        
+        entityMultiProfiles[entity] = validProfiles;
+        
+        if (enableDebugLog)
+        {
+            int totalRules = validProfiles.Sum(p => p.rules != null ? p.rules.Count : 0);
+            string profileNames = string.Join(", ", validProfiles.Select(p => p.profileName));
+            Debug.Log($"[DamageSystem] 注册实体: {entity.name}, Profiles: [{profileNames}], 总规则数: {totalRules}");
+        }
+    }
+    
+    /// <summary>
     /// 注销实体
     /// </summary>
     public void UnregisterEntity(GameObject entity)
     {
         if (entity == null) return;
         
-        if (entityProfiles.Remove(entity))
+        bool removed = entityProfiles.Remove(entity) || entityMultiProfiles.Remove(entity);
+        
+        if (removed && enableDebugLog)
         {
-            if (enableDebugLog)
-            {
-                Debug.Log($"[DamageSystem] 注销实体: {entity.name}");
-            }
+            Debug.Log($"[DamageSystem] 注销实体: {entity.name}");
         }
     }
     
     /// <summary>
-    /// 获取实体的伤害配置（支持向上查找父级）
+    /// 获取实体的所有伤害规则（支持多 Profile 组合和向上查找父级）
+    /// </summary>
+    private List<DamageRuleConfig> GetAllDamageRules(GameObject entity)
+    {
+        if (entity == null) return new List<DamageRuleConfig>();
+        
+        List<DamageRuleConfig> allRules = new List<DamageRuleConfig>();
+        
+        // 1. 优先尝试从多 Profile 注册表获取
+        if (entityMultiProfiles.TryGetValue(entity, out List<DamageProfile> profiles))
+        {
+            foreach (var profile in profiles)
+            {
+                if (profile != null && profile.rules != null)
+                {
+                    allRules.AddRange(profile.rules.Where(r => r != null));
+                }
+            }
+        }
+        // 2. 回退到单 Profile 注册表
+        else if (entityProfiles.TryGetValue(entity, out DamageProfile singleProfile))
+        {
+            if (singleProfile != null && singleProfile.rules != null)
+            {
+                allRules.AddRange(singleProfile.rules.Where(r => r != null));
+            }
+        }
+        // 3. 如果当前对象没有，尝试从父级获取
+        else
+        {
+            Transform current = entity.transform.parent;
+            while (current != null && allRules.Count == 0)
+            {
+                if (entityMultiProfiles.TryGetValue(current.gameObject, out profiles))
+                {
+                    foreach (var profile in profiles)
+                    {
+                        if (profile != null && profile.rules != null)
+                        {
+                            allRules.AddRange(profile.rules.Where(r => r != null));
+                        }
+                    }
+                    break;
+                }
+                else if (entityProfiles.TryGetValue(current.gameObject, out singleProfile))
+                {
+                    if (singleProfile != null && singleProfile.rules != null)
+                    {
+                        allRules.AddRange(singleProfile.rules.Where(r => r != null));
+                    }
+                    break;
+                }
+                current = current.parent;
+            }
+        }
+        
+        // 按优先级排序
+        allRules.Sort((a, b) => a.priority.CompareTo(b.priority));
+        
+        return allRules;
+    }
+    
+    /// <summary>
+    /// 获取实体的伤害配置（单 Profile，向后兼容）
     /// </summary>
     private DamageProfile GetDamageProfile(GameObject entity)
     {
@@ -134,7 +238,6 @@ public class DamageSystem : SingletonManager<DamageSystem>
         // 先尝试从当前对象获取
         if (entityProfiles.TryGetValue(entity, out DamageProfile profile))
         {
-            Debug.Log($"[DamageSystem] 在 {entity.name} 找到伤害配置: {profile.profileName}");
             return profile;
         }
         
@@ -144,13 +247,11 @@ public class DamageSystem : SingletonManager<DamageSystem>
         {
             if (entityProfiles.TryGetValue(current.gameObject, out profile))
             {
-                Debug.Log($"[DamageSystem] 在父级 {current.name} 找到伤害配置: {profile.profileName}");
                 return profile;
             }
             current = current.parent;
         }
         
-        Debug.LogWarning($"[DamageSystem] ⚠️ {entity.name} 及其所有父级都未注册伤害配置");
         return null;
     }
     
@@ -170,18 +271,17 @@ public class DamageSystem : SingletonManager<DamageSystem>
         
         totalCollisions++;
         
-        // 获取 source 的伤害配置
-        DamageProfile profile = GetDamageProfile(evt.Source);
+        // 获取 source 的所有伤害规则（支持多 Profile）
+        List<DamageRuleConfig> rules = GetAllDamageRules(evt.Source);
         
-        if (profile == null)
+        if (rules.Count == 0)
         {
             return;
         }
         
         // 遍历规则，检查匹配
-        foreach (var rule in profile.rules)
+        foreach (var rule in rules)
         {
-            if (rule == null) continue;
             if (rule.triggerType != DamageTriggerType.Collision) continue;
             
             // 检查规则条件
@@ -200,15 +300,14 @@ public class DamageSystem : SingletonManager<DamageSystem>
     {
         if (!systemEnabled) return;
         
-        // 获取 source 的伤害配置
-        DamageProfile profile = GetDamageProfile(evt.Source);
+        // 获取 source 的所有伤害规则（支持多 Profile）
+        List<DamageRuleConfig> rules = GetAllDamageRules(evt.Source);
         
-        if (profile == null) return;
+        if (rules.Count == 0) return;
         
         // 遍历规则，检查匹配
-        foreach (var rule in profile.rules)
+        foreach (var rule in rules)
         {
-            if (rule == null) continue;
             if (rule.triggerType != DamageTriggerType.Stopped) continue;
             
             // 对于 Stopped 类型，需要范围检测
@@ -217,9 +316,25 @@ public class DamageSystem : SingletonManager<DamageSystem>
     }
     
     /// <summary>
-    /// 处理停止伤害（范围检测）
+    /// 处理停止伤害（范围检测）- 根据形状类型选择检测方式
     /// </summary>
     private void ProcessStoppedDamage(DamageRuleConfig rule, StoppedEvent evt)
+    {
+        // 根据规则的形状类型选择检测方式
+        if (rule.rangeShape == RangeShapeType.Triangle)
+        {
+            ProcessTriangleDamage(rule, evt);
+        }
+        else // Circle (默认)
+        {
+            ProcessCircleDamage(rule, evt);
+        }
+    }
+    
+    /// <summary>
+    /// 处理圆形范围伤害（原有逻辑）
+    /// </summary>
+    private void ProcessCircleDamage(DamageRuleConfig rule, StoppedEvent evt)
     {
         // 确定攻击范围
         float range = rule.attackRange;
@@ -271,6 +386,224 @@ public class DamageSystem : SingletonManager<DamageSystem>
             
             ProcessDamage(rule, collisionEvt);
         }
+    }
+    
+    /// <summary>
+    /// 处理三角形范围伤害（新功能）
+    /// 使用几何算法检测碰撞体是否与三角形区域相交
+    /// </summary>
+    private void ProcessTriangleDamage(DamageRuleConfig rule, StoppedEvent evt)
+    {
+        // 检查是否有轨迹数据
+        if (!evt.HasCollision || !evt.LaunchPosition.HasValue || !evt.FirstCollisionPoint.HasValue)
+        {
+            if (enableDebugLog)
+            {
+                Debug.Log($"[DamageSystem] 三角形攻击 '{rule.ruleName}' 取消：无碰撞记录");
+            }
+            return;
+        }
+        
+        // 获取三角形三个顶点
+        Vector2 p1 = evt.LaunchPosition.Value;      // 起点
+        Vector2 p2 = evt.FirstCollisionPoint.Value; // 第一碰撞点
+        Vector2 p3 = evt.StoppedPosition;           // 终点
+        
+        // 验证三角形有效性
+        if (!IsValidTriangle(p1, p2, p3, out float area))
+        {
+            if (enableDebugLog)
+            {
+                Debug.Log($"[DamageSystem] 三角形攻击 '{rule.ruleName}' 取消：三角形无效（面积: {area:F3}）");
+            }
+            return;
+        }
+        
+        if (enableDebugLog)
+        {
+            Debug.Log($"[DamageSystem] 三角形攻击 '{rule.ruleName}' 触发：面积 {area:F2}，顶点: [{p1}, {p2}, {p3}]");
+        }
+        
+        // 计算三角形的包围盒（用于粗筛选）
+        float minX = Mathf.Min(p1.x, p2.x, p3.x);
+        float maxX = Mathf.Max(p1.x, p2.x, p3.x);
+        float minY = Mathf.Min(p1.y, p2.y, p3.y);
+        float maxY = Mathf.Max(p1.y, p2.y, p3.y);
+        Vector2 boxCenter = new Vector2((minX + maxX) / 2, (minY + maxY) / 2);
+        Vector2 boxSize = new Vector2(maxX - minX, maxY - minY);
+        
+        // 粗筛选：使用包围盒检测所有可能的目标
+        Collider2D[] colliders = Physics2D.OverlapBoxAll(boxCenter, boxSize, 0f);
+        
+        if (enableDebugLog)
+        {
+            Debug.Log($"[DamageSystem] 包围盒内检测到 {colliders.Length} 个碰撞体");
+        }
+        
+        int hitCount = 0;
+        foreach (var collider in colliders)
+        {
+            GameObject target = collider.gameObject;
+            
+            // 检查目标标签
+            if (!string.IsNullOrEmpty(rule.targetTag))
+            {
+                if (!target.CompareTag(rule.targetTag))
+                {
+                    if (showRuleMatching)
+                    {
+                        Debug.Log($"[DamageSystem] 跳过 {target.name}：标签不匹配（需要 {rule.targetTag}）");
+                    }
+                    continue;
+                }
+            }
+            
+            // 检查来源标签
+            if (!string.IsNullOrEmpty(rule.sourceTag))
+            {
+                if (!evt.Source.CompareTag(rule.sourceTag)) continue;
+            }
+            
+            // 精确检测：判断碰撞体是否与三角形区域相交
+            if (!IsColliderIntersectTriangle(collider, p1, p2, p3))
+            {
+                if (showRuleMatching)
+                {
+                    Debug.Log($"[DamageSystem] {target.name} 不在三角形内");
+                }
+                continue;
+            }
+            
+            hitCount++;
+            
+            Vector2 targetPos = target.transform.position;
+            
+            if (enableDebugLog)
+            {
+                Debug.Log($"[DamageSystem] ✅ {target.name} 在三角形内，准备造成伤害");
+            }
+            
+            // 创建模拟的碰撞事件用于伤害计算
+            CollisionEvent collisionEvt = new CollisionEvent
+            {
+                Source = evt.Source,
+                Target = target,
+                ContactPoint = targetPos,
+                ContactNormal = (targetPos - evt.StoppedPosition).normalized,
+                Velocity = 0f,
+                CollisionTime = evt.StoppedTime
+            };
+            
+            ProcessDamage(rule, collisionEvt);
+        }
+        
+        if (enableDebugLog)
+        {
+            Debug.Log($"[DamageSystem] 三角形攻击命中 {hitCount} 个目标");
+        }
+    }
+    
+    #endregion
+    
+    #region 几何工具方法
+    
+    /// <summary>
+    /// 验证三角形有效性（检查三点是否共线或距离过近）
+    /// </summary>
+    /// <param name="p1">顶点1</param>
+    /// <param name="p2">顶点2</param>
+    /// <param name="p3">顶点3</param>
+    /// <param name="area">输出：三角形面积</param>
+    /// <returns>是否为有效三角形</returns>
+    private bool IsValidTriangle(Vector2 p1, Vector2 p2, Vector2 p3, out float area)
+    {
+        // 使用向量叉积计算三角形面积
+        // Area = 0.5 * |AB × AC|
+        Vector2 AB = p2 - p1;
+        Vector2 AC = p3 - p1;
+        
+        // 2D向量叉积的z分量
+        float crossProduct = AB.x * AC.y - AB.y * AC.x;
+        area = Mathf.Abs(crossProduct) * 0.5f;
+        
+        // 面积阈值：小于0.1的三角形视为无效（三点接近共线）
+        const float MIN_AREA = 0.1f;
+        return area >= MIN_AREA;
+    }
+    
+    /// <summary>
+    /// 判断碰撞体是否与三角形区域相交
+    /// </summary>
+    /// <param name="collider">目标碰撞体</param>
+    /// <param name="p1">三角形顶点1</param>
+    /// <param name="p2">三角形顶点2</param>
+    /// <param name="p3">三角形顶点3</param>
+    /// <returns>是否相交</returns>
+    private bool IsColliderIntersectTriangle(Collider2D collider, Vector2 p1, Vector2 p2, Vector2 p3)
+    {
+        // 策略：检查碰撞体的多个采样点是否有任何一个在三角形内
+        // 这样可以处理各种形状的碰撞体（圆形、方形、多边形等）
+        
+        Vector2 center = collider.bounds.center;
+        float radius = Mathf.Max(collider.bounds.extents.x, collider.bounds.extents.y);
+        
+        // 1. 检查碰撞体中心点
+        if (IsPointInTriangle(center, p1, p2, p3))
+        {
+            return true;
+        }
+        
+        // 2. 检查碰撞体边界的8个采样点（上下左右 + 四个角）
+        Vector2[] samplePoints = new Vector2[]
+        {
+            center + new Vector2(radius, 0),        // 右
+            center + new Vector2(-radius, 0),       // 左
+            center + new Vector2(0, radius),        // 上
+            center + new Vector2(0, -radius),       // 下
+            center + new Vector2(radius, radius),   // 右上
+            center + new Vector2(-radius, radius),  // 左上
+            center + new Vector2(radius, -radius),  // 右下
+            center + new Vector2(-radius, -radius)  // 左下
+        };
+        
+        foreach (var point in samplePoints)
+        {
+            if (IsPointInTriangle(point, p1, p2, p3))
+            {
+                return true;
+            }
+        }
+        
+        // 3. 检查三角形的三个顶点是否在碰撞体内（反向检测）
+        if (collider.OverlapPoint(p1) || collider.OverlapPoint(p2) || collider.OverlapPoint(p3))
+        {
+            return true;
+        }
+        
+        // 如果所有检测都不通过，认为不相交
+        return false;
+    }
+    
+    /// <summary>
+    /// 判断点是否在三角形内（重心坐标法）
+    /// </summary>
+    private bool IsPointInTriangle(Vector2 point, Vector2 p1, Vector2 p2, Vector2 p3)
+    {
+        Vector2 v0 = p3 - p1;
+        Vector2 v1 = p2 - p1;
+        Vector2 v2 = point - p1;
+        
+        float dot00 = Vector2.Dot(v0, v0);
+        float dot01 = Vector2.Dot(v0, v1);
+        float dot02 = Vector2.Dot(v0, v2);
+        float dot11 = Vector2.Dot(v1, v1);
+        float dot12 = Vector2.Dot(v1, v2);
+        
+        float invDenom = 1f / (dot00 * dot11 - dot01 * dot01);
+        float u = (dot11 * dot02 - dot01 * dot12) * invDenom;
+        float v = (dot00 * dot12 - dot01 * dot02) * invDenom;
+        
+        return (u >= 0) && (v >= 0) && (u + v <= 1);
     }
     
     #endregion

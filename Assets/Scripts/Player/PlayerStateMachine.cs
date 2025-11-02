@@ -202,12 +202,13 @@ public class PlayerStateMachine : MonoBehaviour
         
         var blackboard = playerBehavior.GetBlackboard();
         
-        if (state == PlayerState.Moving)
+        // Moving 和 MovingEnd 状态都可以攻击
+        if (state == PlayerState.Moving || state == PlayerState.MovingEnd)
         {
             blackboard.Set("CanAttack", true);
             if (showDebugInfo)
             {
-                Debug.Log("[PlayerStateMachine] ✅ 设置 CanAttack = true (Moving 状态)");
+                Debug.Log($"[PlayerStateMachine] ✅ 设置 CanAttack = true ({state} 状态)");
             }
         }
         else

@@ -10,17 +10,18 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5037b3c987730d84ab57aac9a2f5788e, type: 3}
-  m_Name: DamageRule_EnemyHitPlayer
+  m_Name: Thorn
   m_EditorClassIdentifier: 
-  ruleName: "\u654C\u4EBA\u78B0\u649E\u89C4\u5219"
+  ruleName: "\u654C\u4EBA\u9677\u9631\u653B\u51FB"
   priority: 0
   triggerType: 0
-  sourceTag: Enemy
+  sourceTag: EnemyAttackRange
   targetTag: Player
-  requireSourceState: CanAttack
+  requireSourceState: IsTrap
   requireTargetState: 
   minVelocity: 0
   velocityMultiplier: 0
+  attackRange: 0
   baseDamage: 10
   damageMultiplier: 1
   damageType: 0

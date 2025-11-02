@@ -2,6 +2,15 @@ using UnityEngine;
 using System.Collections.Generic;
 
 /// <summary>
+/// 攻击范围形状类型
+/// </summary>
+public enum RangeShapeType
+{
+    Circle,    // 圆形范围（默认）
+    Triangle   // 三角形范围（需要轨迹记录）
+}
+
+/// <summary>
 /// 伤害规则配置 - ScriptableObject
 /// 定义实体在什么情况下造成伤害
 /// 
@@ -48,6 +57,9 @@ public class DamageRuleConfig : ScriptableObject
     public float velocityMultiplier = 0f;
     
     [Header("范围配置（Stopped 类型专用）")]
+    [Tooltip("攻击范围形状类型")]
+    public RangeShapeType rangeShape = RangeShapeType.Circle;
+    
     [Tooltip("攻击范围（仅 Stopped 类型使用，0 表示从 PlayerData 读取）")]
     public float attackRange = 0f;
     

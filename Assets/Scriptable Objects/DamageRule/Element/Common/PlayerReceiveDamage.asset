@@ -10,7 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5037b3c987730d84ab57aac9a2f5788e, type: 3}
-  m_Name: DamageRule_PlayerHitThornTrap
+  m_Name: PlayerReceiveDamage
   m_EditorClassIdentifier: 
   ruleName: "\u73A9\u5BB6\u649E\u523A\u9677\u9631"
   priority: 0
@@ -32,4 +32,3 @@ MonoBehaviour:
   knockbackForce: 0
   stunDuration: 0
   canBeBlocked: 1
-
