@@ -530,11 +530,46 @@ public class PlayerBehavior : MonoBehaviour, IDamageable
     }
     
     /// <summary>
-    /// 死亡处理
+    /// ✅ 多角色系统改造：死亡处理
     /// </summary>
     void Die()
     {
-        // 可以在这里添加死亡逻辑
+        Debug.LogWarning($"[PlayerBehavior] {gameObject.name} 血量归零，开始死亡处理");
+        
+        // 获取角色ID
+        string characterID = GetMyCharacterID();
+        if (string.IsNullOrEmpty(characterID))
+        {
+            Debug.LogError($"[PlayerBehavior] {gameObject.name} 无法获取角色ID，死亡处理失败！");
+            return;
+        }
+        
+        // 发布角色死亡事件（DeathManager 会监听并处理）
+        GameEventBus.PublishCharacterDied(characterID);
+        
+        Debug.LogWarning($"[PlayerBehavior] ✅ 已发布角色死亡事件：{characterID}");
+        
+        // 死亡的具体处理（禁用球体、更新TeamData等）由 DeathManager 统一处理
+    }
+    
+    /// <summary>
+    /// ✅ 多角色系统：获取当前角色ID
+    /// </summary>
+    string GetMyCharacterID()
+    {
+        var session = GameSession.GetOrCreateInstance();
+        if (session != null && session.HasTeamData())
+        {
+            var teamData = session.GetTeamData();
+            foreach (var character in teamData.characters)
+            {
+                if (character.ballInstance == gameObject)
+                {
+                    return character.characterID;
+                }
+            }
+        }
+        return null;
     }
     
     /// <summary>

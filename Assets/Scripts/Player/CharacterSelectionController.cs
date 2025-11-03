@@ -114,6 +114,16 @@ public class CharacterSelectionController : MonoBehaviour
             return;
         }
         
+        // ✅ 检查角色是否死亡
+        if (IsCharacterDead(characterID))
+        {
+            if (showDebugInfo)
+            {
+                Debug.LogWarning($"CharacterSelectionController: 角色 {characterID} 已死亡，无法选中");
+            }
+            return;
+        }
+        
         // 检查是否点击的是已选中的角色
         if (selectedCharacterID == characterID)
         {
@@ -266,6 +276,24 @@ public class CharacterSelectionController : MonoBehaviour
         }
         
         return null;
+    }
+    
+    /// <summary>
+    /// ✅ 多角色系统：检查角色是否死亡
+    /// </summary>
+    bool IsCharacterDead(string characterID)
+    {
+        var session = GameSession.GetOrCreateInstance();
+        if (session != null && session.HasTeamData())
+        {
+            var teamData = session.GetTeamData();
+            var character = teamData.characters.Find(c => c.characterID == characterID);
+            if (character != null)
+            {
+                return !character.isAlive;
+            }
+        }
+        return false;
     }
     
     #endregion
