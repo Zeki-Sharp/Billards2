@@ -118,20 +118,31 @@ public class TopBarController : MonoBehaviour
     #region 事件处理
     
     /// <summary>
-    /// 游戏开始事件处理（角色选择完成）
+    /// 游戏开始事件处理（角色选择完成）- 多角色模式
     /// </summary>
-    void OnGameStarted(PlayerData character)
+    void OnGameStarted(System.Collections.Generic.List<PlayerData> selectedCharacters)
     {
-        if (showDebugInfo)
+        if (selectedCharacters == null || selectedCharacters.Count == 0)
         {
-            Debug.Log($"TopBarController: 角色选择完成，显示TopBar - {character.info.name}");
+            Debug.LogWarning("TopBarController: 未选择任何角色！");
+            return;
         }
         
-        // 更新角色头像
-        UpdatePlayerPortrait(character);
+        // TODO: 多角色模式下，TopBar需要显示当前控制的角色
+        // 暂时显示第一个角色的信息
+        PlayerData firstCharacter = selectedCharacters[0];
+        
+        if (showDebugInfo)
+        {
+            string characterNames = string.Join(", ", selectedCharacters.ConvertAll(c => c.info.name));
+            Debug.Log($"TopBarController: 角色选择完成，显示TopBar - 队伍: {characterNames}");
+        }
+        
+        // 更新角色头像（暂时显示第一个角色）
+        UpdatePlayerPortrait(firstCharacter);
         
         // 初始化血量显示为满血（角色刚选择，血量为满）
-        float maxHealth = character != null ? character.maxHealth : 100f;
+        float maxHealth = firstCharacter != null ? firstCharacter.maxHealth : 100f;
         UpdateHealthDisplay(maxHealth, maxHealth);
         
         // 显示TopBar

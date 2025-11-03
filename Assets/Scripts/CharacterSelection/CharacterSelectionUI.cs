@@ -137,17 +137,11 @@ public class CharacterSelectionUI : MonoBehaviour
     }
     
     /// <summary>
-    /// 角色选择事件处理
+    /// 角色选择事件处理（多选模式）
     /// </summary>
-    void OnCharacterSelected(PlayerData characterData)
+    void OnCharacterSelected(PlayerData characterData, int positionIndex)
     {
         if (characterData == null) return;
-        
-        // 更新选中角色文本
-        if (selectedCharacterText != null)
-        {
-            selectedCharacterText.text = string.Format(characterSelectedTextFormat, characterData.info.name);
-        }
         
         // 播放选择动画
         if (enableAnimations)
@@ -155,18 +149,20 @@ public class CharacterSelectionUI : MonoBehaviour
             PlaySelectionAnimation();
         }
         
+        // 更新UI状态由Manager自动更新，这里只需要动画
+        
         if (showDebugInfo)
         {
-            Debug.Log($"CharacterSelectionUI: 角色选择 - {characterData.info.name}");
+            Debug.Log($"CharacterSelectionUI: 角色选择 [{positionIndex}号位] - {characterData.info.name}");
         }
     }
     
     /// <summary>
-    /// 开始游戏事件处理
+    /// 开始游戏事件处理（多选模式）
     /// </summary>
-    void OnStartGame(PlayerData characterData)
+    void OnStartGame(System.Collections.Generic.List<PlayerData> selectedCharacters)
     {
-        if (characterData == null) return;
+        if (selectedCharacters == null || selectedCharacters.Count == 0) return;
         
         // 播放开始游戏动画
         if (enableAnimations)
@@ -176,36 +172,39 @@ public class CharacterSelectionUI : MonoBehaviour
         
         if (showDebugInfo)
         {
-            Debug.Log($"CharacterSelectionUI: 开始游戏 - {characterData.info.name}");
+            string characterNames = string.Join(", ", selectedCharacters.ConvertAll(c => c.info.name));
+            Debug.Log($"CharacterSelectionUI: 开始游戏 - 队伍: {characterNames}");
         }
     }
     
     /// <summary>
-    /// 更新UI状态
+    /// 更新UI状态（多选模式）
     /// </summary>
     void UpdateUIState()
     {
         if (selectionManager == null) return;
         
-        bool hasSelectedCharacter = selectionManager.HasSelectedCharacter();
+        bool hasSelectedFullTeam = selectionManager.HasSelectedFullTeam();
+        int selectedCount = selectionManager.GetSelectedCount();
         
         // 更新开始游戏按钮状态
         if (startGameButton != null)
         {
-            startGameButton.interactable = hasSelectedCharacter;
+            startGameButton.interactable = hasSelectedFullTeam;
         }
         
         // 更新选中角色文本
         if (selectedCharacterText != null)
         {
-            if (hasSelectedCharacter)
+            if (selectedCount == 0)
             {
-                var selectedCharacter = selectionManager.GetSelectedCharacter();
-                selectedCharacterText.text = string.Format(characterSelectedTextFormat, selectedCharacter.info.name);
+                selectedCharacterText.text = noCharacterSelectedText;
             }
             else
             {
-                selectedCharacterText.text = noCharacterSelectedText;
+                var selectedCharacters = selectionManager.GetSelectedCharacters();
+                string characterNames = string.Join(", ", selectedCharacters.ConvertAll(c => c.info.name));
+                selectedCharacterText.text = $"已选择 ({selectedCount}/{TeamData.TEAM_SIZE}): {characterNames}";
             }
         }
     }

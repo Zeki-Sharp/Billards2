@@ -21,13 +21,14 @@ public class CharacterSelectionManager : MonoBehaviour
     [Header("调试")]
     [SerializeField] private bool showDebugInfo = true;
     
-    // 状态管理
-    private PlayerData selectedCharacter;
+    // 状态管理 - 多选模式
+    private List<PlayerData> selectedCharacters = new List<PlayerData>(TeamData.TEAM_SIZE);
     private List<CharacterButton> characterButtons = new List<CharacterButton>();
     
     // 事件
-    public static event Action<PlayerData> OnCharacterSelected;
-    public static event Action<PlayerData> OnStartGame;
+    public static event Action<PlayerData, int> OnCharacterSelected; // 参数：角色数据, 位置索引
+    public static event Action<PlayerData> OnCharacterDeselected;
+    public static event Action<List<PlayerData>> OnStartGame; // 改为传递角色列表
     
     void Start()
     {
@@ -169,7 +170,7 @@ public class CharacterSelectionManager : MonoBehaviour
     }
     
     /// <summary>
-    /// 选择角色
+    /// 选择角色（多选模式）
     /// </summary>
     public void SelectCharacter(PlayerData characterData)
     {
@@ -179,8 +180,26 @@ public class CharacterSelectionManager : MonoBehaviour
             return;
         }
         
-        // 更新选中状态
-        selectedCharacter = characterData;
+        // 检查是否已选中（如果已选中则取消选中）
+        if (selectedCharacters.Contains(characterData))
+        {
+            DeselectCharacter(characterData);
+            return;
+        }
+        
+        // 检查是否已满（最多3个）
+        if (selectedCharacters.Count >= TeamData.TEAM_SIZE)
+        {
+            if (showDebugInfo)
+            {
+                Debug.LogWarning($"CharacterSelectionManager: 已选择{TeamData.TEAM_SIZE}个角色，无法继续添加");
+            }
+            return;
+        }
+        
+        // 添加到选中列表
+        selectedCharacters.Add(characterData);
+        int positionIndex = selectedCharacters.Count; // 1-based
         
         // 更新所有按钮的选中状态
         UpdateButtonSelectionStates();
@@ -189,16 +208,43 @@ public class CharacterSelectionManager : MonoBehaviour
         UpdateUIState();
         
         // 触发事件
-        OnCharacterSelected?.Invoke(selectedCharacter);
+        OnCharacterSelected?.Invoke(characterData, positionIndex);
         
         if (showDebugInfo)
         {
-            Debug.Log($"CharacterSelectionManager: 选择角色 - {selectedCharacter.info.name}");
+            Debug.Log($"CharacterSelectionManager: 选择角色 [{positionIndex}号位] - {characterData.info.name}");
         }
     }
     
     /// <summary>
-    /// 更新按钮选中状态
+    /// 取消选择角色
+    /// </summary>
+    public void DeselectCharacter(PlayerData characterData)
+    {
+        if (characterData == null || !selectedCharacters.Contains(characterData))
+        {
+            return;
+        }
+        
+        selectedCharacters.Remove(characterData);
+        
+        // 更新所有按钮的选中状态
+        UpdateButtonSelectionStates();
+        
+        // 更新UI状态
+        UpdateUIState();
+        
+        // 触发事件
+        OnCharacterDeselected?.Invoke(characterData);
+        
+        if (showDebugInfo)
+        {
+            Debug.Log($"CharacterSelectionManager: 取消选择角色 - {characterData.info.name}");
+        }
+    }
+    
+    /// <summary>
+    /// 更新按钮选中状态（多选模式）
     /// </summary>
     void UpdateButtonSelectionStates()
     {
@@ -206,71 +252,105 @@ public class CharacterSelectionManager : MonoBehaviour
         {
             if (button != null)
             {
-                bool isSelected = button.GetCharacterData() == selectedCharacter;
+                bool isSelected = selectedCharacters.Contains(button.GetCharacterData());
                 button.SetSelected(isSelected);
             }
         }
     }
     
     /// <summary>
-    /// 更新UI状态
+    /// 更新UI状态（多选模式）
     /// </summary>
     void UpdateUIState()
     {
         // 更新选中角色文本
         if (selectedCharacterText != null)
         {
-            if (selectedCharacter != null)
+            if (selectedCharacters.Count == 0)
             {
-                selectedCharacterText.text = $"已选择: {selectedCharacter.info.name}";
+                selectedCharacterText.text = $"请选择角色 (0/{TeamData.TEAM_SIZE})";
+            }
+            else if (selectedCharacters.Count < TeamData.TEAM_SIZE)
+            {
+                string characterNames = string.Join(", ", selectedCharacters.ConvertAll(c => c.info.name));
+                selectedCharacterText.text = $"已选择 ({selectedCharacters.Count}/{TeamData.TEAM_SIZE}): {characterNames}";
             }
             else
             {
-                selectedCharacterText.text = "请选择角色";
+                string characterNames = string.Join(", ", selectedCharacters.ConvertAll(c => c.info.name));
+                selectedCharacterText.text = $"队伍已满 ({selectedCharacters.Count}/{TeamData.TEAM_SIZE}): {characterNames}";
             }
         }
         
-        // 更新开始游戏按钮状态
+        // 更新开始游戏按钮状态（只有选满3个才能开始）
         if (startGameButton != null)
         {
-            startGameButton.interactable = selectedCharacter != null;
+            startGameButton.interactable = selectedCharacters.Count == TeamData.TEAM_SIZE;
         }
     }
     
     /// <summary>
-    /// 开始游戏按钮点击事件
+    /// 开始游戏按钮点击事件（多选模式）
     /// </summary>
     public void OnStartGameClicked()
     {
-        if (selectedCharacter == null)
+        if (selectedCharacters.Count != TeamData.TEAM_SIZE)
         {
-            Debug.LogWarning("CharacterSelectionManager: 未选择角色，无法开始游戏");
+            Debug.LogWarning($"CharacterSelectionManager: 未选满{TeamData.TEAM_SIZE}个角色，无法开始游戏");
             return;
         }
         
         if (showDebugInfo)
         {
-            Debug.Log($"CharacterSelectionManager: 开始游戏 - {selectedCharacter.info.name}");
+            string characterNames = string.Join(", ", selectedCharacters.ConvertAll(c => c.info.name));
+            Debug.Log($"CharacterSelectionManager: 开始游戏 - 队伍: {characterNames}");
         }
         
         // 触发开始游戏事件
-        OnStartGame?.Invoke(selectedCharacter);
+        OnStartGame?.Invoke(selectedCharacters);
         
-        // 设置选中的角色数据到SceneTransitionManager
-        SceneTransitionManager.SetSelectedCharacter(selectedCharacter);
+        // 创建队伍数据并保存到 GameSession
+        CreateAndSaveTeamData();
         
-        // 加载Level1场景
-        LoadLevel1Scene();
+        // 加载地图场景
+        LoadMapScene();
+    }
+    
+    /// <summary>
+    /// 创建队伍数据并保存到 GameSession
+    /// </summary>
+    void CreateAndSaveTeamData()
+    {
+        // 创建队伍数据
+        TeamData teamData = new TeamData(selectedCharacters);
+        
+        // 保存到 GameSession
+        var session = GameSession.GetOrCreateInstance();
+        if (session != null)
+        {
+            session.SetTeamData(teamData);
+            
+            if (showDebugInfo)
+            {
+                Debug.Log($"CharacterSelectionManager: 队伍数据已保存到 GameSession");
+                teamData.PrintDebugInfo();
+            }
+        }
+        else
+        {
+            Debug.LogError("CharacterSelectionManager: 无法获取 GameSession！");
+        }
     }
     
     /// <summary>
     /// 加载地图场景（使用地图系统）
     /// </summary>
-    void LoadLevel1Scene()
+    void LoadMapScene()
     {
         if (showDebugInfo)
         {
-            Debug.Log($"CharacterSelectionManager: 准备加载地图场景，选中角色: {selectedCharacter.info.name}");
+            string characterNames = string.Join(", ", selectedCharacters.ConvertAll(c => c.info.name));
+            Debug.Log($"CharacterSelectionManager: 准备加载地图场景，队伍: {characterNames}");
         }
         
         // ✅ 清除地图系统标记（确保MapSceneController识别为首次进入）
@@ -285,19 +365,35 @@ public class CharacterSelectionManager : MonoBehaviour
     }
     
     /// <summary>
-    /// 获取当前选中的角色
+    /// 获取当前选中的角色列表
     /// </summary>
-    public PlayerData GetSelectedCharacter()
+    public List<PlayerData> GetSelectedCharacters()
     {
-        return selectedCharacter;
+        return new List<PlayerData>(selectedCharacters);
     }
     
     /// <summary>
-    /// 检查是否已选择角色
+    /// 检查是否已选满角色
     /// </summary>
-    public bool HasSelectedCharacter()
+    public bool HasSelectedFullTeam()
     {
-        return selectedCharacter != null;
+        return selectedCharacters.Count == TeamData.TEAM_SIZE;
+    }
+    
+    /// <summary>
+    /// 检查角色是否已被选中
+    /// </summary>
+    public bool IsCharacterSelected(PlayerData characterData)
+    {
+        return selectedCharacters.Contains(characterData);
+    }
+    
+    /// <summary>
+    /// 获取已选角色数量
+    /// </summary>
+    public int GetSelectedCount()
+    {
+        return selectedCharacters.Count;
     }
     
     /// <summary>
@@ -305,7 +401,7 @@ public class CharacterSelectionManager : MonoBehaviour
     /// </summary>
     public void ResetSelection()
     {
-        selectedCharacter = null;
+        selectedCharacters.Clear();
         UpdateButtonSelectionStates();
         UpdateUIState();
         
@@ -335,13 +431,18 @@ public class CharacterSelectionManager : MonoBehaviour
     [ContextMenu("显示调试信息")]
     void ShowDebugInfo()
     {
+        string selectedInfo = selectedCharacters.Count > 0
+            ? string.Join(", ", selectedCharacters.ConvertAll(c => c.info.name))
+            : "无";
+            
         Debug.Log($"CharacterSelectionManager 调试信息:\n" +
                  $"配置数据: {(selectionData != null ? "已配置" : "未配置")}\n" +
                  $"按钮预制体: {(characterButtonPrefab != null ? "已配置" : "未配置")}\n" +
                  $"按钮容器: {(buttonContainer != null ? "已配置" : "未配置")}\n" +
                  $"开始游戏按钮: {(startGameButton != null ? "已配置" : "未配置")}\n" +
                  $"角色按钮数量: {characterButtons.Count}\n" +
-                 $"选中角色: {(selectedCharacter != null ? selectedCharacter.info.name : "无")}");
+                 $"已选角色数: {selectedCharacters.Count}/{TeamData.TEAM_SIZE}\n" +
+                 $"选中角色: {selectedInfo}");
     }
     
     #endregion

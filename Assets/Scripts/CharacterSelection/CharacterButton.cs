@@ -113,6 +113,7 @@ public class CharacterButton : MonoBehaviour
     public void SetSelected(bool selected)
     {
         isSelected = selected;
+        Debug.Log($"CharacterButton [{characterData?.info.name}]: SetSelected({selected})");
         UpdateVisualState();
     }
     
@@ -129,14 +130,21 @@ public class CharacterButton : MonoBehaviour
         {
             colors.normalColor = selectedColor;
             colors.highlightedColor = selectedColor;
+            colors.pressedColor = selectedColor;
+            colors.selectedColor = selectedColor;
         }
         else
         {
             colors.normalColor = normalColor;
             colors.highlightedColor = hoverColor;
+            colors.pressedColor = hoverColor;
+            colors.selectedColor = normalColor;
         }
         
         button.colors = colors;
+        
+        // 强制刷新按钮状态（立即应用颜色变化）
+        button.OnDeselect(null);
         
         // 显示选中指示器
         if (selectedIndicator != null)

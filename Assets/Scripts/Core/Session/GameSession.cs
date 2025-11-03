@@ -172,6 +172,52 @@ public class GameSession : SingletonManager<GameSession>
         return Statistics != null ? Statistics.totalEnemyKills : 0;
     }
     
+    /// <summary>
+    /// 获取队伍数据
+    /// </summary>
+    public TeamData GetTeamData()
+    {
+        return PlayerData != null ? PlayerData.teamData : null;
+    }
+    
+    /// <summary>
+    /// 检查是否有队伍数据
+    /// </summary>
+    public bool HasTeamData()
+    {
+        return PlayerData != null && PlayerData.HasTeamData();
+    }
+    
+    /// <summary>
+    /// 设置队伍数据
+    /// </summary>
+    public void SetTeamData(TeamData teamData)
+    {
+        if (PlayerData != null)
+        {
+            PlayerData.teamData = teamData;
+            
+            if (EnableDebugLog)
+            {
+                Debug.Log($"[GameSession] 设置队伍数据: {teamData.characters.Count}个角色");
+            }
+        }
+    }
+    
+    /// <summary>
+    /// 获取或创建队伍数据
+    /// </summary>
+    public TeamData GetOrCreateTeamData()
+    {
+        if (PlayerData == null)
+        {
+            Debug.LogError("[GameSession] PlayerData为空，无法创建队伍数据");
+            return null;
+        }
+        
+        return PlayerData.GetOrCreateTeamData();
+    }
+    
     #endregion
     
     #region 调试信息
@@ -181,13 +227,29 @@ public class GameSession : SingletonManager<GameSession>
     /// </summary>
     public string GetDebugInfo()
     {
-        return $"[GameSession 调试信息]\n" +
+        string info = $"[GameSession 调试信息]\n" +
                $"=== 玩家数据 ===\n" +
                $"  - 有数据: {HasPlayerData()}\n" +
                $"  - 属性数: {PlayerData?.attributeCurrentValues.Count ?? 0}\n" +
                $"  - 修改器: {PlayerData?.activeModifiers.Count ?? 0}\n" +
-               $"  - 状态效果: {PlayerData?.activeStatusEffects.Count ?? 0}\n" +
-               $"=== 游戏统计 ===\n" +
+               $"  - 状态效果: {PlayerData?.activeStatusEffects.Count ?? 0}\n";
+        
+        // 队伍数据信息
+        if (HasTeamData())
+        {
+            TeamData team = GetTeamData();
+            info += $"=== 队伍数据 ===\n" +
+                   $"  - 角色数: {team.characters.Count}/{TeamData.TEAM_SIZE}\n" +
+                   $"  - 存活数: {team.AliveCount}\n" +
+                   $"  - 队伍状态: {(team.IsTeamWiped ? "全灭" : "存活")}\n" +
+                   $"  - 平均血量: {team.AverageHealthPercentage:P0}\n";
+        }
+        else
+        {
+            info += $"=== 队伍数据 ===\n  - 无队伍数据\n";
+        }
+        
+        info += $"=== 游戏统计 ===\n" +
                $"  - 总击杀: {Statistics?.totalEnemyKills ?? 0}\n" +
                $"  - 通关数: {Statistics?.levelsCompleted ?? 0}\n" +
                $"  - 游戏时长: {Statistics?.gameTime ?? 0f:F1}秒\n" +
@@ -195,6 +257,8 @@ public class GameSession : SingletonManager<GameSession>
                $"  - 来自地图: {State?.fromMapSystem ?? false}\n" +
                $"  - 地图层级: {State?.currentMapLayer ?? -1}\n" +
                $"  - 当前关卡: {State?.currentLevelID ?? "无"}";
+        
+        return info;
     }
     
     /// <summary>

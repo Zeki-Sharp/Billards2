@@ -39,6 +39,16 @@ public class PlayerRuntimeData
     
     #endregion
     
+    #region 多角色队伍数据
+    
+    /// <summary>
+    /// 队伍数据（多角色控制系统）
+    /// 管理3个角色的运行时状态
+    /// </summary>
+    public TeamData teamData = null;
+    
+    #endregion
+    
     #region 辅助方法
     
     /// <summary>
@@ -49,6 +59,13 @@ public class PlayerRuntimeData
         attributeCurrentValues.Clear();
         activeModifiers.Clear();
         activeStatusEffects.Clear();
+        
+        // 清除队伍数据
+        if (teamData != null)
+        {
+            teamData.Clear();
+            teamData = null;
+        }
     }
     
     /// <summary>
@@ -58,7 +75,28 @@ public class PlayerRuntimeData
     {
         return attributeCurrentValues.Count > 0 || 
                activeModifiers.Count > 0 || 
-               activeStatusEffects.Count > 0;
+               activeStatusEffects.Count > 0 ||
+               (teamData != null && teamData.IsValid());
+    }
+    
+    /// <summary>
+    /// 检查是否有队伍数据
+    /// </summary>
+    public bool HasTeamData()
+    {
+        return teamData != null && teamData.IsValid();
+    }
+    
+    /// <summary>
+    /// 获取队伍数据（如果不存在则创建）
+    /// </summary>
+    public TeamData GetOrCreateTeamData()
+    {
+        if (teamData == null)
+        {
+            teamData = new TeamData();
+        }
+        return teamData;
     }
     
     #endregion
