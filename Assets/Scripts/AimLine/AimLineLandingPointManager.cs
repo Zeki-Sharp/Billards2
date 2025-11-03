@@ -447,18 +447,39 @@ public class AimLineLandingPointManager : MonoBehaviour
     }
     
     /// <summary>
-    /// 获取攻击范围半径
+    /// ✅ 获取攻击范围半径（使用当前角色的 PlayerBehavior）
     /// </summary>
     /// <returns>攻击范围半径</returns>
     float GetAttackRangeRadius()
     {
-        PlayerBehavior playerCore = FindFirstObjectByType<PlayerBehavior>();
-        if (playerCore == null) return 0f;
+        // ✅ 使用已存储的 playerBehavior（当前角色），而不是 FindFirstObjectByType（会找到错误的角色）
+        if (playerBehavior == null)
+        {
+            if (showDebugInfo)
+            {
+                Debug.LogWarning("[AimLineLandingPointManager] playerBehavior 为 null，无法获取攻击范围");
+            }
+            return 0f;
+        }
         
-        PlayerAttackManager attackManager = playerCore.GetComponent<PlayerAttackManager>();
-        if (attackManager == null) return 0f;
+        PlayerAttackManager attackManager = playerBehavior.GetComponent<PlayerAttackManager>();
+        if (attackManager == null)
+        {
+            if (showDebugInfo)
+            {
+                Debug.LogWarning("[AimLineLandingPointManager] PlayerAttackManager 为 null");
+            }
+            return 0f;
+        }
         
-        return attackManager.GetFinalAreaRadius();
+        float radius = attackManager.GetFinalAreaRadius();
+        
+        if (showDebugInfo)
+        {
+            Debug.Log($"[AimLineLandingPointManager] 获取攻击范围半径: {radius} (角色: {playerBehavior.gameObject.name})");
+        }
+        
+        return radius;
     }
     
     /// <summary>
