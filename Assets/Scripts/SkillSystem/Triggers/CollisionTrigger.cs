@@ -10,6 +10,9 @@ public class CollisionTrigger : ITrigger
     
     private string targetTag = "Enemy"; // 默认目标标签
     
+    // ✅ 多角色系统：技能归属的角色ID
+    private string ownerCharacterID;
+    
     /// <summary>
     /// 设置目标标签
     /// </summary>
@@ -17,6 +20,15 @@ public class CollisionTrigger : ITrigger
     public void SetTargetTag(string tag)
     {
         targetTag = tag;
+    }
+    
+    /// <summary>
+    /// ✅ 多角色系统：设置触发器归属的角色ID
+    /// </summary>
+    /// <param name="characterID">角色ID</param>
+    public void SetOwner(string characterID)
+    {
+        ownerCharacterID = characterID;
     }
     
     /// <summary>
@@ -47,6 +59,12 @@ public class CollisionTrigger : ITrigger
             if (collisionEvent.Source == null || !collisionEvent.Source.CompareTag("Player"))
             {
                 return false;
+            }
+            
+            // ✅ 多角色系统：检查碰撞来源是否是归属角色
+            if (!TriggerHelper.CheckEventSource(collisionEvent, ownerCharacterID))
+            {
+                return false;  // 不是归属角色的碰撞，不触发
             }
             
             // 检查目标标签是否匹配

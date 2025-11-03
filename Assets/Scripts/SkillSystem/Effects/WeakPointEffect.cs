@@ -51,6 +51,15 @@ public class WeakPointEffect : IEffect
     }
     
     /// <summary>
+    /// ✅ 多角色系统：设置效果的目标角色ID（WeakPointEffect 不使用）
+    /// </summary>
+    /// <param name="characterID">目标角色ID</param>
+    public void SetTarget(string characterID)
+    {
+        // WeakPointEffect 作用于敌人，不需要目标角色ID
+    }
+    
+    /// <summary>
     /// 初始化效果
     /// </summary>
     public void Initialize()

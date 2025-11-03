@@ -43,6 +43,15 @@ public class DropItemEffect : IEffect
     }
     
     /// <summary>
+    /// ✅ 多角色系统：设置效果的目标角色ID（DropItemEffect 不使用）
+    /// </summary>
+    /// <param name="characterID">目标角色ID</param>
+    public void SetTarget(string characterID)
+    {
+        // DropItemEffect 不需要目标角色，掉落位置来自事件数据
+    }
+    
+    /// <summary>
     /// 初始化效果
     /// </summary>
     public void Initialize()

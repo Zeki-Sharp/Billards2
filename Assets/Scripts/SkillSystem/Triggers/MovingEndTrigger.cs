@@ -11,18 +11,25 @@ public class MovingEndTrigger : ITrigger
     private bool hasTriggered = false;
     private PlayerStateMachine playerStateMachine;
     
+    // ✅ 多角色系统：技能归属的角色ID
+    private string ownerCharacterID;
+    
+    /// <summary>
+    /// ✅ 多角色系统：设置触发器归属的角色ID
+    /// </summary>
+    /// <param name="characterID">角色ID</param>
+    public void SetOwner(string characterID)
+    {
+        ownerCharacterID = characterID;
+    }
+    
     /// <summary>
     /// 初始化触发器
     /// </summary>
     public void Initialize()
     {
-        // 查找 PlayerStateMachine
-        playerStateMachine = Object.FindFirstObjectByType<PlayerStateMachine>();
-        if (playerStateMachine == null)
-        {
-            Debug.LogError("[MovingEndTrigger] 未找到 PlayerStateMachine！");
-            return;
-        }
+        // ⚠️ 多角色系统：不再使用全局查找，改为事件驱动
+        // playerStateMachine 不再需要（改用角色ID过滤）
         
         // 订阅球停止事件
         GameEventBus.OnBallStopped += OnBallStopped;
@@ -39,18 +46,22 @@ public class MovingEndTrigger : ITrigger
         if (args.TryGetEventData<BallPhysics>(out var ballPhysics))
         {
             // 检查是否是玩家球
-            if (ballPhysics.gameObject.CompareTag("Player"))
+            if (!ballPhysics.gameObject.CompareTag("Player"))
             {
-                // 检查是否在 MovingEnd 状态
-                if (playerStateMachine != null && 
-                    playerStateMachine.CurrentState == PlayerStateMachine.PlayerState.MovingEnd)
-                {
-                    if (!hasTriggered)
-                    {
-                        hasTriggered = true;
-                        return true;
-                    }
-                }
+                return false;
+            }
+            
+            // ✅ 多角色系统：检查是否是归属角色的球停止事件
+            if (!TriggerHelper.CheckEventSource(ballPhysics, ownerCharacterID))
+            {
+                return false;  // 不是归属角色，不触发
+            }
+            
+            // 检查是否已触发过（每次停止只触发一次）
+            if (!hasTriggered)
+            {
+                hasTriggered = true;
+                return true;
             }
         }
         

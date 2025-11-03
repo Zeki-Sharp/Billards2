@@ -11,6 +11,9 @@ public class DataSourceTrigger : ITrigger
     private DataExtractorType extractorType;
     private bool hasInitialized = false;
     
+    // ✅ 多角色系统：技能归属的角色ID
+    private string ownerCharacterID;
+    
     /// <summary>
     /// 设置数据提取器
     /// </summary>
@@ -28,6 +31,19 @@ public class DataSourceTrigger : ITrigger
     {
         extractorType = type;
         dataExtractor = GetDataExtractor(type);
+    }
+    
+    /// <summary>
+    /// ✅ 多角色系统：设置触发器归属的角色ID
+    /// </summary>
+    /// <param name="characterID">角色ID</param>
+    public void SetOwner(string characterID)
+    {
+        ownerCharacterID = characterID;
+        
+        // ⚠️ TODO: DataSourceTrigger 的角色过滤需要扩展 HealthStateData 添加来源信息
+        // 当前 HealthStateData 没有包含来源角色的 GameObject/characterID
+        // 暂时不做过滤，假设 DataSourceTrigger 技能总是应用到自己角色
     }
     
     /// <summary>

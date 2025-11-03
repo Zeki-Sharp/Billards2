@@ -40,4 +40,10 @@ public interface IEffect
     /// </summary>
     /// <param name="canExecute">是否允许执行</param>
     void SetCanExecute(bool canExecute);
+    
+    /// <summary>
+    /// ✅ 多角色系统：设置效果的目标角色ID
+    /// </summary>
+    /// <param name="characterID">目标角色ID</param>
+    void SetTarget(string characterID);
 }

@@ -307,6 +307,11 @@ public class SkillInstance
     /// </summary>
     public string InstanceId { get; private set; }
     
+    /// <summary>
+    /// ✅ 多角色系统：技能归属的角色ID
+    /// </summary>
+    public string ownerCharacterID;
+    
     public SkillInstance(SkillConfig config, SkillLevelInstance levelInstance, int level)
     {
         this.config = config;
@@ -315,6 +320,30 @@ public class SkillInstance
         
         // 生成唯一实例ID
         this.InstanceId = $"{config.skillName}_Lv{level}_{System.Guid.NewGuid()}";
+        
+        // ✅ 多角色系统：默认为空（全局技能）
+        this.ownerCharacterID = null;
+    }
+    
+    /// <summary>
+    /// ✅ 多角色系统：设置技能归属并传递给触发器和效果
+    /// </summary>
+    /// <param name="characterID">角色ID</param>
+    public void SetOwner(string characterID)
+    {
+        this.ownerCharacterID = characterID;
+        
+        // 将归属信息传递给触发器
+        if (currentLevelInstance?.trigger != null)
+        {
+            currentLevelInstance.trigger.SetOwner(characterID);
+        }
+        
+        // ✅ 将归属信息传递给效果
+        if (currentLevelInstance?.effect != null)
+        {
+            currentLevelInstance.effect.SetTarget(characterID);
+        }
     }
     
     /// <summary>

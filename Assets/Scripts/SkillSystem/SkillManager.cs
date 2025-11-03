@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;  // ✅ 多角色系统：LINQ 支持
 using UnityEngine;
 
 /// <summary>
@@ -28,6 +29,18 @@ public class SkillManager : SingletonManager<SkillManager>
     
     // 技能实例管理
     private Dictionary<string, SkillInstance> skillInstances = new Dictionary<string, SkillInstance>();
+    
+    // ✅ 多角色系统改造：技能归属映射
+    /// <summary>
+    /// 角色技能映射：characterID → List<SkillConfig>
+    /// </summary>
+    private Dictionary<string, List<SkillConfig>> characterSkills = new Dictionary<string, List<SkillConfig>>();
+    
+    /// <summary>
+    /// 技能归属映射：skillInstanceID → characterID
+    /// 用于快速查询技能归属于哪个角色
+    /// </summary>
+    private Dictionary<string, string> skillOwnership = new Dictionary<string, string>();
     
     /// <summary>
     /// DropItem类型技能名称列表（用于掉落系统）
@@ -354,9 +367,178 @@ public class SkillManager : SingletonManager<SkillManager>
     
     #region 公共方法
     
+    #region 多角色系统 - 技能归属管理
+    
     /// <summary>
-    /// 添加技能配置
+    /// ✅ 多角色系统：添加技能到指定角色
     /// </summary>
+    /// <param name="characterID">角色ID</param>
+    /// <param name="skillConfig">技能配置</param>
+    public void AddSkillToCharacter(string characterID, SkillConfig skillConfig)
+    {
+        if (string.IsNullOrEmpty(characterID))
+        {
+            Debug.LogError("[SkillManager] 无法添加技能：角色ID为空");
+            return;
+        }
+        
+        if (skillConfig == null || !skillConfig.IsValid())
+        {
+            Debug.LogError("[SkillManager] 无法添加无效的技能配置");
+            return;
+        }
+        
+        // 初始化角色技能列表（如果不存在）
+        if (!characterSkills.ContainsKey(characterID))
+        {
+            characterSkills[characterID] = new List<SkillConfig>();
+        }
+        
+        // 添加技能到角色列表
+        characterSkills[characterID].Add(skillConfig);
+        
+        // 创建技能实例并设置归属
+        var skillInstance = skillConfig.CreateSkillInstance();
+        if (skillInstance != null)
+        {
+            // 生成唯一的技能实例ID：characterID + skillName
+            string skillInstanceID = $"{characterID}_{skillConfig.skillName}";
+            
+            // ✅ 设置归属角色（会自动传递给触发器和效果）
+            skillInstance.SetOwner(characterID);
+            
+            // 存储技能实例
+            skillInstances[skillInstanceID] = skillInstance;
+            
+            // 记录技能归属
+            skillOwnership[skillInstanceID] = characterID;
+            
+            // 检查是否为DropItem类型技能
+            var currentLevelConfig = skillConfig.GetLevelConfig(skillInstance.currentLevel);
+            if (currentLevelConfig?.effectConfig is DropItemEffectConfig)
+            {
+                dropItemSkillNames.Add(skillInstanceID);
+                if (enableDebugLog)
+                {
+                    Debug.Log($"[SkillManager] 注册DropItem技能 - {skillConfig.skillName} Lv{skillInstance.currentLevel} → 角色 {characterID}");
+                }
+            }
+            
+            // 通知技能状态管理器
+            skillStateManager?.AddActiveSkill(skillConfig.skillName);
+            
+            // 添加到 activeSkills 以保持兼容性
+            if (!activeSkills.Contains(skillConfig))
+            {
+                activeSkills.Add(skillConfig);
+            }
+            
+            if (enableDebugLog)
+            {
+                Debug.Log($"[SkillManager] ✅ 添加技能 '{skillConfig.skillName}' 到角色 '{characterID}'");
+            }
+        }
+        else
+        {
+            Debug.LogError($"[SkillManager] 技能实例创建失败：{skillConfig.skillName}");
+        }
+    }
+    
+    /// <summary>
+    /// ✅ 多角色系统：获取指定角色的所有技能
+    /// </summary>
+    /// <param name="characterID">角色ID</param>
+    /// <returns>技能配置列表</returns>
+    public List<SkillConfig> GetCharacterSkills(string characterID)
+    {
+        if (characterSkills.TryGetValue(characterID, out var skills))
+        {
+            return new List<SkillConfig>(skills);  // 返回副本
+        }
+        return new List<SkillConfig>();
+    }
+    
+    /// <summary>
+    /// ✅ 多角色系统：获取技能的归属角色ID
+    /// </summary>
+    /// <param name="skillInstanceID">技能实例ID</param>
+    /// <returns>角色ID，如果未找到返回 null</returns>
+    public string GetSkillOwner(string skillInstanceID)
+    {
+        if (skillOwnership.TryGetValue(skillInstanceID, out var characterID))
+        {
+            return characterID;
+        }
+        return null;
+    }
+    
+    /// <summary>
+    /// ✅ 多角色系统：移除指定角色的所有技能（角色死亡时调用）
+    /// </summary>
+    /// <param name="characterID">角色ID</param>
+    public void RemoveCharacterSkills(string characterID)
+    {
+        if (!characterSkills.ContainsKey(characterID))
+        {
+            return;
+        }
+        
+        // 获取角色的所有技能实例ID
+        var skillInstanceIDs = skillOwnership
+            .Where(kvp => kvp.Value == characterID)
+            .Select(kvp => kvp.Key)
+            .ToList();
+        
+        // 移除技能实例
+        foreach (var skillInstanceID in skillInstanceIDs)
+        {
+            if (skillInstances.ContainsKey(skillInstanceID))
+            {
+                var skillInstance = skillInstances[skillInstanceID];
+                skillInstances.Remove(skillInstanceID);
+                
+                // 移除DropItem记录
+                dropItemSkillNames.Remove(skillInstanceID);
+                
+                // 通知技能状态管理器
+                skillStateManager?.RemoveActiveSkill(skillInstance.config.skillName);
+                
+                if (enableDebugLog)
+                {
+                    Debug.Log($"[SkillManager] 移除角色 '{characterID}' 的技能：{skillInstance.config.skillName}");
+                }
+            }
+            
+            // 移除归属记录
+            skillOwnership.Remove(skillInstanceID);
+        }
+        
+        // 移除角色技能列表
+        characterSkills.Remove(characterID);
+        
+        if (enableDebugLog)
+        {
+            Debug.Log($"[SkillManager] ✅ 已移除角色 '{characterID}' 的所有技能（共 {skillInstanceIDs.Count} 个）");
+        }
+    }
+    
+    /// <summary>
+    /// ✅ 多角色系统：获取所有角色ID
+    /// </summary>
+    /// <returns>角色ID列表</returns>
+    public List<string> GetAllCharacterIDs()
+    {
+        return new List<string>(characterSkills.Keys);
+    }
+    
+    #endregion
+    
+    #region 旧版全局技能管理（保留向后兼容）
+    
+    /// <summary>
+    /// 添加技能配置（旧版全局方法，建议使用 AddSkillToCharacter）
+    /// </summary>
+    [System.Obsolete("建议使用 AddSkillToCharacter(characterID, skillConfig) 替代", false)]
     public void AddSkill(SkillConfig skillConfig)
     {
         if (skillConfig == null || !skillConfig.IsValid())
@@ -435,6 +617,10 @@ public class SkillManager : SingletonManager<SkillManager>
         // 清空技能列表
         activeSkills.Clear();
         
+        // ✅ 多角色系统：清空角色技能映射
+        characterSkills.Clear();
+        skillOwnership.Clear();
+        
         // 复用现有的重新初始化方法（清空实例和掉落记录）
         ReinitializeSkillInstances();
         
@@ -446,7 +632,7 @@ public class SkillManager : SingletonManager<SkillManager>
         
         if (enableDebugLog)
         {
-            Debug.Log("[SkillManager] 重置完成 - 所有技能已清空");
+            Debug.Log("[SkillManager] 重置完成 - 所有技能已清空（包括角色技能映射）");
         }
     }
     
@@ -615,13 +801,32 @@ public class SkillManager : SingletonManager<SkillManager>
     public void ShowSkillStatus()
     {
         Debug.Log("=== 技能状态信息 ===");
-        foreach (var skillInstance in skillInstances.Values)
+        
+        // ✅ 显示角色技能映射
+        Debug.Log($"角色数量: {characterSkills.Count}");
+        foreach (var kvp in characterSkills)
         {
-            Debug.Log($"技能: {skillInstance.config.skillName}");
-            Debug.Log($"- 配置: {skillInstance.config.GetDebugInfo()}");
+            Debug.Log($"  角色 '{kvp.Key}': {kvp.Value.Count} 个技能");
+            foreach (var skillConfig in kvp.Value)
+            {
+                Debug.Log($"    - {skillConfig.skillName}");
+            }
+        }
+        
+        // 显示技能实例
+        Debug.Log($"技能实例总数: {skillInstances.Count}");
+        foreach (var kvp in skillInstances)
+        {
+            var skillInstance = kvp.Value;
+            var owner = GetSkillOwner(kvp.Key);
+            Debug.Log($"技能: {skillInstance.config.skillName} (实例ID: {kvp.Key})");
+            Debug.Log($"  - 归属角色: {owner ?? "全局"}");
+            Debug.Log($"  - 配置: {skillInstance.config.GetDebugInfo()}");
         }
         Debug.Log("===================");
     }
+    
+    #endregion
     
     #endregion
 }

@@ -26,6 +26,15 @@ public class SpawnEffect : IEffect
     }
     
     /// <summary>
+    /// ✅ 多角色系统：设置效果的目标角色ID（SpawnEffect 不使用）
+    /// </summary>
+    /// <param name="characterID">目标角色ID</param>
+    public void SetTarget(string characterID)
+    {
+        // SpawnEffect 是占位符效果，不使用目标角色
+    }
+    
+    /// <summary>
     /// 初始化效果（空实现）
     /// </summary>
     public void Initialize()

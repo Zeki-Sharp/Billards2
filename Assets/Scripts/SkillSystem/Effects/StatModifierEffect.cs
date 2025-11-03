@@ -17,6 +17,9 @@ public class StatModifierEffect : IEffect
     private PlayerBehavior targetPlayer;      // 目标玩家
     private PlayerStats statsManager; // ✅ 属性管理器（轻量级系统）
     
+    // ✅ 多角色系统：目标角色ID
+    private string targetCharacterID;
+    
     // 叠加控制字段
     private bool allowStacking = true;    // 是否允许叠加
     private bool hasTriggered = false;    // 是否已经触发（用于非叠加效果）
@@ -67,6 +70,19 @@ public class StatModifierEffect : IEffect
         targetStat = stat;
         modifierValue = modifier;
         modifierType = type;
+    }
+    
+    /// <summary>
+    /// ✅ 多角色系统：设置效果的目标角色ID
+    /// </summary>
+    /// <param name="characterID">目标角色ID</param>
+    public void SetTarget(string characterID)
+    {
+        targetCharacterID = characterID;
+        
+        // 清除缓存的目标，强制重新查找
+        targetPlayer = null;
+        statsManager = null;
     }
     
     /// <summary>
@@ -217,13 +233,48 @@ public class StatModifierEffect : IEffect
     }
     
     /// <summary>
-    /// 动态获取目标玩家
+    /// ✅ 多角色系统改造：动态获取目标角色
     /// </summary>
     private bool GetTargetPlayer()
     {
         if (targetPlayer == null)
         {
-            targetPlayer = Object.FindFirstObjectByType<PlayerBehavior>();
+            // ✅ 多角色系统：根据 targetCharacterID 查找对应角色
+            if (!string.IsNullOrEmpty(targetCharacterID))
+            {
+                var teamData = GameSession.Instance?.GetTeamData();
+                if (teamData != null)
+                {
+                    var character = teamData.characters.Find(c => c.characterID == targetCharacterID);
+                    if (character != null && character.ballInstance != null)
+                    {
+                        targetPlayer = character.ballInstance.GetComponent<PlayerBehavior>();
+                        
+                        if (targetPlayer == null)
+                        {
+                            Debug.LogError($"[{EffectName}] 角色 {targetCharacterID} 的球体没有 PlayerBehavior 组件");
+                            return false;
+                        }
+                    }
+                    else
+                    {
+                        Debug.LogWarning($"[{EffectName}] 找不到角色 {targetCharacterID} 或其球体实例");
+                        return false;
+                    }
+                }
+                else
+                {
+                    Debug.LogWarning($"[{EffectName}] TeamData 为空，无法查找目标角色");
+                    return false;
+                }
+            }
+            else
+            {
+                // 向后兼容：如果没有指定角色ID，使用全局查找
+                Debug.LogWarning($"[{EffectName}] 未指定目标角色ID，使用全局查找（不推荐）");
+                targetPlayer = Object.FindFirstObjectByType<PlayerBehavior>();
+            }
+            
             if (targetPlayer != null)
             {
                 // 查找属性管理器

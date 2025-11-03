@@ -291,7 +291,7 @@ public class PlayerStateMachine : MonoBehaviour
     
     /// <summary>
     /// 更新蓄力状态（新增）
-    /// </summary>
+    /// </summary> 
     void UpdateChargingState()
     {
         // ✅ 状态机思想：双向门槛检测

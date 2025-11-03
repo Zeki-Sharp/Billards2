@@ -28,4 +28,10 @@ public interface ITrigger
     /// 重置触发器状态
     /// </summary>
     void Reset();
+    
+    /// <summary>
+    /// ✅ 多角色系统：设置触发器归属的角色ID
+    /// </summary>
+    /// <param name="characterID">角色ID</param>
+    void SetOwner(string characterID);
 }

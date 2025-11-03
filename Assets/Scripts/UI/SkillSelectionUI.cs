@@ -247,27 +247,31 @@ public class SkillSelectionUI : BasePanel
     }
     
     /// <summary>
-    /// 获取带等级标识的技能名称
+    /// ✅ 多角色系统改造：获取带角色和等级标识的技能名称
     /// </summary>
     /// <param name="skill">技能配置</param>
     /// <param name="skillIndex">技能在选择列表中的索引</param>
-    /// <returns>技能名称（如果有多个等级则带等级标识）</returns>
+    /// <returns>技能名称（包含角色归属和等级标识）</returns>
     string GetSkillNameWithLevel(SkillConfig skill, int skillIndex)
     {
         if (skill == null)
             return "";
         
         string skillName = skill.skillName;
+        string prefix = "";
         
-        // 检查技能是否有多个等级
-        int maxLevel = skill.GetMaxLevel();
-        if (maxLevel > 1)
+        // ✅ 从 SkillSelectionManager 获取技能选项（包含角色和等级信息）
+        if (skillSelectionManager != null)
         {
-            // 从 SkillSelectionManager 获取目标等级
-            if (skillSelectionManager != null)
+            var option = skillSelectionManager.GetSkillOption(skillIndex);
+            if (option != null)
             {
-                var option = skillSelectionManager.GetSkillOption(skillIndex);
-                if (option != null)
+                // ✅ 添加角色归属前缀
+                prefix = $"[{option.positionIndex}号位 {option.characterName}] ";
+                
+                // 检查技能是否有多个等级
+                int maxLevel = skill.GetMaxLevel();
+                if (maxLevel > 1)
                 {
                     // 在技能名称后添加等级标识
                     skillName = $"{skillName} lv.{option.targetLevel}";
@@ -275,7 +279,7 @@ public class SkillSelectionUI : BasePanel
             }
         }
         
-        return skillName;
+        return prefix + skillName;
     }
     
     /// <summary>

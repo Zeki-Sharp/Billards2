@@ -33,6 +33,15 @@ public class TransitionEffect : IEffect
     private AnimationCurve chargingToTransitionCurve;
     
     /// <summary>
+    /// ✅ 多角色系统：设置效果的目标角色ID（TransitionEffect 不使用）
+    /// </summary>
+    /// <param name="characterID">目标角色ID</param>
+    public void SetTarget(string characterID)
+    {
+        // TransitionEffect 作用于全局场景切换，不需要目标角色
+    }
+    
+    /// <summary>
     /// 初始化效果
     /// </summary>
     public void Initialize()

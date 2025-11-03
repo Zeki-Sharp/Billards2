@@ -9,6 +9,19 @@ public class AlwaysTrueTrigger : ITrigger
 {
     public string TriggerName => "AlwaysTrueTrigger";
     
+    // ✅ 多角色系统：技能归属的角色ID（此触发器不使用，但需要实现接口）
+    private string ownerCharacterID;
+    
+    /// <summary>
+    /// ✅ 多角色系统：设置触发器归属的角色ID
+    /// </summary>
+    /// <param name="characterID">角色ID</param>
+    public void SetOwner(string characterID)
+    {
+        ownerCharacterID = characterID;
+        // AlwaysTrueTrigger 不使用角色过滤，始终返回true
+    }
+    
     /// <summary>
     /// 初始化触发器
     /// </summary>

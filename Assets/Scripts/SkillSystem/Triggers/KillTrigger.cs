@@ -11,6 +11,9 @@ public class KillTrigger : ITrigger
     
     private string targetTag = "Enemy"; // 默认目标标签
     
+    // ✅ 多角色系统：技能归属的角色ID
+    private string ownerCharacterID;
+    
     /// <summary>
     /// 设置目标标签
     /// </summary>
@@ -18,6 +21,15 @@ public class KillTrigger : ITrigger
     public void SetTargetTag(string tag)
     {
         targetTag = tag;
+    }
+    
+    /// <summary>
+    /// ✅ 多角色系统：设置触发器归属的角色ID
+    /// </summary>
+    /// <param name="characterID">角色ID</param>
+    public void SetOwner(string characterID)
+    {
+        ownerCharacterID = characterID;
     }
     
     /// <summary>
@@ -37,6 +49,12 @@ public class KillTrigger : ITrigger
         // 检查事件数据类型
         if (args.TryGetEventData<DeathData>(out var deathData))
         {
+            // ✅ 多角色系统：检查击杀来源是否是归属角色
+            if (!TriggerHelper.CheckEventSource(deathData, ownerCharacterID))
+            {
+                return false;  // 不是归属角色的击杀，不触发
+            }
+            
             // 检查目标标签是否匹配
             bool tagMatches = string.IsNullOrEmpty(targetTag) || deathData.DeadObjectTag == targetTag;
             
