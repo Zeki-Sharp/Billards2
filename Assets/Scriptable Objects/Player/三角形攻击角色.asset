@@ -13,10 +13,10 @@ MonoBehaviour:
   m_Name: "\u4E09\u89D2\u5F62\u653B\u51FB\u89D2\u8272"
   m_EditorClassIdentifier: 
   info:
-    name: "\u4E09\u89D2\u5F62\u653B\u51FB\u89D2\u8272"
+    name: "\u4E09\u89D2\u653B\u51FB\u89D2\u8272"
     acronym: 
     description: "\u8FD0\u52A8\u505C\u6B62\u65F6\u6309\u7167\u8F68\u8FF9\u9020\u6210\u8303\u56F4\u4F24\u5BB3"
-    icon: {fileID: -8265326783544323283, guid: 36d1de35597400f479eca08ebb1188e9, type: 3}
+    icon: {fileID: -6857464360402037956, guid: 24615f8d737091446ba1bc00694b362f, type: 3}
     color: {r: 1, g: 1, b: 1, a: 1}
     characterClass: 
     rarity: "\u666E\u901A"
