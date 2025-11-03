@@ -34,9 +34,9 @@ MonoBehaviour:
     effectConfig:
       rid: 832807104352092302
     resetConditionConfig:
-      rid: -2
+      rid: 6937075115761074252
     effectRemovalConfig:
-      rid: -2
+      rid: 6937075115761074253
   - level: 2
     isActive: 1
     levelDescription: 
@@ -57,8 +57,6 @@ MonoBehaviour:
   references:
     version: 2
     RefIds:
-    - rid: -2
-      type: {class: , ns: , asm: }
     - rid: 832807104352092243
       type: {class: DataSourceTriggerConfig, ns: , asm: Assembly-CSharp}
       data:
@@ -123,3 +121,9 @@ MonoBehaviour:
         targetValue: 0.8
         minValue: 0
         maxValue: 1
+    - rid: 6937075115761074252
+      type: {class: NeverResetConditionConfig, ns: , asm: Assembly-CSharp}
+      data: 
+    - rid: 6937075115761074253
+      type: {class: NeverEffectRemovalConditionConfig, ns: , asm: Assembly-CSharp}
+      data: 

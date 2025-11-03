@@ -34,9 +34,9 @@ MonoBehaviour:
     effectConfig:
       rid: 832807104352092292
     resetConditionConfig:
-      rid: -2
+      rid: 6937075115761074251
     effectRemovalConfig:
-      rid: -2
+      rid: 6937075115761074250
   - level: 2
     isActive: 1
     levelDescription: 
@@ -94,4 +94,10 @@ MonoBehaviour:
       data: 
     - rid: 832807104352092328
       type: {class: NeverEffectRemovalConditionConfig, ns: , asm: Assembly-CSharp}
+      data: 
+    - rid: 6937075115761074250
+      type: {class: NeverEffectRemovalConditionConfig, ns: , asm: Assembly-CSharp}
+      data: 
+    - rid: 6937075115761074251
+      type: {class: NeverResetConditionConfig, ns: , asm: Assembly-CSharp}
       data: 

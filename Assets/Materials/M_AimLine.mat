@@ -49,7 +49,7 @@ Material:
     - _QueueControl: 0
     - _QueueOffset: 0
     - _UScale: 15
-    - _UVOffset: 126.40584
+    - _UVOffset: 40.565067
     m_Colors:
     - _Tint: {r: 1, g: 1, b: 0, a: 1}
   m_BuildTextureStacks: []

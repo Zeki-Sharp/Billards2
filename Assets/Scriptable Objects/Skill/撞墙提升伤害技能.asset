@@ -49,16 +49,14 @@ MonoBehaviour:
     effectConfig:
       rid: 832807104352092288
     resetConditionConfig:
-      rid: -2
+      rid: 6937075115761074254
     effectRemovalConfig:
-      rid: -2
+      rid: 6937075115761074255
   requiredSkills: []
   isActive: 1
   references:
     version: 2
     RefIds:
-    - rid: -2
-      type: {class: , ns: , asm: }
     - rid: 832807104352092238
       type: {class: CollisionTriggerConfig, ns: , asm: Assembly-CSharp}
       data:
@@ -103,5 +101,11 @@ MonoBehaviour:
       type: {class: OnPhaseEndedResetConditionConfig, ns: , asm: Assembly-CSharp}
       data: 
     - rid: 832807104352092321
+      type: {class: OnPhaseEndedEffectRemovalConditionConfig, ns: , asm: Assembly-CSharp}
+      data: 
+    - rid: 6937075115761074254
+      type: {class: OnPhaseEndedResetConditionConfig, ns: , asm: Assembly-CSharp}
+      data: 
+    - rid: 6937075115761074255
       type: {class: OnPhaseEndedEffectRemovalConditionConfig, ns: , asm: Assembly-CSharp}
       data: 
