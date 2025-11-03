@@ -8,7 +8,8 @@ public class PlayerData : ScriptableObject
     public enum AttackMode
     {
         Collision,    // 碰撞攻击
-        Area          // 范围攻击
+        Area,         // 范围攻击
+        Triangle      // 三角形攻击（新增）
     }
     
     [BoxGroup("显示信息")]

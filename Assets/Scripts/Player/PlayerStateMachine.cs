@@ -352,18 +352,22 @@ public class PlayerStateMachine : MonoBehaviour
     {
         if (showDebugInfo)
         {
-            Debug.Log("PlayerStateMachine: 进入 MovingEnd 阶段");
+            Debug.Log($"PlayerStateMachine [{GetMyCharacterID()}]: 进入 MovingEnd 阶段");
         }
         
+        // ✅ 多角色系统改造：使用自己的 playerBehavior，而不是 FindFirstObjectByType
         // 触发球停止攻击（攻击系统触发点）
-        PlayerBehavior playerBehavior = FindFirstObjectByType<PlayerBehavior>();
         if (playerBehavior != null)
         {
             playerBehavior.HandleBallStoppedAttack();
             if (showDebugInfo)
             {
-                Debug.Log("PlayerStateMachine: MovingEnd 阶段 - 触发球停止攻击");
+                Debug.Log($"PlayerStateMachine [{GetMyCharacterID()}]: MovingEnd 阶段 - 触发球停止攻击");
             }
+        }
+        else
+        {
+            Debug.LogError("PlayerStateMachine: playerBehavior 为 null，无法触发球停止攻击！");
         }
         
         

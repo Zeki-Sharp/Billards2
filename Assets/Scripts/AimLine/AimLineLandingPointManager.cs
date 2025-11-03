@@ -69,6 +69,9 @@ public class AimLineLandingPointManager : MonoBehaviour
     // 落点容器（参考转折点的indicatorContainer）
     private GameObject landingPointContainer;
     
+    // ✅ 多角色系统改造：存储父物体的 PlayerBehavior 引用
+    private PlayerBehavior playerBehavior;
+    
     #endregion
     
     #region Unity生命周期
@@ -104,6 +107,25 @@ public class AimLineLandingPointManager : MonoBehaviour
     /// </summary>
     void InitializeLandingPointManager()
     {
+        // ✅ 多角色系统改造：从父物体获取 PlayerBehavior
+        // 结构：Player (PlayerBehavior) -> AimController (本组件挂在这里)
+        if (transform.parent != null)
+        {
+            playerBehavior = transform.parent.GetComponent<PlayerBehavior>();
+            if (playerBehavior == null)
+            {
+                Debug.LogWarning($"[AimLineLandingPointManager] 未找到父物体 {transform.parent.name} 的 PlayerBehavior 组件");
+            }
+            else if (showDebugInfo)
+            {
+                Debug.Log($"[AimLineLandingPointManager] ✅ 找到 PlayerBehavior: {playerBehavior.gameObject.name}");
+            }
+        }
+        else
+        {
+            Debug.LogError("[AimLineLandingPointManager] 没有父物体！");
+        }
+        
         // 创建落点容器
         CreateLandingPointContainer();
         
@@ -155,8 +177,8 @@ public class AimLineLandingPointManager : MonoBehaviour
         isLandingPointVisible = true;
         lastLandingPosition = position;
         
-        // 显示攻击范围圆形（如果启用且角色是范围攻击模式）
-        if (showAttackRangeCircle && IsAreaAttackMode())
+        // ✅ 多角色系统改造：显示攻击范围圆形（撞击和三角形角色显示，范围攻击不显示）
+        if (showAttackRangeCircle && ShouldShowLandingPointCircle())
         {
             float radius = GetAttackRangeRadius();
             if (radius > 0f)
@@ -387,18 +409,41 @@ public class AimLineLandingPointManager : MonoBehaviour
     #region 攻击范围圆形
     
     /// <summary>
-    /// 检查是否为范围攻击模式
+    /// ✅ 多角色系统改造：检查是否应该显示落点范围圈
+    /// 范围攻击角色显示（需要看到攻击范围），撞击和三角形角色不显示
     /// </summary>
-    /// <returns>是否为范围攻击模式</returns>
-    bool IsAreaAttackMode()
+    /// <returns>是否应该显示落点范围圈</returns>
+    bool ShouldShowLandingPointCircle()
     {
-        PlayerBehavior playerCore = FindFirstObjectByType<PlayerBehavior>();
-        if (playerCore == null) return false;
+        if (playerBehavior == null)
+        {
+            if (showDebugInfo)
+            {
+                Debug.LogWarning("[AimLineLandingPointManager] playerBehavior 为 null，无法判断是否显示落点范围圈");
+            }
+            return false;
+        }
         
-        Player player = playerCore.GetComponent<Player>();
-        if (player == null || player.playerData == null) return false;
+        Player player = playerBehavior.GetComponent<Player>();
+        if (player == null || player.playerData == null)
+        {
+            if (showDebugInfo)
+            {
+                Debug.LogWarning("[AimLineLandingPointManager] Player 或 playerData 为 null");
+            }
+            return false;
+        }
         
-        return player.playerData.attackMode == PlayerData.AttackMode.Area;
+        // ✅ 范围攻击角色显示落点范围圈（需要看到攻击半径），撞击和三角形角色不显示
+        PlayerData.AttackMode mode = player.playerData.attackMode;
+        bool shouldShow = (mode == PlayerData.AttackMode.Area);
+        
+        if (showDebugInfo)
+        {
+            Debug.Log($"[AimLineLandingPointManager] 攻击模式: {mode}, 是否显示落点范围圈: {shouldShow}");
+        }
+        
+        return shouldShow;
     }
     
     /// <summary>
