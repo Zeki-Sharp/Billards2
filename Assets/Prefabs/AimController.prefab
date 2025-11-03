@@ -17,7 +17,7 @@ GameObject:
   - component: {fileID: 7333251144507815251}
   - component: {fileID: 365253809899638556}
   m_Layer: 0
-  m_Name: Launcher
+  m_Name: AimController
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -121,8 +121,6 @@ MonoBehaviour:
   landingPointColor: {r: 0.43764746, g: 0.9622642, b: 0.4339267, a: 0.5803922}
   landingPointSortingOrder: 11
   showLandingPoint: 1
-  minDisplayDistance: 0.5
-  maxDisplayDistance: 30
   showAttackRangeCircle: 1
   attackRangeCircleSprite: {fileID: -2413806693520163455, guid: a86470a33a6bf42c4b3595704624658b, type: 3}
   attackRangeCircleColor: {r: 1, g: 0.5, b: 0, a: 0.3}

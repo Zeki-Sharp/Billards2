@@ -23,9 +23,8 @@ public class AimController : MonoBehaviour
     
     [Header("瞄准设置")]
     
-    
-    [Header("球体设置")]
-    public PlayerBehavior playerCore; // 玩家核心引用
+    // ✅ 多角色系统改造：playerCore 改为 private，从父物体自动获取
+    // 移除 public PlayerBehavior playerCore 字段
     
     
     [Header("相机设置")]
@@ -52,26 +51,41 @@ public class AimController : MonoBehaviour
     private bool isVisible = false; // 是否显示瞄准线
     private Vector2 aimDirection;
     
-    // 组件引用
+    // 组件引用（本地，在 AimController GameObject 上）
     private AimLineLandingPointManager landingPointManager;
+    
+    // 父物体组件引用（在 Player GameObject 上）
+    private PlayerBehavior playerCore;
     private ChargeSystem chargeSystem;
+    private PlayerStateMachine playerStateMachine;
     
     void Start()
     {
         InitializeController();
         
-        // 订阅蓄力事件
-        GameEventBus.OnChargingStarted += ShowChargingUI;
-        GameEventBus.OnChargingStopped += HideChargingUI;
-        GameEventBus.OnChargingReset += HideChargingUI;
+        // ✅ 多角色系统改造：订阅父物体 PlayerStateMachine 状态变化
+        if (playerStateMachine != null)
+        {
+            playerStateMachine.OnStateChanged += OnPlayerStateChanged;
+            
+            if (showDebugInfo)
+            {
+                Debug.Log($"AimController [{transform.parent?.name}]: 已订阅 PlayerStateMachine 状态变化");
+            }
+        }
+        else
+        {
+            Debug.LogError($"AimController [{transform.parent?.name}]: PlayerStateMachine 未找到！");
+        }
     }
     
     void OnDestroy()
     {
-        // 取消订阅蓄力事件
-        GameEventBus.OnChargingStarted -= ShowChargingUI;
-        GameEventBus.OnChargingStopped -= HideChargingUI;
-        GameEventBus.OnChargingReset -= HideChargingUI;
+        // 取消订阅状态变化
+        if (playerStateMachine != null)
+        {
+            playerStateMachine.OnStateChanged -= OnPlayerStateChanged;
+        }
         
         // 取消订阅蓄力进度事件
         GameEventBus.OnChargingProgressChanged -= UpdateChargingProgress;
@@ -100,22 +114,16 @@ public class AimController : MonoBehaviour
             return;
         }
         
-        // 验证必需组件
-        if (playerCore == null)
-        {
-            Debug.LogError("AimController: PlayerCore 未设置！请在Inspector中设置PlayerCore引用");
-            return;
-        }
+        // ✅ 多角色系统改造：从父物体获取组件
+        InitializeParentComponents();
         
-        
-        
-        // 初始化组件
+        // 初始化本地组件
         InitializeRenderer();
-        InitializeComponents();
+        InitializeLocalComponents();
         
         if (showDebugInfo)
         {
-            Debug.Log("AimController: 初始化完成");
+            Debug.Log($"AimController [{transform.parent?.name}]: 初始化完成");
         }
     }
     
@@ -151,30 +159,56 @@ public class AimController : MonoBehaviour
     }
     
     /// <summary>
-    /// 初始化必要组件
+    /// 从父物体获取 Player 组件（多角色系统）
     /// </summary>
-    void InitializeComponents()
+    void InitializeParentComponents()
     {
-        // 获取落点管理器组件
-        landingPointManager = GetComponent<AimLineLandingPointManager>();
-        if (landingPointManager == null)
+        if (transform.parent == null)
         {
-            Debug.LogWarning("AimController: 找不到AimLineLandingPointManager组件，落点显示功能将不可用");
+            Debug.LogError("AimController: 没有父物体！请确保 AimController 是 Player 的子物体");
+            return;
         }
         
-        // 获取蓄力系统组件（用于获取当前力度）
-        if (playerCore != null)
+        // 从父物体获取组件
+        playerCore = transform.parent.GetComponent<PlayerBehavior>();
+        if (playerCore == null)
         {
-            chargeSystem = playerCore.GetComponent<ChargeSystem>();
-            if (chargeSystem == null)
-            {
-                Debug.LogWarning("AimController: 找不到ChargeSystem组件，无法获取当前力度");
-            }
+            Debug.LogError($"AimController: 父物体 {transform.parent.name} 上没有 PlayerBehavior 组件");
+        }
+        
+        chargeSystem = transform.parent.GetComponent<ChargeSystem>();
+        if (chargeSystem == null)
+        {
+            Debug.LogWarning($"AimController: 父物体 {transform.parent.name} 上没有 ChargeSystem 组件");
+        }
+        
+        playerStateMachine = transform.parent.GetComponent<PlayerStateMachine>();
+        if (playerStateMachine == null)
+        {
+            Debug.LogError($"AimController: 父物体 {transform.parent.name} 上没有 PlayerStateMachine 组件");
         }
         
         if (showDebugInfo)
         {
-            Debug.Log($"AimController: 组件初始化完成 - 落点管理器: {(landingPointManager != null ? "已找到" : "未找到")}, 蓄力系统: {(chargeSystem != null ? "已找到" : "未找到")}");
+            Debug.Log($"AimController [{transform.parent.name}]: 父物体组件获取完成 - PlayerCore: {playerCore != null}, ChargeSystem: {chargeSystem != null}, StateMachine: {playerStateMachine != null}");
+        }
+    }
+    
+    /// <summary>
+    /// 初始化本地组件（在 AimController GameObject 上）
+    /// </summary>
+    void InitializeLocalComponents()
+    {
+        // 获取落点管理器组件（在本 GameObject 上）
+        landingPointManager = GetComponent<AimLineLandingPointManager>();
+        if (landingPointManager == null)
+        {
+            Debug.LogWarning($"AimController [{transform.parent?.name}]: 本地没有 AimLineLandingPointManager 组件，落点显示功能将不可用");
+        }
+        
+        if (showDebugInfo)
+        {
+            Debug.Log($"AimController [{transform.parent?.name}]: 本地组件初始化完成 - 落点管理器: {landingPointManager != null}");
         }
     }
     
@@ -320,9 +354,42 @@ public class AimController : MonoBehaviour
     }
     
     /// <summary>
-    /// 显示蓄力UI（由蓄力事件调用）
+    /// 处理父物体状态变化（多角色系统）
     /// </summary>
-    public void ShowChargingUI()
+    void OnPlayerStateChanged(PlayerStateMachine.PlayerState newState, PlayerStateMachine.PlayerState oldState)
+    {
+        // Selected 或 Charging 状态显示瞄准线
+        if (newState == PlayerStateMachine.PlayerState.Selected || newState == PlayerStateMachine.PlayerState.Charging)
+        {
+            if (!isVisible)
+            {
+                ShowChargingUI();
+                
+                if (showDebugInfo)
+                {
+                    Debug.Log($"AimController [{transform.parent.name}]: 状态 {oldState} → {newState}，显示瞄准线");
+                }
+            }
+        }
+        // 其他状态隐藏瞄准线
+        else
+        {
+            if (isVisible)
+            {
+                HideChargingUI();
+                
+                if (showDebugInfo)
+                {
+                    Debug.Log($"AimController [{transform.parent.name}]: 状态 {oldState} → {newState}，隐藏瞄准线");
+                }
+            }
+        }
+    }
+    
+    /// <summary>
+    /// 显示蓄力UI（多角色系统）
+    /// </summary>
+    void ShowChargingUI()
     {
         isVisible = true;
         
@@ -340,6 +407,11 @@ public class AimController : MonoBehaviour
         if (playerCore != null)
         {
             playerCore.gameObject.PublishEffect("Charge", playerCore.transform.position);
+        }
+        
+        if (showDebugInfo)
+        {
+            Debug.Log($"AimController [{transform.parent?.name}]: 显示瞄准线，isVisible={isVisible}");
         }
     }
     
@@ -366,11 +438,17 @@ public class AimController : MonoBehaviour
     }
     
     /// <summary>
-    /// 隐藏蓄力UI（由蓄力事件调用）
+    /// 隐藏蓄力UI（多角色系统）
     /// </summary>
-    public void HideChargingUI()
+    void HideChargingUI()
     {
         isVisible = false;
+        
+        // ✅ 清空瞄准线渲染
+        if (aimLineRenderer != null)
+        {
+            aimLineRenderer.ClearAllLines();
+        }
         
         // 隐藏落点
         if (landingPointManager != null)
@@ -382,6 +460,10 @@ public class AimController : MonoBehaviour
         GameEventBus.OnChargingProgressChanged -= UpdateChargingProgress;
         GameEventBus.OnForceChanged -= UpdateForceDisplay;
         
+        if (showDebugInfo)
+        {
+            Debug.Log($"AimController [{transform.parent?.name}]: 隐藏瞄准线，isVisible={isVisible}");
+        }
     }
     
     void UpdateAimLine()

@@ -15,7 +15,10 @@ using System.Collections.Generic;
 /// - 使用真实Unity物理引擎
 /// - 与BallPhysics协同工作
 /// - 输出标准List<Vector3>格式（兼容现有渲染系统）
+/// 
+/// 【执行顺序】：COMPONENT (100)，确保 SimulationManager 先初始化
 /// </summary>
+[DefaultExecutionOrder(ManagerExecutionOrder.COMPONENT)]
 public class TrajectoryPredictor : MonoBehaviour
 {
     #region 配置
@@ -30,12 +33,13 @@ public class TrajectoryPredictor : MonoBehaviour
     [Tooltip("最大轨迹点数")]
     [SerializeField] private int maxTrajectoryPoints = 200;
     
-    [Header("组件引用")]
-    [Tooltip("场景管理器")]
-    [SerializeField] private TrajectorySimulationManager simulationManager;
+    // ✅ 多角色系统改造：不再需要手动配置引用
+    // [Header("组件引用")]
+    // [Tooltip("场景管理器")]
+    // [SerializeField] private TrajectorySimulationManager simulationManager;
     
-    [Tooltip("对象复制器")]
-    [SerializeField] private SimulationObjectReplicator objectReplicator;
+    // [Tooltip("对象复制器")]
+    // [SerializeField] private SimulationObjectReplicator objectReplicator;
     
     [Header("调试")]
     [Tooltip("是否显示调试日志")]
@@ -60,21 +64,47 @@ public class TrajectoryPredictor : MonoBehaviour
     private List<Vector3> trajectoryPoints = new List<Vector3>();
     private List<Vector3> collisionPoints = new List<Vector3>();
     
+    // ✅ 多角色系统改造：通过 Instance 获取场景管理器
+    private TrajectorySimulationManager simulationManager;
+    
     #endregion
     
     #region Unity生命周期
     
-    void Awake()
+    // ✅ 移除 Awake，改为延迟初始化
+    // 避免在 Awake 中访问 Instance 导致自动创建问题
+    
+    /// <summary>
+    /// 确保 SimulationManager 已初始化
+    /// </summary>
+    void EnsureSimulationManager()
     {
-        // 自动查找组件（如果Inspector中未配置）
         if (simulationManager == null)
         {
             simulationManager = TrajectorySimulationManager.Instance;
-        }
-        
-        if (objectReplicator == null)
-        {
-            objectReplicator = GetComponent<SimulationObjectReplicator>();
+            
+            if (simulationManager == null)
+            {
+                Debug.LogError("TrajectoryPredictor: 无法获取 TrajectorySimulationManager 单例！");
+            }
+            else
+            {
+                if (showDebugLog)
+                {
+                    Debug.Log($"TrajectoryPredictor [{transform.parent?.name}]: 已连接到 TrajectorySimulationManager");
+                    Debug.Log($"  场景有效性: {simulationManager.IsSceneValid()}");
+                }
+                
+                // ✅ 如果场景无效，尝试创建
+                if (!simulationManager.IsSceneValid())
+                {
+                    Debug.LogWarning($"TrajectoryPredictor [{transform.parent?.name}]: 影子场景未创建，触发创建...");
+                    simulationManager.CreateSimulationScene();
+                    
+                    // 创建后需要复制对象
+                    simulationManager.UpdateDynamicObjects();
+                }
+            }
         }
     }
     
@@ -90,6 +120,9 @@ public class TrajectoryPredictor : MonoBehaviour
     /// <returns>轨迹点列表</returns>
     public List<Vector3> PredictTrajectory(Vector3 startPosition, Vector2 initialVelocity)
     {
+        // ✅ 延迟初始化：第一次调用时才获取 SimulationManager
+        EnsureSimulationManager();
+        
         if (showDebugLog)
         {
             Debug.Log($"TrajectoryPredictor: 开始预测轨迹 - 起点:{startPosition}, 速度:{initialVelocity}");
@@ -134,9 +167,16 @@ public class TrajectoryPredictor : MonoBehaviour
     private bool PrepareSimulation()
     {
         // 确保影子场景存在
-        if (simulationManager == null || !simulationManager.IsSceneValid())
+        if (simulationManager == null)
         {
-            Debug.LogError("TrajectoryPredictor: 影子场景无效！");
+            Debug.LogError("TrajectoryPredictor: SimulationManager 为 null！");
+            return false;
+        }
+        
+        if (!simulationManager.IsSceneValid())
+        {
+            Debug.LogError($"TrajectoryPredictor: 影子场景无效！isSceneCreated={simulationManager != null}");
+            Debug.LogError($"  场景信息: {(simulationManager != null ? simulationManager.GetSceneInfo() : "Manager为null")}");
             return false;
         }
         
@@ -148,37 +188,54 @@ public class TrajectoryPredictor : MonoBehaviour
             return false;
         }
         
-        // 复制场景对象（每次预测都重新复制，确保最新状态）
-        if (objectReplicator == null)
+        // ✅ 多角色系统改造：预测前先更新影子场景中的动态对象（玩家、敌人）
+        // 因为玩家球体是在角色选择后才生成的，必须先复制到影子场景
+        simulationManager.UpdateDynamicObjects();
+        
+        if (showDebugLog)
         {
-            Debug.LogError("TrajectoryPredictor: ObjectReplicator 未配置！");
-            return false;
+            Debug.Log($"TrajectoryPredictor [{transform.parent?.name}]: 已更新影子场景动态对象");
         }
         
         Scene simScene = simulationManager.GetSimulationScene();
-        objectReplicator.ReplicateAllObjects(simScene);
         
-        // 查找模拟球（复制后的玩家球）
+        // ✅ 多角色系统改造：通过名字精确匹配找到对应的模拟球
         GameObject[] rootObjects = simScene.GetRootGameObjects();
         simulatedPlayerBall = null;
         
-        // 🔍 诊断：检查有多少个Player对象
-        int playerCount = 0;
+        // 获取父物体名字（当前正在操作的球）
+        string parentName = transform.parent != null ? transform.parent.name : "";
+        string targetSimName = "Sim_" + parentName;  // 复制后的名字格式
+        
         foreach (GameObject obj in rootObjects)
         {
-            if (obj.name.Contains("Player"))
+            if (obj.name == targetSimName)
             {
-                playerCount++;
-                if (simulatedPlayerBall == null)
+                simulatedPlayerBall = obj;
+                
+                if (showDebugLog)
                 {
-                    simulatedPlayerBall = obj;
+                    Debug.Log($"TrajectoryPredictor [{parentName}]: ✅ 找到对应的模拟球 {obj.name}");
                 }
+                break;
             }
         }
         
-        if (showDebugLog && playerCount > 1)
+        // 🔍 调试：如果没找到，列出所有 Player 对象
+        if (simulatedPlayerBall == null && showDebugLog)
         {
-            Debug.LogWarning($"⚠️ 警告：场景中发现 {playerCount} 个Player对象！可能存在清理不完全的旧对象");
+            int playerCount = 0;
+            Debug.LogWarning($"TrajectoryPredictor [{parentName}]: ❌ 未找到匹配的模拟球！目标名字: {targetSimName}");
+            Debug.LogWarning("  影子场景中的 Player 对象：");
+            foreach (GameObject obj in rootObjects)
+            {
+                if (obj.name.Contains("Player"))
+                {
+                    Debug.LogWarning($"    - {obj.name}");
+                    playerCount++;
+                }
+            }
+            Debug.LogWarning($"  共 {playerCount} 个 Player 对象");
         }
         
         if (simulatedPlayerBall == null)

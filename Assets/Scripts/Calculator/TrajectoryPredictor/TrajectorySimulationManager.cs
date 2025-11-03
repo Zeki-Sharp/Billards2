@@ -11,28 +11,60 @@ using UnityEngine.SceneManagement;
 /// - 确保主场景和影子场景互不干扰
 /// 
 /// 【设计原则】：
-/// - 单例模式：全局唯一的影子场景管理器
+/// - 单例模式：全局唯一的影子场景管理器（继承 SingletonManager）
+/// - 跨场景持久化：DontDestroyOnLoad
 /// - 延迟创建：首次访问时才创建场景
 /// - 自动清理：销毁时清理影子场景
+/// 
+/// 【执行顺序】：SYSTEM (-100)，早于所有其他组件
 /// </summary>
-public class TrajectorySimulationManager : MonoBehaviour
+[DefaultExecutionOrder(ManagerExecutionOrder.SYSTEM)]
+public class TrajectorySimulationManager : SingletonManager<TrajectorySimulationManager>
 {
-    #region 单例
+    #region SingletonManager 重写
     
-    private static TrajectorySimulationManager instance;
+    protected override bool PersistAcrossScenes => true;  // 跨场景持久化
     
-    public static TrajectorySimulationManager Instance
+    protected override void OnManagerCreated()
     {
-        get
+        // ✅ 获取对象复制器组件
+        objectReplicator = GetComponent<SimulationObjectReplicator>();
+        if (objectReplicator == null)
         {
-            if (instance == null)
-            {
-                GameObject go = new GameObject("TrajectorySimulationManager");
-                instance = go.AddComponent<TrajectorySimulationManager>();
-                DontDestroyOnLoad(go);
-            }
-            return instance;
+            Debug.LogWarning("TrajectorySimulationManager: 没有找到 SimulationObjectReplicator 组件");
         }
+        
+        // 可选：启动时创建场景
+        if (createOnAwake)
+        {
+            CreateSimulationScene();
+            
+            // ✅ 检查场景是否创建成功后再复制对象
+            if (objectReplicator != null && isSceneCreated && simulationScene.IsValid())
+            {
+                objectReplicator.ReplicateAllObjects(simulationScene);
+                
+                if (showDebugLog)
+                {
+                    Debug.Log("TrajectorySimulationManager: 已复制场景对象到影子场景");
+                }
+            }
+            else if (showDebugLog)
+            {
+                Debug.LogWarning($"TrajectorySimulationManager: 跳过对象复制 - isSceneCreated={isSceneCreated}, sceneValid={simulationScene.IsValid()}");
+            }
+        }
+        
+        if (showDebugLog)
+        {
+            Debug.Log("TrajectorySimulationManager: 初始化完成");
+        }
+    }
+    
+    protected override void OnManagerDestroyed()
+    {
+        // 清理影子场景
+        DestroySimulationScene();
     }
     
     #endregion
@@ -57,46 +89,13 @@ public class TrajectorySimulationManager : MonoBehaviour
     // 场景状态
     private bool isSceneCreated = false;
     
-    #endregion
-    
-    #region Unity生命周期
-    
-    void Awake()
-    {
-        // 单例检查
-        if (instance != null && instance != this)
-        {
-            Destroy(gameObject);
-            return;
-        }
-        
-        instance = this;
-        DontDestroyOnLoad(gameObject);
-        
-        // 可选：启动时创建场景
-        if (createOnAwake)
-        {
-            CreateSimulationScene();
-        }
-        
-        if (showDebugLog)
-        {
-            Debug.Log("TrajectorySimulationManager: 初始化完成");
-        }
-    }
-    
-    void OnDestroy()
-    {
-        // 清理影子场景
-        DestroySimulationScene();
-        
-        if (instance == this)
-        {
-            instance = null;
-        }
-    }
+    // ✅ 多角色系统改造：内部管理对象复制器
+    private SimulationObjectReplicator objectReplicator;
     
     #endregion
+    
+    // ✅ 继承 SingletonManager 后，不再需要手动实现 Awake/OnDestroy
+    // 逻辑已移到 OnManagerCreated/OnManagerDestroyed
     
     #region 公共方法
     
@@ -191,10 +190,17 @@ public class TrajectorySimulationManager : MonoBehaviour
     /// </summary>
     public Scene GetSimulationScene()
     {
-        if (!isSceneCreated)
+        // ✅ 检查场景有效性（可能失效）
+        if (!IsSceneValid())
         {
-            Debug.LogWarning("TrajectorySimulationManager: 影子场景未创建，正在创建...");
+            Debug.LogWarning("TrajectorySimulationManager: 影子场景无效或未创建，正在创建...");
             CreateSimulationScene();
+            
+            // 创建后复制对象
+            if (objectReplicator != null && isSceneCreated)
+            {
+                objectReplicator.ReplicateAllObjects(simulationScene);
+            }
         }
         
         return simulationScene;
@@ -205,10 +211,17 @@ public class TrajectorySimulationManager : MonoBehaviour
     /// </summary>
     public PhysicsScene2D GetPhysicsScene()
     {
-        if (!isSceneCreated)
+        // ✅ 检查场景有效性（可能失效）
+        if (!IsSceneValid())
         {
-            Debug.LogWarning("TrajectorySimulationManager: 影子场景未创建，正在创建...");
+            Debug.LogWarning("TrajectorySimulationManager: 影子场景无效或未创建，正在创建...");
             CreateSimulationScene();
+            
+            // 创建后复制对象
+            if (objectReplicator != null && isSceneCreated)
+            {
+                objectReplicator.ReplicateAllObjects(simulationScene);
+            }
         }
         
         return simulationPhysicsScene;
@@ -219,6 +232,14 @@ public class TrajectorySimulationManager : MonoBehaviour
     /// </summary>
     public bool IsSceneValid()
     {
+        // ✅ 检测场景失效：如果标记为已创建，但实际无效，重置标记
+        if (isSceneCreated && !simulationScene.IsValid())
+        {
+            Debug.LogWarning("TrajectorySimulationManager: 检测到场景失效（可能被卸载），重置标记");
+            isSceneCreated = false;
+            return false;
+        }
+        
         return isSceneCreated && simulationScene.IsValid() && simulationPhysicsScene.IsValid();
     }
     
@@ -234,6 +255,32 @@ public class TrajectorySimulationManager : MonoBehaviour
         
         DestroySimulationScene();
         CreateSimulationScene();
+    }
+    
+    /// <summary>
+    /// 更新影子场景中的动态对象（多角色系统 - 每回合或敌人移动时调用）
+    /// </summary>
+    public void UpdateDynamicObjects()
+    {
+        if (!isSceneCreated)
+        {
+            Debug.LogWarning("TrajectorySimulationManager: 影子场景未创建，无法更新对象");
+            return;
+        }
+        
+        if (objectReplicator != null)
+        {
+            objectReplicator.ReplicateAllObjects(simulationScene);
+            
+            if (showDebugLog)
+            {
+                Debug.Log("TrajectorySimulationManager: 已更新影子场景中的动态对象");
+            }
+        }
+        else
+        {
+            Debug.LogWarning("TrajectorySimulationManager: ObjectReplicator 为 null，无法更新对象");
+        }
     }
     
     #endregion
