@@ -32,10 +32,12 @@ public class PlayerStateMachine : MonoBehaviour
     /// </summary>
     public enum PlayerState
     {
-        Idle,        // 空闲状态：等待输入
+        Idle,        // 空闲状态：等待被选中
+        Selected,    // 已选中：等待蓄力输入（新增）
         Charging,    // 蓄力状态：不能移动、显示瞄准线、更新蓄力进度
         Moving,      // 运动状态：物理发射移动中，不能进行任何操作
-        MovingEnd    // 移动结束状态：球停止后的处理阶段，技能触发点
+        MovingEnd,   // 移动结束状态：球停止后的处理阶段，技能触发点
+        Completed    // 本回合已完成：不能再发射，不能再被选中（新增）
     }
     
     [Header("状态设置")]
@@ -64,9 +66,17 @@ public class PlayerStateMachine : MonoBehaviour
         playerBehavior = GetComponent<PlayerBehavior>();
         chargeSystem = GetComponent<ChargeSystem>();
         
-        // 订阅蓄力事件
-        GameEventBus.OnChargingStarted += OnChargingStarted;
-        GameEventBus.OnChargingStopped += OnChargingStopped;
+        // ⚠️ 多角色系统改造：订阅带角色ID的新事件
+        GameEventBus.OnCharacterSelected += OnCharacterSelected;
+        GameEventBus.OnCharacterDeselected += OnCharacterDeselected;
+        // ✅ 状态机思想：不再订阅 ChargingStarted，状态由力度自动驱动
+        GameEventBus.OnCharacterLaunched += OnCharacterLaunched;
+        
+        // 订阅回合重置事件
+        if (PlayerTurnManager.Instance != null)
+        {
+            PlayerTurnManager.OnTurnReset += OnTurnReset;
+        }
         
         // 订阅物理事件
         GameEventBus.OnBallStopped += OnBallStoppedHandler;
@@ -83,9 +93,17 @@ public class PlayerStateMachine : MonoBehaviour
     
     void OnDestroy()
     {
-        // 取消订阅蓄力事件
-        GameEventBus.OnChargingStarted -= OnChargingStarted;
-        GameEventBus.OnChargingStopped -= OnChargingStopped;
+        // ⚠️ 多角色系统改造：取消订阅带角色ID的新事件
+        GameEventBus.OnCharacterSelected -= OnCharacterSelected;
+        GameEventBus.OnCharacterDeselected -= OnCharacterDeselected;
+        // ✅ 状态机思想：不再订阅 ChargingStarted
+        GameEventBus.OnCharacterLaunched -= OnCharacterLaunched;
+        
+        // 取消订阅回合重置事件
+        if (PlayerTurnManager.Instance != null)
+        {
+            PlayerTurnManager.OnTurnReset -= OnTurnReset;
+        }
         
         // 取消订阅物理事件
         GameEventBus.OnBallStopped -= OnBallStoppedHandler;
@@ -131,8 +149,11 @@ public class PlayerStateMachine : MonoBehaviour
             case PlayerState.Idle:
                 UpdateIdleState();
                 break;
+            case PlayerState.Selected:
+                UpdateSelectedState();
+                break;
             case PlayerState.Charging:
-                
+                UpdateChargingState();
                 break;
             case PlayerState.Moving:
                 UpdateMovingState();
@@ -178,6 +199,9 @@ public class PlayerStateMachine : MonoBehaviour
             case PlayerState.Idle:
                 // 进入空闲状态
                 break;
+            case PlayerState.Selected:
+                // 进入已选中状态，等待蓄力输入
+                break;
             case PlayerState.Charging:
                 // 进入蓄力状态 - 现在由事件驱动，不需要直接调用
                 break;
@@ -189,6 +213,9 @@ public class PlayerStateMachine : MonoBehaviour
                 // 进入 MovingEnd 状态
                 // 启动协程处理 MovingEnd 阶段
                 StartCoroutine(ExecuteMovingEndPhase());
+                break;
+            case PlayerState.Completed:
+                // 进入已完成状态，本回合不能再发射
                 break;
         }
     }
@@ -219,6 +246,9 @@ public class PlayerStateMachine : MonoBehaviour
                 Debug.Log($"[PlayerStateMachine] ❌ 设置 CanAttack = false ({state} 状态)");
             }
         }
+        
+        // Selected 和 Charging 状态显示瞄准线（如果需要）
+        // Completed 状态可能需要特殊视觉效果（如灰化）
     }
     
     #endregion
@@ -230,10 +260,57 @@ public class PlayerStateMachine : MonoBehaviour
     /// </summary>
     void UpdateIdleState()
     {
-        // 检查是否在物理移动（排除WASD移动）
-        if (playerBehavior != null && playerBehavior.IsPhysicsMoving() && !playerBehavior.IsMoving())
+        // Idle 状态：等待被选中
+        // 不需要特殊更新逻辑
+    }
+    
+    /// <summary>
+    /// 更新已选中状态（新增）
+    /// </summary>
+    void UpdateSelectedState()
+    {
+        // ✅ 状态机思想：状态由条件自动驱动
+        // 检查力度是否达到门槛 → 自动切换到 Charging
+        if (chargeSystem != null && chargeSystem.IsCharging())
         {
-            SwitchToState(PlayerState.Moving);
+            float currentForce = chargeSystem.GetCurrentForce();
+            float threshold = chargeSystem.LaunchForceThreshold;
+            
+            if (currentForce >= threshold)
+            {
+                // 力度达到门槛，自动切换到 Charging
+                SwitchToState(PlayerState.Charging);
+                
+                if (showDebugInfo)
+                {
+                    Debug.Log($"PlayerStateMachine: ✅ 力度达到门槛（{currentForce:F2} >= {threshold}），Selected → Charging");
+                }
+            }
+        }
+    }
+    
+    /// <summary>
+    /// 更新蓄力状态（新增）
+    /// </summary>
+    void UpdateChargingState()
+    {
+        // ✅ 状态机思想：双向门槛检测
+        // 检查力度是否降回门槛以下 → 自动切回 Selected
+        if (chargeSystem != null && chargeSystem.IsCharging())
+        {
+            float currentForce = chargeSystem.GetCurrentForce();
+            float threshold = chargeSystem.LaunchForceThreshold;
+            
+            if (currentForce < threshold)
+            {
+                // 力度降回门槛以下，自动切回 Selected
+                SwitchToState(PlayerState.Selected);
+                
+                if (showDebugInfo)
+                {
+                    Debug.Log($"PlayerStateMachine: ⬇️ 力度降回门槛以下（{currentForce:F2} < {threshold}），Charging → Selected");
+                }
+            }
         }
     }
     
@@ -304,13 +381,21 @@ public class PlayerStateMachine : MonoBehaviour
             }
         }
         
-        if (showDebugInfo)
-        {
-            Debug.Log("PlayerStateMachine: MovingEnd 阶段完成，通知 PlayerPhaseController");
-        }
+        // ⚠️ 多角色系统改造：切换到 Completed 状态（不再触发 OnPlayingComplete）
+        // 回合完成由 PlayerTurnManager 判断
+        SwitchToState(PlayerState.Completed);
         
-        // 通知 PlayerPhaseController Playing 阶段完成
-        OnPlayingComplete?.Invoke();
+        // ✅ 通知 PlayerTurnManager 角色完成
+        string characterID = GetMyCharacterID();
+        if (!string.IsNullOrEmpty(characterID))
+        {
+            GameEventBus.PublishCharacterCompleted(characterID);
+            
+            if (showDebugInfo)
+            {
+                Debug.Log($"PlayerStateMachine: MovingEnd 阶段完成，切换到 Completed，通知 PlayerTurnManager [{characterID}]");
+            }
+        }
     }
     
     #endregion
@@ -335,53 +420,162 @@ public class PlayerStateMachine : MonoBehaviour
     }
     
     /// <summary>
-    /// 蓄力开始事件处理
+    /// 角色被选中事件处理（多角色系统）
     /// </summary>
-    void OnChargingStarted()
+    void OnCharacterSelected(string characterID)
     {
-        if (showDebugInfo)
+        // 检查是否是当前球体
+        if (!IsMyCharacter(characterID))
         {
-            Debug.Log($"PlayerStateMachine.OnChargingStarted: 收到蓄力开始事件，当前状态={currentState}");
+            return;
         }
         
+        if (showDebugInfo)
+        {
+            Debug.Log($"PlayerStateMachine [{characterID}]: 收到选中事件，当前状态={currentState}");
+        }
+        
+        // 只有在 Idle 状态才能被选中
         if (currentState == PlayerState.Idle)
         {
-            SwitchToState(PlayerState.Charging);
+            SwitchToState(PlayerState.Selected);
         }
         else
         {
             if (showDebugInfo)
             {
-                Debug.LogWarning($"PlayerStateMachine.OnChargingStarted: 无法开始蓄力，当前状态不是Idle（当前={currentState}）");
+                Debug.LogWarning($"PlayerStateMachine [{characterID}]: 无法选中，当前状态不是Idle（当前={currentState}）");
             }
         }
     }
     
     /// <summary>
-    /// 蓄力停止事件处理
+    /// 角色取消选中事件处理（多角色系统）
     /// </summary>
-    void OnChargingStopped()
+    void OnCharacterDeselected(string characterID)
     {
+        // 检查是否是当前球体
+        if (!IsMyCharacter(characterID))
+        {
+            return;
+        }
+        
+        if (showDebugInfo)
+        {
+            Debug.Log($"PlayerStateMachine [{characterID}]: 收到取消选中事件，当前状态={currentState}");
+        }
+        
+        // 从 Selected 或 Charging 状态切回 Idle
+        if (currentState == PlayerState.Selected || currentState == PlayerState.Charging)
+        {
+            SwitchToState(PlayerState.Idle);
+            
+            if (showDebugInfo)
+            {
+                Debug.Log($"PlayerStateMachine [{characterID}]: 从{currentState}切回Idle状态");
+            }
+        }
+    }
+    
+    /// <summary>
+    /// 回合重置事件处理（多角色系统）
+    /// </summary>
+    void OnTurnReset()
+    {
+        if (showDebugInfo)
+        {
+            Debug.Log($"PlayerStateMachine: 收到回合重置事件，当前状态={currentState}");
+        }
+        
+        // 从 Completed 状态重置为 Idle
+        if (currentState == PlayerState.Completed)
+        {
+            SwitchToState(PlayerState.Idle);
+            
+            if (showDebugInfo)
+            {
+                Debug.Log("PlayerStateMachine: 从Completed重置为Idle状态");
+            }
+        }
+    }
+    
+    // ✅ 状态机思想：移除 OnCharacterChargingStarted 事件处理
+    // Selected ↔ Charging 状态转换由力度自动驱动，不需要事件
+    
+    /// <summary>
+    /// 角色发射事件处理（多角色系统）
+    /// </summary>
+    void OnCharacterLaunched(string characterID, Vector2 direction, float force)
+    {
+        // 检查是否是当前球体
+        if (!IsMyCharacter(characterID))
+        {
+            return;
+        }
+        
+        if (showDebugInfo)
+        {
+            Debug.Log($"PlayerStateMachine [{characterID}]: 收到发射事件，执行发射动作");
+        }
+        
         if (currentState == PlayerState.Charging)
         {
-            // 获取充能进度
-            float chargingPower = chargeSystem != null ? chargeSystem.GetChargingPower() : 0f;
-            
-            
-            // 发射
+            // ✅ 球体自己执行发射（事件驱动）
             if (playerBehavior != null)
             {
-                playerBehavior.LaunchCharged();
+                playerBehavior.Launch(direction, force);
+                
+                if (showDebugInfo)
+                {
+                    Debug.Log($"PlayerStateMachine [{characterID}]: 发射完成，力度={force:F2}，方向={direction}");
+                }
             }
             
             // 切换到运动状态
             SwitchToState(PlayerState.Moving);
-            
-            if (showDebugInfo)
+        }
+    }
+    
+    /// <summary>
+    /// 检查是否是当前角色（通过角色ID过滤事件）
+    /// </summary>
+    bool IsMyCharacter(string characterID)
+    {
+        // 从 GameSession.TeamData 中查找匹配的角色
+        var session = GameSession.GetOrCreateInstance();
+        if (session != null && session.HasTeamData())
+        {
+            var teamData = session.GetTeamData();
+            foreach (var character in teamData.characters)
             {
-                Debug.Log($"PlayerStateMachine: 发射完成，充能进度: {chargingPower:F2}");
+                if (character.characterID == characterID && character.ballInstance == gameObject)
+                {
+                    return true;
+                }
             }
         }
+        return false;
+    }
+    
+    /// <summary>
+    /// 获取当前角色ID
+    /// </summary>
+    string GetMyCharacterID()
+    {
+        // 从 GameSession.TeamData 中查找当前球体对应的角色ID
+        var session = GameSession.GetOrCreateInstance();
+        if (session != null && session.HasTeamData())
+        {
+            var teamData = session.GetTeamData();
+            foreach (var character in teamData.characters)
+            {
+                if (character.ballInstance == gameObject)
+                {
+                    return character.characterID;
+                }
+            }
+        }
+        return null;
     }
     
     /// <summary>

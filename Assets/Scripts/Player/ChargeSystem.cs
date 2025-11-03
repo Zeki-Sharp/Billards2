@@ -34,7 +34,7 @@ public class ChargeSystem : MonoBehaviour
     
     [Header("通用蓄力设置")]
     [SerializeField] private float maxForce = 25f; // 最大力度
-    [SerializeField] private float minForce = 5f; // 最小力度
+    // ⚠️ 多角色系统改造：移除 minForce，统一从0开始
     
     [Header("时间蓄力设置")]
     [SerializeField] private float chargeTime = 2f; // 蓄满力所需时间（秒）
@@ -43,9 +43,12 @@ public class ChargeSystem : MonoBehaviour
     [SerializeField] [Tooltip("拉弓的最大距离（世界单位）")] private float maxPullDistance = 5f;
     [SerializeField] [Tooltip("拉弓的最小有效距离")] private float minPullDistance = 0.1f;
     
+    [Header("力度门槛设置")]
+    [SerializeField] [Tooltip("发射力度阈值（小于此值不能发射，也可以切换选择）")] 
+    private float launchForceThreshold = 2f;
+    
     [Header("滚轮蓄力设置")]
     [SerializeField] [Tooltip("滚轮灵敏度")] private float scrollSensitivity = 0.5f;
-    [SerializeField] [Tooltip("发射力度阈值（小于此值不能发射）")] private float launchForceThreshold = 1f;
     
     [Header("组件引用")]
     [SerializeField] private PlayerBehavior playerBehavior; // 用于获取球位置
@@ -75,35 +78,21 @@ public class ChargeSystem : MonoBehaviour
     
     void Start()
     {
+        // ⚠️ 多角色系统改造：移除全局事件订阅
+        // 现在由 ChargeController 直接调用公共方法，不再响应全局事件
         
-        // 订阅蓄力事件
-        GameEventBus.OnChargingStarted += StartCharging;
-        GameEventBus.OnChargingStopped += StopCharging;
-        GameEventBus.OnChargingReset += ResetCharging;
+        // 【已移除】订阅蓄力事件：OnChargingStarted, OnChargingStopped, OnChargingReset
+        // 【已移除】滚轮模式自动蓄力逻辑：OnPlayerPlayingPhaseStarted, CheckInitialGameState
         
-        // 【滚轮模式】订阅玩家 Playing 阶段开始事件，自动进入蓄力
-        if (chargeMode == ChargeMode.ScrollBased)
+        if (showDebugInfo)
         {
-            GameEventBus.OnPlayerPlayingPhaseStarted += OnPlayerPlayingPhaseStarted;
-            Debug.Log("ChargeSystem [滚轮模式]: 已订阅 PlayerPlayingPhaseStarted 事件");
-            
-            // 延迟检查初始游戏状态（处理初次进入关卡的情况）
-            StartCoroutine(CheckInitialGameState());
+            Debug.Log($"ChargeSystem: 初始化完成（模式={chargeMode}），等待 ChargeController 调用");
         }
     }
     
     void OnDestroy()
     {
-        // 取消订阅蓄力事件
-        GameEventBus.OnChargingStarted -= StartCharging;
-        GameEventBus.OnChargingStopped -= StopCharging;
-        GameEventBus.OnChargingReset -= ResetCharging;
-        
-        // 取消订阅 PlayerPlayingPhaseStarted 事件
-        if (chargeMode == ChargeMode.ScrollBased)
-        {
-            GameEventBus.OnPlayerPlayingPhaseStarted -= OnPlayerPlayingPhaseStarted;
-        }
+        // ⚠️ 多角色系统改造：已移除全局事件订阅，无需取消订阅
     }
     
     void Update()
@@ -144,7 +133,7 @@ public class ChargeSystem : MonoBehaviour
         isCharging = true;
         chargingStartTime = Time.time;
         chargingPower = 0f;
-        currentForce = minForce;
+        currentForce = 0f;  // ✅ 统一从0开始
         // timestopEffectTriggered = false; // 重置时停特效状态（暂未使用）
         
         // 拉弓模式：记录开始位置（球的位置作为拉弓中心）
@@ -308,8 +297,8 @@ public class ChargeSystem : MonoBehaviour
     /// </summary>
     void CalculateCurrentForce_TimeBased()
     {
-        // 时间模式：直接基于蓄力进度（时间）计算力度
-        currentForce = Mathf.Lerp(minForce, maxForce, chargingPower);
+        // ✅ 方案B：从0开始，统一门槛值逻辑
+        currentForce = Mathf.Lerp(0f, maxForce, chargingPower);
     }
     
     /// <summary>
@@ -317,8 +306,8 @@ public class ChargeSystem : MonoBehaviour
     /// </summary>
     void CalculateCurrentForce_BowPull()
     {
-        // 拉弓模式：基于拉弓距离计算力度
-        currentForce = Mathf.Lerp(minForce, maxForce, chargingPower);
+        // ✅ 方案B：从0开始，统一门槛值逻辑
+        currentForce = Mathf.Lerp(0f, maxForce, chargingPower);
     }
     
     /// <summary>
@@ -350,8 +339,8 @@ public class ChargeSystem : MonoBehaviour
     /// </summary>
     void CalculateCurrentForce_ScrollBased()
     {
-        // 滚轮模式：基于蓄力进度计算力度
-        currentForce = Mathf.Lerp(minForce, maxForce, chargingPower);
+        // ✅ 方案B：从0开始，统一门槛值逻辑
+        currentForce = Mathf.Lerp(0f, maxForce, chargingPower);
     }
     
     #endregion
@@ -446,16 +435,8 @@ public class ChargeSystem : MonoBehaviour
     /// <returns>是否可以发射</returns>
     public bool CanLaunch()
     {
-        if (chargeMode == ChargeMode.ScrollBased)
-        {
-            // 滚轮模式：检查力度阈值
-            return currentForce >= launchForceThreshold;
-        }
-        else
-        {
-            // 其他模式：总是可以发射
-            return true;
-        }
+        // ✅ 方案B：所有模式统一检查门槛值
+        return currentForce >= launchForceThreshold;
     }
     
     #endregion
@@ -465,14 +446,14 @@ public class ChargeSystem : MonoBehaviour
     /// <summary>
     /// 设置蓄力参数
     /// </summary>
-    public void SetChargingParameters(float maxF, float minF)
+    public void SetChargingParameters(float maxF, float threshold)
     {
         maxForce = maxF;
-        minForce = minF;
+        launchForceThreshold = threshold;
         
         if (showDebugInfo)
         {
-            Debug.Log($"ChargeSystem: 更新蓄力参数 - 最大力度: {maxF}, 最小力度: {minF}");
+            Debug.Log($"ChargeSystem: 更新蓄力参数 - 最大力度: {maxF}, 发射门槛: {threshold}");
         }
     }
     
@@ -486,7 +467,7 @@ public class ChargeSystem : MonoBehaviour
     #region 公共属性
     
     public float MaxForce => maxForce;
-    public float MinForce => minForce;
+    // ⚠️ 方案B：移除 MinForce，统一从0开始
     public ChargeMode CurrentChargeMode => chargeMode;
     public float CurrentPullDistance => currentPullDistance;
     public Vector3 BowPullStartPosition => bowPullStartPosition;
@@ -538,52 +519,10 @@ public class ChargeSystem : MonoBehaviour
     
     #region 玩家回合事件处理（滚轮模式专用）
     
-    /// <summary>
-    /// 处理玩家 Playing 阶段开始事件（PlayerStateMachine 已准备好）
-    /// </summary>
-    private void OnPlayerPlayingPhaseStarted()
-    {
-        // 只在滚轮模式下处理
-        if (chargeMode != ChargeMode.ScrollBased)
-            return;
-        
-        // 检查是否需要自动开始蓄力
-        if (!isCharging)
-        {
-            if (showDebugInfo)
-            {
-                Debug.Log("ChargeSystem [滚轮模式]: 玩家回合开始，自动进入蓄力");
-            }
-            GameEventBus.PublishChargingStarted();
-        }
-    }
-    
-    /// <summary>
-    /// 延迟检查初始游戏状态（处理游戏开始时已经是玩家回合的情况）
-    /// </summary>
-    private System.Collections.IEnumerator CheckInitialGameState()
-    {
-        // 等待确保所有组件初始化完成
-        yield return new WaitForSeconds(0.5f);
-        
-        // 检查是否是玩家阶段
-        GameFlowController gameFlowController = GameFlowController.Instance;
-        
-        if (gameFlowController == null)
-        {
-            Debug.LogWarning("ChargeSystem [滚轮模式]: GameFlowController.Instance 为 null！");
-            yield break;
-        }
-        
-        if (gameFlowController.IsPlayerPhase && !isCharging)
-        {
-            if (showDebugInfo)
-            {
-                Debug.Log("ChargeSystem [滚轮模式]: 初始状态为玩家回合，自动进入蓄力");
-            }
-            GameEventBus.PublishChargingStarted();
-        }
-    }
+    // ⚠️ 多角色系统改造：已移除自动蓄力逻辑
+    // 【已删除】OnPlayerPlayingPhaseStarted() - 不再自动响应Playing阶段开始
+    // 【已删除】CheckInitialGameState() - 不再延迟检查游戏状态
+    // 现在由 ChargeController 在角色被选中时主动调用 StartCharging()
     
     #endregion
     

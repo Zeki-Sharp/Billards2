@@ -47,9 +47,6 @@ public class PlayerPhaseController : SingletonManager<PlayerPhaseController>
     // 当前阶段
     private PlayerPhase currentPhase = PlayerPhase.None;
     
-    // 组件引用
-    private PlayerStateMachine playerStateMachine;
-    
     // 事件
     public System.Action<PlayerPhase> OnPhaseChanged;
     public System.Action OnPlayerPhaseComplete; // 整个玩家阶段完成事件
@@ -70,15 +67,16 @@ public class PlayerPhaseController : SingletonManager<PlayerPhaseController>
     
     void Start()
     {
-        playerStateMachine = FindFirstObjectByType<PlayerStateMachine>();
+        // ⚠️ 多角色系统改造：不再监听 PlayerStateMachine.OnPlayingComplete（因为有多个球）
+        // 改为监听 PlayerTurnManager.OnTurnComplete
         
-        if (playerStateMachine != null)
+        if (PlayerTurnManager.Instance != null)
         {
-            playerStateMachine.OnPlayingComplete += OnPlayingComplete;
+            PlayerTurnManager.OnTurnComplete += OnTurnComplete;
         }
         else
         {
-            Debug.LogError("PlayerPhaseController: 未找到 PlayerStateMachine！");
+            Debug.LogWarning("PlayerPhaseController: 未找到 PlayerTurnManager，回合管理将不可用");
         }
     }
     
@@ -86,9 +84,10 @@ public class PlayerPhaseController : SingletonManager<PlayerPhaseController>
     {
         base.OnDestroy();
         
-        if (playerStateMachine != null)
+        // ⚠️ 多角色系统改造：取消订阅 PlayerTurnManager 事件
+        if (PlayerTurnManager.Instance != null)
         {
-            playerStateMachine.OnPlayingComplete -= OnPlayingComplete;
+            PlayerTurnManager.OnTurnComplete -= OnTurnComplete;
         }
     }
     
@@ -97,12 +96,6 @@ public class PlayerPhaseController : SingletonManager<PlayerPhaseController>
     /// </summary>
     public void StartPlayerPhase()
     {
-        if (playerStateMachine == null)
-        {
-            Debug.LogError("PlayerPhaseController: PlayerStateMachine 未初始化！");
-            return;
-        }
-        
         SwitchToPhase(PlayerPhase.PhaseStart);
     }
     
@@ -174,26 +167,37 @@ public class PlayerPhaseController : SingletonManager<PlayerPhaseController>
     }
     
     /// <summary>
-    /// 执行 Playing 阶段（委托给 PlayerStateMachine）
+    /// 执行 Playing 阶段（委托给 PlayerTurnManager）
     /// </summary>
     void ExecutePlaying()
     {
-        if (playerStateMachine != null)
+        // ✅ 多角色系统改造：委托 PlayerTurnManager 启动回合
+        if (PlayerTurnManager.Instance != null)
         {
-            playerStateMachine.StartPlaying();
+            PlayerTurnManager.Instance.StartTurn();
             GameEventBus.PublishPlayerPlayingPhaseStarted();
+            
+            if (showDebugInfo)
+            {
+                Debug.Log("PlayerPhaseController: Playing 阶段开始，等待玩家发射");
+            }
         }
         else
         {
-            Debug.LogError("PlayerPhaseController: PlayerStateMachine 为 null！");
+            Debug.LogError("PlayerPhaseController: PlayerTurnManager 为 null！");
         }
     }
     
     /// <summary>
-    /// Playing 阶段完成回调（由 PlayerStateMachine 通知）
+    /// 回合完成回调（由 PlayerTurnManager 通知）
     /// </summary>
-    void OnPlayingComplete()
+    void OnTurnComplete()
     {
+        if (showDebugInfo)
+        {
+            Debug.Log("PlayerPhaseController: 收到回合完成事件，切换到 PhaseEnd");
+        }
+        
         SwitchToPhase(PlayerPhase.PhaseEnd);
     }
     

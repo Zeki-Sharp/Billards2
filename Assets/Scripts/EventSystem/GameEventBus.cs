@@ -240,6 +240,98 @@ public static class GameEventBus
     
     #endregion
     
+    #region 多角色系统事件（带角色ID）
+    
+    // ===== 原始输入事件（来自 GlobalInputManager）=====
+    
+    /// <summary>
+    /// 球体被点击事件（原始输入）
+    /// </summary>
+    public static event System.Action<GameObject> OnBallClicked;
+    
+    /// <summary>
+    /// 滚轮输入事件（原始输入）
+    /// </summary>
+    public static event System.Action<float> OnScrollInput;
+    
+    /// <summary>
+    /// 发射输入事件（原始输入 - 左键点击但未击中球体）
+    /// </summary>
+    public static event System.Action OnLaunchInput;
+    
+    /// <summary>
+    /// 取消输入事件（原始输入 - 右键点击）
+    /// </summary>
+    public static event System.Action OnCancelInput;
+    
+    // ===== 输入与控制事件 =====
+    
+    /// <summary>
+    /// 角色被选中事件
+    /// </summary>
+    public static event System.Action<string> OnCharacterSelected;
+    
+    /// <summary>
+    /// 角色被取消选中事件
+    /// </summary>
+    public static event System.Action<string> OnCharacterDeselected;
+    
+    /// <summary>
+    /// 特定角色开始蓄力事件
+    /// </summary>
+    public static event System.Action<string> OnCharacterChargingStarted;
+    
+    /// <summary>
+    /// 特定角色停止蓄力事件
+    /// </summary>
+    public static event System.Action<string, float> OnCharacterChargingStopped;
+    
+    /// <summary>
+    /// 特定角色发射事件
+    /// </summary>
+    public static event System.Action<string, Vector2, float> OnCharacterLaunched;
+    
+    /// <summary>
+    /// 特定角色完成发射事件（进入 Completed 状态）
+    /// </summary>
+    public static event System.Action<string> OnCharacterCompleted;
+    
+    // ===== 战斗事件 =====
+    
+    /// <summary>
+    /// 特定角色受伤事件
+    /// </summary>
+    public static event System.Action<string, float, string> OnCharacterDamaged;
+    
+    /// <summary>
+    /// 特定角色治疗事件
+    /// </summary>
+    public static event System.Action<string, float> OnCharacterHealed;
+    
+    /// <summary>
+    /// 特定角色死亡事件
+    /// </summary>
+    public static event System.Action<string> OnCharacterDied;
+    
+    // ===== 技能事件 =====
+    
+    /// <summary>
+    /// 给特定角色添加技能事件
+    /// </summary>
+    public static event System.Action<string, string> OnCharacterSkillAdded;
+    
+    /// <summary>
+    /// 特定角色的技能激活事件
+    /// </summary>
+    public static event System.Action<string, string> OnCharacterSkillActivated;
+    
+    /// <summary>
+    /// 移除特定角色的技能事件
+    /// </summary>
+    public static event System.Action<string, string> OnCharacterSkillRemoved;
+    
+    #endregion
+    
     #region UI/表现事件
     
     /// <summary>
@@ -451,6 +543,113 @@ public static class GameEventBus
     /// 发布力度变化事件
     /// </summary>
     public static void PublishForceChanged(float force) => OnForceChanged?.Invoke(force);
+    
+    // ===== 多角色系统事件发布方法 =====
+    
+    // --- 原始输入事件 ---
+    
+    /// <summary>
+    /// 发布球体被点击事件
+    /// </summary>
+    /// <param name="ballObject">被点击的球体GameObject</param>
+    public static void PublishBallClicked(GameObject ballObject) => OnBallClicked?.Invoke(ballObject);
+    
+    /// <summary>
+    /// 发布滚轮输入事件
+    /// </summary>
+    /// <param name="scrollDelta">滚轮滚动量</param>
+    public static void PublishScrollInput(float scrollDelta) => OnScrollInput?.Invoke(scrollDelta);
+    
+    /// <summary>
+    /// 发布发射输入事件
+    /// </summary>
+    public static void PublishLaunchInput() => OnLaunchInput?.Invoke();
+    
+    /// <summary>
+    /// 发布取消输入事件
+    /// </summary>
+    public static void PublishCancelInput() => OnCancelInput?.Invoke();
+    
+    /// <summary>
+    /// 发布角色被选中事件
+    /// </summary>
+    /// <param name="characterID">角色ID</param>
+    public static void PublishCharacterSelected(string characterID) => OnCharacterSelected?.Invoke(characterID);
+    
+    /// <summary>
+    /// 发布角色被取消选中事件
+    /// </summary>
+    /// <param name="characterID">角色ID</param>
+    public static void PublishCharacterDeselected(string characterID) => OnCharacterDeselected?.Invoke(characterID);
+    
+    /// <summary>
+    /// 发布特定角色开始蓄力事件
+    /// </summary>
+    /// <param name="characterID">角色ID</param>
+    public static void PublishCharacterChargingStarted(string characterID) => OnCharacterChargingStarted?.Invoke(characterID);
+    
+    /// <summary>
+    /// 发布特定角色停止蓄力事件
+    /// </summary>
+    /// <param name="characterID">角色ID</param>
+    /// <param name="force">蓄力力度</param>
+    public static void PublishCharacterChargingStopped(string characterID, float force) => OnCharacterChargingStopped?.Invoke(characterID, force);
+    
+    /// <summary>
+    /// 发布特定角色发射事件
+    /// </summary>
+    /// <param name="characterID">角色ID</param>
+    /// <param name="direction">发射方向</param>
+    /// <param name="force">发射力度</param>
+    public static void PublishCharacterLaunched(string characterID, Vector2 direction, float force) => OnCharacterLaunched?.Invoke(characterID, direction, force);
+    
+    /// <summary>
+    /// 发布特定角色完成发射事件
+    /// </summary>
+    /// <param name="characterID">角色ID</param>
+    public static void PublishCharacterCompleted(string characterID) => OnCharacterCompleted?.Invoke(characterID);
+    
+    /// <summary>
+    /// 发布特定角色受伤事件
+    /// </summary>
+    /// <param name="characterID">角色ID</param>
+    /// <param name="damage">伤害值</param>
+    /// <param name="sourceID">伤害来源ID</param>
+    public static void PublishCharacterDamaged(string characterID, float damage, string sourceID) => OnCharacterDamaged?.Invoke(characterID, damage, sourceID);
+    
+    /// <summary>
+    /// 发布特定角色治疗事件
+    /// </summary>
+    /// <param name="characterID">角色ID</param>
+    /// <param name="amount">治疗量</param>
+    public static void PublishCharacterHealed(string characterID, float amount) => OnCharacterHealed?.Invoke(characterID, amount);
+    
+    /// <summary>
+    /// 发布特定角色死亡事件
+    /// </summary>
+    /// <param name="characterID">角色ID</param>
+    public static void PublishCharacterDied(string characterID) => OnCharacterDied?.Invoke(characterID);
+    
+    /// <summary>
+    /// 发布给特定角色添加技能事件
+    /// </summary>
+    /// <param name="characterID">角色ID</param>
+    /// <param name="skillID">技能ID</param>
+    public static void PublishCharacterSkillAdded(string characterID, string skillID) => OnCharacterSkillAdded?.Invoke(characterID, skillID);
+    
+    /// <summary>
+    /// 发布特定角色的技能激活事件
+    /// </summary>
+    /// <param name="characterID">角色ID</param>
+    /// <param name="skillID">技能ID</param>
+    public static void PublishCharacterSkillActivated(string characterID, string skillID) => OnCharacterSkillActivated?.Invoke(characterID, skillID);
+    
+    /// <summary>
+    /// 发布移除特定角色的技能事件
+    /// </summary>
+    /// <param name="characterID">角色ID</param>
+    /// <param name="skillID">技能ID</param>
+    public static void PublishCharacterSkillRemoved(string characterID, string skillID) => OnCharacterSkillRemoved?.Invoke(characterID, skillID);
     
     #endregion
     

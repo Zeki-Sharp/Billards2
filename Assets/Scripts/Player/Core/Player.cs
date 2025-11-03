@@ -33,8 +33,8 @@ public class Player : MonoBehaviour
     [Tooltip("如果为空，将自动从同一GameObject获取")]
     [SerializeField] private PlayerBehavior playerBehavior;
     [SerializeField] private PlayerStateMachine stateMachine;
-    [SerializeField] private PlayerInputHandler inputHandler;
-    [SerializeField] private PlayerMovementController movementController;
+    // ⚠️ 多角色系统改造：已移除 PlayerInputHandler 和 PlayerMovementController
+    // 输入由全局 GlobalInputManager 处理，不再需要WASD移动
     
     [Header("子系统组件")]
     [Tooltip("如果为空，将自动从同一GameObject获取")]
@@ -102,10 +102,7 @@ public class Player : MonoBehaviour
             playerBehavior = GetComponent<PlayerBehavior>();
         if (stateMachine == null)
             stateMachine = GetComponent<PlayerStateMachine>();
-        if (inputHandler == null)
-            inputHandler = GetComponent<PlayerInputHandler>();
-        if (movementController == null)
-            movementController = GetComponent<PlayerMovementController>();
+        // ⚠️ 多角色系统改造：不再获取 PlayerInputHandler 和 PlayerMovementController
         
         // 子系统组件 - 优先使用Inspector配置，否则从GameObject获取
         if (attackManager == null)
@@ -117,19 +114,16 @@ public class Player : MonoBehaviour
         
         // 检查必需组件是否存在
         if (playerBehavior == null)
-            Debug.LogError("Player: 缺少 PlayerCore 组件！请在Inspector中添加或在GameObject上添加。");
+            Debug.LogError("Player: 缺少 PlayerBehavior 组件！请在Inspector中添加或在GameObject上添加。");
         if (stateMachine == null)
             Debug.LogError("Player: 缺少 PlayerStateMachine 组件！请在Inspector中添加或在GameObject上添加。");
-        if (inputHandler == null)
-            Debug.LogError("Player: 缺少 PlayerInputHandler 组件！请在Inspector中添加或在GameObject上添加。");
-        if (movementController == null)
-            Debug.LogError("Player: 缺少 PlayerMovementController 组件！请在Inspector中添加或在GameObject上添加。");
+        // ⚠️ 多角色系统改造：不再检查 PlayerInputHandler 和 PlayerMovementController
         if (attackManager == null)
             Debug.LogError("Player: 缺少 PlayerAttackManager 组件！请在Inspector中添加或在GameObject上添加。");
         if (chargeSystem == null)
             Debug.LogError("Player: 缺少 ChargeSystem 组件！请在Inspector中添加或在GameObject上添加。");
         if (statsManager == null)
-            Debug.LogError("Player: 缺少 PlayerStatsManagerV2 组件！请在Inspector中添加或在GameObject上添加。");
+            Debug.LogError("Player: 缺少 PlayerStats 组件！请在Inspector中添加或在GameObject上添加。");
     }
     
     /// <summary>
@@ -290,21 +284,9 @@ public class Player : MonoBehaviour
         return stateMachine;
     }
     
-    /// <summary>
-    /// 获取输入处理器组件
-    /// </summary>
-    public PlayerInputHandler GetInputHandler()
-    {
-        return inputHandler;
-    }
-    
-    /// <summary>
-    /// 获取移动控制器组件
-    /// </summary>
-    public PlayerMovementController GetMovementController()
-    {
-        return movementController;
-    }
+    // ⚠️ 多角色系统改造：已移除 GetInputHandler() 和 GetMovementController()
+    // 输入由全局 GlobalInputManager 处理
+    // 暂时不需要移动功能
     
     /// <summary>
     /// 获取攻击管理器组件

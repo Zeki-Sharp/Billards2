@@ -528,6 +528,64 @@ public class LevelManager : SingletonManager<LevelManager>
         {
             Debug.Log("LevelManager: 玩家数据已从 GameSession 中自动恢复");
         }
+        
+        // ✅ 多角色系统：生成玩家队伍
+        SpawnPlayerTeam();
+    }
+    
+    /// <summary>
+    /// 生成玩家队伍（多角色系统）
+    /// </summary>
+    void SpawnPlayerTeam()
+    {
+        // 查找场景中的 PlayerSpawner
+        PlayerSpawner playerSpawner = FindFirstObjectByType<PlayerSpawner>();
+        
+        if (playerSpawner == null)
+        {
+            Debug.LogWarning("LevelManager: 场景中未找到 PlayerSpawner，将使用场景中预设的玩家球体");
+            return;
+        }
+        
+        // 检查是否有队伍数据
+        var session = GameSession.GetOrCreateInstance();
+        if (session == null || !session.HasTeamData())
+        {
+            Debug.LogWarning("LevelManager: GameSession 中没有队伍数据，跳过生成");
+            return;
+        }
+        
+        // 清除场景中可能存在的旧玩家球体
+        ClearExistingPlayerBalls();
+        
+        // 生成队伍
+        var spawnedBalls = playerSpawner.SpawnTeam();
+        
+        if (showDebugInfo)
+        {
+            Debug.Log($"LevelManager: 成功生成 {spawnedBalls.Count} 个玩家球体");
+        }
+    }
+    
+    /// <summary>
+    /// 清除场景中现有的玩家球体（避免冲突）
+    /// </summary>
+    void ClearExistingPlayerBalls()
+    {
+        // 查找所有 Player 组件
+        Player[] existingPlayers = FindObjectsByType<Player>(FindObjectsSortMode.None);
+        
+        foreach (Player player in existingPlayers)
+        {
+            if (player != null)
+            {
+                if (showDebugInfo)
+                {
+                    Debug.Log($"LevelManager: 清除现有玩家球体 - {player.gameObject.name}");
+                }
+                Destroy(player.gameObject);
+            }
+        }
     }
     
     #endregion
