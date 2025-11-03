@@ -21,8 +21,9 @@ namespace DeepSpaceLabs.SAM
         Dead,
         
         // 玩家特效
-        Launch,     // 发射特效
-        Charge      // 蓄力特效
+        Launch,         // 发射特效
+        Charge,         // 蓄力特效
+        ChargeStop      // 停止蓄力特效（取消蓄力时的爆发效果）
     }
 
     /// <summary>
@@ -276,6 +277,59 @@ namespace DeepSpaceLabs.SAM
         public void PlayDeathEffect(GameObject effectObj, EffectType effectType, DeathData deathData)
         {
             PlayEffect(effectObj, effectType, deathData: deathData);
+        }
+        
+        /// <summary>
+        /// 停止特效播放（枚举版本 - 推荐使用）
+        /// </summary>
+        /// <param name="effectObj">特效所属的游戏对象</param>
+        /// <param name="effectType">特效类型枚举</param>
+        /// <param name="stopAllFeedbacks">是否停止所有 feedbacks（默认 true）</param>
+        public void StopEffect(GameObject effectObj, EffectType effectType, bool stopAllFeedbacks = true)
+        {
+            string effectKey = effectType.ToString();
+            
+            if (!TryGetEffect(effectObj, effectKey, out var mmfPlayer))
+            {
+                if (enableDebugLog)
+                {
+                    Debug.Log($"[EffectManager] StopEffect 失败: 未找到特效 {effectKey} on {effectObj?.name}");
+                }
+                return;
+            }
+            
+            // 停止 MMF Player
+            mmfPlayer.StopFeedbacks(stopAllFeedbacks);
+            
+            if (enableDebugLog)
+            {
+                Debug.Log($"[EffectManager] 停止特效: {effectKey} on {effectObj.name}");
+            }
+        }
+        
+        /// <summary>
+        /// 停止对象上的所有特效
+        /// </summary>
+        /// <param name="effectObj">特效所属的游戏对象</param>
+        public void StopAllEffects(GameObject effectObj)
+        {
+            if (effectObj == null) return;
+            
+            if (effectObjMMPlayerMap.TryGetValue(effectObj, out var playerMap))
+            {
+                foreach (var kvp in playerMap)
+                {
+                    if (kvp.Value != null)
+                    {
+                        kvp.Value.StopFeedbacks();
+                    }
+                }
+                
+                if (enableDebugLog)
+                {
+                    Debug.Log($"[EffectManager] 停止 {effectObj.name} 上的所有特效（共 {playerMap.Count} 个）");
+                }
+            }
         }
         
         

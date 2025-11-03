@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using DeepSpaceLabs.SAM;
 
 /// <summary>
 /// 瞄准线控制器 - 事件驱动的瞄准线系统
@@ -456,13 +457,30 @@ public class AimController : MonoBehaviour
             landingPointManager.HideLandingPoint();
         }
         
+        // ✅ 播放停止蓄力特效（取消蓄力的爆发效果）
+        if (playerCore != null && EffectManager.Instance != null)
+        {
+            // 先停止正在播放的蓄力特效
+            EffectManager.Instance.StopEffect(playerCore.gameObject, EffectType.Charge);
+            
+            // 播放停止蓄力特效（Stop Charge Effect）
+            EffectManager.Instance.PlayBasicEffect(playerCore.gameObject, EffectType.ChargeStop, playerCore.transform.position);
+        }
+        
+        // ✅ 淡出时停全屏特效（色散特效）
+        TimeStopEffect timeStopEffect = FindFirstObjectByType<TimeStopEffect>();
+        if (timeStopEffect != null)
+        {
+            timeStopEffect.FadeOut(); // 使用淡出效果，而不是立即关闭
+        }
+        
         // 取消订阅蓄力进度事件
         GameEventBus.OnChargingProgressChanged -= UpdateChargingProgress;
         GameEventBus.OnForceChanged -= UpdateForceDisplay;
         
         if (showDebugInfo)
         {
-            Debug.Log($"AimController [{transform.parent?.name}]: 隐藏瞄准线，isVisible={isVisible}");
+            Debug.Log($"AimController [{transform.parent?.name}]: 隐藏瞄准线、播放停止蓄力特效、淡出时停特效，isVisible={isVisible}");
         }
     }
     
