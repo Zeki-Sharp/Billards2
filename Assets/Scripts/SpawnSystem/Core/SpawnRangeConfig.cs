@@ -55,6 +55,28 @@ public class SpawnRangeConfig
     [Tooltip("随机偏移范围")]
     public float offsetRange = 0.5f;
     
+    [Header("障碍物检测")]
+    [LabelText("启用障碍物检测")]
+    [Tooltip("是否检测并避开障碍物（墙体/玩家/敌人）")]
+    public bool checkObstacles = false;
+    
+    [LabelText("障碍物层")]
+    [Tooltip("需要避让的物体层（推荐：Wall + Player + Enemy）")]
+    [ShowIf("checkObstacles")]
+    public LayerMask obstacleLayer = 0;
+    
+    [LabelText("检测半径")]
+    [Tooltip("障碍物检测半径（球体半径 + 安全边距）")]
+    [ShowIf("checkObstacles")]
+    [MinValue(0.1f)]
+    public float checkRadius = 0.6f;
+    
+    [LabelText("最大尝试次数")]
+    [Tooltip("找不到有效位置时的最大重试次数")]
+    [ShowIf("checkObstacles")]
+    [MinValue(5)]
+    public int maxObstacleCheckAttempts = 30;
+    
     /// <summary>
     /// 获取随机生成位置
     /// </summary>
@@ -271,6 +293,53 @@ public class SpawnRangeConfig
         coordinateSystem = SpawnCoordinateSystem.RelativeSpace;
         rangeShape = SpawnRangeShape.Circle;
         relativeRadius = radius;
+    }
+    
+    /// <summary>
+    /// 检查位置是否与障碍物重叠
+    /// </summary>
+    /// <param name="position">待检测的位置</param>
+    /// <param name="checkRadius">检测半径</param>
+    /// <param name="obstacleLayer">障碍物层</param>
+    /// <returns>true = 位置有效（无障碍物），false = 有障碍物</returns>
+    public bool IsPositionClear(Vector3 position, float checkRadius, LayerMask obstacleLayer)
+    {
+        // 使用 Physics2D.OverlapCircle 检测是否与障碍物重叠
+        Collider2D hit = Physics2D.OverlapCircle(position, checkRadius, obstacleLayer);
+        
+        // null = 没有检测到任何障碍物 → 位置有效 ✅
+        // non-null = 检测到障碍物（墙/玩家/敌人） → 位置无效 ❌
+        return hit == null;
+    }
+    
+    /// <summary>
+    /// 获取有效的随机位置（带障碍物检测）
+    /// </summary>
+    /// <param name="origin">原点位置（相对坐标系统时使用）</param>
+    /// <returns>有效的随机位置（世界坐标）</returns>
+    public Vector3 GetValidRandomPosition(Vector3? origin = null)
+    {
+        // 如果未启用障碍物检测，直接返回随机位置
+        if (!checkObstacles)
+        {
+            return GetRandomPosition(origin);
+        }
+        
+        // 尝试多次生成位置，直到找到不与障碍物重叠的位置
+        for (int attempt = 0; attempt < maxObstacleCheckAttempts; attempt++)
+        {
+            Vector3 candidatePosition = GetRandomPosition(origin);
+            
+            // 检查是否与障碍物重叠
+            if (IsPositionClear(candidatePosition, checkRadius, obstacleLayer))
+            {
+                return candidatePosition;  // 找到有效位置 ✅
+            }
+        }
+        
+        // 如果多次尝试失败，回退到不检查障碍物（保证能生成）
+        Debug.LogWarning($"[SpawnRangeConfig] 经过 {maxObstacleCheckAttempts} 次尝试未找到无障碍位置，使用可能重叠的随机位置");
+        return GetRandomPosition(origin);
     }
     
     /// <summary>

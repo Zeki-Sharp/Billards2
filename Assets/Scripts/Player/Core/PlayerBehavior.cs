@@ -284,15 +284,8 @@ public class PlayerBehavior : MonoBehaviour, IDamageable
         return ballPhysics != null && ballPhysics.IsMoving();
     }
     
-    /// <summary>
-    /// 是否在WASD移动（由MovementController管理）
-    /// </summary>
-    public bool IsMoving()
-    {
-        // 这个方法由PlayerMovementController实现
-        PlayerMovementController movementController = GetComponent<PlayerMovementController>();
-        return movementController != null && movementController.IsMoving;
-    }
+    // ⚠️ 多角色系统改造：IsMoving() 方法已废弃
+    // WASD移动功能已移除，不再需要此方法
     
     #endregion
     
@@ -712,12 +705,7 @@ public class PlayerBehavior : MonoBehaviour, IDamageable
             ballPhysics.ResetBallState();
         }
         
-        PlayerMovementController movementController = GetComponent<PlayerMovementController>();
-        if (movementController != null)
-        {
-            // 停止WASD移动
-            movementController.StopWASDMovement();
-        }
+        // ⚠️ 多角色系统改造：已移除WASD移动功能，不需要停止移动
         
     }
     

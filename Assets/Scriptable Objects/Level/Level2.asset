@@ -18,8 +18,10 @@ MonoBehaviour:
   generateInitialEnemies: 1
   initialEnemies:
   - enemyData: {fileID: 11400000, guid: 8d46072aeaab4c44fab958850bbe7872, type: 2}
+    level: 1
     count: 2
   - enemyData: {fileID: 11400000, guid: ce82a34099b9d1f4899931eb09ed10ce, type: 2}
+    level: 1
     count: 2
   initialEnemySpawnRange:
     coordinateSystem: 0
@@ -31,6 +33,12 @@ MonoBehaviour:
     relativeRadius: 2
     enablePositionOffset: 1
     offsetRange: 0.5
+    checkObstacles: 1
+    obstacleLayer:
+      serializedVersion: 2
+      m_Bits: 328
+    checkRadius: 0.6
+    maxObstacleCheckAttempts: 30
   waves: []
   waveEnemySpawnRange:
     coordinateSystem: 0
@@ -42,6 +50,12 @@ MonoBehaviour:
     relativeRadius: 2
     enablePositionOffset: 1
     offsetRange: 0.5
+    checkObstacles: 1
+    obstacleLayer:
+      serializedVersion: 2
+      m_Bits: 328
+    checkRadius: 0.6
+    maxObstacleCheckAttempts: 30
   loopWaves: 0
   enableTurnPenalty: 1
   turnPenaltyThreshold: 8

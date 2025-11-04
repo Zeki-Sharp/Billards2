@@ -148,8 +148,10 @@ public class EnemySpawner : BaseSpawner<EnemyData>
     /// </summary>
     private void SpawnEnemyWithLevel(EnemyData enemyData, int level, SpawnRangeConfig rangeConfig = null)
     {
-        // 使用基类的 Spawn 方法生成敌人
-        Vector3 spawnPosition = rangeConfig != null ? rangeConfig.GetRandomPosition() : transform.position;
+        // ✅ 使用新方法：自动避开障碍物（墙体/玩家/敌人）
+        // 如果 rangeConfig.checkObstacles = true，会使用 Physics2D 检测障碍物
+        // 如果 rangeConfig.checkObstacles = false，行为与原来相同（向后兼容）
+        Vector3 spawnPosition = rangeConfig != null ? rangeConfig.GetValidRandomPosition() : transform.position;
         GameObject spawnedObject = InstantiateObject(enemyData, spawnPosition, enemyParent);
         
         if (spawnedObject != null)

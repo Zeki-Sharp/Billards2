@@ -33,6 +33,12 @@ MonoBehaviour:
     relativeRadius: 2
     enablePositionOffset: 1
     offsetRange: 0.5
+    checkObstacles: 1
+    obstacleLayer:
+      serializedVersion: 2
+      m_Bits: 328
+    checkRadius: 0.6
+    maxObstacleCheckAttempts: 30
   waves:
   - enemySpawns:
     - enemyData: {fileID: 11400000, guid: 8d46072aeaab4c44fab958850bbe7872, type: 2}
@@ -63,6 +69,12 @@ MonoBehaviour:
     relativeRadius: 2
     enablePositionOffset: 1
     offsetRange: 0.5
+    checkObstacles: 1
+    obstacleLayer:
+      serializedVersion: 2
+      m_Bits: 328
+    checkRadius: 0.6
+    maxObstacleCheckAttempts: 30
   loopWaves: 0
   enableTurnPenalty: 1
   turnPenaltyThreshold: 12

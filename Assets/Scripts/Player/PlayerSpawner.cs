@@ -202,10 +202,12 @@ public class PlayerSpawner : MonoBehaviour
         // 尝试多次生成位置，直到找到不重叠的位置
         for (int attempt = 0; attempt < maxSpawnAttempts; attempt++)
         {
-            // 获取随机位置
-            Vector3 candidatePosition = spawnRange.GetRandomPosition();
+            // ✅ 使用新方法：自动避开障碍物（墙体/玩家/敌人）
+            // 如果 spawnRange.checkObstacles = true，会使用 Physics2D 检测障碍物
+            // 如果 spawnRange.checkObstacles = false，行为与原来相同（向后兼容）
+            Vector3 candidatePosition = spawnRange.GetValidRandomPosition();
             
-            // 检查是否与现有球体重叠
+            // ✅ 仍然检查是否与现有球体距离过近（双重保险，更精确的间距控制）
             if (IsPositionValid(candidatePosition, existingBalls))
             {
                 return candidatePosition;
@@ -219,7 +221,7 @@ public class PlayerSpawner : MonoBehaviour
         
         // 如果多次尝试失败，返回随机位置（可能重叠，但总比不生成好）
         Debug.LogWarning($"PlayerSpawner: 经过 {maxSpawnAttempts} 次尝试未找到不重叠位置，使用可能重叠的随机位置");
-        return spawnRange.GetRandomPosition();
+        return spawnRange.GetValidRandomPosition();
     }
     
     /// <summary>

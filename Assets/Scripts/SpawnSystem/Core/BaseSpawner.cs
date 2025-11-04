@@ -169,7 +169,8 @@ public abstract class BaseSpawner<T> : MonoBehaviour
     {
         if (rangeConfig != null)
         {
-            return rangeConfig.GetRandomPosition();
+            // ✅ 使用新方法：自动避开障碍物（墙体/玩家/敌人）
+            return rangeConfig.GetValidRandomPosition();
         }
         else
         {

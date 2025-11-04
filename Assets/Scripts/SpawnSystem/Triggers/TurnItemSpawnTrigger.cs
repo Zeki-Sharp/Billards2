@@ -208,7 +208,8 @@ public class TurnItemSpawnTrigger : MonoBehaviour
             
             for (int retry = 0; retry < maxRetries && !spawned; retry++)
             {
-                Vector3 itemSpawnPosition = spawnRange.GetRandomPosition();
+                // ✅ 使用新方法：自动避开障碍物（墙体/玩家/敌人）
+                Vector3 itemSpawnPosition = spawnRange.GetValidRandomPosition();
                 
                 if (itemSpawner.TrySpawn(itemsArray[i], itemSpawnPosition, out GameObject spawnedObject))
                 {
