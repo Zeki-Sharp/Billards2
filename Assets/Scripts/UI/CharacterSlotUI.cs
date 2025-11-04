@@ -47,6 +47,9 @@ public class CharacterSlotUI : MonoBehaviour
     [Tooltip("死亡遮罩")]
     [SerializeField] private Image deathOverlay;
     
+    [Tooltip("已发射遮罩（本回合已使用）")]
+    [SerializeField] private Image launchedOverlay;
+    
     #endregion
     
     #region 颜色配置
@@ -78,6 +81,11 @@ public class CharacterSlotUI : MonoBehaviour
         if (deathOverlay != null)
         {
             deathOverlay.enabled = false;
+        }
+        
+        if (launchedOverlay != null)
+        {
+            launchedOverlay.enabled = false;
         }
     }
     
@@ -227,6 +235,22 @@ public class CharacterSlotUI : MonoBehaviour
     }
     
     /// <summary>
+    /// 设置已发射状态（本回合已使用）
+    /// </summary>
+    public void SetLaunched(bool isLaunched)
+    {
+        if (launchedOverlay != null)
+        {
+            launchedOverlay.enabled = isLaunched;
+        }
+        
+        if (showDebugInfo)
+        {
+            Debug.Log($"[CharacterSlotUI] 设置已发射状态: {isLaunched}");
+        }
+    }
+    
+    /// <summary>
     /// 清空槽位
     /// </summary>
     public void ClearSlot()
@@ -242,6 +266,7 @@ public class CharacterSlotUI : MonoBehaviour
         
         SetHighlight(false);
         SetDead(false);
+        SetLaunched(false);
     }
     
     #endregion
@@ -275,6 +300,15 @@ public class CharacterSlotUI : MonoBehaviour
         if (deathOverlay != null)
         {
             SetDead(!deathOverlay.enabled);
+        }
+    }
+    
+    [ContextMenu("测试 - 切换已发射")]
+    void TestToggleLaunched()
+    {
+        if (launchedOverlay != null)
+        {
+            SetLaunched(!launchedOverlay.enabled);
         }
     }
     

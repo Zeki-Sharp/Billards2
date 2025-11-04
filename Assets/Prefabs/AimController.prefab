@@ -13,8 +13,6 @@ GameObject:
   - component: {fileID: 8664044329718287280}
   - component: {fileID: 8943938372370279972}
   - component: {fileID: 2050217528864470944}
-  - component: {fileID: 1937195193328698812}
-  - component: {fileID: 7333251144507815251}
   - component: {fileID: 365253809899638556}
   m_Layer: 0
   m_Name: AimController
@@ -50,7 +48,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 07880cd37e99074408a4dee92b460510, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  playerCore: {fileID: 0}
   targetCamera: {fileID: 0}
   trajectoryPredictor: {fileID: 365253809899638556}
   aimLineRenderer: {fileID: 8943938372370279972}
@@ -98,7 +95,7 @@ MonoBehaviour:
   defaultCapVertices: 8
   defaultCornerVertices: 5
   collisionIndicatorSprite: {fileID: -2413806693520163455, guid: a86470a33a6bf42c4b3595704624658b, type: 3}
-  indicatorSize: 0.8
+  indicatorSize: 0.7
   indicatorColor: {r: 1, g: 1, b: 1, a: 0.5882353}
   indicatorSortingOrder: 11
   showCollisionIndicators: 1
@@ -117,7 +114,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   landingPointSprite: {fileID: -2413806693520163455, guid: a86470a33a6bf42c4b3595704624658b, type: 3}
-  landingPointSize: 0.8
+  landingPointSize: 0.7
   landingPointColor: {r: 0.43764746, g: 0.9622642, b: 0.4339267, a: 0.5803922}
   landingPointSortingOrder: 11
   showLandingPoint: 1
@@ -126,41 +123,6 @@ MonoBehaviour:
   attackRangeCircleColor: {r: 1, g: 0.5, b: 0, a: 0.3}
   attackRangeCircleSortingOrder: 10
   showDebugInfo: 0
---- !u!114 &1937195193328698812
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5125386412533849888}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 72f4b418bbeee8b4fbf2825ec40fc4ee, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  simulationSceneName: TrajectorySimulationScene
-  createOnAwake: 1
-  showDebugLog: 1
---- !u!114 &7333251144507815251
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5125386412533849888}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7c83bee196abec0458a32cd488a34d2b, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  dynamicObjectTags:
-  - Player
-  - Enemy
-  staticObjectTags:
-  - Wall
-  replicateBallPhysics: 1
-  replicatePhysicsMaterial: 1
-  showDebugLog: 1
 --- !u!114 &365253809899638556
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -176,7 +138,5 @@ MonoBehaviour:
   maxSimulationSteps: 500
   sampleDistance: 0.02
   maxTrajectoryPoints: 1000
-  simulationManager: {fileID: 1937195193328698812}
-  objectReplicator: {fileID: 7333251144507815251}
   showDebugLog: 1
   showStepLog: 1

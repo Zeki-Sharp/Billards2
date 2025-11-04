@@ -497,8 +497,42 @@ public class PlayerBehavior : MonoBehaviour, IDamageable
     {
         if (statsManager == null) return;
         
+        // 1. 更新 PlayerStats（组件内部）
         statsManager.AddHealth(healAmount);
         Debug.Log($"PlayerCore: ✅ 回血 {healAmount:F1}，当前血量: {statsManager.CurrentHealth:F1}/{statsManager.MaxHealth:F1}");
+        
+        // 2. ✅ 同步到 TeamData（UI从这里读取）
+        SyncHealthToTeamData();
+        
+        // 3. ✅ 发布角色治疗事件（UI会监听并更新血条）
+        string characterID = GetMyCharacterID();
+        if (!string.IsNullOrEmpty(characterID))
+        {
+            GameEventBus.PublishCharacterHealed(characterID, healAmount);
+        }
+    }
+    
+    /// <summary>
+    /// ✅ 同步血量到 TeamData（UI从这里读取血量）
+    /// </summary>
+    private void SyncHealthToTeamData()
+    {
+        if (statsManager == null) return;
+        
+        // 获取角色ID
+        string characterID = GetMyCharacterID();
+        if (string.IsNullOrEmpty(characterID)) return;
+        
+        // 从 TeamData 中找到对应角色
+        var teamData = GameSession.Instance?.GetTeamData();
+        if (teamData == null) return;
+        
+        var character = teamData.characters.Find(c => c.characterID == characterID);
+        if (character == null) return;
+        
+        // 同步血量
+        character.currentHealth = statsManager.CurrentHealth;
+        character.maxHealth = statsManager.MaxHealth;
     }
     
     /// <summary>
@@ -512,10 +546,21 @@ public class PlayerBehavior : MonoBehaviour, IDamageable
             return;
         }
         
+        // 1. 更新 PlayerStats（组件内部）
         statsManager.SubtractHealth(damage);
         Debug.Log($"PlayerCore: 受到伤害 {damage:F1}，当前血量: {statsManager.CurrentHealth:F1}/{statsManager.MaxHealth:F1}");
         
-        // 检查是否死亡
+        // 2. ✅ 同步到 TeamData（UI从这里读取）
+        SyncHealthToTeamData();
+        
+        // 3. ✅ 发布角色受伤事件（UI会监听并更新血条）
+        string characterID = GetMyCharacterID();
+        if (!string.IsNullOrEmpty(characterID))
+        {
+            GameEventBus.PublishCharacterDamaged(characterID, damage, "Unknown");
+        }
+        
+        // 4. 检查是否死亡
         if (statsManager.CurrentHealth <= 0)
         {
             Die();

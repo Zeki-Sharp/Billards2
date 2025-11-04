@@ -251,8 +251,8 @@ public class SkillSelectionManager : SingletonManager<SkillSelectionManager>
             {
                 Debug.LogWarning($"[SkillSelectionManager] 角色 '{characterName}' 没有可用技能，跳过");
                 continue;
-            }
-            
+        }
+        
             // 获取该角色已有的技能
             List<SkillConfig> characterExistingSkills = new List<SkillConfig>();
             if (skillManager != null)
@@ -303,7 +303,7 @@ public class SkillSelectionManager : SingletonManager<SkillSelectionManager>
         }
         
         if (allAvailableOptions.Count == 0)
-        {
+            {
             Debug.LogWarning("[SkillSelectionManager] 没有可选择的技能或升级选项");
             return;
         }
@@ -366,14 +366,14 @@ public class SkillSelectionManager : SingletonManager<SkillSelectionManager>
                         }
                     }
                 }
-                
-                if (showDebugInfo)
-                {
+            
+            if (showDebugInfo)
+            {
                     Debug.Log($"[SkillSelectionManager] 所有角色共有 {existingSkills.Count} 个不同的技能");
-                    foreach (var skill in existingSkills)
-                    {
-                        Debug.Log($"  - {skill.skillName}");
-                    }
+                foreach (var skill in existingSkills)
+                {
+                    Debug.Log($"  - {skill.skillName}");
+                }
                 }
             }
             else

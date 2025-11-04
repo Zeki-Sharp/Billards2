@@ -43,6 +43,11 @@ public class TopBarController : MonoBehaviour
     [Tooltip("剩余回合数显示组件（独立管理）")]
     private RemainingTurnsDisplay turnsDisplay;
     
+    [Header("发射次数显示")]
+    [SerializeField]
+    [Tooltip("发射次数文本")]
+    private TextMeshProUGUI launchCountText;
+    
     [Header("按钮")]
     [SerializeField] private UnityEngine.UI.Button skillButton;      // 技能按钮（书本图标）
     [SerializeField] private UnityEngine.UI.Button settingsButton;   // 设置按钮（齿轮图标）
@@ -136,6 +141,11 @@ public class TopBarController : MonoBehaviour
         
         // 订阅游戏重启事件（隐藏TopBar）
         GameEventBus.OnGameRestart += OnGameRestart;
+        
+        // ✅ 订阅发射次数相关事件
+        GameEventBus.OnCharacterLaunched += OnCharacterLaunched;
+        PlayerTurnManager.OnTurnReset += OnTurnReset;
+        PlayerTurnManager.OnTurnComplete += OnTurnCompleted;
     }
     
     /// <summary>
@@ -152,11 +162,60 @@ public class TopBarController : MonoBehaviour
         
         CharacterSelectionManager.OnStartGame -= OnGameStarted;
         GameEventBus.OnGameRestart -= OnGameRestart;
+        
+        // ✅ 发射次数相关事件
+        GameEventBus.OnCharacterLaunched -= OnCharacterLaunched;
+        PlayerTurnManager.OnTurnReset -= OnTurnReset;
+        PlayerTurnManager.OnTurnComplete -= OnTurnCompleted;
     }
     
     #endregion
     
     #region 事件处理
+    
+    #region 发射次数事件
+    
+    /// <summary>
+    /// ✅ 角色发射事件 - 更新发射次数显示 + 标记槽位状态
+    /// </summary>
+    void OnCharacterLaunched(string characterID, Vector2 direction, float force)
+    {
+        // 延迟一帧更新，确保 PlayerTurnManager 先处理完
+        StartCoroutine(UpdateLaunchCountNextFrame());
+        
+        // ✅ 标记该角色槽位为"已发射"状态
+        UpdateCharacterLaunchedState(characterID, true);
+    }
+    
+    /// <summary>
+    /// 延迟一帧更新发射次数（确保数据已更新）
+    /// </summary>
+    System.Collections.IEnumerator UpdateLaunchCountNextFrame()
+    {
+        yield return null;  // 等待一帧
+        UpdateLaunchCountDisplay();
+    }
+    
+    /// <summary>
+    /// ✅ 回合重置事件 - 更新发射次数显示 + 清除槽位发射状态
+    /// </summary>
+    void OnTurnReset()
+    {
+        UpdateLaunchCountDisplay();
+        
+        // ✅ 清除所有槽位的"已发射"状态
+        ClearAllLaunchedStates();
+    }
+    
+    /// <summary>
+    /// ✅ 回合完成事件 - 更新发射次数显示
+    /// </summary>
+    void OnTurnCompleted()
+    {
+        UpdateLaunchCountDisplay();
+    }
+    
+    #endregion
     
     #region 多角色系统事件
     
@@ -221,6 +280,9 @@ public class TopBarController : MonoBehaviour
         
         // ✅ 刷新所有角色槽位
         RefreshAllSlots();
+        
+        // ✅ 初始化发射次数显示
+        UpdateLaunchCountDisplay();
         
         // 显示TopBar
         SetVisible(true);
@@ -486,6 +548,60 @@ public class TopBarController : MonoBehaviour
                  $"Turns Display: {(turnsDisplay != null ? "已配置" : "未配置")}\n" +
                  $"Skill Button: {(skillButton != null ? "已配置" : "未配置")}\n" +
                  $"Settings Button: {(settingsButton != null ? "已配置" : "未配置")}");
+    }
+    
+    #endregion
+    
+    #region 发射次数显示
+    
+    /// <summary>
+    /// ✅ 更新发射次数显示
+    /// </summary>
+    void UpdateLaunchCountDisplay()
+    {
+        if (launchCountText == null) return;
+        
+        if (PlayerTurnManager.Instance == null)
+        {
+            launchCountText.text = "剩余发射：-/-";
+            return;
+        }
+        
+        int remaining = PlayerTurnManager.Instance.RemainingLaunches;
+        int launched = PlayerTurnManager.Instance.LaunchedCount;
+        int total = launched + remaining;
+        
+        launchCountText.text = $"剩余发射：{remaining}/{total}";
+    }
+    
+    #endregion
+    
+    #region 已发射状态管理
+    
+    /// <summary>
+    /// ✅ 更新角色发射状态
+    /// </summary>
+    void UpdateCharacterLaunchedState(string characterID, bool isLaunched)
+    {
+        var slot = FindSlotByCharacterID(characterID);
+        if (slot != null)
+        {
+            slot.SetLaunched(isLaunched);
+        }
+    }
+    
+    /// <summary>
+    /// ✅ 清除所有槽位的发射状态（回合开始时调用）
+    /// </summary>
+    void ClearAllLaunchedStates()
+    {
+        foreach (var slot in slots)
+        {
+            if (slot != null)
+            {
+                slot.SetLaunched(false);
+            }
+        }
     }
     
     #endregion
