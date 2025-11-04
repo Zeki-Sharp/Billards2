@@ -73,16 +73,11 @@ public class EnemyBehavior : MonoBehaviour, IDamageable
             Debug.LogWarning($"EnemyBehavior {name}: 请手动配置AttackRange引用！");
         }
         
-        // 查找玩家
-        GameObject playerObj = GameObject.FindGameObjectWithTag("Player");
-        if (playerObj != null)
-        {
-            player = playerObj.transform;
-        }
-        else
-        {
-            Debug.LogWarning($"EnemyBehavior {name}: 未找到玩家！");
-        }
+        // ✅ 多角色系统改造：玩家目标在每个阶段执行前动态查找（FindNearestPlayer）
+        // 不再在 Start() 中静态查找玩家，因为：
+        // 1. 多角色系统中有多个玩家，需要选择最近的
+        // 2. 玩家可能移动或死亡，需要实时更新目标
+        // 3. 每个行动阶段（预告/攻击/移动）都会调用 FindNearestPlayer()
         
         // ✅ 新伤害系统：订阅伤害事件
         GameEventBus.OnDamage += OnDamageReceived;
@@ -119,10 +114,74 @@ public class EnemyBehavior : MonoBehaviour, IDamageable
     }
     
     /// <summary>
+    /// ✅ 多角色系统改造：查找最近的存活玩家作为目标
+    /// </summary>
+    /// <returns>最近的存活玩家 Transform，如果没有存活玩家则返回 null</returns>
+    private Transform FindNearestPlayer()
+    {
+        // 从 GameSession 获取队伍数据
+        var teamData = GameSession.Instance?.GetTeamData();
+        if (teamData == null)
+        {
+            Debug.LogError($"[EnemyBehavior] {name}: GameSession.TeamData 为空，无法查找玩家！");
+            return null;
+        }
+        
+        if (teamData.characters == null || teamData.characters.Count == 0)
+        {
+            Debug.LogWarning($"[EnemyBehavior] {name}: TeamData.characters 为空，无法查找玩家！");
+            return null;
+        }
+        
+        Transform nearestPlayer = null;
+        float nearestDistance = float.MaxValue;
+        
+        // 遍历所有角色，查找最近的存活玩家
+        foreach (var character in teamData.characters)
+        {
+            // 跳过已死亡的角色
+            if (!character.isAlive)
+                continue;
+            
+            // 检查角色的游戏对象引用
+            if (character.ballInstance == null)
+                continue;
+            
+            // 计算距离
+            float distance = Vector3.Distance(transform.position, character.ballInstance.transform.position);
+            
+            // 更新最近玩家
+            if (distance < nearestDistance)
+            {
+                nearestDistance = distance;
+                nearestPlayer = character.ballInstance.transform;
+            }
+        }
+        
+        // 输出查找结果（简洁）
+        if (nearestPlayer == null)
+        {
+            Debug.LogWarning($"[EnemyBehavior] {name}: 没有找到存活的玩家");
+        }
+        
+        return nearestPlayer;
+    }
+    
+    /// <summary>
     /// 执行攻击阶段
     /// </summary>
     public void ExecuteAttackPhase()
     {
+        // ✅ 多角色系统改造：每个阶段前重新查找最近的存活玩家
+        player = FindNearestPlayer();
+        
+        // ✅ 容错处理：如果没有存活玩家，跳过攻击阶段
+        if (player == null)
+        {
+            Debug.LogWarning($"[EnemyBehavior] {name}: 攻击阶段 - 找不到存活的玩家，跳过攻击");
+            return;
+        }
+        
         // 使用攻击行为系统执行攻击
         if (attackBehavior != null && attackRange != null && CurrentLevelConfig != null)
         {
@@ -149,6 +208,16 @@ public class EnemyBehavior : MonoBehaviour, IDamageable
     /// </summary>
     public void ExecuteTelegraphPhase()
     {
+        // ✅ 多角色系统改造：每个阶段前重新查找最近的存活玩家
+        player = FindNearestPlayer();
+        
+        // ✅ 容错处理：如果没有存活玩家，跳过预告阶段
+        if (player == null)
+        {
+            Debug.LogWarning($"[EnemyBehavior] {name}: 预告阶段 - 找不到存活的玩家，跳过预告");
+            return;
+        }
+        
         // 更新攻击范围
         if (attackArea != null)
         {
@@ -192,7 +261,17 @@ public class EnemyBehavior : MonoBehaviour, IDamageable
             }
         }
         
-        if (player != null && movementBehavior != null && CurrentLevelConfig != null)
+        // ✅ 多角色系统改造：每个阶段前重新查找最近的存活玩家
+        player = FindNearestPlayer();
+        
+        // ✅ 容错处理：如果没有存活玩家，跳过移动阶段
+        if (player == null)
+        {
+            Debug.LogWarning($"[EnemyBehavior] {name}: 移动阶段 - 找不到存活的玩家，跳过移动");
+            return;
+        }
+        
+        if (movementBehavior != null && CurrentLevelConfig != null)
         {
             // 使用行为系统执行移动
             BehaviorStatus status = movementBehavior.ExecuteMovement(transform, player, enemyData, CurrentLevelConfig, runtimeState, out Vector2 targetPosition);
@@ -212,7 +291,7 @@ public class EnemyBehavior : MonoBehaviour, IDamageable
         }
         else
         {
-            Debug.LogWarning($"EnemyBehavior {name}: 无法移动，未找到玩家或行为组件！");
+            Debug.LogWarning($"EnemyBehavior {name}: 移动行为组件未设置，无法执行移动！");
         }
     }
     
@@ -560,6 +639,16 @@ public class EnemyBehavior : MonoBehaviour, IDamageable
     /// </summary>
     public void ShowAttackRange()
     {
+        // ✅ 多角色系统改造：查找最近的存活玩家
+        player = FindNearestPlayer();
+        
+        // ✅ 容错处理：如果没有存活玩家，跳过
+        if (player == null)
+        {
+            Debug.LogWarning($"[EnemyBehavior] {name}: ShowAttackRange - 找不到存活的玩家，跳过攻击范围显示");
+            return;
+        }
+        
         // 使用攻击行为系统执行预告
         if (attackBehavior != null && attackRange != null && CurrentLevelConfig != null)
         {

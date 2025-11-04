@@ -93,6 +93,19 @@ public class CharacterSelectionController : MonoBehaviour
     {
         if (ballObject == null) return;
         
+        // ✅ 使用统一权限管理器检查选择权限（阶段 + 发射次数）
+        if (PlayerInputPermissionManager.Instance == null)
+        {
+            Debug.LogError("[CharacterSelectionController] PlayerInputPermissionManager.Instance 为 null！请在场景中添加该组件");
+            return;
+        }
+        
+        if (!PlayerInputPermissionManager.Instance.CanSelectCharacter())
+        {
+            // 权限管理器已经输出了详细的拒绝原因日志
+            return;
+        }
+        
         // 从球体获取角色ID
         string characterID = GetCharacterIDFromBall(ballObject);
         if (string.IsNullOrEmpty(characterID))

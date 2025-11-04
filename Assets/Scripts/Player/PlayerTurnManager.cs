@@ -35,8 +35,11 @@ public class PlayerTurnManager : MonoBehaviour
     
     // 回合状态
     private int remainingLaunches;           // 剩余发射次数
-    private int launchedCount;               // 已发射次数
+    private int launchedCount;               // 已发射次数（球发射瞬间计数）
     private List<string> launchedCharacterIDs = new List<string>(); // 已发射的角色ID列表
+    
+    // ✅ 回合结束监控
+    private bool isWaitingForAllBallsToStop = false;  // 是否在等待所有玩家球停止
     
     // 场景单例
     private static PlayerTurnManager instance;
@@ -70,14 +73,16 @@ public class PlayerTurnManager : MonoBehaviour
     
     void OnEnable()
     {
-        // ✅ 订阅角色完成事件（而不是发射事件）
-        GameEventBus.OnCharacterCompleted += OnCharacterCompleted;
+        // ✅ 订阅事件：发射时计数，球停止时检查回合结束
+        GameEventBus.OnCharacterLaunched += OnCharacterLaunched;   // 球发射时
+        GameEventBus.OnBallStopped += OnAnyBallStopped;             // 任意球停止时
     }
     
     void OnDisable()
     {
         // 取消订阅
-        GameEventBus.OnCharacterCompleted -= OnCharacterCompleted;
+        GameEventBus.OnCharacterLaunched -= OnCharacterLaunched;
+        GameEventBus.OnBallStopped -= OnAnyBallStopped;
     }
     
     void OnDestroy()
@@ -91,7 +96,7 @@ public class PlayerTurnManager : MonoBehaviour
     #region 回合管理
     
     /// <summary>
-    /// 开始新回合（重置发射次数）
+    /// 开始新回合（重置发射次数和监控状态）
     /// </summary>
     public void StartTurn()
     {
@@ -99,52 +104,142 @@ public class PlayerTurnManager : MonoBehaviour
         remainingLaunches = launchesPerTurn;
         launchedCount = 0;
         launchedCharacterIDs.Clear();
+        isWaitingForAllBallsToStop = false;
         
         // 发布回合重置事件
         OnTurnReset?.Invoke();
         
         if (showDebugInfo)
         {
-            Debug.Log($"PlayerTurnManager: ✅ 回合开始，需要发射 {launchesPerTurn} 个球");
+            Debug.Log($"[PlayerTurnManager] ✅ 回合开始，需要发射 {launchesPerTurn} 个球");
         }
     }
     
     /// <summary>
-    /// 处理角色完成事件（MovingEnd → Completed）
+    /// ✅ 处理角色发射事件（球发射瞬间计数）
     /// </summary>
-    void OnCharacterCompleted(string characterID)
+    void OnCharacterLaunched(string characterID, Vector2 direction, float force)
     {
         // 检查是否已经记录过（防止重复计数）
         if (launchedCharacterIDs.Contains(characterID))
         {
             if (showDebugInfo)
             {
-                Debug.LogWarning($"PlayerTurnManager: 角色 {characterID} 已经完成过，忽略重复");
+                Debug.LogWarning($"[PlayerTurnManager] 角色 {characterID} 已经发射过，忽略重复");
             }
             return;
         }
         
-        // 记录完成
+        // 记录发射
         launchedCharacterIDs.Add(characterID);
         launchedCount++;
         remainingLaunches--;
         
         if (showDebugInfo)
         {
-            Debug.Log($"PlayerTurnManager: ✅ 角色 {characterID} 完成发射！进度 ({launchedCount}/{launchesPerTurn})，剩余 {remainingLaunches} 次");
+            Debug.Log($"[PlayerTurnManager] ✅ 角色 {characterID} 发射！已发射 {launchedCount}/{launchesPerTurn}，剩余 {remainingLaunches} 次");
         }
         
-        // 检查回合是否完成
+        // ✅ 发射次数用尽，开始监控所有玩家球是否停止
         if (remainingLaunches <= 0)
+        {
+            isWaitingForAllBallsToStop = true;
+            
+            if (showDebugInfo)
+            {
+                Debug.Log($"[PlayerTurnManager] 发射次数用尽，等待所有玩家球停止");
+            }
+        }
+    }
+    
+    /// <summary>
+    /// ✅ 处理任意球停止事件（检查所有玩家球是否都停止）
+    /// </summary>
+    void OnAnyBallStopped(BallPhysics ball)
+    {
+        // 只在监控期间处理
+        if (!isWaitingForAllBallsToStop)
+            return;
+        
+        // 检查是否是玩家球
+        if (!IsPlayerBall(ball))
+            return;
+        
+        // 检查所有玩家球是否都停止
+        if (AreAllPlayerBallsStopped())
         {
             if (showDebugInfo)
             {
-                Debug.Log($"PlayerTurnManager: ✅✅ 所有发射完成，回合结束！");
+                Debug.Log($"[PlayerTurnManager] ✅✅ 所有玩家球停止运动，回合结束！");
             }
+            
+            // 停止监控
+            isWaitingForAllBallsToStop = false;
             
             // 触发回合完成事件
             OnTurnComplete?.Invoke();
         }
+    }
+    
+    /// <summary>
+    /// 检查是否是玩家球
+    /// </summary>
+    bool IsPlayerBall(BallPhysics ball)
+    {
+        if (ball == null || ball.gameObject == null)
+            return false;
+        
+        var teamData = GameSession.Instance?.GetTeamData();
+        if (teamData == null)
+            return false;
+        
+        // 检查是否是队伍中任意一个角色的球
+        foreach (var character in teamData.characters)
+        {
+            if (character != null && character.ballInstance == ball.gameObject)
+            {
+                return true;
+            }
+        }
+        
+        return false;
+    }
+    
+    /// <summary>
+    /// 检查所有玩家球是否都停止
+    /// </summary>
+    bool AreAllPlayerBallsStopped()
+    {
+        var teamData = GameSession.Instance?.GetTeamData();
+        if (teamData == null)
+        {
+            Debug.LogError("[PlayerTurnManager] TeamData 为 null，无法检查球停止状态");
+            return false;
+        }
+        
+        // 检查所有角色的球
+        foreach (var character in teamData.characters)
+        {
+            if (character == null || character.ballInstance == null)
+                continue;
+            
+            // 获取球的物理组件
+            BallPhysics physics = character.ballInstance.GetComponent<BallPhysics>();
+            if (physics == null)
+            {
+                Debug.LogWarning($"[PlayerTurnManager] 角色 {character.characterID} 的球缺少 BallPhysics 组件");
+                continue;
+            }
+            
+            // 检查是否在运动
+            if (physics.IsMoving())
+            {
+                return false;  // 还有球在动
+            }
+        }
+        
+        // 所有球都停止了
+        return true;
     }
     
     #endregion
@@ -186,8 +281,9 @@ public class PlayerTurnManager : MonoBehaviour
     {
         string info = $"=== PlayerTurnManager 回合状态 ===\n";
         info += $"已发射: {launchedCount}/{launchesPerTurn}\n";
-        info += $"剩余: {remainingLaunches}\n";
+        info += $"剩余发射次数: {remainingLaunches}\n";
         info += $"已发射角色: {string.Join(", ", launchedCharacterIDs)}\n";
+        info += $"等待所有球停止: {(isWaitingForAllBallsToStop ? "是" : "否")}\n";
         info += $"回合完成: {(IsTurnComplete ? "是" : "否")}";
         return info;
     }

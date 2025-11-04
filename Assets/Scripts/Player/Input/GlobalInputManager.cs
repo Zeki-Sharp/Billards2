@@ -123,6 +123,13 @@ public class GlobalInputManager : MonoBehaviour
             return;
         }
         
+        // ✅ 使用统一权限管理器检查是否在玩家回合
+        if (PlayerInputPermissionManager.Instance == null || 
+            !PlayerInputPermissionManager.Instance.CanProcessInputInCurrentPhase())
+        {
+            return; // 不在玩家回合，不处理输入
+        }
+        
         // 处理输入
         HandleInput();
     }
