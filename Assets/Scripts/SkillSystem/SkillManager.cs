@@ -473,6 +473,26 @@ public class SkillManager : SingletonManager<SkillManager>
     }
     
     /// <summary>
+    /// ✅ 多角色系统：获取指定角色的所有技能实例
+    /// </summary>
+    /// <param name="characterID">角色ID</param>
+    /// <returns>技能实例列表</returns>
+    public List<SkillInstance> GetCharacterSkillInstances(string characterID)
+    {
+        List<SkillInstance> characterSkills = new List<SkillInstance>();
+        
+        foreach (var kvp in skillInstances)
+        {
+            if (skillOwnership.TryGetValue(kvp.Key, out string owner) && owner == characterID)
+            {
+                characterSkills.Add(kvp.Value);
+            }
+        }
+        
+        return characterSkills;
+    }
+    
+    /// <summary>
     /// ✅ 多角色系统：移除指定角色的所有技能（角色死亡时调用）
     /// </summary>
     /// <param name="characterID">角色ID</param>
