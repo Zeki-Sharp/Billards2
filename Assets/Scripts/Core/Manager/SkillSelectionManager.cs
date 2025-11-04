@@ -40,9 +40,6 @@ public class SkillSelectionManager : SingletonManager<SkillSelectionManager>
     [SerializeField] private SkillDatabase skillDatabase;
     [SerializeField] private int skillSelectionCount = 3; // 每次选择的技能数量
     
-    // 可用技能列表（运行时填充）
-    private List<SkillConfig> allAvailableSkills = new List<SkillConfig>();
-    
     [Header("调试")]
     [SerializeField] private bool showDebugInfo = true;
     
@@ -82,78 +79,55 @@ public class SkillSelectionManager : SingletonManager<SkillSelectionManager>
         
         if (showDebugInfo)
         {
-            Debug.Log("SkillSelectionManager: 初始化完成");
-            Debug.Log($"SkillSelectionManager: 技能库包含 {allAvailableSkills.Count} 个技能");
+            Debug.Log("[SkillSelectionManager] 初始化完成（多角色模式）");
         }
     }
     
     /// <summary>
-    /// 从技能数据库加载技能配置
+    /// ✅ 多角色系统改造：验证技能数据库引用（不再预加载角色特定技能）
     /// </summary>
     void LoadSkillsFromDatabase()
     {
-        allAvailableSkills.Clear();
-        
         // 检查数据库引用
         if (skillDatabase == null)
         {
-            Debug.LogError("SkillSelectionManager: 技能数据库未配置！请在Inspector中分配SkillDatabase资源。");
+            Debug.LogError("[SkillSelectionManager] 技能数据库未配置！请在Inspector中分配SkillDatabase资源。");
             return;
         }
         
-        // 获取当前角色名称
-        string currentCharacterName = GetCurrentCharacterName();
-        
         if (showDebugInfo)
         {
-            Debug.Log($"SkillSelectionManager: 当前角色名称 = '{currentCharacterName}'");
-        }
-        
-        // 从数据库获取适合当前角色的技能
-        List<SkillConfig> availableSkills = skillDatabase.GetSkillsForCharacter(currentCharacterName);
-        
-        if (showDebugInfo)
-        {
-            Debug.Log($"SkillSelectionManager: 从数据库找到 {availableSkills.Count} 个适合角色 '{currentCharacterName}' 的技能");
-        }
-        
-        // 添加到可用技能列表
-        allAvailableSkills.AddRange(availableSkills);
-        
-        if (allAvailableSkills.Count == 0)
-        {
-            Debug.LogWarning($"SkillSelectionManager: 没有找到适合角色 '{currentCharacterName}' 的技能！");
-        }
-        
-        if (showDebugInfo)
-        {
-            Debug.Log($"SkillSelectionManager: 最终加载 {allAvailableSkills.Count} 个有效技能配置");
-            foreach (var skill in allAvailableSkills)
-            {
-                Debug.Log($"  - {skill.skillName} (Tag: {skill.skillTag})");
-            }
+            Debug.Log($"[SkillSelectionManager] ✅ 技能数据库已加载: {skillDatabase.name}");
+            Debug.Log($"[SkillSelectionManager] 多角色模式：技能池将在生成选项时动态加载");
         }
     }
     
     /// <summary>
-    /// 获取当前角色名称
+    /// ✅ 多角色系统改造：为指定角色获取可用技能（角色特定 + common）
     /// </summary>
-    /// <returns>当前角色名称，如果无法获取则返回空字符串</returns>
-    string GetCurrentCharacterName()
+    /// <param name="characterName">角色名称</param>
+    /// <returns>该角色可用的技能列表</returns>
+    List<SkillConfig> GetSkillsForCharacter(string characterName)
     {
-        PlayerData currentCharacter = SceneTransitionManager.GetSelectedCharacter();
-        
-        if (currentCharacter != null && !string.IsNullOrEmpty(currentCharacter.info.name))
+        if (skillDatabase == null)
         {
-            return currentCharacter.info.name;
+            Debug.LogError($"[SkillSelectionManager] 技能数据库为空，无法为角色 '{characterName}' 获取技能");
+            return new List<SkillConfig>();
         }
+        
+        // 从数据库获取适合该角色的技能（包含角色特定 + common 标签）
+        List<SkillConfig> skills = skillDatabase.GetSkillsForCharacter(characterName);
         
         if (showDebugInfo)
         {
-            Debug.LogWarning("SkillSelectionManager: 无法获取当前角色名称，将只加载 common 和 default 标签的技能");
+            Debug.Log($"[SkillSelectionManager] 角色 '{characterName}' 可用技能数: {skills.Count}");
+            foreach (var skill in skills)
+            {
+                Debug.Log($"    - {skill.skillName} (Tag: {skill.skillTag})");
+            }
         }
         
-        return "";
+        return skills;
     }
     
     
@@ -192,14 +166,13 @@ public class SkillSelectionManager : SingletonManager<SkillSelectionManager>
     {
         if (isSkillSelectionActive)
         {
-            Debug.LogWarning("SkillSelectionManager: 技能选择已在进行中，忽略重复启动");
+            Debug.LogWarning("[SkillSelectionManager] 技能选择已在进行中，忽略重复启动");
             return;
         }
         
-        if (allAvailableSkills == null || allAvailableSkills.Count == 0)
+        if (skillDatabase == null)
         {
-            Debug.LogError("SkillSelectionManager: 技能库为空，无法进行技能选择！");
-            // 直接进入下一关卡
+            Debug.LogError("[SkillSelectionManager] 技能数据库为空，无法进行技能选择！");
             ProceedToNextLevel();
             return;
         }
@@ -209,7 +182,7 @@ public class SkillSelectionManager : SingletonManager<SkillSelectionManager>
         
         if (currentSelection.Count == 0)
         {
-            Debug.LogWarning("SkillSelectionManager: 没有可选择的技能，直接进入下一关卡");
+            Debug.LogWarning("[SkillSelectionManager] 没有可选择的技能，直接进入下一关卡");
             ProceedToNextLevel();
             return;
         }
@@ -218,7 +191,7 @@ public class SkillSelectionManager : SingletonManager<SkillSelectionManager>
         
         if (showDebugInfo)
         {
-            Debug.Log($"SkillSelectionManager: 技能选择启动，提供 {currentSelection.Count} 个技能选择");
+            Debug.Log($"[SkillSelectionManager] 技能选择启动，提供 {currentSelection.Count} 个技能选择");
             for (int i = 0; i < currentSelection.Count; i++)
             {
                 Debug.Log($"  - 技能 {i + 1}: {currentSelection[i].skillName}");
@@ -230,12 +203,12 @@ public class SkillSelectionManager : SingletonManager<SkillSelectionManager>
     }
     
     /// <summary>
-    /// ✅ 多角色系统改造：生成随机技能选择（支持技能升级 + 角色预分配）
+    /// ✅ 多角色系统改造：为每个角色生成独立技能池并随机选择（支持技能升级 + 角色预分配）
     /// </summary>
     void GenerateRandomSkillSelection()
     {
         currentSelection.Clear();
-        currentSelectionOptions.Clear(); // 清空选项列表
+        currentSelectionOptions.Clear();
         
         // ✅ 获取队伍数据
         var teamData = GameSession.Instance?.GetTeamData();
@@ -253,85 +226,109 @@ public class SkillSelectionManager : SingletonManager<SkillSelectionManager>
             return;
         }
         
-        // 获取玩家已有的技能
-        List<SkillConfig> playerSkills = GetPlayerExistingSkills();
-        
-        // 创建技能选择选项列表
-        List<SkillSelectionOption> availableOptions = new List<SkillSelectionOption>();
-        
-        // 1. 添加新技能选项（未学习的技能）
-        foreach (var skill in allAvailableSkills)
+        if (showDebugInfo)
         {
-            if (!playerSkills.Contains(skill) && IsSkillUnlocked(skill) && skill.isActive)
-            {
-                availableOptions.Add(new SkillSelectionOption
-                {
-                    skillConfig = skill,
-                    isUpgrade = false,
-                    targetLevel = 1
-                });
-            }
+            Debug.Log($"[SkillSelectionManager] 开始为 {aliveCharacters.Count} 个存活角色生成技能选项");
         }
         
-        // 2. 添加技能升级选项（已学习但可升级的技能）
-        foreach (var skill in playerSkills)
+        // ✅ 为每个存活角色生成技能选项
+        List<SkillSelectionOption> allAvailableOptions = new List<SkillSelectionOption>();
+        
+        foreach (var character in aliveCharacters)
         {
+            string characterName = character.characterData?.info.name ?? "未知角色";
+            string characterID = character.characterID;
+            
+            if (showDebugInfo)
+            {
+                Debug.Log($"[SkillSelectionManager] 为角色 [{character.positionIndex}号位 {characterName}] 生成技能池");
+            }
+            
+            // ✅ 获取该角色的可用技能（角色特定 + common）
+            List<SkillConfig> characterSkills = GetSkillsForCharacter(characterName);
+            
+            if (characterSkills.Count == 0)
+            {
+                Debug.LogWarning($"[SkillSelectionManager] 角色 '{characterName}' 没有可用技能，跳过");
+                continue;
+            }
+            
+            // 获取该角色已有的技能
+            List<SkillConfig> characterExistingSkills = new List<SkillConfig>();
             if (skillManager != null)
             {
-                var skillInstance = skillManager.GetSkillInstance(skill.skillName);
-                if (skillInstance != null && skillInstance.CanUpgrade())
+                var existingSkillConfigs = skillManager.GetCharacterSkills(characterID);
+                characterExistingSkills.AddRange(existingSkillConfigs);
+            }
+            
+            // 1. 添加新技能选项（该角色未学习的技能）
+            foreach (var skill in characterSkills)
+            {
+                if (!characterExistingSkills.Contains(skill) && IsSkillUnlocked(skill) && skill.isActive)
                 {
-                    int nextLevel = skillInstance.GetNextLevel();
-                    availableOptions.Add(new SkillSelectionOption
+                    allAvailableOptions.Add(new SkillSelectionOption
                     {
                         skillConfig = skill,
-                        isUpgrade = true,
-                        targetLevel = nextLevel
+                        isUpgrade = false,
+                        targetLevel = 1,
+                        targetCharacterID = characterID,
+                        characterName = characterName,
+                        positionIndex = character.positionIndex
                     });
+                }
+            }
+            
+            // 2. 添加技能升级选项（该角色已学习但可升级的技能）
+            foreach (var skill in characterExistingSkills)
+            {
+                if (skillManager != null)
+                {
+                    string skillInstanceID = $"{characterID}_{skill.skillName}";
+                    var skillInstance = skillManager.GetSkillInstance(skillInstanceID);
+                    if (skillInstance != null && skillInstance.CanUpgrade())
+                    {
+                        int nextLevel = skillInstance.GetNextLevel();
+                        allAvailableOptions.Add(new SkillSelectionOption
+                        {
+                            skillConfig = skill,
+                            isUpgrade = true,
+                            targetLevel = nextLevel,
+                            targetCharacterID = characterID,
+                            characterName = characterName,
+                            positionIndex = character.positionIndex
+                        });
+                    }
                 }
             }
         }
         
-        if (availableOptions.Count == 0)
+        if (allAvailableOptions.Count == 0)
         {
-            if (showDebugInfo)
-            {
-                Debug.LogWarning("SkillSelectionManager: 没有可选择的技能或升级选项");
-            }
+            Debug.LogWarning("[SkillSelectionManager] 没有可选择的技能或升级选项");
             return;
         }
         
-        // ✅ 随机选择技能选项并预分配角色
-        int selectionCount = Mathf.Min(skillSelectionCount, availableOptions.Count);
-        selectionCount = Mathf.Min(selectionCount, aliveCharacters.Count);  // 不超过存活角色数
-        
-        // 打乱存活角色顺序（用于随机分配）
-        var shuffledCharacters = aliveCharacters.OrderBy(x => Random.value).ToList();
+        // ✅ 从所有选项中随机选择
+        int selectionCount = Mathf.Min(skillSelectionCount, allAvailableOptions.Count);
         
         // 使用 Fisher-Yates 洗牌算法进行随机选择
         for (int i = 0; i < selectionCount; i++)
         {
-            int randomIndex = Random.Range(i, availableOptions.Count);
+            int randomIndex = Random.Range(i, allAvailableOptions.Count);
             
             // 交换元素
-            SkillSelectionOption temp = availableOptions[i];
-            availableOptions[i] = availableOptions[randomIndex];
-            availableOptions[randomIndex] = temp;
-            
-            // ✅ 预分配目标角色
-            var targetCharacter = shuffledCharacters[i % shuffledCharacters.Count];
-            availableOptions[i].targetCharacterID = targetCharacter.characterID;
-            availableOptions[i].characterName = targetCharacter.characterData?.info.name ?? "未知角色";
-            availableOptions[i].positionIndex = targetCharacter.positionIndex;
+            SkillSelectionOption temp = allAvailableOptions[i];
+            allAvailableOptions[i] = allAvailableOptions[randomIndex];
+            allAvailableOptions[randomIndex] = temp;
             
             // 添加到选择列表
-            currentSelection.Add(availableOptions[i].skillConfig);
-            currentSelectionOptions.Add(availableOptions[i]); // 保存选项（包含等级和角色信息）
+            currentSelection.Add(allAvailableOptions[i].skillConfig);
+            currentSelectionOptions.Add(allAvailableOptions[i]);
         }
         
         if (showDebugInfo)
         {
-            Debug.Log($"[SkillSelectionManager] ✅ 从 {availableOptions.Count} 个可用选项中选择了 {currentSelection.Count} 个技能（已预分配角色）");
+            Debug.Log($"[SkillSelectionManager] ✅ 从 {allAvailableOptions.Count} 个可用选项中选择了 {currentSelection.Count} 个技能");
             foreach (var option in currentSelectionOptions)
             {
                 string optionType = option.isUpgrade ? $"升级到Lv{option.targetLevel}" : "新技能";
@@ -621,6 +618,11 @@ public class SkillSelectionManager : SingletonManager<SkillSelectionManager>
         {
             return currentSelectionOptions[index];
         }
+        
+        if (showDebugInfo)
+        {
+            Debug.LogError($"[SkillSelectionManager] 索引 {index} 超出范围（Count: {currentSelectionOptions.Count}），返回 null");
+        }
         return null;
     }
     
@@ -645,16 +647,16 @@ public class SkillSelectionManager : SingletonManager<SkillSelectionManager>
     }
     
     /// <summary>
-    /// 获取技能库中的技能数量
+    /// 检查技能数据库是否已配置
     /// </summary>
-    /// <returns>技能库中的技能数量</returns>
-    public int GetAvailableSkillCount()
+    /// <returns>技能数据库是否可用</returns>
+    public bool IsSkillDatabaseAvailable()
     {
-        return allAvailableSkills != null ? allAvailableSkills.Count : 0;
+        return skillDatabase != null;
     }
     
     /// <summary>
-    /// 手动刷新技能库（重新发现所有技能）
+    /// 手动刷新技能库（重新验证数据库引用）
     /// </summary>
     public void RefreshSkillLibrary()
     {
@@ -662,7 +664,7 @@ public class SkillSelectionManager : SingletonManager<SkillSelectionManager>
         
         if (showDebugInfo)
         {
-            Debug.Log($"SkillSelectionManager: 手动刷新技能库完成，加载 {allAvailableSkills.Count} 个技能");
+            Debug.Log($"[SkillSelectionManager] 技能库刷新完成");
         }
     }
     
@@ -704,28 +706,22 @@ public class SkillSelectionManager : SingletonManager<SkillSelectionManager>
     {
         Debug.Log($"SkillSelectionManager 技能库信息:\n" +
                   $"技能数据库: {(skillDatabase != null ? skillDatabase.name : "未配置")}\n" +
-                  $"技能库总数: {GetAvailableSkillCount()}\n" +
                   $"技能选择数量: {skillSelectionCount}\n" +
-                  $"技能选择激活: {isSkillSelectionActive}");
+                  $"技能选择激活: {isSkillSelectionActive}\n" +
+                  $"当前选项数: {currentSelectionOptions.Count}");
         
-        if (allAvailableSkills != null && allAvailableSkills.Count > 0)
+        if (currentSelectionOptions.Count > 0)
         {
-            Debug.Log("技能库内容:");
-            for (int i = 0; i < allAvailableSkills.Count; i++)
+            Debug.Log("当前技能选项:");
+            for (int i = 0; i < currentSelectionOptions.Count; i++)
             {
-                if (allAvailableSkills[i] != null)
-                {
-                    Debug.Log($"  - {i + 1}. {allAvailableSkills[i].skillName}");
-                }
-                else
-                {
-                    Debug.Log($"  - {i + 1}. [空技能]");
-                }
+                var opt = currentSelectionOptions[i];
+                Debug.Log($"  - {i + 1}. [{opt.positionIndex}号位 {opt.characterName}] {opt.skillConfig.skillName}");
             }
         }
         else
         {
-            Debug.Log("技能库为空");
+            Debug.Log("当前没有技能选项");
         }
     }
     
