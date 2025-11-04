@@ -75,11 +75,6 @@ public class CharacterSkillContainer : MonoBehaviour
         if (noSkillHint != null)
         {
             noSkillHint.SetActive(show);
-            Debug.Log($"[CharacterSkillContainer] {gameObject.name} NoSkillHint.SetActive({show})");
-        }
-        else
-        {
-            Debug.LogWarning($"[CharacterSkillContainer] {gameObject.name} noSkillHint 引用为空！请在 Inspector 中配置。");
         }
     }
     

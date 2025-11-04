@@ -18,6 +18,9 @@ public class ItemPickup : MonoBehaviour
     private bool isPickedUp = false; // 防止重复拾取（仅限当前实例）
     private string instanceId; // 实例唯一标识
     
+    // ✅ 拾取者对象缓存（用于获取角色ID）
+    private GameObject lastPickerObject;
+    
     #region Unity生命周期
     
     void Start()
@@ -80,6 +83,9 @@ public class ItemPickup : MonoBehaviour
     private void PickupItem(GameObject picker)
     {
         isPickedUp = true;
+        
+        // ✅ 缓存拾取者对象（用于获取角色ID）
+        lastPickerObject = picker;
         
         if (enableDebugLog)
         {
@@ -169,7 +175,7 @@ public class ItemPickup : MonoBehaviour
     }
     
     /// <summary>
-    /// 添加持续效果（如buff）
+    /// ✅ 添加持续效果（如buff）- 多角色系统适配
     /// </summary>
     private bool AddPersistentEffect()
     {
@@ -186,15 +192,52 @@ public class ItemPickup : MonoBehaviour
             return false;
         }
         
-        // 添加技能到管理器
-        skillManager.AddSkill(itemConfig.itemSkill);
+        // ✅ 获取拾取者的角色ID
+        string pickerCharacterID = GetPickerCharacterID();
+        if (string.IsNullOrEmpty(pickerCharacterID))
+        {
+            Debug.LogError($"[ItemPickup] 无法获取拾取者角色ID，无法添加持续效果！");
+            return false;
+        }
+        
+        // ✅ 添加技能到拾取者角色
+        skillManager.AddSkillToCharacter(pickerCharacterID, itemConfig.itemSkill);
         
         if (enableDebugLog)
         {
-            Debug.Log($"[ItemPickup] ✅ 持续效果添加成功: {itemConfig.itemSkill.skillName}");
+            Debug.Log($"[ItemPickup] ✅ 持续效果添加成功: {itemConfig.itemSkill.skillName} → 角色 {pickerCharacterID}");
         }
         
         return true;
+    }
+    
+    /// <summary>
+    /// ✅ 获取拾取者的角色ID（从缓存的碰撞物体中）
+    /// </summary>
+    private string GetPickerCharacterID()
+    {
+        if (lastPickerObject == null) return null;
+        
+        // 从拾取者的 PlayerBehavior 获取角色ID
+        var playerBehavior = lastPickerObject.GetComponent<PlayerBehavior>();
+        if (playerBehavior != null)
+        {
+            // 通过 GameSession 查找角色ID
+            var session = GameSession.GetOrCreateInstance();
+            if (session != null && session.HasTeamData())
+            {
+                var teamData = session.GetTeamData();
+                foreach (var character in teamData.characters)
+                {
+                    if (character.ballInstance == lastPickerObject)
+                    {
+                        return character.characterID;
+                    }
+                }
+            }
+        }
+        
+        return null;
     }
     
     #endregion

@@ -14,10 +14,6 @@ using UnityEngine;
 [DefaultExecutionOrder(ManagerExecutionOrder.SYSTEM)]
 public class SkillManager : SingletonManager<SkillManager>
 {
-    [Header("技能配置")]
-    [Tooltip("激活的技能配置列表")]
-    public List<SkillConfig> activeSkills = new List<SkillConfig>();
-    
     [Header("调试设置")]
     [Tooltip("是否显示调试日志")]
     public bool enableDebugLog = true;
@@ -102,33 +98,36 @@ public class SkillManager : SingletonManager<SkillManager>
         skillInstances.Clear();
         dropItemSkillNames.Clear();
         
-        // 为每个技能重新创建实例
-        foreach (var skillConfig in activeSkills)
+        // ✅ 多角色系统：从 characterSkills 重新创建技能实例
+        foreach (var kvp in characterSkills)
         {
-            if (skillConfig != null && skillConfig.IsValid())
+            foreach (var skillConfig in kvp.Value)
             {
-                var skillInstance = skillConfig.CreateSkillInstance();
-                if (skillInstance != null)
+                if (skillConfig != null && skillConfig.IsValid())
                 {
-                    skillInstances[skillConfig.skillName] = skillInstance;
-                    
-                    // 检查是否为DropItem类型技能（从当前等级获取）
-                    var currentLevelConfig = skillConfig.GetLevelConfig(skillInstance.currentLevel);
-                    if (currentLevelConfig?.effectConfig is DropItemEffectConfig)
+                    var skillInstance = skillConfig.CreateSkillInstance();
+                    if (skillInstance != null)
                     {
-                        dropItemSkillNames.Add(skillConfig.skillName);
+                        skillInstances[skillConfig.skillName] = skillInstance;
+                        
+                        // 检查是否为DropItem类型技能（从当前等级获取）
+                        var currentLevelConfig = skillConfig.GetLevelConfig(skillInstance.currentLevel);
+                        if (currentLevelConfig?.effectConfig is DropItemEffectConfig)
+                        {
+                            dropItemSkillNames.Add(skillConfig.skillName);
+                            if (enableDebugLog)
+                            {
+                                Debug.Log($"SkillManager: 重新注册DropItem技能 - {skillConfig.skillName} Lv{skillInstance.currentLevel} (归属: {kvp.Key})");
+                            }
+                        }
+                        
+                        // 通知技能状态管理器技能已激活
+                        skillStateManager?.AddActiveSkill(skillConfig.skillName);
+                        
                         if (enableDebugLog)
                         {
-                            Debug.Log($"SkillManager: 重新注册DropItem技能 - {skillConfig.skillName} Lv{skillInstance.currentLevel}");
+                            Debug.Log($"SkillManager: 重新初始化技能实例 - {skillConfig.skillName} (归属: {kvp.Key})");
                         }
-                    }
-                    
-                    // 通知技能状态管理器技能已激活
-                    skillStateManager?.AddActiveSkill(skillConfig.skillName);
-                    
-                    if (enableDebugLog)
-                    {
-                        Debug.Log($"SkillManager: 重新初始化技能实例 - {skillConfig.skillName}");
                     }
                 }
             }
@@ -427,12 +426,6 @@ public class SkillManager : SingletonManager<SkillManager>
             // 通知技能状态管理器
             skillStateManager?.AddActiveSkill(skillConfig.skillName);
             
-            // 添加到 activeSkills 以保持兼容性
-            if (!activeSkills.Contains(skillConfig))
-            {
-                activeSkills.Add(skillConfig);
-            }
-            
             if (enableDebugLog)
             {
                 Debug.Log($"[SkillManager] ✅ 添加技能 '{skillConfig.skillName}' 到角色 '{characterID}'");
@@ -553,53 +546,6 @@ public class SkillManager : SingletonManager<SkillManager>
     
     #endregion
     
-    #region 旧版全局技能管理（保留向后兼容）
-    
-    /// <summary>
-    /// 添加技能配置（旧版全局方法，建议使用 AddSkillToCharacter）
-    /// </summary>
-    [System.Obsolete("建议使用 AddSkillToCharacter(characterID, skillConfig) 替代", false)]
-    public void AddSkill(SkillConfig skillConfig)
-    {
-        if (skillConfig == null || !skillConfig.IsValid())
-        {
-            Debug.LogError("SkillManager: 无法添加无效的技能配置");
-            return;
-        }
-        
-        if (skillInstances.ContainsKey(skillConfig.skillName))
-        {
-            Debug.LogWarning($"SkillManager: 技能 {skillConfig.skillName} 已存在，跳过添加");
-            return;
-        }
-        
-        activeSkills.Add(skillConfig);
-        var skillInstance = skillConfig.CreateSkillInstance();
-        if (skillInstance != null)
-        {
-            skillInstances[skillConfig.skillName] = skillInstance;
-            
-            // 检查是否为DropItem类型技能，注册到dropItemSkillNames（从当前等级获取）
-            var currentLevelConfig = skillConfig.GetLevelConfig(skillInstance.currentLevel);
-            if (currentLevelConfig?.effectConfig is DropItemEffectConfig)
-            {
-                dropItemSkillNames.Add(skillConfig.skillName);
-                if (enableDebugLog)
-                {
-                    Debug.Log($"SkillManager: 注册DropItem技能 - {skillConfig.skillName} Lv{skillInstance.currentLevel}");
-                }
-            }
-            
-            // 通知技能状态管理器技能已激活
-            skillStateManager?.AddActiveSkill(skillConfig.skillName);
-            
-            if (enableDebugLog)
-            {
-                Debug.Log($"SkillManager: 添加技能 - {skillConfig.skillName}");
-            }
-        }
-    }
-    
     /// <summary>
     /// 移除技能配置
     /// </summary>
@@ -608,7 +554,6 @@ public class SkillManager : SingletonManager<SkillManager>
         if (skillInstances.ContainsKey(skillName))
         {
             skillInstances.Remove(skillName);
-            activeSkills.RemoveAll(config => config.skillName == skillName);
             
             // 通知技能状态管理器技能已失效
             skillStateManager?.RemoveActiveSkill(skillName);
@@ -634,9 +579,6 @@ public class SkillManager : SingletonManager<SkillManager>
     /// </summary>
     public void ResetState()
     {
-        // 清空技能列表
-        activeSkills.Clear();
-        
         // ✅ 多角色系统：清空角色技能映射
         characterSkills.Clear();
         skillOwnership.Clear();
@@ -845,8 +787,6 @@ public class SkillManager : SingletonManager<SkillManager>
         }
         Debug.Log("===================");
     }
-    
-    #endregion
     
     #endregion
 }

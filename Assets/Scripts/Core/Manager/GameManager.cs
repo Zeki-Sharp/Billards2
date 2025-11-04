@@ -71,7 +71,8 @@ public class GameManager : SingletonManager<GameManager>
         if (isGameActive && !isGamePaused && !isGameOver)
         {
             CheckWinCondition();
-            CheckLoseCondition();
+            // ✅ 多角色系统：失败条件由 DeathManager 检测并发布 OnGameOver 事件
+            // 不再需要每帧检查
         }
     }
     
@@ -112,15 +113,6 @@ public class GameManager : SingletonManager<GameManager>
         }
     }
     
-    void CheckLoseCondition()
-    {
-        // 检查失败条件：通过PlayerCore检查血量
-        PlayerBehavior playerBehavior = FindFirstObjectByType<PlayerBehavior>();
-        if (playerBehavior != null && playerBehavior.GetCurrentHealth() <= 0)
-        {
-            GameOver();
-        }
-    }
     
     void GameWin()
     {

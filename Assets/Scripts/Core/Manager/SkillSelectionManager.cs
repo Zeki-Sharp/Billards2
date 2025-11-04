@@ -381,9 +381,8 @@ public class SkillSelectionManager : SingletonManager<SkillSelectionManager>
             }
             else
             {
-                // 向后兼容：如果没有 TeamData，使用旧的全局方式
-                Debug.LogWarning("[SkillSelectionManager] TeamData 为空，使用旧的全局技能列表（不推荐）");
-                existingSkills.AddRange(skillManager.activeSkills);
+                // ❌ 多角色系统：必须有 TeamData
+                Debug.LogError("[SkillSelectionManager] TeamData 为空，无法获取现有技能列表！");
             }
         }
         

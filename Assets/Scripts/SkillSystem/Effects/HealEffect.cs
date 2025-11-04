@@ -147,15 +147,9 @@ public class HealEffect : IEffect
             }
             else
             {
-                // 向后兼容：如果没有指定角色ID，使用全局查找
-                Debug.LogWarning($"[{EffectName}] 未指定目标角色ID，使用全局查找（不推荐）");
-                targetPlayer = Object.FindFirstObjectByType<PlayerBehavior>();
-                
-                if (targetPlayer == null)
-                {
-                    Debug.LogWarning($"[{EffectName}] 未找到PlayerCore");
-                    return false;
-                }
+                // ❌ 多角色系统：必须指定目标角色ID
+                Debug.LogError($"[{EffectName}] 未指定目标角色ID，治疗效果无法执行！");
+                return false;
             }
         }
         

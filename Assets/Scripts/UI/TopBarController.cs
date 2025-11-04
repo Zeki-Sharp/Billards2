@@ -131,9 +131,6 @@ public class TopBarController : MonoBehaviour
         GameEventBus.OnCharacterHealed += OnCharacterHealed;
         GameEventBus.OnCharacterDied += OnCharacterDied;
         
-        // 旧版单角色事件（向后兼容）
-        GameEventBus.OnHealthChanged += OnHealthChanged;
-        
         // 订阅角色选择完成事件（显示TopBar）
         CharacterSelectionManager.OnStartGame += OnGameStarted;
         
@@ -153,8 +150,6 @@ public class TopBarController : MonoBehaviour
         GameEventBus.OnCharacterHealed -= OnCharacterHealed;
         GameEventBus.OnCharacterDied -= OnCharacterDied;
         
-        // 旧版事件
-        GameEventBus.OnHealthChanged -= OnHealthChanged;
         CharacterSelectionManager.OnStartGame -= OnGameStarted;
         GameEventBus.OnGameRestart -= OnGameRestart;
     }
@@ -266,14 +261,6 @@ public class TopBarController : MonoBehaviour
         
         // 隐藏TopBar
         SetVisible(false);
-    }
-    
-    /// <summary>
-    /// 血量变化事件处理
-    /// </summary>
-    void OnHealthChanged(HealthStateData healthData)
-    {
-        UpdateHealthDisplay(healthData.CurrentHealth, healthData.MaxHealth);
     }
     
     #endregion
