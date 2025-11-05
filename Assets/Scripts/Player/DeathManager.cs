@@ -115,21 +115,11 @@ public class DeathManager : SingletonManager<DeathManager>
     {
         if (ballObject == null) return;
         
-        // 禁用渲染
-        var spriteRenderer = ballObject.GetComponent<SpriteRenderer>();
-        if (spriteRenderer != null)
-        {
-            spriteRenderer.enabled = false;
-        }
+        // ✅ 对称敌人死亡逻辑：第1步 - 播放死亡特效（在禁用任何组件前）
+        Vector3 deathPosition = ballObject.transform.position;
+        ballObject.PublishDeath("PlayerDeath", deathPosition);
         
-        // 禁用碰撞器
-        var collider = ballObject.GetComponent<Collider2D>();
-        if (collider != null)
-        {
-            collider.enabled = false;
-        }
-        
-        // 禁用物理（停止移动）
+        // 第2步 - 禁用物理（停止移动）
         var rigidbody = ballObject.GetComponent<Rigidbody2D>();
         if (rigidbody != null)
         {
@@ -138,12 +128,23 @@ public class DeathManager : SingletonManager<DeathManager>
             rigidbody.simulated = false;  // 完全禁用物理模拟
         }
         
-        // 可选：播放死亡特效
-        // PlayDeathEffect(ballObject.transform.position);
+        // 第3步 - 禁用碰撞器（避免死亡后仍然碰撞）
+        var collider = ballObject.GetComponent<Collider2D>();
+        if (collider != null)
+        {
+            collider.enabled = false;
+        }
+        
+        // 注意：不立即禁用渲染，由 MMF_Player 特效控制
+        // MMF_Player 的 Feedbacks 会处理：
+        //   - MMF_Fade: 淡出效果
+        //   - MMF_Scale: 缩放动画
+        //   - MMF_SetActive: 延迟禁用对象（在特效播放完后）
+        // 这样玩家能看到完整的死亡动画
         
         if (showDebugLog)
         {
-            Debug.Log($"[DeathManager] 球体 '{ballObject.name}' 已禁用（渲染、碰撞、物理）");
+            Debug.Log($"[DeathManager] 球体 '{ballObject.name}' 死亡处理完成（特效已触发，物理已禁用）");
         }
     }
     
