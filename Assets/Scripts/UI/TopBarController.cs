@@ -31,13 +31,6 @@ public class TopBarController : MonoBehaviour
     [Tooltip("3号位角色的UI槽位组件")]
     [SerializeField] private CharacterSlotUI slot3;
     
-    // ⚠️ 旧版单角色UI（保留兼容，建议使用上面的槽位）
-    [Header("旧版单角色UI（不推荐）")]
-    [SerializeField] private Image playerPortrait;  // 角色头像
-    [SerializeField] private Image healthBarFill;
-    [SerializeField] private TextMeshProUGUI currentHealthText;
-    [SerializeField] private TextMeshProUGUI totalHealthText;
-    
     [Header("子组件")]
     [SerializeField] 
     [Tooltip("剩余回合数显示组件（独立管理）")]
@@ -345,99 +338,8 @@ public class TopBarController : MonoBehaviour
             Debug.Log("TopBarController: 游戏重启，隐藏TopBar并重置显示");
         }
         
-        // 重置角色头像
-        if (playerPortrait != null)
-        {
-            playerPortrait.sprite = null;
-            playerPortrait.enabled = false;
-        }
-        
-        // 重置血量显示为空（避免显示旧数据）
-        if (healthBarFill != null)
-        {
-            healthBarFill.fillAmount = 1f; // 重置为满血状态
-        }
-        
-        if (currentHealthText != null)
-        {
-            currentHealthText.text = "0";
-        }
-        
-        if (totalHealthText != null)
-        {
-            totalHealthText.text = "0";
-        }
-        
         // 隐藏TopBar
         SetVisible(false);
-    }
-    
-    #endregion
-    
-    #region 角色信息显示
-    
-    /// <summary>
-    /// 更新角色头像
-    /// </summary>
-    void UpdatePlayerPortrait(PlayerData character)
-    {
-        if (playerPortrait != null && character != null)
-        {
-            if (character.info.icon != null)
-            {
-                playerPortrait.sprite = character.info.icon;
-                playerPortrait.enabled = true;
-                playerPortrait.gameObject.SetActive(true);
-                
-                if (showDebugInfo)
-                {
-                    Debug.Log($"TopBarController: 角色头像已更新 - {character.info.name}");
-                }
-            }
-            else
-            {
-                playerPortrait.enabled = false;
-                Debug.LogWarning($"TopBarController: 角色 {character.info.name} 没有配置头像");
-            }
-        }
-        else if (playerPortrait == null)
-        {
-            Debug.LogWarning("TopBarController: playerPortrait 未配置！请在 Inspector 中拖入头像 Image 组件");
-        }
-    }
-    
-    #endregion
-    
-    #region 血量显示
-    
-    /// <summary>
-    /// 更新血量显示
-    /// </summary>
-    void UpdateHealthDisplay(float currentHealth, float maxHealth)
-    {
-        // 更新血条填充
-        if (healthBarFill != null)
-        {
-            float fillAmount = maxHealth > 0 ? currentHealth / maxHealth : 0;
-            healthBarFill.fillAmount = fillAmount;
-        }
-        
-        // 更新当前血量文本
-        if (currentHealthText != null)
-        {
-            currentHealthText.text = Mathf.CeilToInt(currentHealth).ToString();
-        }
-        
-        // 更新最大血量文本
-        if (totalHealthText != null)
-        {
-            totalHealthText.text = Mathf.CeilToInt(maxHealth).ToString();
-        }
-        
-        if (showDebugInfo)
-        {
-            Debug.Log($"TopBarController: 血量更新 - {currentHealth}/{maxHealth}");
-        }
     }
     
     #endregion
@@ -588,13 +490,10 @@ public class TopBarController : MonoBehaviour
         Debug.Log($"TopBarController 状态:\n" +
                  $"可见: {isVisible}\n" +
                  $"Canvas Group: {(canvasGroup != null ? "已配置" : "未配置")}\n" +
-                 $"Player Portrait: {(playerPortrait != null ? "已配置" : "未配置")}\n" +
-                 $"Health Bar Fill: {(healthBarFill != null ? "已配置" : "未配置")}\n" +
-                 $"Current Health Text: {(currentHealthText != null ? "已配置" : "未配置")}\n" +
-                 $"Total Health Text: {(totalHealthText != null ? "已配置" : "未配置")}\n" +
                  $"Turns Display: {(turnsDisplay != null ? "已配置" : "未配置")}\n" +
                  $"Skill Button: {(skillButton != null ? "已配置" : "未配置")}\n" +
-                 $"Settings Button: {(settingsButton != null ? "已配置" : "未配置")}");
+                 $"Settings Button: {(settingsButton != null ? "已配置" : "未配置")}\n" +
+                 $"Turn Indicator Text: {(turnIndicatorText != null ? "已配置" : "未配置")}");
     }
     
     #endregion
