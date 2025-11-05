@@ -22,7 +22,6 @@ public class CharacterSelectionUI : MonoBehaviour
     [SerializeField] private string instructionTextContent = "请选择你要使用的角色";
     [SerializeField] private string startGameButtonTextContent = "开始游戏";
     [SerializeField] private string noCharacterSelectedText = "请选择角色";
-    [SerializeField] private string characterSelectedTextFormat = "已选择: {0}";
     
     [Header("动画设置")]
     [SerializeField] private bool enableAnimations = true;

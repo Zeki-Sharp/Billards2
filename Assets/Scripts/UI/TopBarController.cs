@@ -48,6 +48,14 @@ public class TopBarController : MonoBehaviour
     [Tooltip("发射次数文本")]
     private TextMeshProUGUI launchCountText;
     
+    [Header("回合指示")]
+    [SerializeField]
+    [Tooltip("回合指示文本（显示玩家回合/敌人回合）")]
+    private TextMeshProUGUI turnIndicatorText;
+    
+    [SerializeField] private Color playerTurnColor = Color.cyan;
+    [SerializeField] private Color enemyTurnColor = Color.red;
+    
     [Header("按钮")]
     [SerializeField] private UnityEngine.UI.Button skillButton;      // 技能按钮（书本图标）
     [SerializeField] private UnityEngine.UI.Button settingsButton;   // 设置按钮（齿轮图标）
@@ -136,6 +144,9 @@ public class TopBarController : MonoBehaviour
         GameEventBus.OnCharacterHealed += OnCharacterHealed;
         GameEventBus.OnCharacterDied += OnCharacterDied;
         
+        // ✅ 订阅回合切换事件
+        GameEventBus.OnGameFlowStateChanged += OnGameFlowStateChanged;
+        
         // 订阅角色选择完成事件（显示TopBar）
         CharacterSelectionManager.OnStartGame += OnGameStarted;
         
@@ -160,6 +171,9 @@ public class TopBarController : MonoBehaviour
         GameEventBus.OnCharacterHealed -= OnCharacterHealed;
         GameEventBus.OnCharacterDied -= OnCharacterDied;
         
+        // ✅ 回合切换事件
+        GameEventBus.OnGameFlowStateChanged -= OnGameFlowStateChanged;
+        
         CharacterSelectionManager.OnStartGame -= OnGameStarted;
         GameEventBus.OnGameRestart -= OnGameRestart;
         
@@ -172,6 +186,39 @@ public class TopBarController : MonoBehaviour
     #endregion
     
     #region 事件处理
+    
+    #region 回合切换事件
+    
+    /// <summary>
+    /// 游戏流程状态变化事件处理
+    /// </summary>
+    void OnGameFlowStateChanged(GameFlowState newState)
+    {
+        if (turnIndicatorText == null) return;
+        
+        switch (newState)
+        {
+            case GameFlowState.PlayerPhase:
+                turnIndicatorText.text = "玩家回合";
+                turnIndicatorText.color = playerTurnColor;
+                if (showDebugInfo)
+                {
+                    Debug.Log("[TopBarController] 切换到玩家回合");
+                }
+                break;
+                
+            case GameFlowState.EnemyPhase:
+                turnIndicatorText.text = "敌人回合";
+                turnIndicatorText.color = enemyTurnColor;
+                if (showDebugInfo)
+                {
+                    Debug.Log("[TopBarController] 切换到敌人回合");
+                }
+                break;
+        }
+    }
+    
+    #endregion
     
     #region 发射次数事件
     

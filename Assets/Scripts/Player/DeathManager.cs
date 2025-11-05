@@ -117,7 +117,7 @@ public class DeathManager : SingletonManager<DeathManager>
         
         // ✅ 对称敌人死亡逻辑：第1步 - 播放死亡特效（在禁用任何组件前）
         Vector3 deathPosition = ballObject.transform.position;
-        ballObject.PublishDeath("PlayerDeath", deathPosition);
+        ballObject.PublishDeath("PlayerDeath", deathPosition, null);
         
         // 第2步 - 禁用物理（停止移动）
         var rigidbody = ballObject.GetComponent<Rigidbody2D>();
