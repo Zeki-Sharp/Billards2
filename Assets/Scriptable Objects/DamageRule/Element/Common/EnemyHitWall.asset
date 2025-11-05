@@ -10,26 +10,27 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5037b3c987730d84ab57aac9a2f5788e, type: 3}
-  m_Name: Collision
+  m_Name: EnemyHitWall
   m_EditorClassIdentifier: 
-  ruleName: "\u73A9\u5BB6\u78B0\u649E\u89C4\u5219"
-  priority: 10
+  ruleName: "\u654C\u4EBA\u649E\u5899\u4F24\u5BB3"
+  priority: 0
   triggerType: 0
-  sourceTag: Player
-  targetTag: Enemy
-  requireSourceState: CanAttack
+  sourceTag: Enemy
+  targetTag: Wall
+  requireSourceState: 
+  requireSourceNotState: 
   requireTargetState: 
   requireTargetNotState: IsTrap
-  minVelocity: 0
+  minVelocity: 0.1
   velocityMultiplier: 0
   rangeShape: 0
   attackRange: 0
-  baseDamage: 0
+  baseDamage: 10
   damageMultiplier: 1
   damageType: 0
   affectPlayer: 0
   affectEnemy: 1
-  selfDamage: 0
+  selfDamage: 1
   knockbackForce: 0
   stunDuration: 0
   canBeBlocked: 1

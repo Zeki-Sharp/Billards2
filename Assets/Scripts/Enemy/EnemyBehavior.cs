@@ -574,6 +574,7 @@ public class EnemyBehavior : MonoBehaviour, IDamageable
         Debug.Log($"EnemyBehavior {name}: 陷阱模式设置为 {(trapMode ? "开启" : "关闭")}");
     }
     
+    #region 死亡处理
     
     /// <summary>
     /// 敌人死亡
@@ -673,4 +674,6 @@ public class EnemyBehavior : MonoBehaviour, IDamageable
             attackRange.HideTelegraph();
         }
     }
+    
+    #endregion
 }

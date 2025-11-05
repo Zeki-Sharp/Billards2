@@ -14,6 +14,7 @@ public class CharacterSelectionUI : MonoBehaviour
     [SerializeField] private Button startGameButton;
     [SerializeField] private TextMeshProUGUI startGameButtonText;
     [SerializeField] private TextMeshProUGUI selectedCharacterText;
+    [SerializeField] private TextMeshProUGUI selectedCountText; // ✅ 新增：已选角色计数显示
     [SerializeField] private Button backButton;
     
     [Header("UI设置")]
@@ -124,6 +125,7 @@ public class CharacterSelectionUI : MonoBehaviour
     void SubscribeToEvents()
     {
         CharacterSelectionManager.OnCharacterSelected += OnCharacterSelected;
+        CharacterSelectionManager.OnCharacterDeselected += OnCharacterDeselected; // ✅ 订阅取消选择事件
         CharacterSelectionManager.OnStartGame += OnStartGame;
     }
     
@@ -133,6 +135,7 @@ public class CharacterSelectionUI : MonoBehaviour
     void UnsubscribeFromEvents()
     {
         CharacterSelectionManager.OnCharacterSelected -= OnCharacterSelected;
+        CharacterSelectionManager.OnCharacterDeselected -= OnCharacterDeselected; // ✅ 取消订阅
         CharacterSelectionManager.OnStartGame -= OnStartGame;
     }
     
@@ -143,17 +146,34 @@ public class CharacterSelectionUI : MonoBehaviour
     {
         if (characterData == null) return;
         
+        // ✅ 更新UI状态（包括已选计数）
+        UpdateUIState();
+        
         // 播放选择动画
         if (enableAnimations)
         {
             PlaySelectionAnimation();
         }
         
-        // 更新UI状态由Manager自动更新，这里只需要动画
-        
         if (showDebugInfo)
         {
             Debug.Log($"CharacterSelectionUI: 角色选择 [{positionIndex}号位] - {characterData.info.name}");
+        }
+    }
+    
+    /// <summary>
+    /// 角色取消选择事件处理
+    /// </summary>
+    void OnCharacterDeselected(PlayerData characterData)
+    {
+        if (characterData == null) return;
+        
+        // ✅ 更新UI状态（包括已选计数）
+        UpdateUIState();
+        
+        if (showDebugInfo)
+        {
+            Debug.Log($"CharacterSelectionUI: 取消选择 - {characterData.info.name}");
         }
     }
     
@@ -193,7 +213,13 @@ public class CharacterSelectionUI : MonoBehaviour
             startGameButton.interactable = hasSelectedFullTeam;
         }
         
-        // 更新选中角色文本
+        // ✅ 更新已选角色计数显示（独立的Text）
+        if (selectedCountText != null)
+        {
+            selectedCountText.text = $"已选角色：{selectedCount}/{TeamData.TEAM_SIZE}";
+        }
+        
+        // 更新选中角色文本（显示详细信息）
         if (selectedCharacterText != null)
         {
             if (selectedCount == 0)
@@ -204,7 +230,7 @@ public class CharacterSelectionUI : MonoBehaviour
             {
                 var selectedCharacters = selectionManager.GetSelectedCharacters();
                 string characterNames = string.Join(", ", selectedCharacters.ConvertAll(c => c.info.name));
-                selectedCharacterText.text = $"已选择 ({selectedCount}/{TeamData.TEAM_SIZE}): {characterNames}";
+                selectedCharacterText.text = $"已选择: {characterNames}";
             }
         }
     }
@@ -394,6 +420,7 @@ public class CharacterSelectionUI : MonoBehaviour
                  $"说明文本: {(instructionText != null ? "已配置" : "未配置")}\n" +
                  $"按钮容器: {(characterButtonsContainer != null ? "已配置" : "未配置")}\n" +
                  $"开始游戏按钮: {(startGameButton != null ? "已配置" : "未配置")}\n" +
+                 $"已选计数文本: {(selectedCountText != null ? "已配置" : "未配置")}\n" +
                  $"选中角色文本: {(selectedCharacterText != null ? "已配置" : "未配置")}");
     }
     

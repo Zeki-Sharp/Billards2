@@ -43,6 +43,9 @@ public class DamageRuleConfig : ScriptableObject
     [Tooltip("要求攻击者处于特定状态（Blackboard 键名，留空表示无要求）")]
     public string requireSourceState = "";
     
+    [Tooltip("要求攻击者不处于特定状态（Blackboard 键名，留空表示无要求）\n例如：CanAttack（排除主动攻击），用于反弹伤害")]
+    public string requireSourceNotState = "";
+    
     [Tooltip("要求目标处于特定状态（Blackboard 键名，留空表示无要求）")]
     public string requireTargetState = "";
     

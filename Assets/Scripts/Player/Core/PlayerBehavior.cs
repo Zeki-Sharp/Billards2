@@ -176,12 +176,18 @@ public class PlayerBehavior : MonoBehaviour, IDamageable
     {
         // 订阅新伤害系统事件
         GameEventBus.OnDamage += OnDamageReceived;
+        
+        // ✅ 订阅碰撞事件（处理三角形记录、充能力等特殊逻辑）
+        GameEventBus.OnCollision += OnCollisionHandler;
     }
     
     void OnDisable()
     {
         // 取消订阅伤害事件
         GameEventBus.OnDamage -= OnDamageReceived;
+        
+        // ✅ 取消订阅碰撞事件
+        GameEventBus.OnCollision -= OnCollisionHandler;
         
         // 注销实体
         var damageSystem = DamageSystem.Instance;
@@ -362,24 +368,31 @@ public class PlayerBehavior : MonoBehaviour, IDamageable
     
     #region 碰撞处理
     
-    void OnCollisionEnter2D(Collision2D collision)
+    /// <summary>
+    /// ✅ 碰撞事件处理（监听 BallPhysics 发布的碰撞事件）
+    /// 处理玩家特有的碰撞逻辑：三角形记录、撞墙充能力
+    /// </summary>
+    void OnCollisionHandler(CollisionEvent evt)
     {
-        // 【三角形攻击】记录第一次碰撞点（仅记录一次）
-        if (!hasRecordedFirstCollision && collision.contacts.Length > 0)
+        // 检查是否是自己的碰撞事件
+        if (evt.Source != gameObject)
         {
-            firstCollisionPoint = collision.contacts[0].point;
+            return;
+        }
+        
+        // 1. 【三角形攻击】记录第一次碰撞点（仅记录一次）
+        if (!hasRecordedFirstCollision)
+        {
+            firstCollisionPoint = evt.ContactPoint;
             hasRecordedFirstCollision = true;
         }
         
-        // 发布碰撞事件
-        GameEventBus.PublishCollision(CollisionEvent.Create(gameObject, collision));
-        
-        // 撞击边界时的处理（非伤害逻辑）
-        if (collision.gameObject.CompareTag("Wall"))
+        // 2. 撞墙充能力（玩家特有逻辑）
+        if (evt.Target.CompareTag("Wall"))
         {
             if (CanGetBoost())
             {
-                Vector2 wallDirection = ((Vector2)transform.position - collision.contacts[0].point).normalized;
+                Vector2 wallDirection = ((Vector2)transform.position - evt.ContactPoint).normalized;
                 Vector2 wallBoostForce = wallDirection * playerData.ballData.hitBoostForce * playerData.ballData.hitBoostMultiplier;
                 ballPhysics.ApplyForce(wallBoostForce);
             }

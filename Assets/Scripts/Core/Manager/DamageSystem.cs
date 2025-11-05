@@ -271,25 +271,61 @@ public class DamageSystem : SingletonManager<DamageSystem>
         
         totalCollisions++;
         
+        // ✅ 调试日志：碰撞事件
+        if (enableDebugLog)
+        {
+            Debug.Log($"[DamageSystem] 碰撞事件 - Source: {evt.Source?.name} (Tag: {evt.Source?.tag}), Target: {evt.Target?.name} (Tag: {evt.Target?.tag}), 速度: {evt.Velocity:F2}");
+        }
+        
         // 获取 source 的所有伤害规则（支持多 Profile）
         List<DamageRuleConfig> rules = GetAllDamageRules(evt.Source);
         
         if (rules.Count == 0)
         {
+            if (enableDebugLog)
+            {
+                Debug.Log($"[DamageSystem] {evt.Source?.name} 没有配置伤害规则");
+            }
             return;
         }
         
+        if (enableDebugLog)
+        {
+            Debug.Log($"[DamageSystem] {evt.Source?.name} 有 {rules.Count} 条规则");
+        }
+        
         // 遍历规则，检查匹配
+        int matchedCount = 0;
         foreach (var rule in rules)
         {
             if (rule.triggerType != DamageTriggerType.Collision) continue;
             
+            if (showRuleMatching)
+            {
+                Debug.Log($"[DamageSystem] 检查规则: {rule.ruleName}");
+            }
+            
             // 检查规则条件
             if (CheckRule(rule, evt.Source, evt.Target, evt.Velocity))
             {
+                matchedCount++;
+                if (showRuleMatching)
+                {
+                    Debug.Log($"[DamageSystem] ✅ 规则匹配: {rule.ruleName}");
+                }
+                
                 // 计算并发布伤害
                 ProcessDamage(rule, evt);
             }
+            else if (showRuleMatching)
+            {
+                Debug.Log($"[DamageSystem] ❌ 规则不匹配: {rule.ruleName}");
+            }
+        }
+        
+        if (enableDebugLog && matchedCount == 0)
+        {
+            Debug.Log($"[DamageSystem] 没有规则匹配此碰撞");
         }
     }
     
@@ -649,6 +685,26 @@ public class DamageSystem : SingletonManager<DamageSystem>
             if (!stateActive)
             {
                 return false;
+            }
+        }
+        
+        // 检查攻击者"不应处于"的状态要求（例如：排除主动攻击，实现反弹伤害）
+        if (!string.IsNullOrEmpty(rule.requireSourceNotState))
+        {
+            Blackboard blackboard = GetBlackboard(source);
+            
+            // 如果来源没有 Blackboard，认为没有该状态，规则通过
+            if (blackboard != null)
+            {
+                // 尝试获取状态值，如果状态存在且为 true，则规则不匹配
+                if (blackboard.TryGet<bool>(rule.requireSourceNotState, out bool stateValue) && stateValue)
+                {
+                    if (showRuleMatching)
+                    {
+                        Debug.Log($"[DamageSystem] 规则 '{rule.ruleName}' 不匹配：来源处于 '{rule.requireSourceNotState}' 状态");
+                    }
+                    return false;
+                }
             }
         }
         

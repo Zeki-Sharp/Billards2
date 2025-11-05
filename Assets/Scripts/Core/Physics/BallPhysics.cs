@@ -268,6 +268,13 @@ public class BallPhysics : MonoBehaviour
             }
         }
         
+        // ✅ 统一发布通用碰撞事件（供 DamageSystem、PlayerBehavior 等处理）
+        // 所有球体（玩家、敌人）的碰撞都通过这里统一发布
+        if (!isSimulationMode)
+        {
+            GameEventBus.PublishCollision(CollisionEvent.Create(gameObject, collision));
+        }
+        
         // 处理墙面碰撞的角度修正
         if (collision.gameObject.CompareTag("Wall"))
         {

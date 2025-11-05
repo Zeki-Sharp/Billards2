@@ -135,13 +135,6 @@ public class DeathManager : SingletonManager<DeathManager>
             collider.enabled = false;
         }
         
-        // 注意：不立即禁用渲染，由 MMF_Player 特效控制
-        // MMF_Player 的 Feedbacks 会处理：
-        //   - MMF_Fade: 淡出效果
-        //   - MMF_Scale: 缩放动画
-        //   - MMF_SetActive: 延迟禁用对象（在特效播放完后）
-        // 这样玩家能看到完整的死亡动画
-        
         if (showDebugLog)
         {
             Debug.Log($"[DeathManager] 球体 '{ballObject.name}' 死亡处理完成（特效已触发，物理已禁用）");
