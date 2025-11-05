@@ -10,58 +10,55 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: efc89a18d420d744da9894a9f7094350, type: 3}
-  m_Name: "\u51FB\u6740\u6389\u843D\u56DE\u8840"
+  m_Name: "\u70B9\u71C3_\u8303\u56F4\u653B\u51FB"
   m_EditorClassIdentifier: 
   info:
-    name: "\u51FB\u6740\u6389\u843D\u56DE\u8840\u7269"
+    name: "\u70B9\u71C3\u653B\u51FB"
     acronym: 
-    description: 1
+    description: "\u8303\u56F4\u653B\u51FB\u4F1A\u70B9\u71C3\u654C\u4EBA\uFF0C\u6301\u7EED\u9020\u6210\u4F24\u5BB3"
     icon: {fileID: 0}
     color: {r: 1, g: 1, b: 1, a: 1}
     skillType: 
     rarity: "\u666E\u901A"
-    tag: common
+    tag: "\u8303\u56F4\u653B\u51FB\u89D2\u8272"
   skillLevels:
   - level: 1
     isActive: 1
     levelDescription: 
     triggerConfig:
-      rid: 832807104352092237
+      rid: 6937075160391614727
     conditionConfig:
       logicType: 0
       conditions:
-      - rid: 832807104352092255
+      - rid: 6937075160391614725
     effectConfig:
-      rid: 832807104352092271
+      rid: 6937075160391614728
     resetConditionConfig:
-      rid: 832807104352092311
+      rid: 6937075160391614729
     effectRemovalConfig:
       rid: -2
   requiredSkills: []
-  isActive: 0
+  isActive: 1
   references:
     version: 2
     RefIds:
     - rid: -2
       type: {class: , ns: , asm: }
-    - rid: 832807104352092237
-      type: {class: KillTriggerConfig, ns: , asm: Assembly-CSharp}
-      data:
-        killTargetTag: Enemy
-    - rid: 832807104352092255
+    - rid: 6937075160391614725
       type: {class: CountConditionConfig, ns: , asm: Assembly-CSharp}
       data:
         requiredCount: 1
-    - rid: 832807104352092271
-      type: {class: DropItemEffectConfig, ns: , asm: Assembly-CSharp}
+    - rid: 6937075160391614727
+      type: {class: DamageTriggerConfig, ns: , asm: Assembly-CSharp}
       data:
-        dropItemConfig: {fileID: 11400000, guid: 944c44f9fdcc349488cc86c860e75199, type: 2}
-        dropChance: 1
-        dropRangeConfig:
-          dropRadius: 1
-          dropShape: 0
-          positionOffset: {x: 0, y: 0, z: 0}
-          coordinateSystemType: 0
-    - rid: 832807104352092311
-      type: {class: ImmediateResetConditionConfig, ns: , asm: Assembly-CSharp}
+        triggerTypes: 01000000
+        targetTag: Enemy
+        showDebugLog: 1
+    - rid: 6937075160391614728
+      type: {class: TurnBasedStatusEffectConfig, ns: , asm: Assembly-CSharp}
+      data:
+        statusData: {fileID: 11400000, guid: 915f6b6363e491d42a0f132df81a57f7, type: 2}
+        showDebugLog: 1
+    - rid: 6937075160391614729
+      type: {class: OnPhaseEndedResetConditionConfig, ns: , asm: Assembly-CSharp}
       data: 

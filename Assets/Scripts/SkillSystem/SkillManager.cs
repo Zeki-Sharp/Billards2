@@ -157,6 +157,7 @@ public class SkillManager : SingletonManager<SkillManager>
         GameEventBus.OnHealthChanged += HandleHealthChangedEvent;
         GameEventBus.OnGameFlowStateChanged += HandleGameFlowStateChanged;
         GameEventBus.OnBallStopped += HandleBallStoppedEvent;
+        GameEventBus.OnDamage += HandleDamageEvent;  // ✅ 新增：监听伤害事件（用于点燃等DoT技能）
         
         if (enableDebugLog)
         {
@@ -174,6 +175,7 @@ public class SkillManager : SingletonManager<SkillManager>
         GameEventBus.OnHealthChanged -= HandleHealthChangedEvent;
         GameEventBus.OnGameFlowStateChanged -= HandleGameFlowStateChanged;
         GameEventBus.OnBallStopped -= HandleBallStoppedEvent;
+        GameEventBus.OnDamage -= HandleDamageEvent;  // ✅ 新增：取消订阅伤害事件
         
         if (enableDebugLog)
         {
@@ -224,6 +226,25 @@ public class SkillManager : SingletonManager<SkillManager>
                 if (processed && enableDebugLog)
                 {
                     Debug.Log($"[SkillManager] 技能 {skillInstance.config.skillName} 被触发");
+                }
+            }
+        }
+    }
+    
+    /// <summary>
+    /// ✅ 新增：处理伤害事件（用于点燃等DoT技能）
+    /// </summary>
+    void HandleDamageEvent(DamageEvent damageEvent)
+    {
+        // 遍历所有技能实例，检查是否需要处理此伤害事件
+        foreach (var skillInstance in skillInstances.Values)
+        {
+            if (IsEventRelevantForSkill(damageEvent, skillInstance))
+            {
+                bool processed = skillInstance.ProcessEvent(damageEvent);
+                if (processed && enableDebugLog)
+                {
+                    Debug.Log($"[SkillManager] 技能 {skillInstance.config.skillName} 被触发（伤害事件）");
                 }
             }
         }
@@ -351,6 +372,11 @@ public class SkillManager : SingletonManager<SkillManager>
         {
             // MovingEndTrigger 只对球停止事件有效
             return eventData is BallPhysics;
+        }
+        else if (trigger is DamageTrigger)
+        {
+            // DamageTrigger 只对伤害事件有效
+            return eventData is DamageEvent;
         }
         else if (trigger is AlwaysTrueTrigger)
         {

@@ -95,6 +95,10 @@ public static class TriggerHelper
         {
             source = stoppedEvent.Source;
         }
+        else if (eventData is DamageEvent damageEvent)
+        {
+            source = damageEvent.Source;
+        }
         else if (eventData is BallPhysics ballPhysics)
         {
             source = ballPhysics.gameObject;
