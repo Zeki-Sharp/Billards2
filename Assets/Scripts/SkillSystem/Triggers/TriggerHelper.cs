@@ -101,13 +101,25 @@ public static class TriggerHelper
         }
         else if (eventData is DeathData deathData)
         {
-            // ⚠️ DeathData 目前没有击杀者信息，暂时不过滤击杀事件
-            // 所有角色的击杀都会触发（待扩展 DeathData 添加 Attacker 字段）
-            if (showDebugLog)
+            // ✅ DeathData 现在包含击杀者信息，可以正确过滤
+            // 优先使用缓存的 AttackerCharacterID，如果没有则从 Attacker 对象查询
+            if (!string.IsNullOrEmpty(deathData.AttackerCharacterID))
             {
-                Debug.LogWarning("[TriggerHelper] DeathData 缺少击杀者信息，击杀触发器暂不支持角色过滤");
+                source = deathData.Attacker;  // 使用击杀者作为来源
             }
-            return true;  // 不过滤，所有击杀都触发
+            else if (deathData.Attacker != null)
+            {
+                source = deathData.Attacker;  // 从击杀者对象查询角色ID
+            }
+            else
+            {
+                // 没有击杀者信息（可能是环境伤害、自杀等）
+                if (showDebugLog)
+                {
+                    Debug.LogWarning($"[TriggerHelper] DeathData 没有击杀者信息，事件不触发角色技能");
+                }
+                return false;
+            }
         }
         
         if (source == null)

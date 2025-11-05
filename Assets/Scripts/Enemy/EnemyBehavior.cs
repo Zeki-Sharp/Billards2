@@ -40,6 +40,9 @@ public class EnemyBehavior : MonoBehaviour, IDamageable
     [Header("血量管理")]
     private bool isDead = false;
     
+    // ✅ 多角色系统：缓存最后的攻击者（用于死亡事件）
+    private GameObject lastAttacker;
+    
     [Header("UI组件")]
     public HealthBar healthBar;  // 血条UI引用
     
@@ -537,6 +540,9 @@ public class EnemyBehavior : MonoBehaviour, IDamageable
             return;
         }
         
+        // ✅ 缓存攻击者（用于死亡事件）
+        lastAttacker = damageEvent.Source;
+        
         // 应用伤害（复用现有逻辑）
         TakeDamage(damageEvent.FinalDamage);
     }
@@ -621,8 +627,30 @@ public class EnemyBehavior : MonoBehaviour, IDamageable
         // 触发死亡特效
         Debug.Log($"EnemyBehavior {name}: 触发死亡特效事件");
         
-        // 使用缓存的位置发布死亡事件
-        gameObject.PublishDeath("EnemyDeath", cachedEnemyItemPosition);
+        // ✅ 获取击杀者角色ID（用于击杀技能）
+        string attackerCharacterID = null;
+        if (lastAttacker != null)
+        {
+            attackerCharacterID = TriggerHelper.GetCharacterID(lastAttacker);
+        }
+        
+        // 使用缓存的位置发布死亡事件（包含击杀者信息）
+        DeathData deathData = new DeathData
+        {
+            DeathType = "EnemyDeath",
+            Position = cachedEnemyItemPosition,
+            Direction = Vector3.zero,
+            DeadObject = gameObject,
+            DeadObjectTag = gameObject.tag,
+            DeathTime = Time.time,
+            Attacker = lastAttacker,
+            AttackerCharacterID = attackerCharacterID,
+            target = gameObject,
+            enemyType = EnemyType.Normal // 可根据需要扩展
+        };
+        GameEventBus.PublishDeath(deathData);
+        
+        Debug.Log($"EnemyBehavior {name}: 发布死亡事件，击杀者：{attackerCharacterID ?? "无"}");
         
         /// 禁用collider（解决碰撞问题）
         Collider2D[] colliders = GetComponentsInChildren<Collider2D>();

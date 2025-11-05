@@ -60,6 +60,9 @@ public struct AttackData
 /// <summary>
 /// 死亡数据 - 用于游戏逻辑层
 /// 包含死亡相关的所有信息，但不包含表现相关数据
+/// 
+/// 【多角色系统改进】：
+/// - 添加击杀者信息，用于击杀技能的角色识别
 /// </summary>
 public struct DeathData
 {
@@ -70,7 +73,11 @@ public struct DeathData
     public string DeadObjectTag;    // 死亡对象标签
     public float DeathTime;         // 死亡时间戳
     
-    // 新增字段，用于道具掉落系统
+    // ✅ 多角色系统：击杀者信息
+    public GameObject Attacker;            // 击杀者对象
+    public string AttackerCharacterID;     // 击杀者角色ID（可选缓存，用于快速过滤）
+    
+    // 道具掉落系统字段
     public GameObject target;       // 死亡目标（与DeadObject相同，保持兼容性）
     public EnemyType enemyType;     // 敌人类型
 }

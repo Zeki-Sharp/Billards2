@@ -38,6 +38,9 @@ public class PlayerBehavior : MonoBehaviour, IDamageable
     // 核心组件
     private BallPhysics ballPhysics;
     
+    // ✅ 多角色系统：缓存最后的攻击者（用于死亡事件）
+    private GameObject lastAttacker;
+    
     // 【三角形攻击】轨迹记录
     private Vector2? launchPosition;          // 发射起点
     private Vector2? firstCollisionPoint;     // 第一碰撞点
@@ -595,10 +598,33 @@ public class PlayerBehavior : MonoBehaviour, IDamageable
             return;
         }
         
+        // ✅ 获取击杀者角色ID（用于击杀技能）
+        string attackerCharacterID = null;
+        if (lastAttacker != null)
+        {
+            attackerCharacterID = TriggerHelper.GetCharacterID(lastAttacker);
+        }
+        
         // 发布角色死亡事件（DeathManager 会监听并处理）
         GameEventBus.PublishCharacterDied(characterID);
         
-        Debug.LogWarning($"[PlayerBehavior] ✅ 已发布角色死亡事件：{characterID}");
+        // ✅ 发布通用死亡事件（用于击杀技能触发）
+        DeathData deathData = new DeathData
+        {
+            DeathType = "PlayerDeath",
+            Position = transform.position,
+            Direction = Vector3.zero,
+            DeadObject = gameObject,
+            DeadObjectTag = gameObject.tag,
+            DeathTime = Time.time,
+            Attacker = lastAttacker,
+            AttackerCharacterID = attackerCharacterID,
+            target = gameObject,
+            enemyType = EnemyType.Normal // 玩家死亡不适用，使用默认值
+        };
+        GameEventBus.PublishDeath(deathData);
+        
+        Debug.LogWarning($"[PlayerBehavior] ✅ 已发布角色死亡事件：{characterID}, 击杀者：{attackerCharacterID ?? "无"}");
         
         // 死亡的具体处理（禁用球体、更新TeamData等）由 DeathManager 统一处理
     }
@@ -709,6 +735,9 @@ public class PlayerBehavior : MonoBehaviour, IDamageable
         {
             return;
         }
+        
+        // ✅ 缓存攻击者（用于死亡事件）
+        lastAttacker = damageEvent.Source;
         
         // 应用伤害（复用现有逻辑）
         ApplyDamage(damageEvent.FinalDamage);

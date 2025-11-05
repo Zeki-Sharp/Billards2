@@ -688,12 +688,24 @@ public static class GameEventBus
     #region 简化工厂方法
     
     /// <summary>
-    /// 发布简单死亡事件
+    /// 发布简单死亡事件（向后兼容，无击杀者信息）
     /// </summary>
     /// <param name="deathType">死亡类型</param>
     /// <param name="position">死亡位置</param>
     /// <param name="deadObject">死亡对象</param>
     public static void PublishSimpleDeath(string deathType, Vector3 position, GameObject deadObject)
+    {
+        PublishSimpleDeath(deathType, position, deadObject, null);
+    }
+    
+    /// <summary>
+    /// 发布简单死亡事件（带击杀者信息）
+    /// </summary>
+    /// <param name="deathType">死亡类型</param>
+    /// <param name="position">死亡位置</param>
+    /// <param name="deadObject">死亡对象</param>
+    /// <param name="attacker">击杀者对象</param>
+    public static void PublishSimpleDeath(string deathType, Vector3 position, GameObject deadObject, GameObject attacker)
     {
         // 获取敌人类型
         EnemyType enemyType = EnemyType.Normal; // 默认为普通敌人
@@ -707,6 +719,13 @@ public static class GameEventBus
             }
         }
         
+        // ✅ 获取击杀者角色ID
+        string attackerCharacterID = null;
+        if (attacker != null)
+        {
+            attackerCharacterID = TriggerHelper.GetCharacterID(attacker);
+        }
+        
         var deathData = new DeathData
         {
             DeathType = deathType,
@@ -715,7 +734,8 @@ public static class GameEventBus
             DeadObject = deadObject,
             DeadObjectTag = deadObject?.tag ?? "",
             DeathTime = Time.time,
-            // 新增字段
+            Attacker = attacker,
+            AttackerCharacterID = attackerCharacterID,
             target = deadObject,
             enemyType = enemyType
         };

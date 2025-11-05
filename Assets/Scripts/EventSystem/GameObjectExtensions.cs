@@ -7,14 +7,26 @@ using UnityEngine;
 public static class GameObjectExtensions
 {
     /// <summary>
-    /// 发布死亡事件
+    /// 发布死亡事件（向后兼容，无击杀者信息）
     /// </summary>
     /// <param name="deadObject">死亡对象</param>
     /// <param name="deathType">死亡类型</param>
     /// <param name="position">死亡位置</param>
     public static void PublishDeath(this GameObject deadObject, string deathType, Vector3 position)
     {
-        GameEventBus.PublishSimpleDeath(deathType, position, deadObject);
+        GameEventBus.PublishSimpleDeath(deathType, position, deadObject, null);
+    }
+    
+    /// <summary>
+    /// 发布死亡事件（带击杀者信息）
+    /// </summary>
+    /// <param name="deadObject">死亡对象</param>
+    /// <param name="deathType">死亡类型</param>
+    /// <param name="position">死亡位置</param>
+    /// <param name="attacker">击杀者对象</param>
+    public static void PublishDeath(this GameObject deadObject, string deathType, Vector3 position, GameObject attacker)
+    {
+        GameEventBus.PublishSimpleDeath(deathType, position, deadObject, attacker);
     }
     
     /// <summary>
