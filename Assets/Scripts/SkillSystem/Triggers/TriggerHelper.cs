@@ -8,6 +8,14 @@ public static class TriggerHelper
 {
     /// <summary>
     /// 从 GameObject 获取角色ID
+    /// 
+    /// 【查询策略】：
+    /// 1. 优先从 Player 组件读取（O(1)，快速）
+    /// 2. Fallback：遍历 TeamData（O(n)，兼容性）
+    /// 
+    /// 【设计说明】：
+    /// - Player 组件是场景对象层的唯一ID持有者
+    /// - 统一通过此方法查询，避免直接遍历 TeamData
     /// </summary>
     /// <param name="gameObject">游戏对象</param>
     /// <returns>角色ID，如果未找到返回 null</returns>
@@ -15,27 +23,25 @@ public static class TriggerHelper
     {
         if (gameObject == null) return null;
         
-        // 方法1：从 Player 组件获取
-        var player = gameObject.GetComponent<Player>();
-        if (player != null && player.playerData != null)
+        // 策略1：优先从 Player 组件直接读取（高效：O(1)）
+        Player player = gameObject.GetComponent<Player>();
+        if (player != null && !string.IsNullOrEmpty(player.CharacterID))
         {
-            // 从 GameSession 的 TeamData 中查找匹配的角色ID
-            var teamData = GameSession.Instance?.GetTeamData();
-            if (teamData != null)
+            return player.CharacterID;
+        }
+        
+        // 策略2：Fallback - 通过 GameSession.TeamData 查找（兼容旧代码：O(n)）
+        var teamData = GameSession.Instance?.GetTeamData();
+        if (teamData != null)
+        {
+            foreach (var character in teamData.characters)
             {
-                foreach (var character in teamData.characters)
+                if (character.ballInstance == gameObject)
                 {
-                    if (character.ballInstance == gameObject)
-                    {
-                        return character.characterID;
-                    }
+                    return character.characterID;
                 }
             }
         }
-        
-        // 方法2：如果有 CharacterIdentity 组件（未来可以添加）
-        // var identity = gameObject.GetComponent<CharacterIdentity>();
-        // if (identity != null) return identity.CharacterID;
         
         return null;
     }

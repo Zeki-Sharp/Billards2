@@ -26,6 +26,19 @@ using DeepSpaceLabs.SAM;
 /// </summary>
 public class Player : MonoBehaviour
 {
+    [Header("角色标识")]
+    [SerializeField] private string characterID = "";
+    
+    /// <summary>
+    /// 获取角色ID
+    /// 
+    /// 【设计说明】：
+    /// - Player 组件是场景对象层的唯一ID持有者
+    /// - 所有从 GameObject 查 characterID 的操作应优先通过此属性
+    /// - 由 PlayerSpawner 在生成时设置
+    /// </summary>
+    public string CharacterID => characterID;
+    
     [Header("数据设置")]
     public PlayerData playerData; // 玩家配置数据
     
@@ -318,6 +331,28 @@ public class Player : MonoBehaviour
     public PlayerData GetPlayerData()
     {
         return playerData;
+    }
+    
+    /// <summary>
+    /// 设置角色ID
+    /// 
+    /// 【调用时机】：由 PlayerSpawner 在生成角色时调用
+    /// 【验证】：确保ID不为空
+    /// </summary>
+    public void SetCharacterID(string id)
+    {
+        if (string.IsNullOrEmpty(id))
+        {
+            Debug.LogError("Player: 尝试设置空的角色ID！");
+            return;
+        }
+        
+        characterID = id;
+        
+        if (showDebugInfo)
+        {
+            Debug.Log($"Player: 设置角色ID = {id}");
+        }
     }
     
     /// <summary>

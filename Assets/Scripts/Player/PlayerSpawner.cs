@@ -169,10 +169,11 @@ public class PlayerSpawner : MonoBehaviour
         // 设置球体名称（便于调试）
         ball.name = $"Player_{character.positionIndex}_{character.characterData.info.name}";
         
-        // 获取 Player 组件并设置数据
+        // 获取 Player 组件并设置数据和ID
         Player player = ball.GetComponent<Player>();
         if (player != null)
         {
+            player.SetCharacterID(character.characterID);
             player.SetPlayerData(character.characterData);
         }
         else
