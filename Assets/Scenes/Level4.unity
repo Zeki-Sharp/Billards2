@@ -9787,7 +9787,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3c4333f109bb5af459406e60f828e8f6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  levelConfig: {fileID: 11400000, guid: ba504b0d527f12a4a8e42a143cc0222f, type: 2}
+  levelConfig: {fileID: 11400000, guid: 31afce0bc8abb9744bde20f67d8eb81f, type: 2}
   currentWaveIndex: 0
   showDebugInfo: 1
 --- !u!4 &1568426789

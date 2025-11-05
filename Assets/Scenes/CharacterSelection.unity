@@ -119,28 +119,6 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
---- !u!114 &247500638 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 7223637764640356983, guid: a5df6d7f680596340b0c0f463602dbaf, type: 3}
-  m_PrefabInstance: {fileID: 6495772989107903221}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
---- !u!114 &320918696 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 3429197496002112793, guid: a5df6d7f680596340b0c0f463602dbaf, type: 3}
-  m_PrefabInstance: {fileID: 6495772989107903221}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!1 &451633022
 GameObject:
   m_ObjectHideFlags: 0
@@ -341,11 +319,6 @@ RectTransform:
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 3748192999519781910, guid: 99549815ea855ec49b9c9cf1fc1f1dfa, type: 3}
   m_PrefabInstance: {fileID: 527629962744692031}
-  m_PrefabAsset: {fileID: 0}
---- !u!224 &737301689 stripped
-RectTransform:
-  m_CorrespondingSourceObject: {fileID: 2781766955409632584, guid: a5df6d7f680596340b0c0f463602dbaf, type: 3}
-  m_PrefabInstance: {fileID: 6495772989107903221}
   m_PrefabAsset: {fileID: 0}
 --- !u!1 &893274483
 GameObject:
@@ -573,109 +546,6 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 8084716891869683436, guid: a5df6d7f680596340b0c0f463602dbaf, type: 3}
   m_PrefabInstance: {fileID: 6495772989107903221}
   m_PrefabAsset: {fileID: 0}
---- !u!1 &1754439842
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1754439845}
-  - component: {fileID: 1754439844}
-  - component: {fileID: 1754439843}
-  m_Layer: 0
-  m_Name: CharacterSelection
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!114 &1754439843
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1754439842}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 92b5ccfe66a78d54f85ca70f80703da3, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  titleText: {fileID: 1931349599}
-  instructionText: {fileID: 0}
-  characterButtonsContainer: {fileID: 737301689}
-  startGameButton: {fileID: 247500638}
-  startGameButtonText: {fileID: 320918696}
-  selectedCharacterText: {fileID: 0}
-  selectedCountText: {fileID: 0}
-  backButton: {fileID: 0}
-  titleTextContent: "\u9009\u62E9\u89D2\u8272"
-  instructionTextContent: "\u8BF7\u9009\u62E9\u4F60\u8981\u4F7F\u7528\u7684\u89D2\u8272"
-  startGameButtonTextContent: "\u5F00\u59CB\u6E38\u620F"
-  noCharacterSelectedText: "\u8BF7\u9009\u62E9\u89D2\u8272"
-  characterSelectedTextFormat: "\u5DF2\u9009\u62E9: {0}"
-  enableAnimations: 1
-  buttonAnimationDuration: 0.3
-  buttonAnimationCurve:
-    serializedVersion: 2
-    m_Curve:
-    - serializedVersion: 3
-      time: 0
-      value: 0
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0
-      outWeight: 0
-    - serializedVersion: 3
-      time: 1
-      value: 1
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0
-      outWeight: 0
-    m_PreInfinity: 2
-    m_PostInfinity: 2
-    m_RotationOrder: 4
-  showDebugInfo: 1
---- !u!114 &1754439844
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1754439842}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 5407a909b06995f449a479c5bea0d560, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  selectionData: {fileID: 11400000, guid: 7b4a075286903f14f9f59c4afe2885e2, type: 2}
-  characterButtonPrefab: {fileID: 2735802933560132947, guid: 4c1d6c99c8d502a4293f850debb61e87, type: 3}
-  buttonContainer: {fileID: 737301689}
-  startGameButton: {fileID: 247500638}
-  selectedCharacterText: {fileID: 0}
-  showDebugInfo: 1
---- !u!4 &1754439845
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1754439842}
-  serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 2158.3352, y: 802.19415, z: 1.3191273}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1881173264
 GameObject:
   m_ObjectHideFlags: 0
@@ -707,17 +577,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1931349599 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 1264333194364062439, guid: a5df6d7f680596340b0c0f463602dbaf, type: 3}
-  m_PrefabInstance: {fileID: 6495772989107903221}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!1 &1947432006
 GameObject:
   m_ObjectHideFlags: 0
@@ -1329,89 +1188,8 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents:
-    - targetCorrespondingSourceObject: {fileID: 6824372971652058527, guid: a5df6d7f680596340b0c0f463602dbaf, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 6495772989107903224}
-    - targetCorrespondingSourceObject: {fileID: 6824372971652058527, guid: a5df6d7f680596340b0c0f463602dbaf, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 6495772989107903223}
+    m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: a5df6d7f680596340b0c0f463602dbaf, type: 3}
---- !u!1 &6495772989107903222 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 6824372971652058527, guid: a5df6d7f680596340b0c0f463602dbaf, type: 3}
-  m_PrefabInstance: {fileID: 6495772989107903221}
-  m_PrefabAsset: {fileID: 0}
---- !u!114 &6495772989107903223
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6495772989107903222}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 92b5ccfe66a78d54f85ca70f80703da3, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  titleText: {fileID: 1931349599}
-  instructionText: {fileID: 0}
-  characterButtonsContainer: {fileID: 737301689}
-  startGameButton: {fileID: 247500638}
-  startGameButtonText: {fileID: 0}
-  selectedCharacterText: {fileID: 0}
-  selectedCountText: {fileID: 0}
-  backButton: {fileID: 0}
-  titleTextContent: "\u9009\u62E9\u89D2\u8272"
-  instructionTextContent: "\u8BF7\u9009\u62E9\u4F60\u8981\u4F7F\u7528\u7684\u89D2\u8272"
-  startGameButtonTextContent: "\u5F00\u59CB\u6E38\u620F"
-  noCharacterSelectedText: "\u8BF7\u9009\u62E9\u89D2\u8272"
-  characterSelectedTextFormat: "\u5DF2\u9009\u62E9: {0}"
-  enableAnimations: 1
-  buttonAnimationDuration: 0.3
-  buttonAnimationCurve:
-    serializedVersion: 2
-    m_Curve:
-    - serializedVersion: 3
-      time: 0
-      value: 0
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0
-      outWeight: 0
-    - serializedVersion: 3
-      time: 1
-      value: 1
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0
-      outWeight: 0
-    m_PreInfinity: 2
-    m_PostInfinity: 2
-    m_RotationOrder: 4
-  showDebugInfo: 1
---- !u!114 &6495772989107903224
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6495772989107903222}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 5407a909b06995f449a479c5bea0d560, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  selectionData: {fileID: 11400000, guid: 7b4a075286903f14f9f59c4afe2885e2, type: 2}
-  characterButtonPrefab: {fileID: 2735802933560132947, guid: 4c1d6c99c8d502a4293f850debb61e87, type: 3}
-  buttonContainer: {fileID: 737301689}
-  startGameButton: {fileID: 247500638}
-  selectedCharacterText: {fileID: 0}
-  showDebugInfo: 1
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
@@ -1420,7 +1198,6 @@ SceneRoots:
   - {fileID: 2056407284181519252}
   - {fileID: 1444439767}
   - {fileID: 893274485}
-  - {fileID: 1754439845}
   - {fileID: 1078379049}
   - {fileID: 578658536}
   - {fileID: 465744419}

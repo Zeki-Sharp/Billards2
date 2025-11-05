@@ -13,16 +13,11 @@ MonoBehaviour:
   m_Name: Player_Physics
   m_EditorClassIdentifier: 
   mass: 0.5
-  radius: 0.35
+  maxSpeed: 30
+  stopThreshold: 1
   bounceDamping: 1
   friction: 0
-  stopThreshold: 1
   linearDamping: 0.1
-  isWhiteBall: 1
-  maxSpeed: 50
-  hitBoostForce: 1
-  hitBoostMultiplier: 1
-  boostSpeedThreshold: 20
   speedToBounciness:
     serializedVersion: 2
     m_Curve:
@@ -94,8 +89,11 @@ MonoBehaviour:
   minDamping: 0.3
   maxDamping: 1
   enableTimeDamping: 1
-  timeDampingRate: 0.8
-  maxTimeDamping: 2.4
   timeDampingStartTime: 1
+  timeDampingRate: 1.2
+  maxTimeDamping: 10
+  hitBoostForce: 1
+  hitBoostMultiplier: 1
+  boostSpeedThreshold: 20
   updateThreshold: 0.05
   updateInterval: 0.02

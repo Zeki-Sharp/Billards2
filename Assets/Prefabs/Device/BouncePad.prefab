@@ -536,7 +536,9 @@ MonoBehaviour:
   affectEnemy: 0
   hazardEffect: {fileID: 266202345133936180}
   showDebugInfo: 0
-  bounceMultiplier: 2
+  bounceMultiplier: 1.8
+  minBounceSpeed: 8
+  maxBounceSpeed: 16
 --- !u!222 &8286702370002448216
 CanvasRenderer:
   m_ObjectHideFlags: 0

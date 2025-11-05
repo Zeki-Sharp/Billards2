@@ -27,8 +27,19 @@ public class BouncePad : BaseLevelHazard
     [Tooltip("反弹速度倍数（1.0 = 正常，2.0 = 双倍反弹力）")]
     [SerializeField] private float bounceMultiplier = 1.5f;
     
+    [Tooltip("最小反弹速度（保证轻撞也有好反馈）")]
+    [SerializeField] private float minBounceSpeed = 8f;
+    
+    [Tooltip("最大反弹速度（防止重撞失控）")]
+    [SerializeField] private float maxBounceSpeed = 15f;
+    
     /// <summary>
     /// 弹簧被触发 - 增强反弹速度
+    /// 
+    /// 【改进机制】：
+    /// 1. 先倍增速度（保留物理感）
+    /// 2. 保证最小反弹速度（轻撞也有好反馈）
+    /// 3. 限制最大反弹速度（防止重撞失控）
     /// </summary>
     protected override void OnHazardTriggered(GameObject ball)
     {
@@ -42,19 +53,34 @@ public class BouncePad : BaseLevelHazard
         
         // 获取当前速度（物理引擎已经处理了反弹）
         Vector2 currentVelocity = physics.GetVelocity();
+        float originalSpeed = currentVelocity.magnitude;
+        Vector2 direction = currentVelocity.normalized;
         
-        // 在反弹方向上增强速度（不改变方向）
-        Vector2 enhancedVelocity = currentVelocity * bounceMultiplier;
+        // 1. 在反弹方向上增强速度（倍增）
+        float boostedSpeed = originalSpeed * bounceMultiplier;
+        
+        // 2. 应用速度范围限制
+        float finalSpeed = Mathf.Clamp(boostedSpeed, minBounceSpeed, maxBounceSpeed);
+        
+        // 3. 计算最终速度向量
+        Vector2 finalVelocity = direction * finalSpeed;
         
         if (showDebugInfo)
         {
+            string limitType = "";
+            if (boostedSpeed < minBounceSpeed)
+                limitType = " [最小限制]";
+            else if (boostedSpeed > maxBounceSpeed)
+                limitType = " [最大限制]";
+            
             Debug.Log($"[BouncePad] {ball.name} 触发弹簧！" +
-                    $"原速度: {currentVelocity.magnitude:F2}, " +
-                    $"增强后: {enhancedVelocity.magnitude:F2} (x{bounceMultiplier})");
+                    $"原速度: {originalSpeed:F2}, " +
+                    $"倍增后: {boostedSpeed:F2} (x{bounceMultiplier}), " +
+                    $"最终速度: {finalSpeed:F2}{limitType}");
         }
         
-        // 设置增强后的速度
-        physics.SetVelocity(enhancedVelocity);
+        // 设置最终速度
+        physics.SetVelocity(finalVelocity);
     }
     
     #region Gizmo 可视化
