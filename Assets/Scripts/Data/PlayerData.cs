@@ -5,13 +5,6 @@ using System.Collections.Generic;
 [CreateAssetMenu(fileName = "PlayerData", menuName = "Game/Player Data")]
 public class PlayerData : ScriptableObject
 {
-    public enum AttackMode
-    {
-        Collision,    // 碰撞攻击
-        Area,         // 范围攻击
-        Triangle      // 三角形攻击（新增）
-    }
-    
     [BoxGroup("显示信息")]
     [LabelText("玩家信息")]
     [Tooltip("显示信息（名称、图标、描述等）")]
@@ -37,30 +30,17 @@ public class PlayerData : ScriptableObject
     public float baseMaxHealth = 100f;
     
     [BoxGroup("战斗配置")]
-    [LabelText("攻击方式")]
-    [Tooltip("选择玩家的攻击方式")]
-    public AttackMode attackMode = AttackMode.Collision;
-    
-    [BoxGroup("战斗配置")]
-    [ShowIf("attackMode", AttackMode.Collision)]
-    [LabelText("碰撞伤害")]
-    [Tooltip("碰撞攻击的伤害值")]
+    [LabelText("攻击力")]
+    [Tooltip("角色的基础攻击力，作为所有伤害计算的基础值")]
     [MinValue(0.1f)]
-    public float collisionDamage = 10f;
+    public float attackPower = 10f;
     
     [BoxGroup("战斗配置")]
-    [ShowIf("attackMode", AttackMode.Area)]
-    [LabelText("范围伤害")]
-    [Tooltip("范围攻击的伤害值")]
-    [MinValue(0.1f)]
-    public float areaDamage = 15f;
-    
-    [BoxGroup("战斗配置")]
-    [ShowIf("attackMode", AttackMode.Area)]
     [LabelText("攻击范围")]
-    [Tooltip("范围攻击的半径")]
+    [Tooltip("范围攻击的半径（仅用于范围攻击规则）")]
     [MinValue(0.1f)]
     public float areaRadius = 2f;
+    
     
     [BoxGroup("新伤害系统配置")]
     [LabelText("伤害配置列表")]
@@ -72,12 +52,6 @@ public class PlayerData : ScriptableObject
     /// 向后兼容：返回第一个 Profile
     /// </summary>
     public DamageProfile damageProfile => damageProfiles != null && damageProfiles.Count > 0 ? damageProfiles[0] : null;
-    
-    [BoxGroup("战斗配置")]
-    [ShowIf("attackMode", AttackMode.Area)]
-    [LabelText("敌人层遮罩")]
-    [Tooltip("范围攻击检测的敌人图层")]
-    public LayerMask enemyLayerMask = -1;
     
     [BoxGroup("移动配置")]
     [LabelText("基础微调移动速度")]

@@ -212,7 +212,7 @@ public class CharacterButton : MonoBehaviour
             Debug.Log($"角色信息:\n" +
                      $"名称: {characterData.info.name}\n" +
                      $"描述: {characterData.info.description}\n" +
-                     $"攻击模式: {characterData.attackMode}\n" +
+                     $"攻击力: {characterData.attackPower}\n" +
                      $"选中状态: {isSelected}");
         }
         else

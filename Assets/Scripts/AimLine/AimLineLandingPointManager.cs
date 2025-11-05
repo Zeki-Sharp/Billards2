@@ -434,16 +434,40 @@ public class AimLineLandingPointManager : MonoBehaviour
             return false;
         }
         
-        // ✅ 范围攻击角色显示落点范围圈（需要看到攻击半径），撞击和三角形角色不显示
-        PlayerData.AttackMode mode = player.playerData.attackMode;
-        bool shouldShow = (mode == PlayerData.AttackMode.Area);
+        // ✅ 检查角色是否配置了 Stopped 圆形范围攻击规则
+        bool shouldShow = HasStoppedCircleRangeAttack(player.playerData);
         
         if (showDebugInfo)
         {
-            Debug.Log($"[AimLineLandingPointManager] 攻击模式: {mode}, 是否显示落点范围圈: {shouldShow}");
+            Debug.Log($"[AimLineLandingPointManager] 是否有范围攻击: {shouldShow}");
         }
         
         return shouldShow;
+    }
+    
+    /// <summary>
+    /// 检查角色是否配置了 Stopped 圆形范围攻击规则
+    /// </summary>
+    bool HasStoppedCircleRangeAttack(PlayerData data)
+    {
+        if (data == null || data.damageProfiles == null) return false;
+        
+        foreach (var profile in data.damageProfiles)
+        {
+            if (profile == null || profile.rules == null) continue;
+            
+            foreach (var rule in profile.rules)
+            {
+                if (rule != null && 
+                    rule.triggerType == DamageTriggerType.Stopped && 
+                    rule.rangeShape == RangeShapeType.Circle)
+                {
+                    return true;
+                }
+            }
+        }
+        
+        return false;
     }
     
     /// <summary>

@@ -136,7 +136,7 @@ public class SceneTransitionManager : SingletonManager<SceneTransitionManager>
     {
         if (selectedCharacterData != null)
         {
-            Debug.Log($"当前选中角色: {selectedCharacterData.info.name} (攻击模式: {selectedCharacterData.attackMode})");
+            Debug.Log($"当前选中角色: {selectedCharacterData.info.name} (攻击力: {selectedCharacterData.attackPower})");
         }
         else
         {

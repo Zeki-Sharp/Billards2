@@ -172,9 +172,8 @@ public class PlayerStats : MonoBehaviour
     {
         if (playerData == null) return 0f;
         
-        return playerData.attackMode == PlayerData.AttackMode.Collision 
-            ? playerData.collisionDamage 
-            : playerData.areaDamage;
+        // ✅ 统一使用 attackPower，不再区分攻击模式
+        return playerData.attackPower;
     }
     
     /// <summary>

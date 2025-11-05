@@ -64,10 +64,10 @@ public class DamageRuleConfig : ScriptableObject
     public float attackRange = 0f;
     
     [Header("伤害计算")]
-    [Tooltip("基础伤害")]
+    [Tooltip("基础伤害（0 = 从 PlayerData.attackPower 读取）")]
     public float baseDamage = 10f;
     
-    [Tooltip("伤害倍率")]
+    [Tooltip("伤害倍率（应用于基础伤害）")]
     public float damageMultiplier = 1.0f;
     
     [Tooltip("伤害类型")]
@@ -92,6 +92,39 @@ public class DamageRuleConfig : ScriptableObject
     
     [Tooltip("是否可被格挡")]
     public bool canBeBlocked = true;
+    
+    /// <summary>
+    /// 获取最终的基础伤害值
+    /// 如果 baseDamage = 0，则从 PlayerData.attackPower 读取
+    /// </summary>
+    public float GetBaseDamage(GameObject source)
+    {
+        // 如果配置了固定值，直接使用
+        if (baseDamage > 0f)
+        {
+            return baseDamage;
+        }
+        
+        // 否则从 PlayerData 读取攻击力
+        var playerBehavior = source?.GetComponent<PlayerBehavior>();
+        if (playerBehavior?.PlayerData != null)
+        {
+            return playerBehavior.PlayerData.attackPower;
+        }
+        
+        // 回退：尝试从父级获取
+        if (source != null && source.transform.parent != null)
+        {
+            playerBehavior = source.transform.parent.GetComponent<PlayerBehavior>();
+            if (playerBehavior?.PlayerData != null)
+            {
+                return playerBehavior.PlayerData.attackPower;
+            }
+        }
+        
+        Debug.LogWarning($"[DamageRuleConfig] {ruleName}: 无法获取攻击力，使用默认值 0");
+        return 0f;
+    }
     
     /// <summary>
     /// 验证规则配置

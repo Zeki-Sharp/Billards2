@@ -22,8 +22,9 @@ MonoBehaviour:
   requireTargetNotState: IsTrap
   minVelocity: 0
   velocityMultiplier: 0
+  rangeShape: 0
   attackRange: 0
-  baseDamage: 10
+  baseDamage: 0
   damageMultiplier: 1
   damageType: 0
   affectPlayer: 0

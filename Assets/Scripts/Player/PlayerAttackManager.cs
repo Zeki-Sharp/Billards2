@@ -117,7 +117,7 @@ public class PlayerAttackManager : MonoBehaviour
             Debug.LogError("PlayerAttackManager: 未配置 PlayerData！");
         }
         
-        Debug.Log($"PlayerAttackManager: 初始化完成 - 攻击模式: {playerData?.attackMode}");
+        Debug.Log($"PlayerAttackManager: 初始化完成 - 攻击力: {playerData?.attackPower}");
     }
     
     #region 攻击力计算
@@ -148,16 +148,8 @@ public class PlayerAttackManager : MonoBehaviour
             return 0f;
         }
         
-        switch (playerData.attackMode)
-        {
-            case PlayerData.AttackMode.Collision:
-                return playerData.collisionDamage;
-            case PlayerData.AttackMode.Area:
-                return playerData.areaDamage;
-            default:
-                Debug.LogError("PlayerAttackManager: 未知的攻击模式！");
-                return 0f;
-        }
+        // ✅ 统一使用 attackPower，不再区分攻击模式
+        return playerData.attackPower;
     }
     
     #endregion
@@ -300,14 +292,6 @@ public class PlayerAttackManager : MonoBehaviour
     #endregion
     
     #region 公共属性
-    
-    /// <summary>
-    /// 获取当前攻击模式
-    /// </summary>
-    public PlayerData.AttackMode CurrentAttackMode
-    {
-        get { return playerData != null ? playerData.attackMode : PlayerData.AttackMode.Collision; }
-    }
     
     /// <summary>
     /// 检查是否可以进行攻击

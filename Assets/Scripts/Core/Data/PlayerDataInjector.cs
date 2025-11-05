@@ -69,7 +69,7 @@ public class PlayerDataInjector : MonoBehaviour
         
         if (showDebugInfo)
         {
-            Debug.Log($"PlayerDataInjector: 角色数据注入完成 - {selectedCharacter.info.name} (攻击模式: {selectedCharacter.attackMode})");
+            Debug.Log($"PlayerDataInjector: 角色数据注入完成 - {selectedCharacter.info.name} (攻击力: {selectedCharacter.attackPower})");
         }
     }
     

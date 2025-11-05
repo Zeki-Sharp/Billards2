@@ -208,11 +208,12 @@ public class GlobalInputManager : MonoBehaviour
         if (rightClickAction.WasPressedThisFrame())
         {
             // 检查是否在UI上
-            if (IsPointerOverUI())
+            GameObject blockingUI = GetBlockingUI();
+            if (blockingUI != null)
             {
                 if (showDebugInfo)
                 {
-                    Debug.Log("GlobalInputManager: 右键点击在UI上，忽略");
+                    Debug.Log($"GlobalInputManager: 右键点击在UI上，忽略 - UI名称: {blockingUI.name}");
                 }
                 return;
             }
@@ -234,11 +235,12 @@ public class GlobalInputManager : MonoBehaviour
         if (leftClickAction.WasPressedThisFrame())
         {
             // 检查是否在UI上
-            if (IsPointerOverUI())
+            GameObject blockingUI = GetBlockingUI();
+            if (blockingUI != null)
             {
                 if (showDebugInfo)
                 {
-                    Debug.Log("GlobalInputManager: 左键点击在UI上，忽略");
+                    Debug.Log($"GlobalInputManager: 左键点击在UI上，忽略 - UI名称: {blockingUI.name}, Layer: {LayerMask.LayerToName(blockingUI.layer)}");
                 }
                 return;
             }
@@ -335,9 +337,17 @@ public class GlobalInputManager : MonoBehaviour
     /// </summary>
     bool IsPointerOverUI()
     {
+        return GetBlockingUI() != null;
+    }
+    
+    /// <summary>
+    /// 获取阻挡点击的UI对象（用于调试）
+    /// </summary>
+    GameObject GetBlockingUI()
+    {
         if (EventSystem.current == null)
         {
-            return false;
+            return null;
         }
         
         PointerEventData eventData = new PointerEventData(EventSystem.current);
@@ -350,15 +360,11 @@ public class GlobalInputManager : MonoBehaviour
         {
             if (IsInLayerMask(result.gameObject.layer, blockingUILayers))
             {
-                if (showDebugInfo)
-                {
-                    Debug.Log($"GlobalInputManager: 检测到阻挡UI - {result.gameObject.name}");
-                }
-                return true;
+                return result.gameObject;
             }
         }
         
-        return false;
+        return null;
     }
     
     /// <summary>

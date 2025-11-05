@@ -755,8 +755,9 @@ public class DamageSystem : SingletonManager<DamageSystem>
     /// </summary>
     private void ProcessDamage(DamageRuleConfig rule, CollisionEvent evt)
     {
-        // 1. 计算基础伤害
-        float baseDamage = rule.baseDamage * rule.damageMultiplier;
+        // 1. 计算基础伤害（支持从 PlayerData.attackPower 读取）
+        float baseValue = rule.GetBaseDamage(evt.Source);
+        float baseDamage = baseValue * rule.damageMultiplier;
         
         // 2. 速度加成
         if (rule.velocityMultiplier > 0f)

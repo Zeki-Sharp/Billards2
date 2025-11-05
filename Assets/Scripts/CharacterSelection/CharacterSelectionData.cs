@@ -90,7 +90,7 @@ public class CharacterSelectionData : ScriptableObject
         for (int i = 0; i < availableCharacters.Count; i++)
         {
             var character = availableCharacters[i];
-            info += $"{i + 1}. {character.info.name} ({character.attackMode})\n";
+            info += $"{i + 1}. {character.info.name} (攻击力: {character.attackPower})\n";
         }
         
         return info;

@@ -24,8 +24,8 @@ MonoBehaviour:
   velocityMultiplier: 0
   rangeShape: 1
   attackRange: 0
-  baseDamage: 10
-  damageMultiplier: 1
+  baseDamage: 0
+  damageMultiplier: 2
   damageType: 0
   affectPlayer: 0
   affectEnemy: 1
