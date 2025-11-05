@@ -75,7 +75,16 @@
 
 ---
 
-### 5. 字符串引用更新 ⭐
+### 5. 敌人系统单Profile改造 ⭐⭐
+
+**问题**：`EnemyData` 使用单个 `damageProfile`，而 `PlayerData` 已改用 `damageProfiles` 列表，架构不统一。阻塞 `DamageSystem` 单Profile系统清理（~80行冗余代码）。  
+**方案**：①将 `EnemyData.damageProfile` 改为 `damageProfiles` 列表 ②修改 `EnemyBehavior` 注册逻辑 ③更新所有敌人配置文件 ④删除 `DamageSystem` 单Profile注册代码。  
+**影响**：影响3个文件（EnemyData/EnemyBehavior/DamageSystem），需更新所有敌人SO配置。不影响功能，仅架构统一。  
+**时机**：敌人系统稳定运行后，择时改造。建议在添加新敌人类型前完成。
+
+---
+
+### 6. 字符串引用更新 ⭐
 
 **问题**：日志和注释中仍使用旧名称 `PlayerStatsManagerV2`（已改为 `PlayerStats`）。  
 **方案**：全局搜索替换 `PlayerStatsManagerV2` → `PlayerStats`。  

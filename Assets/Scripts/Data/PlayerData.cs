@@ -48,28 +48,11 @@ public class PlayerData : ScriptableObject
     [ListDrawerSettings(ShowIndexLabels = true)]
     public List<DamageProfile> damageProfiles = new List<DamageProfile>();
     
-    /// <summary>
-    /// 向后兼容：返回第一个 Profile
-    /// </summary>
-    public DamageProfile damageProfile => damageProfiles != null && damageProfiles.Count > 0 ? damageProfiles[0] : null;
-    
     [BoxGroup("移动配置")]
     [LabelText("基础微调移动速度")]
     [Tooltip("基础微调移动速度")]
     [MinValue(0.1f)]
     public float baseMicroMoveSpeed = 5f;
-    
-    [BoxGroup("向后兼容属性")]
-    [LabelText("最大血量")]
-    [Tooltip("最大血量 - 通过PlayerStatsManager获取最终值")]
-    [ReadOnly]
-    public float maxHealth => baseMaxHealth;
-    
-    [BoxGroup("向后兼容属性")]
-    [LabelText("微调移动速度")]
-    [Tooltip("微调移动速度 - 通过PlayerStatsManager获取最终值")]
-    [ReadOnly]
-    public float microMoveSpeed => baseMicroMoveSpeed;
     
     [BoxGroup("玩家特有配置")]
     [LabelText("可以升级")]

@@ -17,6 +17,10 @@ MonoBehaviour:
   icon: {fileID: 0}
   itemSkill: {fileID: 11400000, guid: 295137818e7240147adb54c0a36f42cf, type: 2}
   isInstantEffect: 1
+  targetType: 0
+  targetCharacterName: 
+  pickupRestriction: 0
+  restrictedCharacterName: 
   itemPrefab: {fileID: 5612692153959467649, guid: c5ef7f4e58ed0574d970771b6894b71c, type: 3}
   pickupEffect: {fileID: 0}
   pickupSound: {fileID: 0}

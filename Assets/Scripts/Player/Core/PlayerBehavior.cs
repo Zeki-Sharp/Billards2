@@ -157,17 +157,11 @@ public class PlayerBehavior : MonoBehaviour, IDamageable
             return;
         }
         
-        // 优先使用多 Profile 列表
+        // ✅ 注册到 DamageSystem（多 Profile 组合）
         if (playerData.damageProfiles != null && playerData.damageProfiles.Count > 0)
         {
             DamageSystem.Instance.RegisterEntity(gameObject, playerData.damageProfiles);
             Debug.Log($"[PlayerBehavior] 注册到 DamageSystem，Profile 数量: {playerData.damageProfiles.Count}");
-        }
-        // 回退到单 Profile（向后兼容）
-        else if (playerData.damageProfile != null)
-        {
-            DamageSystem.Instance.RegisterEntity(gameObject, playerData.damageProfile);
-            Debug.Log($"[PlayerBehavior] 注册到 DamageSystem（单 Profile）");
         }
         else
         {

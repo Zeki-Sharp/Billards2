@@ -203,9 +203,8 @@ public class PlayerSpawner : MonoBehaviour
         // 尝试多次生成位置，直到找到不重叠的位置
         for (int attempt = 0; attempt < maxSpawnAttempts; attempt++)
         {
-            // ✅ 使用新方法：自动避开障碍物（墙体/玩家/敌人）
-            // 如果 spawnRange.checkObstacles = true，会使用 Physics2D 检测障碍物
-            // 如果 spawnRange.checkObstacles = false，行为与原来相同（向后兼容）
+            // ✅ 自动避开障碍物（墙体/玩家/敌人）
+            // checkObstacles = true 时使用 Physics2D 检测，false 时使用随机位置
             Vector3 candidatePosition = spawnRange.GetValidRandomPosition();
             
             // ✅ 仍然检查是否与现有球体距离过近（双重保险，更精确的间距控制）

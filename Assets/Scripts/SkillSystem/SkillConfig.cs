@@ -19,25 +19,25 @@ public class SkillConfig : ScriptableObject
     [HideLabel]
     public SkillInfo info = new SkillInfo();
     
-    #region 向后兼容属性（从 Info 读取）
+    #region 便捷访问属性（从 Info 读取）
     
     /// <summary>
-    /// 技能名称（向后兼容，从 Info 读取）
+    /// 技能名称（从 Info 读取）
     /// </summary>
     public string skillName => info?.name ?? "";
     
     /// <summary>
-    /// 技能描述（向后兼容，从 Info 读取）
+    /// 技能描述（从 Info 读取）
     /// </summary>
     public string description => info?.description ?? "";
     
     /// <summary>
-    /// 技能标签（向后兼容，从 Info 读取）
+    /// 技能标签（从 Info 读取）
     /// </summary>
     public string skillTag => info?.tag ?? "default";
     
     /// <summary>
-    /// 技能图标（向后兼容，从 Info 读取）
+    /// 技能图标（从 Info 读取）
     /// </summary>
     public Sprite skillIcon => info?.icon;
     

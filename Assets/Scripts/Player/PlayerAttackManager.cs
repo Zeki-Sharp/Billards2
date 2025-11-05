@@ -211,18 +211,6 @@ public class PlayerAttackManager : MonoBehaviour
                 if (stoppedRule != null) break;
             }
         }
-        // 回退到单 Profile（向后兼容）
-        else if (playerData.damageProfile != null)
-        {
-            foreach (var rule in playerData.damageProfile.rules)
-            {
-                if (rule != null && rule.triggerType == DamageTriggerType.Stopped)
-                {
-                    stoppedRule = rule;
-                    break;
-                }
-            }
-        }
         
         // 如果没有 Stopped 规则，不显示特效
         if (stoppedRule == null) return;

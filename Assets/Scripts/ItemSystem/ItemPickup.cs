@@ -69,6 +69,16 @@ public class ItemPickup : MonoBehaviour
             return;
         }
         
+        // ✅ 检查拾取限制
+        if (!CanPickup(other.gameObject))
+        {
+            if (enableDebugLog)
+            {
+                Debug.Log($"[ItemPickup] {other.gameObject.name} 不满足拾取条件：{itemConfig.itemName}");
+            }
+            return;
+        }
+        
         // 执行拾取
         PickupItem(other.gameObject);
     }
@@ -138,12 +148,16 @@ public class ItemPickup : MonoBehaviour
     
     /// <summary>
     /// 执行一次性效果（如治疗）
+    /// 
+    /// 【多角色系统改进】：
+    /// - 根据 targetType 配置，为不同角色执行效果
+    /// - 支持：拾取者、全队、指定角色
     /// </summary>
     private bool ExecuteInstantEffect()
     {
         if (enableDebugLog)
         {
-            Debug.Log($"[ItemPickup] 执行一次性效果: {itemConfig.itemSkill.skillName}");
+            Debug.Log($"[ItemPickup] 执行一次性效果: {itemConfig.itemSkill.skillName}, 目标类型: {itemConfig.targetType}");
         }
         
         // 创建效果实例（从等级1获取）
@@ -154,24 +168,22 @@ public class ItemPickup : MonoBehaviour
             return false;
         }
         
-        var effect = level1Config.effectConfig.CreateEffect();
-        
-        if (effect == null)
+        // ✅ 根据目标类型执行效果
+        switch (itemConfig.targetType)
         {
-            Debug.LogError($"[ItemPickup] 创建效果失败: {itemConfig.itemSkill.skillName}");
-            return false;
+            case ItemTargetType.Picker:
+                return ExecuteEffectForPicker(level1Config);
+                
+            case ItemTargetType.AllCharacters:
+                return ExecuteEffectForAllCharacters(level1Config);
+                
+            case ItemTargetType.SpecificCharacter:
+                return ExecuteEffectForSpecificCharacter(level1Config);
+                
+            default:
+                Debug.LogError($"[ItemPickup] 未知的目标类型: {itemConfig.targetType}");
+                return false;
         }
-        
-        // 初始化并执行效果
-        effect.Initialize();
-        bool success = effect.ExecuteEffect(null);
-        
-        if (success && enableDebugLog)
-        {
-            Debug.Log($"[ItemPickup] ✅ 一次性效果执行成功: {itemConfig.itemSkill.skillName}");
-        }
-        
-        return success;
     }
     
     /// <summary>
@@ -212,32 +224,205 @@ public class ItemPickup : MonoBehaviour
     }
     
     /// <summary>
-    /// ✅ 获取拾取者的角色ID（从缓存的碰撞物体中）
+    /// ✅ 获取拾取者的角色ID（使用统一接口）
     /// </summary>
     private string GetPickerCharacterID()
     {
-        if (lastPickerObject == null) return null;
-        
-        // 从拾取者的 PlayerBehavior 获取角色ID
-        var playerBehavior = lastPickerObject.GetComponent<PlayerBehavior>();
-        if (playerBehavior != null)
+        return TriggerHelper.GetCharacterID(lastPickerObject);
+    }
+    
+    /// <summary>
+    /// ✅ 检查是否可以拾取（拾取限制）
+    /// </summary>
+    private bool CanPickup(GameObject picker)
+    {
+        switch (itemConfig.pickupRestriction)
         {
-            // 通过 GameSession 查找角色ID
-            var session = GameSession.GetOrCreateInstance();
-            if (session != null && session.HasTeamData())
+            case ItemPickupRestriction.None:
+                return true;
+                
+            case ItemPickupRestriction.SpecificCharacter:
+                return CanPickupBySpecificCharacter(picker);
+                
+            case ItemPickupRestriction.HealthBelow50:
+                return CanPickupByHealthCondition(picker);
+                
+            default:
+                return true;
+        }
+    }
+    
+    /// <summary>
+    /// 检查角色名称限制
+    /// </summary>
+    private bool CanPickupBySpecificCharacter(GameObject picker)
+    {
+        if (string.IsNullOrEmpty(itemConfig.restrictedCharacterName))
+        {
+            Debug.LogWarning($"[ItemPickup] 配置了角色限制但未指定角色名");
+            return true;
+        }
+        
+        string pickerCharacterName = GetCharacterName(picker);
+        bool canPickup = pickerCharacterName == itemConfig.restrictedCharacterName;
+        
+        if (enableDebugLog && !canPickup)
+        {
+            Debug.Log($"[ItemPickup] {pickerCharacterName} 不是指定角色 {itemConfig.restrictedCharacterName}，无法拾取");
+        }
+        
+        return canPickup;
+    }
+    
+    /// <summary>
+    /// 检查血量条件
+    /// </summary>
+    private bool CanPickupByHealthCondition(GameObject picker)
+    {
+        PlayerBehavior playerBehavior = picker.GetComponent<PlayerBehavior>();
+        if (playerBehavior == null) return false;
+        
+        float healthRatio = playerBehavior.GetCurrentHealth() / playerBehavior.GetMaxHealth();
+        bool canPickup = healthRatio < 0.5f;
+        
+        if (enableDebugLog && !canPickup)
+        {
+            Debug.Log($"[ItemPickup] {picker.name} 血量 {healthRatio * 100:F0}% >= 50%，无法拾取");
+        }
+        
+        return canPickup;
+    }
+    
+    /// <summary>
+    /// 获取角色名称
+    /// </summary>
+    private string GetCharacterName(GameObject ball)
+    {
+        if (ball == null) return null;
+        
+        var teamData = GameSession.Instance?.GetTeamData();
+        if (teamData != null)
+        {
+            foreach (var character in teamData.characters)
             {
-                var teamData = session.GetTeamData();
-                foreach (var character in teamData.characters)
+                if (character.ballInstance == ball)
                 {
-                    if (character.ballInstance == lastPickerObject)
-                    {
-                        return character.characterID;
-                    }
+                    return character.characterData?.info.name;
                 }
             }
         }
         
         return null;
+    }
+    
+    /// <summary>
+    /// 为拾取者执行效果
+    /// </summary>
+    private bool ExecuteEffectForPicker(SkillLevelConfig levelConfig)
+    {
+        string pickerCharacterID = GetPickerCharacterID();
+        if (string.IsNullOrEmpty(pickerCharacterID))
+        {
+            Debug.LogError($"[ItemPickup] 无法获取拾取者角色ID");
+            return false;
+        }
+        
+        var effect = levelConfig.effectConfig.CreateEffect();
+        if (effect == null) return false;
+        
+        effect.Initialize();
+        effect.SetTarget(pickerCharacterID);  // ✅ 设置目标
+        bool success = effect.ExecuteEffect(null);
+        
+        if (enableDebugLog)
+        {
+            Debug.Log($"[ItemPickup] ✅ 效果应用于拾取者 {pickerCharacterID}: {success}");
+        }
+        
+        return success;
+    }
+    
+    /// <summary>
+    /// 为所有角色执行效果
+    /// </summary>
+    private bool ExecuteEffectForAllCharacters(SkillLevelConfig levelConfig)
+    {
+        var teamData = GameSession.Instance?.GetTeamData();
+        if (teamData == null)
+        {
+            Debug.LogError($"[ItemPickup] TeamData 为空，无法为全队执行效果");
+            return false;
+        }
+        
+        int successCount = 0;
+        foreach (var character in teamData.characters)
+        {
+            if (!character.isAlive) continue;
+            
+            var effect = levelConfig.effectConfig.CreateEffect();
+            if (effect == null) continue;
+            
+            effect.Initialize();
+            effect.SetTarget(character.characterID);  // ✅ 设置目标
+            if (effect.ExecuteEffect(null))
+            {
+                successCount++;
+                
+                if (enableDebugLog)
+                {
+                    Debug.Log($"[ItemPickup] ✅ 效果应用于角色 {character.characterID}");
+                }
+            }
+        }
+        
+        if (enableDebugLog)
+        {
+            Debug.Log($"[ItemPickup] ✅ 团队效果完成，成功 {successCount}/{teamData.characters.Count} 个角色");
+        }
+        
+        return successCount > 0;
+    }
+    
+    /// <summary>
+    /// 为指定角色执行效果
+    /// </summary>
+    private bool ExecuteEffectForSpecificCharacter(SkillLevelConfig levelConfig)
+    {
+        if (string.IsNullOrEmpty(itemConfig.targetCharacterName))
+        {
+            Debug.LogError($"[ItemPickup] 配置了指定角色但未填写角色名");
+            return false;
+        }
+        
+        var teamData = GameSession.Instance?.GetTeamData();
+        if (teamData == null)
+        {
+            Debug.LogError($"[ItemPickup] TeamData 为空");
+            return false;
+        }
+        
+        var targetCharacter = teamData.characters.Find(c => 
+            c.characterData?.info.name == itemConfig.targetCharacterName && c.isAlive);
+            
+        if (targetCharacter == null)
+        {
+            Debug.LogWarning($"[ItemPickup] 未找到目标角色: {itemConfig.targetCharacterName}");
+            return false;
+        }
+        
+        var effect = levelConfig.effectConfig.CreateEffect();
+        if (effect == null) return false;
+        
+        effect.Initialize();
+        effect.SetTarget(targetCharacter.characterID);  // ✅ 设置目标
+        bool success = effect.ExecuteEffect(null);
+        
+        if (enableDebugLog)
+        {
+            Debug.Log($"[ItemPickup] ✅ 效果应用于指定角色 {itemConfig.targetCharacterName}: {success}");
+        }
+        
+        return success;
     }
     
     #endregion
