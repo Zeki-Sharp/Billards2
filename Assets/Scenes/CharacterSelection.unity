@@ -195,7 +195,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 65d011a5ac5444346acc539d03dbe10e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  playerBehavior: {fileID: 0}
   currentLevelConfig: {fileID: 0}
   showDebugInfo: 1
 --- !u!4 &465744419
