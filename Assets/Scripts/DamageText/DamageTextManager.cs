@@ -175,10 +175,6 @@ public class DamageTextManager : SingletonManager<DamageTextManager>
             return null;
         }
         
-        if (enableDebugLog)
-        {
-            Debug.Log($"[DamageTextManager] 创建新的伤害数字实例");
-        }
         
         return damageText;
     }
@@ -213,10 +209,6 @@ public class DamageTextManager : SingletonManager<DamageTextManager>
         // 播放 MMF 动画
         PlayDamageTextAnimation(damageText);
         
-        if (enableDebugLog)
-        {
-            Debug.Log($"DamageTextManager: 显示伤害数字 {damage} 在屏幕位置 {screenPosition}");
-        }
     }
     
     /// <summary>
@@ -296,11 +288,6 @@ public class DamageTextManager : SingletonManager<DamageTextManager>
         {
             // 显示伤害数字 - 使用最终伤害值
             ShowDamageText(damageEvt.HitPosition, damageEvt.FinalDamage, damageEvt.Target);
-            
-            if (enableDebugLog)
-            {
-                Debug.Log($"DamageTextManager: 显示伤害数字 {damageEvt.FinalDamage}");
-            }
         }
     }
     

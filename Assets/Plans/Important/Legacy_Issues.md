@@ -84,7 +84,16 @@
 
 ---
 
-### 6. 字符串引用更新 ⭐
+### 6. 敌人架构组件查找优化 ⭐⭐
+
+**问题**：EnemyBehavior 从根物体移到 enemyItem 后，多处代码使用 GetComponentInChildren/Parent 查找，造成性能开销和逻辑复杂度。  
+**方案**：①Enemy.cs 已优化（enemyItem.GetComponent） ②AttackRange.cs 需通过 Enemy.enemyItem 间接查找 ③状态系统保持容错查找（支持灵活结构） ④WeakPointManager/DamageTextManager 等外部系统优化。  
+**影响**：影响8个文件，其中 AttackRange 查找失败会导致攻击范围不转向。部分已修复（Enemy.cs、EnemyBehavior.cs），剩余项为性能优化。  
+**时机**：逐步优化，AttackRange 问题优先级高，状态系统可保持现状作为容错。
+
+---
+
+### 7. 字符串引用更新 ⭐
 
 **问题**：日志和注释中仍使用旧名称 `PlayerStatsManagerV2`（已改为 `PlayerStats`）。  
 **方案**：全局搜索替换 `PlayerStatsManagerV2` → `PlayerStats`。  
