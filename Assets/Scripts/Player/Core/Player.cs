@@ -54,6 +54,7 @@ public class Player : MonoBehaviour
     [SerializeField] private PlayerAttackManager attackManager;
     [SerializeField] private ChargeSystem chargeSystem;
     [SerializeField] private PlayerStats statsManager; // ✅ 使用轻量级 Modifier 系统
+    [SerializeField] private PlayerVisualController visualController; // 视觉表现控制器
     
     [Header("特效配置")]
     [Tooltip("玩家特效配置列表，在 Inspector 中直接拖拽 MMF_Player 组件")]
@@ -124,6 +125,8 @@ public class Player : MonoBehaviour
             chargeSystem = GetComponent<ChargeSystem>();
         if (statsManager == null)
             statsManager = GetComponent<PlayerStats>();
+        if (visualController == null)
+            visualController = GetComponent<PlayerVisualController>();
         
         // 检查必需组件是否存在
         if (playerBehavior == null)
@@ -379,6 +382,12 @@ public class Player : MonoBehaviour
         
         // 重新初始化所有组件以应用新数据
         InitializeAllComponents();
+        
+        // 应用视觉表现
+        if (visualController != null)
+        {
+            visualController.ApplyVisuals(newPlayerData);
+        }
     }
     
     /// <summary>
