@@ -1,0 +1,59 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: efc89a18d420d744da9894a9f7094350, type: 3}
+  m_Name: "\u70B9\u71C3\u589E\u4F24"
+  m_EditorClassIdentifier: 
+  info:
+    name: "\u70B9\u71C3\u589E\u4F24"
+    acronym: 
+    description: "\u653B\u51FB\u70B9\u71C3\u72B6\u6001\u7684\u89D2\u8272\u65F6\uFF0C\u653B\u51FB\u529B\u589E\u52A010"
+    icon: {fileID: 0}
+    color: {r: 1, g: 1, b: 1, a: 1}
+    skillType: 
+    rarity: "\u666E\u901A"
+    tag: "\u649E\u51FB\u89D2\u8272"
+  skillLevels:
+  - level: 1
+    isActive: 1
+    levelDescription: 
+    triggerConfig:
+      rid: 6937075183333671049
+    conditionConfig:
+      logicType: 0
+      conditions: []
+    effectConfig:
+      rid: 6937075183333671051
+    resetConditionConfig:
+      rid: 6937075183333671052
+    effectRemovalConfig:
+      rid: -2
+  requiredSkills: []
+  isActive: 1
+  references:
+    version: 2
+    RefIds:
+    - rid: -2
+      type: {class: , ns: , asm: }
+    - rid: 6937075183333671049
+      type: {class: AlwaysTrueTriggerConfig, ns: , asm: Assembly-CSharp}
+      data: 
+    - rid: 6937075183333671051
+      type: {class: RegisterDamageModifierEffectConfig, ns: , asm: Assembly-CSharp}
+      data:
+        targetStatusData: {fileID: 11400000, guid: 915f6b6363e491d42a0f132df81a57f7, type: 2}
+        increaseType: 1
+        damageMultiplier: 1.5
+        fixedDamageBonus: 10
+        showDebugLog: 1
+    - rid: 6937075183333671052
+      type: {class: NeverResetConditionConfig, ns: , asm: Assembly-CSharp}
+      data: 
