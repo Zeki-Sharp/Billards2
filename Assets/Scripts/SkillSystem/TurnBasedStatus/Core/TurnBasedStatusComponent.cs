@@ -22,6 +22,23 @@ using UnityEngine;
 /// </summary>
 public abstract class TurnBasedStatusComponent : MonoBehaviour
 {
+    #region 事件通知（通过 GameEventBus）
+    
+    /// <summary>
+    /// 触发状态变化事件（通过 GameEventBus）
+    /// </summary>
+    protected void NotifyStatusChanged()
+    {
+        if (statusData != null)
+        {
+            // ✅ 发送真正的目标根物体，而不是 gameObject（可能是子对象）
+            GameObject eventTarget = targetRoot != null ? targetRoot : gameObject;
+            GameEventBus.PublishTurnBasedStatusChanged(eventTarget, statusData, remainingTurns);
+        }
+    }
+    
+    #endregion
+    
     #region 受保护字段（子类可访问）
     
     /// <summary>
@@ -43,6 +60,11 @@ public abstract class TurnBasedStatusComponent : MonoBehaviour
     /// 状态来源（施加者）
     /// </summary>
     protected GameObject source;
+    
+    /// <summary>
+    /// 状态目标（有 IDamageable 的根物体）
+    /// </summary>
+    protected GameObject targetRoot;
     
     /// <summary>
     /// 特效实例
@@ -78,6 +100,11 @@ public abstract class TurnBasedStatusComponent : MonoBehaviour
     /// </summary>
     public string DisplayName => statusData != null ? statusData.displayName : "";
     
+    /// <summary>
+    /// 状态数据（供UI访问）
+    /// </summary>
+    public TurnBasedStatusData StatusData => statusData;
+    
     #endregion
     
     #region 初始化
@@ -100,6 +127,14 @@ public abstract class TurnBasedStatusComponent : MonoBehaviour
         damagePerTurn = data.baseDamagePerTurn;
         showDebugLog = enableDebugLog;
         
+        // ✅ 记录真正的目标根物体（有 IDamageable 的对象）
+        var damageable = GetComponent<IDamageable>();
+        if (damageable == null)
+        {
+            damageable = GetComponentInParent<IDamageable>();
+        }
+        targetRoot = (damageable as MonoBehaviour)?.gameObject ?? gameObject;
+        
         // 生成特效
         if (data.vfxPrefab != null)
         {
@@ -114,6 +149,9 @@ public abstract class TurnBasedStatusComponent : MonoBehaviour
         
         // 子类初始化逻辑
         OnStatusApplied();
+        
+        // 通知UI更新
+        NotifyStatusChanged();
     }
     
     /// <summary>
@@ -134,6 +172,9 @@ public abstract class TurnBasedStatusComponent : MonoBehaviour
         {
             Debug.Log($"[{DisplayName}] {gameObject.name} 状态叠加：+{additionalTurns}回合，总计{remainingTurns}回合");
         }
+        
+        // 通知UI更新
+        NotifyStatusChanged();
     }
     
     #endregion
@@ -162,6 +203,13 @@ public abstract class TurnBasedStatusComponent : MonoBehaviour
         
         // 子类清理逻辑
         OnStatusRemoved();
+        
+        // 通知UI更新（状态移除，回合数为0）
+        if (statusData != null)
+        {
+            GameObject eventTarget = targetRoot != null ? targetRoot : gameObject;
+            GameEventBus.PublishTurnBasedStatusChanged(eventTarget, statusData, 0);
+        }
     }
     
     #endregion
@@ -202,6 +250,9 @@ public abstract class TurnBasedStatusComponent : MonoBehaviour
         
         // 回合数递减
         remainingTurns--;
+        
+        // 通知UI更新（回合数变化）
+        NotifyStatusChanged();
         
         // 如果回合数耗尽，销毁组件
         if (remainingTurns <= 0)

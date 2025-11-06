@@ -14,7 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   statusID: Burning
   displayName: "\u70B9\u71C3"
-  icon: {fileID: 0}
+  icon: {fileID: -16178199480744190, guid: 7d1bc9c5317e5f84099e1221c2ea1a23, type: 3}
+  iconColor: {r: 0.7132075, g: 0, b: 0, a: 1}
   description: "\u6301\u7EED\u9020\u6210\u706B\u7130\u4F24\u5BB3"
   baseDurationInTurns: 2
   triggerPhase: 4

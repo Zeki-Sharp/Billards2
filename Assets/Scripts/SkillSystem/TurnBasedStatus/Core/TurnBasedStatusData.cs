@@ -33,6 +33,11 @@ public class TurnBasedStatusData : ScriptableObject
     public Sprite icon;
     
     [BoxGroup("基本信息")]
+    [LabelText("图标颜色")]
+    [Tooltip("图标的颜色（白色图标会被染成此颜色）")]
+    public Color iconColor = Color.white;  // 默认白色不染色
+    
+    [BoxGroup("基本信息")]
     [LabelText("描述")]
     [Tooltip("状态效果描述")]
     [TextArea(2, 4)]

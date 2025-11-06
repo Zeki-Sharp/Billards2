@@ -95,6 +95,16 @@ public static class GameEventBus
     
     #endregion
     
+    #region 状态系统事件
+    
+    /// <summary>
+    /// 回合制状态变化事件
+    /// 参数：目标GameObject, 状态数据, 剩余回合数
+    /// </summary>
+    public static event System.Action<GameObject, TurnBasedStatusData, int> OnTurnBasedStatusChanged;
+    
+    #endregion
+    
     #region 玩家状态事件
     
     /// <summary>
@@ -432,6 +442,15 @@ public static class GameEventBus
     /// 发布伤害事件（新伤害系统）
     /// </summary>
     public static void PublishDamage(DamageEvent damageEvent) => OnDamage?.Invoke(damageEvent);
+    
+    /// <summary>
+    /// 发布回合制状态变化事件
+    /// </summary>
+    /// <param name="target">目标GameObject</param>
+    /// <param name="statusData">状态数据</param>
+    /// <param name="remainingTurns">剩余回合数</param>
+    public static void PublishTurnBasedStatusChanged(GameObject target, TurnBasedStatusData statusData, int remainingTurns) 
+        => OnTurnBasedStatusChanged?.Invoke(target, statusData, remainingTurns);
     
     /// <summary>
     /// 发布玩家状态变化事件

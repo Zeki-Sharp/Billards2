@@ -957,6 +957,10 @@ PrefabInstance:
       value: -181
       objectReference: {fileID: 0}
     - target: {fileID: 2716630895527429698, guid: e742b081d32e6fd45b3aee1dfab12ec6, type: 3}
+      propertyPath: turnIndicatorUI
+      value: 
+      objectReference: {fileID: 0}
+    - target: {fileID: 2716630895527429698, guid: e742b081d32e6fd45b3aee1dfab12ec6, type: 3}
       propertyPath: topBarController
       value: 
       objectReference: {fileID: 0}
