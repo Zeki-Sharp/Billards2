@@ -18,7 +18,7 @@ MonoBehaviour:
   iconColor: {r: 0.7132075, g: 0, b: 0, a: 1}
   description: "\u6301\u7EED\u9020\u6210\u706B\u7130\u4F24\u5BB3"
   baseDurationInTurns: 2
-  triggerPhase: 4
+  triggerPhase: 6
   baseDamagePerTurn: 5
   maxStacks: 0
   vfxPrefab: {fileID: 0}

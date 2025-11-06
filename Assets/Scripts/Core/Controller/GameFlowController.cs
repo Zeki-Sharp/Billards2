@@ -112,7 +112,9 @@ public class GameFlowController : SingletonManager<GameFlowController>
     /// </summary>
     void SwitchToPlayerPhase()
     {
-        if (currentState == GameFlowState.PlayerPhase) return;
+        if (currentState == GameFlowState.PlayerPhaseStart || 
+            currentState == GameFlowState.PlayerPhasePlaying) 
+            return;
         
         // 先发布敌人阶段结束事件（如果不是首次启动）
         if (currentState != GameFlowState.None)
@@ -120,8 +122,9 @@ public class GameFlowController : SingletonManager<GameFlowController>
             GameEventBus.PublishGameFlowStateChanged(GameFlowState.EnemyPhaseEnd);
         }
         
-        currentState = GameFlowState.PlayerPhase;
-        GameEventBus.PublishGameFlowStateChanged(GameFlowState.PlayerPhase);
+        // ✅ 发布玩家回合开始事件
+        currentState = GameFlowState.PlayerPhaseStart;
+        GameEventBus.PublishGameFlowStateChanged(GameFlowState.PlayerPhaseStart);
         
         // 启动玩家阶段
         if (playerPhaseController != null)
@@ -141,11 +144,16 @@ public class GameFlowController : SingletonManager<GameFlowController>
     /// </summary>
     void SwitchToEnemyPhase()
     {
-        if (currentState == GameFlowState.EnemyPhase) return;
+        if (currentState == GameFlowState.EnemyPhaseStart || 
+            currentState == GameFlowState.EnemyPhasePlaying) 
+            return;
         
+        // ✅ 发布玩家回合结束事件
         GameEventBus.PublishGameFlowStateChanged(GameFlowState.PlayerPhaseEnd);
-        currentState = GameFlowState.EnemyPhase;
-        GameEventBus.PublishGameFlowStateChanged(GameFlowState.EnemyPhase);
+        
+        // ✅ 发布敌人回合开始事件
+        currentState = GameFlowState.EnemyPhaseStart;
+        GameEventBus.PublishGameFlowStateChanged(GameFlowState.EnemyPhaseStart);
         
         // 启动敌人阶段
         if (enemyPhaseController != null)
@@ -161,8 +169,12 @@ public class GameFlowController : SingletonManager<GameFlowController>
     #region 公共属性
     
     public GameFlowState CurrentState => currentState;
-    public bool IsPlayerPhase => currentState == GameFlowState.PlayerPhase;
-    public bool IsEnemyPhase => currentState == GameFlowState.EnemyPhase;
+    public bool IsPlayerPhase => currentState == GameFlowState.PlayerPhaseStart || 
+                                   currentState == GameFlowState.PlayerPhasePlaying || 
+                                   currentState == GameFlowState.PlayerPhaseEnd;
+    public bool IsEnemyPhase => currentState == GameFlowState.EnemyPhaseStart || 
+                                 currentState == GameFlowState.EnemyPhasePlaying || 
+                                 currentState == GameFlowState.EnemyPhaseEnd;
     
     #endregion
 }

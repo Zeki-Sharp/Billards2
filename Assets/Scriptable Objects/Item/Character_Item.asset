@@ -10,17 +10,17 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 8ff1c7e156b0bca4a988603a406a7fc0, type: 3}
-  m_Name: Health_Item
+  m_Name: Character_Item
   m_EditorClassIdentifier: 
-  itemName: "\u5C0F\u8840\u74F6"
-  description: "\u8FD9\u662F\u4E00\u4E2A\u795E\u79D8\u7684\u9053\u5177..."
-  icon: {fileID: 0}
-  itemSkill: {fileID: 11400000, guid: 295137818e7240147adb54c0a36f42cf, type: 2}
+  itemName: "\u6536\u96C6\u8005\u5B9D\u77F3"
+  description: "\u53EA\u6709\u6536\u96C6\u8005\u53EF\u4EE5\u6536\u96C6\u7684\u7279\u6B8A\u5B9D\u77F3"
+  icon: {fileID: 21300000, guid: ab4ae9efc263fa9439e4477b475fe17c, type: 3}
+  itemSkill: {fileID: 0}
   isInstantEffect: 1
-  targetType: 1
+  targetType: 0
   targetCharacterName: 
-  pickupRestriction: 0
-  restrictedCharacterName: 
-  itemPrefab: {fileID: 5612692153959467649, guid: c5ef7f4e58ed0574d970771b6894b71c, type: 3}
+  pickupRestriction: 1
+  restrictedCharacterName: cha_collect
+  itemPrefab: {fileID: 5612692153959467649, guid: 8e91ead9ab52bff4d879d9e0a1d74782, type: 3}
   pickupEffect: {fileID: 0}
   pickupSound: {fileID: 0}

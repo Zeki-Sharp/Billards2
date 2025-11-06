@@ -133,9 +133,9 @@ public class TurnItemSpawnTrigger : MonoBehaviour
         switch (turnDropType)
         {
             case TurnDropType.PlayerTurnStart:
-                return gameFlowState == GameFlowState.PlayerPhase;
+                return gameFlowState == GameFlowState.PlayerPhaseStart;
             case TurnDropType.EnemyTurnStart:
-                return gameFlowState == GameFlowState.EnemyPhase;
+                return gameFlowState == GameFlowState.EnemyPhaseStart;
             // 未来可以添加其他回合类型
             default:
                 return false;

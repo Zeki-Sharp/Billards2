@@ -18,6 +18,7 @@ MonoBehaviour:
   sourceTag: Player
   targetTag: Enemy
   requireSourceState: CanAttack
+  requireSourceNotState: 
   requireTargetState: 
   requireTargetNotState: IsTrap
   minVelocity: 0
@@ -25,7 +26,7 @@ MonoBehaviour:
   rangeShape: 1
   attackRange: 0
   baseDamage: 0
-  damageMultiplier: 2
+  damageMultiplier: 1
   damageType: 0
   affectPlayer: 0
   affectEnemy: 1

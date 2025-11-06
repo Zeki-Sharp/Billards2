@@ -182,6 +182,24 @@ public static class GameEventBus
     
     #endregion
     
+    #region 物品系统事件
+    
+    /// <summary>
+    /// 物品拾取事件
+    /// 参数：characterID, itemConfig, position
+    /// </summary>
+    public static event System.Action<string, ItemConfig, Vector3> OnItemPickedUp;
+    
+    /// <summary>
+    /// 发布物品拾取事件
+    /// </summary>
+    public static void PublishItemPickedUp(string characterID, ItemConfig itemConfig, Vector3 position)
+    {
+        OnItemPickedUp?.Invoke(characterID, itemConfig, position);
+    }
+    
+    #endregion
+    
     #region 技能系统事件
     
     /// <summary>

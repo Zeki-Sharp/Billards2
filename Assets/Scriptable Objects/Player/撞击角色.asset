@@ -18,6 +18,7 @@ MonoBehaviour:
     description: "\u76F4\u63A5\u649E\u51FB\u654C\u4EBA\u9020\u6210\u4F24\u5BB3"
     icon: {fileID: 8861807583729448495, guid: 943ed9a96a0bc0c4599dae896cf2ef36, type: 3}
     color: {r: 1, g: 1, b: 1, a: 1}
+    characterID: cha_collision
     characterClass: 
     rarity: "\u666E\u901A"
   playerPrefab: {fileID: 3251294568684493535, guid: 2d86053af5e50c446a06f75cbdecb65b, type: 3}

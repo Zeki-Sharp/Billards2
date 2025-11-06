@@ -191,7 +191,9 @@ public class TopBarController : MonoBehaviour
         
         switch (newState)
         {
-            case GameFlowState.PlayerPhase:
+            case GameFlowState.PlayerPhaseStart:
+            case GameFlowState.PlayerPhasePlaying:
+            case GameFlowState.PlayerPhaseEnd:
                 turnIndicatorText.text = "玩家回合";
                 turnIndicatorText.color = playerTurnColor;
                 if (showDebugInfo)
@@ -200,7 +202,9 @@ public class TopBarController : MonoBehaviour
                 }
                 break;
                 
-            case GameFlowState.EnemyPhase:
+            case GameFlowState.EnemyPhaseStart:
+            case GameFlowState.EnemyPhasePlaying:
+            case GameFlowState.EnemyPhaseEnd:
                 turnIndicatorText.text = "敌人回合";
                 turnIndicatorText.color = enemyTurnColor;
                 if (showDebugInfo)

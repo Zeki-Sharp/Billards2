@@ -529,7 +529,7 @@ public class WeakPointManager : SingletonManager<WeakPointManager>, IDamageModif
             return;
         
         // 在玩家回合开始时刷新所有弱点
-        if (state == GameFlowState.PlayerPhase)
+        if (state == GameFlowState.PlayerPhaseStart)
         {
             if (showDebugLog)
             {

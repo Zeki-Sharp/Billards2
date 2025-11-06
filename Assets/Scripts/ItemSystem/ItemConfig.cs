@@ -65,9 +65,12 @@ public class ItemConfig : ScriptableObject
     public ItemTargetType targetType = ItemTargetType.Picker;
     
     [BoxGroup("目标配置")]
-    [LabelText("指定角色名")]
+    [LabelText("指定角色")]
     [ShowIf("targetType", ItemTargetType.SpecificCharacter)]
-    [Tooltip("当目标类型为'指定角色'时，填写角色名称（如'撞击角色'）")]
+    [Tooltip("当目标类型为'指定角色'时，选择角色（使用 characterID）")]
+    #if UNITY_EDITOR
+    [ValueDropdown("GetAllCharacterIDs")]
+    #endif
     public string targetCharacterName = "";
     
     [BoxGroup("拾取限制")]
@@ -76,9 +79,12 @@ public class ItemConfig : ScriptableObject
     public ItemPickupRestriction pickupRestriction = ItemPickupRestriction.None;
     
     [BoxGroup("拾取限制")]
-    [LabelText("限制角色名")]
+    [LabelText("限制角色")]
     [ShowIf("pickupRestriction", ItemPickupRestriction.SpecificCharacter)]
-    [Tooltip("只有该角色能拾取（填写角色名称，如'撞击角色'）")]
+    [Tooltip("只有该角色能拾取（从所有 PlayerData 中选择）")]
+    #if UNITY_EDITOR
+    [ValueDropdown("GetAllCharacterIDs")]
+    #endif
     public string restrictedCharacterName = "";
     
     [BoxGroup("掉落配置")]
@@ -129,6 +135,49 @@ public class ItemConfig : ScriptableObject
         }
     }
     
+    #region Inspector 辅助方法
+    
+    #if UNITY_EDITOR
+    /// <summary>
+    /// 获取所有角色的 characterID 列表（用于 Odin Dropdown）
+    /// 
+    /// 注意：由于 Odin Inspector 限制，必须在本类实现，无法引用 EditorHelper
+    /// 逻辑与 EditorHelper.GetAllCharacterIDs() 保持一致
+    /// </summary>
+    private System.Collections.Generic.IEnumerable<ValueDropdownItem<string>> GetAllCharacterIDs()
+    {
+        var list = new ValueDropdownList<string>();
+        string[] guids = UnityEditor.AssetDatabase.FindAssets("t:PlayerData");
+        
+        if (guids.Length == 0)
+        {
+            list.Add("（未找到任何 PlayerData）", "");
+            return list;
+        }
+        
+        foreach (string guid in guids)
+        {
+            string path = UnityEditor.AssetDatabase.GUIDToAssetPath(guid);
+            PlayerData playerData = UnityEditor.AssetDatabase.LoadAssetAtPath<PlayerData>(path);
+            
+            if (playerData != null && playerData.info != null && !string.IsNullOrEmpty(playerData.info.characterID))
+            {
+                string displayName = $"{playerData.info.name} ({playerData.info.characterID})";
+                list.Add(displayName, playerData.info.characterID);
+            }
+        }
+        
+        if (list.Count == 0)
+        {
+            list.Add("（所有 PlayerData 都未配置 characterID）", "");
+        }
+        
+        return list;
+    }
+    #endif
+    
+    #endregion
+    
     /// <summary>
     /// 验证配置是否有效
     /// </summary>
@@ -140,11 +189,11 @@ public class ItemConfig : ScriptableObject
             return false;
         }
         
-        if (itemSkill == null)
-        {
-            Debug.LogError($"[ItemConfig] {name} 未设置关联技能");
-            return false;
-        }
+        // ✅ 修改：itemSkill 可以为空（如收集者宝石，只用于计数，不需要效果）
+        // if (itemSkill == null)
+        // {
+        //     Debug.LogWarning($"[ItemConfig] {name} 未设置关联技能（如果不需要效果，可以忽略）");
+        // }
         
         if (itemPrefab == null)
         {

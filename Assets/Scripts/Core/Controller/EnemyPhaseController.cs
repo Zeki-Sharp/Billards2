@@ -120,6 +120,12 @@ public class EnemyPhaseController : SingletonManager<EnemyPhaseController>
             return;
         }
         
+        // ✅ 在第一个子阶段开始时，发布敌人回合进行中状态
+        if (currentEnemyPhaseIndex == 0)
+        {
+            GameEventBus.PublishGameFlowStateChanged(GameFlowState.EnemyPhasePlaying);
+        }
+        
         // 获取当前阶段
         EnemyPhase phase = enemyPhaseSequence[currentEnemyPhaseIndex];
         currentEnemyPhase = phase;

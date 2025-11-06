@@ -288,12 +288,16 @@ public class SkillManager : SingletonManager<SkillManager>
     /// </summary>
     void HandleGameFlowStateChanged(GameFlowState newState)
     {
-        if (enableDebugLog)
+        // 遍历所有技能实例，检查是否需要处理此阶段变化
+        foreach (var skillInstance in skillInstances.Values)
         {
-            Debug.Log($"[SkillManager] 游戏流程状态变化: {newState}");
+            if (IsEventRelevantForSkill(newState, skillInstance))
+            {
+                skillInstance.ProcessEvent(newState);
+            }
         }
         
-        // 通知所有技能实例处理回合结束事件
+        // 通知所有技能实例处理回合结束事件（重置条件等）
         foreach (var skillInstance in skillInstances.Values)
         {
             skillInstance.HandlePhaseEndEvent(newState);
@@ -391,6 +395,11 @@ public class SkillManager : SingletonManager<SkillManager>
         {
             // AlwaysTrueTrigger 对所有事件都有效（总是返回true）
             return true;
+        }
+        else if (trigger is PhaseStateTrigger)
+        {
+            // PhaseStateTrigger 只对 GameFlowState 事件有效
+            return eventData is GameFlowState;
         }
         
         // 默认情况下，不处理任何事件

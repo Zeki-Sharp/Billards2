@@ -171,6 +171,9 @@ public class PlayerPhaseController : SingletonManager<PlayerPhaseController>
     /// </summary>
     void ExecutePlaying()
     {
+        // ✅ 发布玩家回合进行中状态
+        GameEventBus.PublishGameFlowStateChanged(GameFlowState.PlayerPhasePlaying);
+        
         // ✅ 多角色系统改造：委托 PlayerTurnManager 启动回合
         if (PlayerTurnManager.Instance != null)
         {

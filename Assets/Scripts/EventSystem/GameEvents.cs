@@ -104,13 +104,21 @@ public struct BallStoppedData
 
 /// <summary>
 /// 游戏流程状态枚举
+/// 
+/// 【阶段细分】：
+/// - 每个回合分为：开始（Start）、进行中（Playing）、结束（End）
+/// - 开始阶段：触发回合开始效果（如掉落物补充）
+/// - 进行中：正常游戏流程（蓄力、发射、移动等）
+/// - 结束阶段：触发回合结束效果（如收集打击）
 /// </summary>
 public enum GameFlowState
 {
-    None,           // 未开始（初始状态）
-    PlayerPhase,    // 玩家阶段
-    PlayerPhaseEnd, // 玩家阶段结束
-    EnemyPhase,     // 敌人阶段
-    EnemyPhaseEnd   // 敌人阶段结束
+    None,               // 未开始（初始状态）
+    PlayerPhaseStart,   // 玩家回合开始
+    PlayerPhasePlaying, // 玩家回合中
+    PlayerPhaseEnd,     // 玩家回合结束
+    EnemyPhaseStart,    // 敌人回合开始
+    EnemyPhasePlaying,  // 敌人回合中
+    EnemyPhaseEnd       // 敌人回合结束
 }
 

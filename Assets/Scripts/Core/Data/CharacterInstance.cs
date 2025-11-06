@@ -101,7 +101,18 @@ public class CharacterInstance
     {
         this.characterData = characterData;
         this.positionIndex = positionIndex;
-        this.characterID = $"character_{positionIndex}";
+        
+        // ✅ 修复：从 PlayerData.info.characterID 读取角色ID
+        if (characterData != null && characterData.info != null && !string.IsNullOrEmpty(characterData.info.characterID))
+        {
+            this.characterID = characterData.info.characterID;
+        }
+        else
+        {
+            // 如果 PlayerData 未配置 characterID，使用位置编号作为后备
+            this.characterID = $"character_{positionIndex}";
+            Debug.LogWarning($"[CharacterInstance] PlayerData '{characterData?.info.name}' 未配置 characterID，使用后备方案: {this.characterID}");
+        }
         
         // 初始化血量
         this.maxHealth = characterData.baseMaxHealth;

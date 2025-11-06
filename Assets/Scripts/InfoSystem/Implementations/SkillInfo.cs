@@ -31,7 +31,7 @@ public class SkillInfo : TInfo
 #endif
     public string rarity = "普通";
     
-    [Tooltip("技能标签（如 default, common, 角色专属等）")]
+    [Tooltip("技能标签（如 default, common, character_1 等）\n使用 characterID 而不是角色名称，支持重命名和多语言")]
 #if UNITY_EDITOR
     [ValueDropdown("GetAvailableTags")]
 #endif
@@ -53,36 +53,30 @@ public class SkillInfo : TInfo
     }
     
     /// <summary>
-    /// 获取可用的标签选项
+    /// 获取可用的技能标签（用于 Odin Dropdown）
+    /// 
+    /// 注意：由于 Odin Inspector 限制，必须在本类实现，无法引用 EditorHelper
+    /// 逻辑与 EditorHelper.GetAllSkillTags() 保持一致
     /// </summary>
-    private IEnumerable<string> GetAvailableTags()
+    private IEnumerable<ValueDropdownItem<string>> GetAvailableTags()
     {
-        var tags = new List<string>();
+        var tags = new ValueDropdownList<string>();
         
-        // 添加固定标签
-        tags.Add("default");
-        tags.Add("common");
+        // 固定标签
+        tags.Add("通用 (default)", "default");
+        tags.Add("公共 (common)", "common");
         
-        // 查找所有角色数据，添加角色专属标签
-        string[] characterDataGuids = UnityEditor.AssetDatabase.FindAssets("t:CharacterSelectionData");
-        if (characterDataGuids.Length > 0)
+        // 动态读取角色 characterID
+        string[] guids = UnityEditor.AssetDatabase.FindAssets("t:PlayerData");
+        foreach (string guid in guids)
         {
-            string path = UnityEditor.AssetDatabase.GUIDToAssetPath(characterDataGuids[0]);
-            var characterData = UnityEditor.AssetDatabase.LoadAssetAtPath<CharacterSelectionData>(path);
+            string path = UnityEditor.AssetDatabase.GUIDToAssetPath(guid);
+            PlayerData playerData = UnityEditor.AssetDatabase.LoadAssetAtPath<PlayerData>(path);
             
-            if (characterData != null && characterData.availableCharacters != null)
+            if (playerData != null && playerData.info != null && !string.IsNullOrEmpty(playerData.info.characterID))
             {
-                foreach (var character in characterData.availableCharacters)
-                {
-                    if (character != null && !string.IsNullOrEmpty(character.info.name))
-                    {
-                        string characterTag = character.info.name;
-                        if (!tags.Contains(characterTag))
-                        {
-                            tags.Add(characterTag);
-                        }
-                    }
-                }
+                string displayName = $"{playerData.info.name} ({playerData.info.characterID})";
+                tags.Add(displayName, playerData.info.characterID);
             }
         }
         

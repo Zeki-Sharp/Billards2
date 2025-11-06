@@ -22,6 +22,9 @@ using System.Collections.Generic;
 public class PlayerInfo : TInfo
 {
     [Header("玩家特有信息")]
+    [Tooltip("角色唯一ID（如 character_1, character_2）")]
+    public string characterID = "";
+    
     [Tooltip("角色职业/类型")]
 #if UNITY_EDITOR
     [ValueDropdown("GetAvailableClasses")]

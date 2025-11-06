@@ -69,7 +69,7 @@ public class ItemPickup : MonoBehaviour
             return;
         }
         
-        // ✅ 检查拾取限制
+        // 检查拾取限制
         if (!CanPickup(other.gameObject))
         {
             if (enableDebugLog)
@@ -115,8 +115,12 @@ public class ItemPickup : MonoBehaviour
         // 2. 播放拾取反馈
         PlayPickupFeedback();
         
-        // 3. 发布拾取事件（暂时注释，等事件系统集成时启用）
-        // GameEventBus.PublishItemPickedUp(itemConfig, transform.position, picker);
+        // 3. 发布拾取事件
+        string pickerCharacterID = GetPickerCharacterID();
+        if (!string.IsNullOrEmpty(pickerCharacterID))
+        {
+            GameEventBus.PublishItemPickedUp(pickerCharacterID, itemConfig, transform.position);
+        }
         
         // 4. 销毁道具对象
         Destroy(gameObject);
@@ -127,10 +131,14 @@ public class ItemPickup : MonoBehaviour
     /// </summary>
     private bool ApplyItemEffect()
     {
+        // ✅ 如果没有关联技能，跳过效果应用（如收集者宝石，只用于计数）
         if (itemConfig.itemSkill == null)
         {
-            Debug.LogError($"[ItemPickup] 道具 {itemConfig.itemName} 未设置关联技能！");
-            return false;
+            if (enableDebugLog)
+            {
+                Debug.Log($"[ItemPickup] 道具 {itemConfig.itemName} 无关联技能，跳过效果应用");
+            }
+            return true;  // 返回 true，允许拾取继续
         }
         
         // 根据是否为一次性效果选择不同的应用方式
@@ -253,22 +261,23 @@ public class ItemPickup : MonoBehaviour
     }
     
     /// <summary>
-    /// 检查角色名称限制
+    /// 检查角色ID限制（使用 characterID 而非角色名称）
     /// </summary>
     private bool CanPickupBySpecificCharacter(GameObject picker)
     {
         if (string.IsNullOrEmpty(itemConfig.restrictedCharacterName))
         {
-            Debug.LogWarning($"[ItemPickup] 配置了角色限制但未指定角色名");
+            Debug.LogWarning($"[ItemPickup] 配置了角色限制但未指定角色ID");
             return true;
         }
         
-        string pickerCharacterName = GetCharacterName(picker);
-        bool canPickup = pickerCharacterName == itemConfig.restrictedCharacterName;
+        // 使用 TriggerHelper 获取角色ID（而非角色名称）
+        string pickerCharacterID = TriggerHelper.GetCharacterID(picker);
+        bool canPickup = pickerCharacterID == itemConfig.restrictedCharacterName;
         
         if (enableDebugLog && !canPickup)
         {
-            Debug.Log($"[ItemPickup] {pickerCharacterName} 不是指定角色 {itemConfig.restrictedCharacterName}，无法拾取");
+            Debug.Log($"[ItemPickup] 角色 {pickerCharacterID} 不是指定角色 {itemConfig.restrictedCharacterName}，无法拾取");
         }
         
         return canPickup;
@@ -294,7 +303,7 @@ public class ItemPickup : MonoBehaviour
     }
     
     /// <summary>
-    /// 获取角色名称
+    /// 获取角色名称（仅用于显示，逻辑判断请使用 TriggerHelper.GetCharacterID）
     /// </summary>
     private string GetCharacterName(GameObject ball)
     {
@@ -384,13 +393,13 @@ public class ItemPickup : MonoBehaviour
     }
     
     /// <summary>
-    /// 为指定角色执行效果
+    /// 为指定角色执行效果（使用 characterID）
     /// </summary>
     private bool ExecuteEffectForSpecificCharacter(SkillLevelConfig levelConfig)
     {
         if (string.IsNullOrEmpty(itemConfig.targetCharacterName))
         {
-            Debug.LogError($"[ItemPickup] 配置了指定角色但未填写角色名");
+            Debug.LogError($"[ItemPickup] 配置了指定角色但未填写角色ID");
             return false;
         }
         
@@ -401,12 +410,13 @@ public class ItemPickup : MonoBehaviour
             return false;
         }
         
+        // ✅ 使用 characterID 查找目标角色
         var targetCharacter = teamData.characters.Find(c => 
-            c.characterData?.info.name == itemConfig.targetCharacterName && c.isAlive);
+            c.characterID == itemConfig.targetCharacterName && c.isAlive);
             
         if (targetCharacter == null)
         {
-            Debug.LogWarning($"[ItemPickup] 未找到目标角色: {itemConfig.targetCharacterName}");
+            Debug.LogWarning($"[ItemPickup] 未找到目标角色ID: {itemConfig.targetCharacterName}");
             return false;
         }
         
@@ -414,12 +424,12 @@ public class ItemPickup : MonoBehaviour
         if (effect == null) return false;
         
         effect.Initialize();
-        effect.SetTarget(targetCharacter.characterID);  // ✅ 设置目标
+        effect.SetTarget(targetCharacter.characterID);
         bool success = effect.ExecuteEffect(null);
         
         if (enableDebugLog)
         {
-            Debug.Log($"[ItemPickup] ✅ 效果应用于指定角色 {itemConfig.targetCharacterName}: {success}");
+            Debug.Log($"[ItemPickup] ✅ 效果应用于角色 {targetCharacter.characterID}: {success}");
         }
         
         return success;

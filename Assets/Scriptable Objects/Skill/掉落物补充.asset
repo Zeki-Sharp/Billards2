@@ -1,0 +1,75 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: efc89a18d420d744da9894a9f7094350, type: 3}
+  m_Name: "\u6389\u843D\u7269\u8865\u5145"
+  m_EditorClassIdentifier: 
+  info:
+    name: "\u6389\u843D\u7269\u8865\u5145"
+    acronym: 
+    description: "\u6BCF\u56DE\u5408\u5F00\u59CB\u65F6\uFF0C\u786E\u4FDD\u573A\u4E0A\u67093\u4E2A\u6536\u96C6\u8005\u5B9D\u77F3"
+    icon: {fileID: 0}
+    color: {r: 1, g: 1, b: 1, a: 1}
+    skillType: 
+    rarity: "\u666E\u901A"
+    tag: cha_collect
+  skillLevels:
+  - level: 1
+    isActive: 1
+    levelDescription: 
+    triggerConfig:
+      rid: 6937075183333671089
+    conditionConfig:
+      logicType: 0
+      conditions: []
+    effectConfig:
+      rid: 6937075183333671090
+    resetConditionConfig:
+      rid: 6937075183333671102
+    effectRemovalConfig:
+      rid: -2
+  requiredSkills: []
+  isActive: 1
+  references:
+    version: 2
+    RefIds:
+    - rid: -2
+      type: {class: , ns: , asm: }
+    - rid: 6937075183333671089
+      type: {class: PhaseStateTriggerConfig, ns: , asm: Assembly-CSharp}
+      data:
+        targetStates: 01000000
+        showDebugLog: 0
+    - rid: 6937075183333671090
+      type: {class: DropItemReplenishEffectConfig, ns: , asm: Assembly-CSharp}
+      data:
+        targetItemCount: 3
+        itemConfig: {fileID: 11400000, guid: 68d9f642e77159846b4990259d98b80f, type: 2}
+        spawnRangeConfig:
+          coordinateSystem: 0
+          rangeShape: 0
+          worldCenter: {x: 0, y: 0, z: 0}
+          worldSize: {x: 16, y: 8}
+          worldRadius: 8
+          relativeSize: {x: 4, y: 4}
+          relativeRadius: 2
+          enablePositionOffset: 1
+          offsetRange: 0.5
+          checkObstacles: 1
+          obstacleLayer:
+            serializedVersion: 2
+            m_Bits: 328
+          checkRadius: 0.6
+          maxObstacleCheckAttempts: 30
+        showDebugLog: 1
+    - rid: 6937075183333671102
+      type: {class: NeverResetConditionConfig, ns: , asm: Assembly-CSharp}
+      data: 
