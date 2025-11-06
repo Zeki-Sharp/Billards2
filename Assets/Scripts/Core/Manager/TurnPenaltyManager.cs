@@ -24,8 +24,7 @@ public class TurnPenaltyManager : SingletonManager<TurnPenaltyManager>
 {
     
     [Header("组件引用")]
-    [SerializeField] [Tooltip("玩家核心组件引用")]
-    private PlayerBehavior playerBehavior;
+    // ✅ 多角色系统：不再需要单一 PlayerBehavior 引用
     
     [Header("关卡配置")]
     [SerializeField] [Tooltip("当前关卡配置")]
@@ -103,12 +102,7 @@ public class TurnPenaltyManager : SingletonManager<TurnPenaltyManager>
     /// </summary>
     private void InitializeCurrentLevel()
     {
-        // 自动查找 PlayerCore（每个场景都需要重新查找）
-        playerBehavior = FindFirstObjectByType<PlayerBehavior>();
-        if (playerBehavior == null && showDebugInfo)
-        {
-            Debug.LogWarning("TurnPenaltyManager: 未找到 PlayerCore 组件（可能还未加载场景）");
-        }
+        // ✅ 多角色系统：不再查找单一 PlayerBehavior，改为从 GameSession 获取队伍数据
         
         // 如果没有通过事件设置配置，尝试从 LevelManager 获取
         if (currentLevelConfig == null)
@@ -168,9 +162,14 @@ public class TurnPenaltyManager : SingletonManager<TurnPenaltyManager>
             return;
         }
         
-        // 检查玩家是否存活
-        if (playerBehavior == null || !playerBehavior.IsAlive())
+        // ✅ 多角色系统：查找血量最高的存活角色
+        var targetCharacter = FindHighestHealthCharacter();
+        if (targetCharacter == null)
         {
+            if (showDebugInfo)
+            {
+                Debug.Log("TurnPenaltyManager: 没有存活的角色，跳过惩罚");
+            }
             return;
         }
         
@@ -178,7 +177,7 @@ public class TurnPenaltyManager : SingletonManager<TurnPenaltyManager>
         float penaltyDamage = CalculatePenaltyDamage();
         
         // 施加惩罚
-        ApplyPenalty(penaltyDamage);
+        ApplyPenalty(penaltyDamage, targetCharacter);
     }
     
     /// <summary>
@@ -203,13 +202,44 @@ public class TurnPenaltyManager : SingletonManager<TurnPenaltyManager>
     }
     
     /// <summary>
-    /// 施加惩罚伤害
+    /// 查找血量最高的存活角色
     /// </summary>
-    private void ApplyPenalty(float damage)
+    private CharacterInstance FindHighestHealthCharacter()
     {
-        if (playerBehavior == null)
+        var teamData = GameSession.Instance?.GetTeamData();
+        if (teamData == null || teamData.characters == null || teamData.characters.Count == 0)
         {
-            Debug.LogError("TurnPenaltyManager: PlayerCore 为 null，无法施加惩罚！");
+            return null;
+        }
+        
+        CharacterInstance highestHealthCharacter = null;
+        float maxHealth = 0f;
+        
+        foreach (var character in teamData.characters)
+        {
+            // 跳过已死亡的角色
+            if (!character.isAlive)
+                continue;
+            
+            // 找血量最高的
+            if (character.currentHealth > maxHealth)
+            {
+                maxHealth = character.currentHealth;
+                highestHealthCharacter = character;
+            }
+        }
+        
+        return highestHealthCharacter;
+    }
+    
+    /// <summary>
+    /// 施加惩罚伤害（多角色版本）
+    /// </summary>
+    private void ApplyPenalty(float damage, CharacterInstance targetCharacter)
+    {
+        if (targetCharacter == null)
+        {
+            Debug.LogError("TurnPenaltyManager: 目标角色为 null，无法施加惩罚！");
             return;
         }
         
@@ -220,14 +250,37 @@ public class TurnPenaltyManager : SingletonManager<TurnPenaltyManager>
         if (showDebugInfo)
         {
             int exceededTurns = currentTurnCount - currentLevelConfig.turnPenaltyThreshold;
-            Debug.LogWarning($"⚠️ 回合惩罚触发！回合数: {currentTurnCount} (超出{exceededTurns}回合), 扣除血量: {damage}, 累计扣血: {accumulatedPenaltyDamage}");
+            string characterName = targetCharacter.characterData?.info?.name ?? targetCharacter.characterID;
+            Debug.LogWarning($"⚠️ 回合惩罚触发！目标: {characterName} (血量:{targetCharacter.currentHealth:F1}), 回合数: {currentTurnCount} (超出{exceededTurns}回合), 扣除血量: {damage}, 累计扣血: {accumulatedPenaltyDamage}");
         }
         
-        // 通过 PlayerCore 施加伤害（使用 IgnorePhase 版本，确保一定会生效）
-        playerBehavior.TakeDamageIgnorePhase(damage);
+        // 直接扣除角色血量
+        targetCharacter.currentHealth -= damage;
+        
+        // 确保不会扣成负数
+        if (targetCharacter.currentHealth < 0)
+        {
+            targetCharacter.currentHealth = 0;
+        }
+        
+        // 发布角色受伤事件（让 UI 和其他系统响应）
+        GameEventBus.PublishCharacterDamaged(targetCharacter.characterID, damage, "TurnPenalty");
+        
+        // 检查是否死亡
+        if (targetCharacter.currentHealth <= 0)
+        {
+            targetCharacter.isAlive = false;
+            GameEventBus.PublishCharacterDied(targetCharacter.characterID);
+            
+            if (showDebugInfo)
+            {
+                string characterName = targetCharacter.characterData?.info?.name ?? targetCharacter.characterID;
+                Debug.LogWarning($"⚠️ {characterName} 因回合惩罚死亡！");
+            }
+        }
         
         // 可以在这里添加 UI 提示或特效
-        // 例如：显示"回合超时！失去XX生命值"的提示
+        // 例如：显示"回合超时！{角色名}失去XX生命值"的提示
     }
     
     /// <summary>
