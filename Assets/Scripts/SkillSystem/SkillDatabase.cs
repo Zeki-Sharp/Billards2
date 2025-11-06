@@ -1,6 +1,7 @@
 using UnityEngine;
 using System.Collections.Generic;
 using System.Linq;
+using Sirenix.OdinInspector;
 
 /// <summary>
 /// 技能数据库 - 集中管理所有可用技能配置
@@ -29,15 +30,33 @@ public class SkillDatabase : ScriptableObject
     [Tooltip("所有可用的技能配置")]
     [SerializeField] private List<SkillConfig> allSkills = new List<SkillConfig>();
     
+    [Header("快速测试开关")]
+    [Tooltip("临时禁用的技能列表（不影响 SO 文件，仅用于测试）")]
+    [InfoBox("在这里拖入要临时禁用的技能，方便快速测试。不会修改 SkillConfig SO 文件。", InfoMessageType.Info)]
+    [SerializeField] private List<SkillConfig> temporarilyDisabledSkills = new List<SkillConfig>();
+    
     [Header("调试")]
     [SerializeField] private bool showDebugInfo = false;
     
     /// <summary>
-    /// 获取所有有效的技能配置
+    /// 获取所有有效的技能配置（排除临时禁用的）
     /// </summary>
     public List<SkillConfig> GetAllSkills()
     {
-        return allSkills.Where(skill => skill != null && skill.IsValid()).ToList();
+        return allSkills
+            .Where(skill => skill != null && 
+                           skill.IsValid() && 
+                           skill.isActive &&  // SO 自己的开关
+                           !IsTemporarilyDisabled(skill))  // 数据库的临时禁用列表
+            .ToList();
+    }
+    
+    /// <summary>
+    /// 检查技能是否被临时禁用
+    /// </summary>
+    private bool IsTemporarilyDisabled(SkillConfig skill)
+    {
+        return temporarilyDisabledSkills != null && temporarilyDisabledSkills.Contains(skill);
     }
     
     /// <summary>
@@ -58,6 +77,8 @@ public class SkillDatabase : ScriptableObject
             return allSkills
                 .Where(skill => skill != null && 
                                skill.IsValid() && 
+                               skill.isActive &&  // SO 的激活开关
+                               !IsTemporarilyDisabled(skill) &&  // 临时禁用列表
                                skill.skillTag == "common")
                 .ToList();
         }
@@ -66,6 +87,8 @@ public class SkillDatabase : ScriptableObject
         var filteredSkills = allSkills
             .Where(skill => skill != null && 
                            skill.IsValid() && 
+                           skill.isActive &&  // SO 的激活开关
+                           !IsTemporarilyDisabled(skill) &&  // 临时禁用列表
                            (skill.skillTag == characterName ||      // 角色专属技能
                             skill.skillTag == "common"))            // 通用技能
             .ToList();
@@ -93,6 +116,8 @@ public class SkillDatabase : ScriptableObject
         return allSkills
             .Where(skill => skill != null && 
                            skill.IsValid() && 
+                           skill.isActive &&  // SO 的激活开关
+                           !IsTemporarilyDisabled(skill) &&  // 临时禁用列表
                            skill.skillTag == tag)
             .ToList();
     }
@@ -232,6 +257,7 @@ public class SkillDatabase : ScriptableObject
         int invalidCount = allSkills.Count(s => s != null && !s.IsValid());
         int validCount = allSkills.Count(s => s != null && s.IsValid());
         int duplicateCount = allSkills.Count - allSkills.Distinct().Count();
+        int disabledCount = temporarilyDisabledSkills != null ? temporarilyDisabledSkills.Count : 0;
         
         // 统计标签分布
         var tagGroups = allSkills
@@ -247,6 +273,7 @@ public class SkillDatabase : ScriptableObject
                        $"❌ 无效技能: {invalidCount}\n" +
                        $"⚠️  空引用: {nullCount}\n" +
                        $"🔁 重复引用: {duplicateCount}\n" +
+                       $"🚫 临时禁用: {disabledCount}\n" +
                        $"📊 总计: {totalCount}\n" +
                        $"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n" +
                        $"标签分布：\n";
@@ -254,6 +281,19 @@ public class SkillDatabase : ScriptableObject
         foreach (var group in tagGroups)
         {
             report += $"  • {group.Key}: {group.Count()} 个技能\n";
+        }
+        
+        if (disabledCount > 0)
+        {
+            report += $"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n";
+            report += $"临时禁用的技能：\n";
+            foreach (var skill in temporarilyDisabledSkills)
+            {
+                if (skill != null)
+                {
+                    report += $"  • {skill.skillName}\n";
+                }
+            }
         }
         
         Debug.Log(report);

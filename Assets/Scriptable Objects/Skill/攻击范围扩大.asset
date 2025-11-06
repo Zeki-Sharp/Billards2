@@ -53,7 +53,7 @@ MonoBehaviour:
     effectRemovalConfig:
       rid: 832807104352092328
   requiredSkills: []
-  isActive: 0
+  isActive: 1
   references:
     version: 2
     RefIds:

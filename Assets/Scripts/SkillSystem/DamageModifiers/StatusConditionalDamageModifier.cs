@@ -84,11 +84,6 @@ public class StatusConditionalDamageModifier : MonoBehaviour, IDamageModifier
         {
             if (!TriggerHelper.IsOwner(attackData.Attacker, ownerCharacterID))
             {
-                if (showDebugLog)
-                {
-                    var atkId = TriggerHelper.GetCharacterID(attackData.Attacker);
-                    Debug.Log($"[{ModifierName}] 攻击者不匹配，跳过 (攻击者:{atkId}, 技能归属:{ownerCharacterID})");
-                }
                 return false;
             }
         }
@@ -96,10 +91,6 @@ public class StatusConditionalDamageModifier : MonoBehaviour, IDamageModifier
         // 检查目标是否有指定状态
         if (!CheckTargetHasStatus(attackData.Target))
         {
-            if (showDebugLog)
-            {
-                Debug.Log($"[{ModifierName}] 目标 {attackData.Target.name} 没有 {targetStatusData.displayName} 状态，跳过");
-            }
             return false;
         }
         
@@ -246,11 +237,6 @@ public class StatusConditionalDamageModifier : MonoBehaviour, IDamageModifier
             if (damageable != null)
             {
                 rootObject = (damageable as MonoBehaviour)?.gameObject;
-                
-                if (showDebugLog)
-                {
-                    Debug.Log($"[StatusConditionalDamageModifier] 目标 {target.name} 是子对象，使用根对象: {rootObject?.name}");
-                }
             }
         }
         
@@ -264,10 +250,6 @@ public class StatusConditionalDamageModifier : MonoBehaviour, IDamageModifier
         
         if (statusComponents == null || statusComponents.Length == 0)
         {
-            if (showDebugLog)
-            {
-                Debug.Log($"[StatusConditionalDamageModifier] {rootObject.name} 没有任何状态组件");
-            }
             return false;
         }
         
@@ -280,18 +262,9 @@ public class StatusConditionalDamageModifier : MonoBehaviour, IDamageModifier
                 // 检查状态是否激活（剩余回合数 > 0）
                 if (component.RemainingTurns > 0)
                 {
-                    if (showDebugLog)
-                    {
-                        Debug.Log($"[StatusConditionalDamageModifier] ✅ 找到匹配状态: {targetStatusData.displayName}, 剩余回合: {component.RemainingTurns}");
-                    }
                     return true;
                 }
             }
-        }
-        
-        if (showDebugLog)
-        {
-            Debug.Log($"[StatusConditionalDamageModifier] {rootObject.name} 没有激活的 {targetStatusData.displayName} 状态");
         }
         
         return false;

@@ -45,6 +45,55 @@ public class PlayerSpawner : MonoBehaviour
     [Header("调试")]
     [SerializeField] private bool showDebugInfo = true;
     
+    /// <summary>
+    /// 为角色添加初始技能
+    /// </summary>
+    /// <param name="character">角色实例</param>
+    private void AddInitialSkills(CharacterInstance character)
+    {
+        if (character == null || character.characterData == null)
+        {
+            return;
+        }
+        
+        // 检查是否配置了初始技能
+        if (character.characterData.initialSkills == null || character.characterData.initialSkills.Count == 0)
+        {
+            return;
+        }
+        
+        // 获取 SkillManager
+        var skillManager = SkillManager.Instance;
+        if (skillManager == null)
+        {
+            Debug.LogWarning($"PlayerSpawner: SkillManager 不存在，无法添加初始技能");
+            return;
+        }
+        
+        if (showDebugInfo)
+        {
+            Debug.Log($"PlayerSpawner: 为角色 {character.characterID} 添加 {character.characterData.initialSkills.Count} 个初始技能");
+        }
+        
+        // 添加所有初始技能到角色
+        foreach (var skillConfig in character.characterData.initialSkills)
+        {
+            if (skillConfig == null)
+            {
+                Debug.LogWarning($"PlayerSpawner: 角色 {character.characterID} 的初始技能列表中有空引用，跳过");
+                continue;
+            }
+            
+            // 使用 SkillManager 添加技能
+            skillManager.AddSkillToCharacter(character.characterID, skillConfig);
+            
+            if (showDebugInfo)
+            {
+                Debug.Log($"PlayerSpawner: ✅ 为 {character.characterID} 添加初始技能: {skillConfig.skillName}");
+            }
+        }
+    }
+    
     void Start()
     {
         // 验证配置
@@ -183,6 +232,9 @@ public class PlayerSpawner : MonoBehaviour
         
         // 保存场景实例引用到 CharacterInstance
         character.ballInstance = ball;
+        
+        // ✅ 添加初始技能（如果 PlayerData 中配置了）
+        AddInitialSkills(character);
         
         return ball;
     }

@@ -72,4 +72,12 @@ public class PlayerData : ScriptableObject
     [LabelText("经验倍数")]
     [MinValue(0.1f)]
     public float experienceMultiplier = 1f;
+    
+    [BoxGroup("技能配置")]
+    [LabelText("初始技能")]
+    [Tooltip("角色一进入游戏就携带的技能（可选）")]
+    [InfoBox("这些技能会在角色生成时自动获得，无需通过技能选择界面获取。", InfoMessageType.Info)]
+    [ListDrawerSettings(ShowIndexLabels = true, DraggableItems = true)]
+    [AssetsOnly]
+    public List<SkillConfig> initialSkills = new List<SkillConfig>();
 }
