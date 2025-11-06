@@ -101,6 +101,7 @@ public class SkillManager : SingletonManager<SkillManager>
         // ✅ 多角色系统：从 characterSkills 重新创建技能实例
         foreach (var kvp in characterSkills)
         {
+            string characterID = kvp.Key;
             foreach (var skillConfig in kvp.Value)
             {
                 if (skillConfig != null && skillConfig.IsValid())
@@ -108,7 +109,15 @@ public class SkillManager : SingletonManager<SkillManager>
                     var skillInstance = skillConfig.CreateSkillInstance();
                     if (skillInstance != null)
                     {
-                        skillInstances[skillConfig.skillName] = skillInstance;
+                        // ✅ 修复：使用统一的 key 格式（characterID_skillName）
+                        string skillInstanceID = $"{characterID}_{skillConfig.skillName}";
+                        skillInstances[skillInstanceID] = skillInstance;
+                        
+                        // ✅ 设置归属角色
+                        skillInstance.SetOwner(characterID);
+                        
+                        // ✅ 记录技能归属
+                        skillOwnership[skillInstanceID] = characterID;
                         
                         // 检查是否为DropItem类型技能（从当前等级获取）
                         var currentLevelConfig = skillConfig.GetLevelConfig(skillInstance.currentLevel);
