@@ -24,8 +24,8 @@ MonoBehaviour:
   playerPrefab: {fileID: 3251294568684493535, guid: 2d86053af5e50c446a06f75cbdecb65b, type: 3}
   ballData: {fileID: 11400000, guid: 5753a6296cab86e45ba7c2b9bfd00e6e, type: 2}
   baseMaxHealth: 80
-  attackPower: 10
-  areaRadius: 1.8
+  attackPower: 20
+  areaRadius: 1.5
   damageProfiles:
   - {fileID: 11400000, guid: d281aacbffa44e54bb1f170b47d3fe96, type: 2}
   - {fileID: 11400000, guid: d2ae35bd97815d34b80ca2adb661c5ed, type: 2}

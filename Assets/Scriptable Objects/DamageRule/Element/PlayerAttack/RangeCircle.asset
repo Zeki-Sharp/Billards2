@@ -26,7 +26,7 @@ MonoBehaviour:
   rangeShape: 0
   attackRange: 0
   baseDamage: 0
-  damageMultiplier: 1
+  damageMultiplier: 0.5
   damageType: 0
   affectPlayer: 0
   affectEnemy: 1
