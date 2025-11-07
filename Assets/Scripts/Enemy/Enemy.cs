@@ -7,7 +7,7 @@ using DeepSpaceLabs.SAM;
 /// <summary>
 /// 敌人脚本 - 管理整个敌人生命周期
 /// </summary>
-public class Enemy : MonoBehaviour
+public class Enemy : MonoBehaviour, IEnemyTurnSkipper
 {
     [Header("子对象引用")]
     public Transform spawnPreview;        // 攻击预告预制体（首次出现用）
@@ -32,6 +32,8 @@ public class Enemy : MonoBehaviour
     [Tooltip("敌人特效配置列表，在 Inspector 中直接拖拽 MMF_Player 组件")]
     public List<EffectConfig> effects = new List<EffectConfig>();
     
+    private readonly Dictionary<object, string> pendingSkipRequests = new Dictionary<object, string>();
+
     void Start()
     {
         // 获取行为组件
@@ -145,6 +147,13 @@ public class Enemy : MonoBehaviour
     public void StartPhase(EnemyPhase phase)
     {
         Debug.Log($"Enemy {name}: 开始阶段 {phase}");
+
+        if (ConsumeSkipRequest(out string skipReason))
+        {
+            Debug.Log($"Enemy {name}: 阶段 {phase} 被跳过（原因: {skipReason}）");
+            HandlePhaseSkip(phase);
+            return;
+        }
         
         switch (phase)
         {
@@ -245,6 +254,63 @@ public class Enemy : MonoBehaviour
     {
         return enemyBehavior;
     }
+
+    #region Turn Skip Support
+
+    private bool ConsumeSkipRequest(out string reason)
+    {
+        if (pendingSkipRequests.Count == 0)
+        {
+            reason = null;
+            return false;
+        }
+
+        reason = string.Join(" | ", pendingSkipRequests.Values);
+        return true;
+    }
+
+    private void HandlePhaseSkip(EnemyPhase phase)
+    {
+        switch (phase)
+        {
+            case EnemyPhase.Attack:
+                OnEnemyPhaseComplete?.Invoke(this, EnemyPhase.Attack);
+                break;
+            case EnemyPhase.Move:
+                OnMoveComplete?.Invoke(this);
+                OnEnemyPhaseComplete?.Invoke(this, EnemyPhase.Move);
+                break;
+            case EnemyPhase.Telegraph:
+                OnTelegraphComplete?.Invoke(this);
+                break;
+            case EnemyPhase.Spawn:
+                OnSpawnComplete?.Invoke(this);
+                break;
+        }
+    }
+
+    public bool RequestSkipOnce(object source, string reason)
+    {
+        if (source == null)
+        {
+            return false;
+        }
+
+        pendingSkipRequests[source] = string.IsNullOrEmpty(reason) ? "Unknown" : reason;
+        return true;
+    }
+
+    public void ClearSkipRequest(object source)
+    {
+        if (source == null)
+        {
+            return;
+        }
+
+        pendingSkipRequests.Remove(source);
+    }
+
+    #endregion
     
     /// <summary>
     /// 设置敌人数据

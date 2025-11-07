@@ -231,3 +231,54 @@ public class PoisonStatusBehaviourConfig : TurnBasedStatusBehaviourConfig
 }
 
 
+/// <summary>
+/// 冰冻状态行为配置：控制敌人跳过行动
+/// </summary>
+[Serializable]
+public class FreezingStatusBehaviourConfig : TurnBasedStatusBehaviourConfig
+{
+    public override Type ComponentType => typeof(FreezingStatus);
+
+    public enum FreezingStackMode
+    {
+        Refresh,
+        Extend,
+        Ignore
+    }
+
+    [BoxGroup("冰冻参数"), LabelText("持续回合数"), MinValue(1)]
+    public int durationInTurns = 1;
+
+    [BoxGroup("冰冻参数"), LabelText("叠加策略"), Tooltip("Refresh：刷新剩余回合；Extend：在当前剩余回合基础上增加；Ignore：忽略新的施加请求")]
+    public FreezingStackMode stackMode = FreezingStackMode.Refresh;
+
+    public override void ApplyInitialValues(TurnBasedStatusData data, TurnBasedStatusComponent component)
+    {
+        component.SetRemainingTurns(durationInTurns);
+        component.SetDamagePerTurn(0f);
+        component.SetCurrentStacks(0);
+    }
+
+    public override void OnStackApplied(TurnBasedStatusData data, TurnBasedStatusComponent component)
+    {
+        switch (stackMode)
+        {
+            case FreezingStackMode.Refresh:
+                component.SetRemainingTurns(durationInTurns);
+                break;
+            case FreezingStackMode.Extend:
+                component.AddRemainingTurns(durationInTurns);
+                break;
+            case FreezingStackMode.Ignore:
+                // 不做处理
+                break;
+        }
+    }
+
+    public override string GetDebugDescription(TurnBasedStatusData data)
+    {
+        return $"{data.displayName} ({durationInTurns}回合，策略:{stackMode})";
+    }
+}
+
+
