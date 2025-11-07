@@ -172,7 +172,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 423, y: -253}
+  m_AnchoredPosition: {x: 434, y: -321}
   m_SizeDelta: {x: 200, y: 60}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &6366651562539075312
@@ -550,7 +550,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 487.7, y: -205.9}
+  m_AnchoredPosition: {x: 498.7, y: -273.9}
   m_SizeDelta: {x: 315.9731, y: 50}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &6504445776594549147
@@ -776,7 +776,6 @@ MonoBehaviour:
   instructionTextContent: "\u8BF7\u9009\u62E9\u4F60\u8981\u4F7F\u7528\u7684\u89D2\u8272"
   startGameButtonTextContent: "\u5F00\u59CB\u6E38\u620F"
   noCharacterSelectedText: "\u8BF7\u9009\u62E9\u89D2\u8272"
-  characterSelectedTextFormat: "\u5DF2\u9009\u62E9: {0}"
   enableAnimations: 1
   buttonAnimationDuration: 0.3
   buttonAnimationCurve:
@@ -839,8 +838,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 2200, y: 1200}
+  m_AnchoredPosition: {x: 0, y: 31.049988}
+  m_SizeDelta: {x: 2200, y: 1075.8}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &1955568622516650013
 CanvasRenderer:
@@ -900,7 +899,7 @@ MonoBehaviour:
   m_ChildAlignment: 0
   m_StartCorner: 0
   m_StartAxis: 0
-  m_CellSize: {x: 600, y: 600}
+  m_CellSize: {x: 500, y: 500}
   m_Spacing: {x: 50, y: 50}
   m_Constraint: 1
   m_ConstraintCount: 4
