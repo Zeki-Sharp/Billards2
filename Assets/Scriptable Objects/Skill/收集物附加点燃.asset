@@ -10,12 +10,12 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: efc89a18d420d744da9894a9f7094350, type: 3}
-  m_Name: "\u4E2D\u6BD2_\u8303\u56F4\u653B\u51FB"
+  m_Name: "\u6536\u96C6\u7269\u9644\u52A0\u70B9\u71C3"
   m_EditorClassIdentifier: 
   info:
-    name: "\u4E2D\u6BD2\u8303\u56F4\u653B\u51FB"
+    name: "\u6536\u96C6\u7269\u9644\u52A0\u70B9\u71C3"
     acronym: 
-    description: "\u8303\u56F4\u653B\u51FB\u4F1A\u4F7F\u654C\u4EBA\u4E2D\u6BD2\uFF0C\u6301\u7EED\u9020\u6210\u4E0E\u5C42\u6570\u76F8\u7B49\u7684\u4F24\u5BB3"
+    description: "\u6536\u96C6\u7269\u653B\u51FB\u654C\u4EBA\u65F6\u8FD8\u4F1A\u5BF9\u654C\u4EBA\u9644\u52A0\u5BF9\u5E94\u5C42\u6570\u7684\u70B9\u71C3"
     icon: {fileID: 0}
     color: {r: 1, g: 1, b: 1, a: 1}
     skillType: 

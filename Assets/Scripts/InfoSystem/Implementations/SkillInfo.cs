@@ -1,7 +1,8 @@
 using UnityEngine;
+using System.Collections.Generic;
+using System.Linq;
 #if UNITY_EDITOR
 using Sirenix.OdinInspector;
-using System.Collections.Generic;
 #endif
 
 /// <summary>
@@ -31,11 +32,15 @@ public class SkillInfo : TInfo
 #endif
     public string rarity = "普通";
     
-    [Tooltip("技能标签（如 default, common, character_1 等）\n使用 characterID 而不是角色名称，支持重命名和多语言")]
+    [Tooltip("技能标签列表（使用 characterID，而非角色显示名）")]
 #if UNITY_EDITOR
-    [ValueDropdown("GetAvailableTags")]
+    [ListDrawerSettings(ShowFoldout = true, DraggableItems = false, HideAddButton = false, HideRemoveButton = false)]
+    [ValueDropdown("GetAvailableTags", IsUniqueList = true)]
 #endif
-    public string tag = "default";
+    public List<string> allowedTags = new List<string>();
+
+    [SerializeField, HideInInspector]
+    private string legacyTag = "default";
     
 #if UNITY_EDITOR
     /// <summary>
@@ -62,10 +67,6 @@ public class SkillInfo : TInfo
     {
         var tags = new ValueDropdownList<string>();
         
-        // 固定标签
-        tags.Add("通用 (default)", "default");
-        tags.Add("公共 (common)", "common");
-        
         // 动态读取角色 characterID
         string[] guids = UnityEditor.AssetDatabase.FindAssets("t:PlayerData");
         foreach (string guid in guids)
@@ -82,6 +83,18 @@ public class SkillInfo : TInfo
         
         return tags;
     }
+
+    [Button("全选角色标签"), GUIColor(0.2f, 0.7f, 1f)]
+    private void SelectAllTags()
+    {
+        allowedTags = GetAvailableTags().Select(item => item.Value).Distinct().ToList();
+    }
+
+    [Button("清空标签"), GUIColor(1f, 0.4f, 0.4f)]
+    private void ClearAllTags()
+    {
+        allowedTags.Clear();
+    }
 #endif
     
     /// <summary>
@@ -90,6 +103,27 @@ public class SkillInfo : TInfo
     public override string GetDebugInfo()
     {
         return $"[SkillInfo] {GetDisplayName()} ({skillType}, {rarity})";
+    }
+
+    private void OnValidate()
+    {
+#if UNITY_EDITOR
+        if (!string.IsNullOrEmpty(legacyTag) && (allowedTags == null || allowedTags.Count == 0))
+        {
+            allowedTags = new List<string> { legacyTag };
+        }
+        legacyTag = string.Empty;
+
+        if (allowedTags != null)
+        {
+            allowedTags = allowedTags.Where(t => !string.IsNullOrEmpty(t)).Distinct().ToList();
+        }
+#endif
+    }
+
+    public IReadOnlyList<string> GetAllowedTags()
+    {
+        return allowedTags ?? (allowedTags = new List<string>());
     }
 }
 

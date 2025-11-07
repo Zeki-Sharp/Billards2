@@ -26,7 +26,7 @@ MonoBehaviour:
       Data: 0|FreezingStatusBehaviourConfig, Assembly-CSharp
     - Name: durationInTurns
       Entry: 3
-      Data: 2
+      Data: 1
     - Name: stackMode
       Entry: 3
       Data: 1

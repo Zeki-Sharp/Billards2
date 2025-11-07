@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using System.Collections.Generic;
+using System.Linq;
 
 /// <summary>
 /// 技能选择界面 - 使用动态布局
@@ -25,7 +26,7 @@ public class SkillSelectionUI : BasePanel
     private SkillSelectionManager skillSelectionManager;
     
     // 当前显示的技能列表
-    private List<SkillConfig> currentSkills = new List<SkillConfig>();
+    private List<SkillSelectionOption> currentOptions = new List<SkillSelectionOption>();
     
     // 当前实例化的按钮列表
     private List<SkillButtonPrefab> instantiatedButtons = new List<SkillButtonPrefab>();
@@ -147,11 +148,11 @@ public class SkillSelectionUI : BasePanel
     /// 技能选择开始事件处理
     /// </summary>
     /// <param name="availableSkills">可选择的技能列表</param>
-    void OnSkillSelectionStarted(List<SkillConfig> availableSkills)
+    void OnSkillSelectionStarted(List<SkillSelectionOption> availableOptions)
     {
         if (showDebugInfo)
         {
-            Debug.Log($"[SkillSelectionUI] 收到技能选择开始事件，技能数量: {availableSkills.Count}");
+            Debug.Log($"[SkillSelectionUI] 收到技能选择开始事件，技能数量: {availableOptions.Count}");
         }
         
         // ✅ 确保 SkillSelectionManager 引用存在
@@ -165,8 +166,8 @@ public class SkillSelectionUI : BasePanel
         }
         
         // 准备技能数据
-        currentSkills.Clear();
-        currentSkills.AddRange(availableSkills);
+        currentOptions.Clear();
+        currentOptions.AddRange(availableOptions);
         
         // 更新技能显示
         UpdateSkillDisplay();
@@ -193,7 +194,7 @@ public class SkillSelectionUI : BasePanel
         }
         
         // 清理技能数据和UI
-        currentSkills.Clear();
+        currentOptions.Clear();
         ClearSkillButtons();
         
         // 通过 UIController 统一隐藏（会自动恢复游戏）
@@ -223,28 +224,14 @@ public class SkillSelectionUI : BasePanel
         }
         
         // 动态生成技能按钮
-        for (int i = 0; i < currentSkills.Count; i++)
+        for (int i = 0; i < currentOptions.Count; i++)
         {
-            SkillConfig skill = currentSkills[i];
-            if (skill == null)
+            SkillSelectionOption option = currentOptions[i];
+            if (option == null || option.skillConfig == null)
+            {
                 continue;
-            
-            // 获取技能选项（包含角色分配信息）
-            SkillSelectionOption option = null;
-            if (skillSelectionManager != null)
-            {
-                option = skillSelectionManager.GetSkillOption(i);
-                
-                if (option == null && showDebugInfo)
-                {
-                    Debug.LogWarning($"[SkillSelectionUI] GetSkillOption({i}) 返回 null！");
-                }
             }
-            else
-            {
-                Debug.LogError($"[SkillSelectionUI] skillSelectionManager 为 null！");
-            }
-            
+
             // 实例化按钮
             GameObject buttonObj = Instantiate(skillButtonPrefab, skillListContainer);
             if (buttonObj != null)
@@ -254,7 +241,7 @@ public class SkillSelectionUI : BasePanel
                 if (buttonInstance != null)
                 {
                     // 初始化按钮
-                    buttonInstance.Initialize(skill, i, option, OnSkillButtonClicked);
+                    buttonInstance.Initialize(option.skillConfig, i, option, OnSkillButtonClicked);
                     instantiatedButtons.Add(buttonInstance);
                 }
                 else
@@ -297,31 +284,23 @@ public class SkillSelectionUI : BasePanel
     /// <param name="skillIndex">技能索引</param>
     void OnSkillButtonClicked(int skillIndex)
     {
-        if (!IsVisible || skillIndex < 0 || skillIndex >= currentSkills.Count || currentSkills[skillIndex] == null)
+        if (!IsVisible)
         {
             if (showDebugInfo)
             {
-                Debug.LogWarning($"SkillSelectionUI: 无效的技能索引 {skillIndex}，当前技能数量: {currentSkills.Count}");
+                Debug.LogWarning($"SkillSelectionUI: 面板未显示，忽略点击 {skillIndex}");
             }
             return;
         }
         
-        SkillConfig selectedSkill = currentSkills[skillIndex];
-        
-        if (showDebugInfo)
-        {
-            Debug.Log($"SkillSelectionUI: 选择技能 - {selectedSkill.skillName} (索引: {skillIndex})");
-        }
-        
-        // 通知 SkillSelectionManager - 使用单例，双重保险
         if (skillSelectionManager == null)
         {
             skillSelectionManager = SkillSelectionManager.Instance;
         }
-        
+
         if (skillSelectionManager != null)
         {
-            skillSelectionManager.OnSkillSelected(selectedSkill);
+            skillSelectionManager.OnSkillSelectedByIndex(skillIndex);
         }
         else
         {
@@ -335,26 +314,26 @@ public class SkillSelectionUI : BasePanel
     void TestShowSkillSelection()
     {
         // 创建测试技能列表
-        List<SkillConfig> testSkills = new List<SkillConfig>();
+        List<SkillSelectionOption> testOptions = new List<SkillSelectionOption>();
         
         if (skillSelectionManager != null)
         {
             var availableSkills = skillSelectionManager.GetCurrentSelection();
             if (availableSkills.Count > 0)
             {
-                testSkills.AddRange(availableSkills);
+                testOptions.AddRange(availableSkills);
             }
         }
         
-        if (testSkills.Count == 0)
+        if (testOptions.Count == 0)
         {
             Debug.LogWarning("SkillSelectionUI: 没有可用的测试技能");
             return;
         }
         
         // 准备技能数据
-        currentSkills.Clear();
-        currentSkills.AddRange(testSkills);
+        currentOptions.Clear();
+        currentOptions.AddRange(testOptions);
         UpdateSkillDisplay();
         
         // 通过 UIController 显示
@@ -378,7 +357,7 @@ public class SkillSelectionUI : BasePanel
     {
         Debug.Log($"SkillSelectionUI 状态:\n" +
                   $"UI激活: {IsVisible}\n" +
-                  $"当前技能数量: {currentSkills.Count}\n" +
+                  $"当前技能数量: {currentOptions.Count}\n" +
                   $"SkillSelectionManager: {(skillSelectionManager != null ? "已连接" : "未连接")}");
     }
     

@@ -10,26 +10,25 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: efc89a18d420d744da9894a9f7094350, type: 3}
-  m_Name: "\u4E2D\u6BD2_\u8303\u56F4\u653B\u51FB"
+  m_Name: "\u4E2D\u6BD2\u649E\u51FB"
   m_EditorClassIdentifier: 
   info:
-    name: "\u4E2D\u6BD2\u8303\u56F4\u653B\u51FB"
+    name: "\u4E2D\u6BD2\u653B\u51FB"
     acronym: 
-    description: "\u8303\u56F4\u653B\u51FB\u4F1A\u4F7F\u654C\u4EBA\u4E2D\u6BD2\uFF0C\u6301\u7EED\u9020\u6210\u4E0E\u5C42\u6570\u76F8\u7B49\u7684\u4F24\u5BB3"
+    description: "\u649E\u51FB\u4F1A\u4F7F\u654C\u4EBA\u4E2D\u6BD2\uFF0C\u6301\u7EED\u9020\u6210\u4E0E\u5C42\u6570\u76F8\u7B49\u7684\u4F24\u5BB3"
     icon: {fileID: 0}
     color: {r: 1, g: 1, b: 1, a: 1}
     skillType: 
     rarity: "\u666E\u901A"
     allowedTags:
-    - cha_range
-    - cha_tri
+    - cha_collision
     legacyTag: default
   skillLevels:
   - level: 1
     isActive: 1
     levelDescription: 
     triggerConfig:
-      rid: 6937075160391614727
+      rid: 6937075205633999034
     conditionConfig:
       logicType: 0
       conditions:
@@ -37,7 +36,7 @@ MonoBehaviour:
     effectConfig:
       rid: 6937075205633998964
     resetConditionConfig:
-      rid: 6937075160391614729
+      rid: 6937075205633999032
     effectRemovalConfig:
       rid: -2
   requiredSkills: []
@@ -51,17 +50,17 @@ MonoBehaviour:
       type: {class: CountConditionConfig, ns: , asm: Assembly-CSharp}
       data:
         requiredCount: 1
-    - rid: 6937075160391614727
-      type: {class: DamageTriggerConfig, ns: , asm: Assembly-CSharp}
-      data:
-        triggerTypes: 01000000
-        targetTag: Enemy
-        showDebugLog: 1
-    - rid: 6937075160391614729
-      type: {class: OnPhaseEndedResetConditionConfig, ns: , asm: Assembly-CSharp}
-      data: 
     - rid: 6937075205633998964
       type: {class: TurnBasedStatusEffectConfig, ns: , asm: Assembly-CSharp}
       data:
         statusData: {fileID: 11400000, guid: 4c13b8311cd391945a0d1212309141b3, type: 2}
         showDebugLog: 1
+    - rid: 6937075205633999032
+      type: {class: ImmediateResetConditionConfig, ns: , asm: Assembly-CSharp}
+      data: 
+    - rid: 6937075205633999034
+      type: {class: DamageTriggerConfig, ns: , asm: Assembly-CSharp}
+      data:
+        triggerTypes: 00000000
+        targetTag: Enemy
+        showDebugLog: 0

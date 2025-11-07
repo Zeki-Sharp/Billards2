@@ -34,7 +34,51 @@ public class SkillConfig : ScriptableObject
     /// <summary>
     /// 技能标签（从 Info 读取）
     /// </summary>
-    public string skillTag => info?.tag ?? "default";
+    public IReadOnlyList<string> AllowedTags => info?.GetAllowedTags();
+
+    public string GetPrimaryTag()
+    {
+        if (AllowedTags != null)
+        {
+            string first = AllowedTags.FirstOrDefault(t => !string.IsNullOrEmpty(t));
+            if (!string.IsNullOrEmpty(first))
+            {
+                return first;
+            }
+        }
+        return string.Empty;
+    }
+
+    public bool ContainsTag(string tag)
+    {
+        if (string.IsNullOrEmpty(tag))
+        {
+            return false;
+        }
+
+        return EnumerateTags().Contains(tag);
+    }
+
+    public IEnumerable<string> EnumerateTags()
+    {
+        if (AllowedTags != null && AllowedTags.Count > 0)
+        {
+            foreach (var tag in AllowedTags)
+            {
+                if (!string.IsNullOrEmpty(tag))
+                {
+                    yield return tag;
+                }
+            }
+            yield break;
+        }
+
+        var primary = GetPrimaryTag();
+        if (!string.IsNullOrEmpty(primary))
+        {
+            yield return primary;
+        }
+    }
     
     /// <summary>
     /// 技能图标（从 Info 读取）

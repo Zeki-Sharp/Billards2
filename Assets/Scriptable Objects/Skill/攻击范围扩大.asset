@@ -20,7 +20,9 @@ MonoBehaviour:
     color: {r: 1, g: 1, b: 1, a: 1}
     skillType: 
     rarity: "\u666E\u901A"
-    tag: "\u8303\u56F4\u653B\u51FB\u89D2\u8272"
+    allowedTags:
+    - cha_range
+    legacyTag: default
   skillLevels:
   - level: 1
     isActive: 1

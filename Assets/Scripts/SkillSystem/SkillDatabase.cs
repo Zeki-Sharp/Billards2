@@ -37,7 +37,23 @@ public class SkillDatabase : ScriptableObject
     
     [Header("调试")]
     [SerializeField] private bool showDebugInfo = false;
+
+    private readonly List<SkillVariant> variantCache = new List<SkillVariant>();
+    private readonly Dictionary<string, List<SkillVariant>> variantsByTag = new Dictionary<string, List<SkillVariant>>();
+    private bool variantsDirty = true;
     
+    private void OnEnable()
+    {
+        MarkVariantsDirty();
+    }
+
+#if UNITY_EDITOR
+    private void OnValidate()
+    {
+        MarkVariantsDirty();
+    }
+#endif
+
     /// <summary>
     /// 获取所有有效的技能配置（排除临时禁用的）
     /// </summary>
@@ -58,47 +74,188 @@ public class SkillDatabase : ScriptableObject
     {
         return temporarilyDisabledSkills != null && temporarilyDisabledSkills.Contains(skill);
     }
-    
-    /// <summary>
-    /// 根据角色名称筛选技能
-    /// 返回适合该角色的技能（包含角色专属技能和通用技能）
-    /// </summary>
-    /// <param name="characterName">角色名称</param>
-    /// <returns>适合该角色的技能列表</returns>
-    public List<SkillConfig> GetSkillsForCharacter(string characterName)
+
+    private static bool HasTag(SkillConfig skill, string tag)
     {
-        if (string.IsNullOrEmpty(characterName))
+        if (skill == null || string.IsNullOrEmpty(tag))
+        {
+            return false;
+        }
+
+        return skill.EnumerateTags().Contains(tag);
+    }
+
+    private static bool HasCommonTag(SkillConfig skill)
+    {
+        return HasTag(skill, "common");
+    }
+
+    private static IEnumerable<string> EnumerateSkillTags(SkillConfig skill)
+    {
+        return skill?.EnumerateTags() ?? Enumerable.Empty<string>();
+    }
+    
+    private void MarkVariantsDirty()
+    {
+        variantsDirty = true;
+    }
+
+    private void EnsureVariantCache()
+    {
+        if (!variantsDirty)
+        {
+            return;
+        }
+
+        variantCache.Clear();
+        variantsByTag.Clear();
+
+        foreach (var skill in GetAllSkills())
+        {
+            var tags = EnumerateSkillTags(skill).Distinct().Where(tag => !string.IsNullOrEmpty(tag)).ToList();
+
+            if (tags.Count == 0)
+            {
+                var fallback = skill.GetPrimaryTag();
+                if (!string.IsNullOrEmpty(fallback))
+                {
+                    tags.Add(fallback);
+                }
+            }
+
+            if (showDebugInfo)
+            {
+                Debug.Log($"[SkillDatabase] 构建 variant 缓存: {skill.skillName} -> [{string.Join(",", tags)}] (AllowedTags.Count={skill.AllowedTags?.Count ?? 0})");
+            }
+
+            foreach (var tag in tags)
+            {
+                var variant = new SkillVariant(skill, tag);
+                variantCache.Add(variant);
+
+                if (!variantsByTag.TryGetValue(tag, out var list))
+                {
+                    list = new List<SkillVariant>();
+                    variantsByTag.Add(tag, list);
+                }
+
+                list.Add(variant);
+            }
+        }
+
+        variantsDirty = false;
+
+        if (showDebugInfo)
+        {
+            Debug.Log($"[SkillDatabase] Variant 缓存构建完成：总计 {variantCache.Count} 个副本，标签键数 {variantsByTag.Count}");
+        }
+    }
+
+    private List<SkillVariant> GetVariantsForTagInternal(string tag)
+    {
+        EnsureVariantCache();
+
+        if (string.IsNullOrEmpty(tag))
+        {
+            return variantCache;
+        }
+
+        if (variantsByTag.TryGetValue(tag, out var list))
         {
             if (showDebugInfo)
             {
-                Debug.LogWarning("[SkillDatabase] 角色名称为空，返回通用技能");
+                Debug.Log($"[SkillDatabase] 通过标签 '{tag}' 获取到 {list.Count} 个副本");
             }
-            // 角色名称为空时，只返回 common 标签的技能
-            return allSkills
-                .Where(skill => skill != null && 
-                               skill.IsValid() && 
-                               skill.isActive &&  // SO 的激活开关
-                               !IsTemporarilyDisabled(skill) &&  // 临时禁用列表
-                               skill.skillTag == "common")
-                .ToList();
+            return list;
         }
-        
-        // 只允许角色专属技能和通用技能
-        var filteredSkills = allSkills
-            .Where(skill => skill != null && 
-                           skill.IsValid() && 
-                           skill.isActive &&  // SO 的激活开关
-                           !IsTemporarilyDisabled(skill) &&  // 临时禁用列表
-                           (skill.skillTag == characterName ||      // 角色专属技能
-                            skill.skillTag == "common"))            // 通用技能
-            .ToList();
-        
+
         if (showDebugInfo)
         {
-            Debug.Log($"[SkillDatabase] 为角色 '{characterName}' 找到 {filteredSkills.Count} 个技能");
+            Debug.LogWarning($"[SkillDatabase] 标签 '{tag}' 未命中 variant 缓存");
         }
-        
-        return filteredSkills;
+
+        return new List<SkillVariant>();
+    }
+
+    public IReadOnlyList<SkillVariant> GetAllVariants()
+    {
+        EnsureVariantCache();
+        return variantCache;
+    }
+
+    public List<SkillVariant> GetVariantsForCharacter(string characterName)
+    {
+        EnsureVariantCache();
+
+        var result = new List<SkillVariant>();
+        var seenVariantIds = new HashSet<string>();
+        var seenBaseConfigs = new HashSet<SkillConfig>();
+
+        void AddVariants(IEnumerable<SkillVariant> variants, bool skipIfBaseExists)
+        {
+            if (variants == null)
+            {
+                return;
+            }
+
+            foreach (var variant in variants)
+            {
+                if (variant?.BaseConfig == null)
+                {
+                    continue;
+                }
+
+                if (skipIfBaseExists && seenBaseConfigs.Contains(variant.BaseConfig))
+                {
+                    continue;
+                }
+
+                if (seenVariantIds.Add(variant.VariantId))
+                {
+                    result.Add(variant);
+                    seenBaseConfigs.Add(variant.BaseConfig);
+                }
+            }
+        }
+
+        if (string.IsNullOrEmpty(characterName))
+        {
+            AddVariants(GetVariantsForTagInternal("common"), skipIfBaseExists: false);
+            if (showDebugInfo)
+            {
+                Debug.Log($"[SkillDatabase] 角色为空 => 返回 {result.Count} 个通用副本");
+            }
+            return result;
+        }
+
+        AddVariants(GetVariantsForTagInternal(characterName), skipIfBaseExists: false);
+        AddVariants(GetVariantsForTagInternal("common"), skipIfBaseExists: true);
+
+        if (showDebugInfo)
+        {
+            Debug.Log($"[SkillDatabase] 角色 '{characterName}' 汇总副本数: {result.Count}");
+            foreach (var variant in result)
+            {
+                Debug.Log($"    • {variant.BaseConfig?.skillName ?? "<null>"} (Tag: {variant.Tag})");
+            }
+        }
+
+        return result;
+    }
+
+    public List<SkillConfig> GetSkillsForCharacter(string characterName)
+    {
+        return GetSkillsForCharacter(characterName, distinct: true);
+    }
+
+    public List<SkillConfig> GetSkillsForCharacter(string characterName, bool distinct)
+    {
+        var variants = GetVariantsForCharacter(characterName);
+        var configs = variants
+            .Select(variant => variant.BaseConfig)
+            .Where(cfg => cfg != null);
+
+        return distinct ? configs.Distinct().ToList() : configs.ToList();
     }
     
     /// <summary>
@@ -116,9 +273,9 @@ public class SkillDatabase : ScriptableObject
         return allSkills
             .Where(skill => skill != null && 
                            skill.IsValid() && 
-                           skill.isActive &&  // SO 的激活开关
-                           !IsTemporarilyDisabled(skill) &&  // 临时禁用列表
-                           skill.skillTag == tag)
+                           skill.isActive &&
+                           !IsTemporarilyDisabled(skill) &&
+                           HasTag(skill, tag))
             .ToList();
     }
     
@@ -170,13 +327,20 @@ public class SkillDatabase : ScriptableObject
     public List<string> GetAllTags()
     {
         return allSkills
-            .Where(skill => skill != null && !string.IsNullOrEmpty(skill.skillTag))
-            .Select(skill => skill.skillTag)
+            .Where(skill => skill != null && skill.IsValid())
+            .SelectMany(EnumerateSkillTags)
+            .Where(tag => !string.IsNullOrEmpty(tag))
             .Distinct()
             .OrderBy(tag => tag)
             .ToList();
     }
     
+    public List<SkillVariant> GetVariantsByTag(string tag)
+    {
+        var variants = GetVariantsForTagInternal(tag);
+        return variants == null ? new List<SkillVariant>() : new List<SkillVariant>(variants);
+    }
+
 #if UNITY_EDITOR
     /// <summary>
     /// 自动填充技能列表（编辑器工具）
@@ -211,6 +375,8 @@ public class SkillDatabase : ScriptableObject
         
         // 验证配置
         ValidateDatabase();
+
+        MarkVariantsDirty();
         
         // 标记为已修改
         UnityEditor.EditorUtility.SetDirty(this);
@@ -241,6 +407,8 @@ public class SkillDatabase : ScriptableObject
         {
             Debug.Log($"[SkillDatabase] 清理完成：所有技能都是有效的");
         }
+
+        MarkVariantsDirty();
         
         // 标记为已修改
         UnityEditor.EditorUtility.SetDirty(this);
@@ -262,7 +430,8 @@ public class SkillDatabase : ScriptableObject
         // 统计标签分布
         var tagGroups = allSkills
             .Where(s => s != null && s.IsValid())
-            .GroupBy(s => string.IsNullOrEmpty(s.skillTag) ? "<未设置>" : s.skillTag)
+            .SelectMany(s => EnumerateSkillTags(s).DefaultIfEmpty("<未设置>"), (skill, tag) => new { skill, tag })
+            .GroupBy(x => x.tag)
             .OrderByDescending(g => g.Count())
             .ToList();
         
@@ -324,6 +493,8 @@ public class SkillDatabase : ScriptableObject
         
         allSkills.Add(skill);
         Debug.Log($"[SkillDatabase] 添加技能: {skill.skillName}");
+
+        MarkVariantsDirty();
         
         UnityEditor.EditorUtility.SetDirty(this);
     }
@@ -341,6 +512,7 @@ public class SkillDatabase : ScriptableObject
         if (allSkills.Remove(skill))
         {
             Debug.Log($"[SkillDatabase] 移除技能: {skill.skillName}");
+            MarkVariantsDirty();
             UnityEditor.EditorUtility.SetDirty(this);
         }
     }
@@ -359,6 +531,7 @@ public class SkillDatabase : ScriptableObject
         if (removedCount > 0)
         {
             Debug.Log($"[SkillDatabase] 移除了 {removedCount} 个重复引用");
+            MarkVariantsDirty();
             UnityEditor.EditorUtility.SetDirty(this);
         }
         else
@@ -378,6 +551,7 @@ public class SkillDatabase : ScriptableObject
             .ToList();
         
         Debug.Log($"[SkillDatabase] 已按名称排序");
+        MarkVariantsDirty();
         UnityEditor.EditorUtility.SetDirty(this);
     }
     
@@ -388,11 +562,20 @@ public class SkillDatabase : ScriptableObject
     public void SortByTag()
     {
         allSkills = allSkills
-            .OrderBy(skill => skill == null ? "" : skill.skillTag)
+            .OrderBy(skill =>
+            {
+                if (skill == null)
+                {
+                    return string.Empty;
+                }
+
+                return EnumerateSkillTags(skill).FirstOrDefault() ?? string.Empty;
+            })
             .ThenBy(skill => skill == null ? "" : skill.skillName)
             .ToList();
         
         Debug.Log($"[SkillDatabase] 已按标签和名称排序");
+        MarkVariantsDirty();
         UnityEditor.EditorUtility.SetDirty(this);
     }
 #endif

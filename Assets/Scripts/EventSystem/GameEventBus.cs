@@ -215,7 +215,7 @@ public static class GameEventBus
     /// <summary>
     /// 技能选择开始事件
     /// </summary>
-    public static event System.Action<List<SkillConfig>> OnSkillSelectionStarted;
+    public static event System.Action<List<SkillSelectionOption>> OnSkillSelectionStarted;
     
     /// <summary>
     /// 技能选择事件
@@ -409,7 +409,7 @@ public static class GameEventBus
     /// <summary>
     /// 发布技能选择开始事件
     /// </summary>
-    public static void PublishSkillSelectionStarted(List<SkillConfig> availableSkills) => OnSkillSelectionStarted?.Invoke(availableSkills);
+    public static void PublishSkillSelectionStarted(List<SkillSelectionOption> availableOptions) => OnSkillSelectionStarted?.Invoke(availableOptions);
     
     /// <summary>
     /// 发布技能选择事件

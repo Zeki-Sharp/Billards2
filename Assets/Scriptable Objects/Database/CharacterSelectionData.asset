@@ -15,5 +15,4 @@ MonoBehaviour:
   availableCharacters:
   - {fileID: 11400000, guid: 9fa21c5d0e8b7b24d9ae0910aa7d5197, type: 2}
   - {fileID: 11400000, guid: 81d30639ef52a824eaa9b3cc9a99404b, type: 2}
-  - {fileID: 11400000, guid: 26bf2367547e4a44e8d8a5a84958899a, type: 2}
   - {fileID: 11400000, guid: c265fd6200c9c01469dbebf3ccf62d75, type: 2}

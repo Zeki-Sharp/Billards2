@@ -98,6 +98,11 @@ public abstract class SingletonManager<T> : MonoBehaviour where T : SingletonMan
             // 设置实例
             instance = this as T;
             
+            if (transform.parent != null)
+            {
+                transform.SetParent(null);
+            }
+            
             // 跨场景保留
             if (PersistAcrossScenes)
             {

@@ -34,5 +34,4 @@ MonoBehaviour:
   startingLevel: 1
   maxLevel: 100
   experienceMultiplier: 1
-  initialSkills:
-  - {fileID: 11400000, guid: a9506ce1473ecc74c99f33dea454fe67, type: 2}
+  initialSkills: []
