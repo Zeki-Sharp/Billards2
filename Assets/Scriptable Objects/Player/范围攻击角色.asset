@@ -36,3 +36,4 @@ MonoBehaviour:
   experienceMultiplier: 1
   initialSkills:
   - {fileID: 11400000, guid: b8bb3dcbd055bf549b5f10a699261bdf, type: 2}
+  - {fileID: 11400000, guid: 7b4b7d73f1d7d1148a0f9ef412d5654e, type: 2}

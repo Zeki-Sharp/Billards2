@@ -111,6 +111,20 @@ public class SkillManager : SingletonManager<SkillManager>
                     {
                         // ✅ 修复：使用统一的 key 格式（characterID_skillName）
                         string skillInstanceID = $"{characterID}_{skillConfig.skillName}";
+                        if (skillInstances.ContainsKey(skillInstanceID))
+                        {
+                            int duplicateIndex = 1;
+                            string originalId = skillInstanceID;
+                            while (skillInstances.ContainsKey(skillInstanceID))
+                            {
+                                skillInstanceID = $"{originalId}#{duplicateIndex}";
+                                duplicateIndex++;
+                            }
+                            if (enableDebugLog)
+                            {
+                                Debug.LogWarning($"[SkillManager] 检测到技能名称冲突：{originalId}，自动重命名为 {skillInstanceID}" );
+                            }
+                        }
                         skillInstances[skillInstanceID] = skillInstance;
                         
                         // ✅ 设置归属角色

@@ -13,9 +13,9 @@ MonoBehaviour:
   m_Name: "\u4E2D\u6BD2_\u8303\u56F4\u653B\u51FB"
   m_EditorClassIdentifier: 
   info:
-    name: "\u70B9\u71C3\u653B\u51FB"
+    name: "\u4E2D\u6BD2\u653B\u51FB"
     acronym: 
-    description: "\u8303\u56F4\u653B\u51FB\u4F1A\u70B9\u71C3\u654C\u4EBA\uFF0C\u6301\u7EED\u9020\u6210\u4F24\u5BB3"
+    description: "\u8303\u56F4\u653B\u51FB\u4F1A\u4F7F\u654C\u4EBA\u4E2D\u6BD2\uFF0C\u6301\u7EED\u9020\u6210\u4E0E\u5C42\u6570\u76F8\u7B49\u7684\u4F24\u5BB3"
     icon: {fileID: 0}
     color: {r: 1, g: 1, b: 1, a: 1}
     skillType: 
