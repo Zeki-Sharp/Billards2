@@ -109,8 +109,7 @@ public class TurnBasedStatusEffect : IEffect
             return false;
         }
         
-        // ✅ 简化版：只支持 BurningStatus
-        ApplyBurningStatus(target, sourceObj);
+        ApplyConfiguredStatus(target, sourceObj);
         
         return true;
     }
@@ -125,32 +124,43 @@ public class TurnBasedStatusEffect : IEffect
     #region 私有方法
     
     /// <summary>
-    /// 施加点燃状态
+    /// 根据配置施加具体状态
     /// </summary>
-    void ApplyBurningStatus(GameObject target, GameObject source)
+    void ApplyConfiguredStatus(GameObject target, GameObject source)
     {
-        // 检查是否已有点燃状态
-        BurningStatus existingStatus = target.GetComponent<BurningStatus>();
-        
+        var componentType = statusData.GetComponentType();
+
+        if (componentType == null || !typeof(TurnBasedStatusComponent).IsAssignableFrom(componentType))
+        {
+            Debug.LogError($"[{EffectName}] ❌ 状态配置返回的组件类型无效: {componentType}");
+            return;
+        }
+
+        var existingStatus = target.GetComponent(componentType) as TurnBasedStatusComponent;
+
         if (existingStatus == null)
         {
-            // 第一次施加：添加组件
-            BurningStatus newStatus = target.AddComponent<BurningStatus>();
-            newStatus.Initialize(statusData, source, showDebugLog);
-            
+            var newStatusComponent = target.AddComponent(componentType) as TurnBasedStatusComponent;
+            if (newStatusComponent == null)
+            {
+                Debug.LogError($"[{EffectName}] ❌ 无法在 {target.name} 上创建状态组件 {componentType.Name}");
+                return;
+            }
+
+            newStatusComponent.Initialize(statusData, source, showDebugLog);
+
             if (showDebugLog)
             {
-                Debug.Log($"[{EffectName}] ✅ 对 {target.name} 施加{statusData.displayName}：{statusData.baseDurationInTurns}回合");
+                Debug.Log($"[{EffectName}] ✅ 对 {target.name} 施加{statusData.displayName}");
             }
         }
         else
         {
-            // 已有点燃：叠加回合数
-            existingStatus.AddStack(statusData.baseDurationInTurns);
-            
+            existingStatus.ReapplyStatus();
+
             if (showDebugLog)
             {
-                Debug.Log($"[{EffectName}] ✅ 对 {target.name} 叠加{statusData.displayName}：+{statusData.baseDurationInTurns}回合，总计{existingStatus.RemainingTurns}回合");
+                Debug.Log($"[{EffectName}] ✅ 对 {target.name} 叠加{statusData.displayName}");
             }
         }
     }

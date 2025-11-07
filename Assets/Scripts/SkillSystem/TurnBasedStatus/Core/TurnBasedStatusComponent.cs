@@ -55,6 +55,11 @@ public abstract class TurnBasedStatusComponent : MonoBehaviour
     /// 每回合伤害（保持第一次施加的值）
     /// </summary>
     protected float damagePerTurn;
+
+    /// <summary>
+    /// 当前叠层数（部分状态使用）
+    /// </summary>
+    protected int currentStacks;
     
     /// <summary>
     /// 状态来源（施加者）
@@ -91,6 +96,11 @@ public abstract class TurnBasedStatusComponent : MonoBehaviour
     public float DamagePerTurn => damagePerTurn;
     
     /// <summary>
+    /// 当前叠层数
+    /// </summary>
+    public int CurrentStacks => currentStacks;
+    
+    /// <summary>
     /// 状态ID
     /// </summary>
     public string StatusID => statusData != null ? statusData.statusID : "";
@@ -123,8 +133,9 @@ public abstract class TurnBasedStatusComponent : MonoBehaviour
         
         statusData = data;
         source = src;
-        remainingTurns = data.baseDurationInTurns;
-        damagePerTurn = data.baseDamagePerTurn;
+        remainingTurns = 0;
+        damagePerTurn = 0f;
+        currentStacks = 0;
         showDebugLog = enableDebugLog;
         
         // ✅ 记录真正的目标根物体（有 IDamageable 的对象）
@@ -142,9 +153,11 @@ public abstract class TurnBasedStatusComponent : MonoBehaviour
             vfxInstance.transform.localPosition = Vector3.zero;
         }
         
+        statusData.ApplyInitialValues(this);
+
         if (showDebugLog)
         {
-            Debug.Log($"[{data.displayName}] {gameObject.name} 被施加状态：{remainingTurns}回合，每回合{damagePerTurn}伤害");
+            Debug.Log($"[{data.displayName}] {gameObject.name} 被施加状态：{remainingTurns}回合，每回合{damagePerTurn}伤害，叠层{currentStacks}");
         }
         
         // 子类初始化逻辑
@@ -155,24 +168,17 @@ public abstract class TurnBasedStatusComponent : MonoBehaviour
     }
     
     /// <summary>
-    /// 叠加层数（增加回合数，伤害保持第一次的值）
+    /// 再次施加状态（由配置控制堆叠逻辑）
     /// </summary>
-    public virtual void AddStack(int additionalTurns)
+    public virtual void ReapplyStatus()
     {
-        // ✅ 简化版：回合数累加，伤害不变
-        remainingTurns += additionalTurns;
-        
-        // 检查最大堆叠限制
-        if (statusData.maxStacks > 0 && remainingTurns > statusData.maxStacks)
-        {
-            remainingTurns = statusData.maxStacks;
-        }
-        
+        statusData?.OnStackApplied(this);
+
         if (showDebugLog)
         {
-            Debug.Log($"[{DisplayName}] {gameObject.name} 状态叠加：+{additionalTurns}回合，总计{remainingTurns}回合");
+            Debug.Log($"[{DisplayName}] {gameObject.name} 状态叠加：剩余{remainingTurns}回合，叠层{currentStacks}");
         }
-        
+
         // 通知UI更新
         NotifyStatusChanged();
     }
@@ -247,7 +253,9 @@ public abstract class TurnBasedStatusComponent : MonoBehaviour
         
         // 调用子类的具体效果逻辑
         OnTurnTrigger();
-        
+
+        statusData?.OnTurnResolved(this);
+
         // 回合数递减
         remainingTurns--;
         
@@ -299,9 +307,43 @@ public abstract class TurnBasedStatusComponent : MonoBehaviour
     /// </summary>
     public virtual string GetStatusInfo()
     {
-        return $"{DisplayName}：{remainingTurns}回合，每回合{damagePerTurn}伤害";
+        return $"{DisplayName}：{remainingTurns}回合，每回合{damagePerTurn}伤害，叠层{currentStacks}";
     }
     
+    #endregion
+
+    #region 供配置调用的接口
+
+    public void SetRemainingTurns(int turns)
+    {
+        remainingTurns = Mathf.Max(0, turns);
+    }
+
+    public void AddRemainingTurns(int turns)
+    {
+        SetRemainingTurns(remainingTurns + turns);
+    }
+
+    public void SetDamagePerTurn(float damage)
+    {
+        damagePerTurn = Mathf.Max(0f, damage);
+    }
+
+    public void AddDamagePerTurn(float damage)
+    {
+        damagePerTurn = Mathf.Max(0f, damagePerTurn + damage);
+    }
+
+    public void SetCurrentStacks(int stacks)
+    {
+        currentStacks = Mathf.Max(0, stacks);
+    }
+
+    public void AddStacks(int stacks)
+    {
+        SetCurrentStacks(currentStacks + stacks);
+    }
+
     #endregion
 }
 

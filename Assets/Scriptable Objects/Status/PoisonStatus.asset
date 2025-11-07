@@ -10,7 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 906dc30d3be9c5845b520076e9de5b20, type: 3}
-  m_Name: BurnStatus
+  m_Name: PoisonStatus
   m_EditorClassIdentifier: 
   serializationData:
     SerializedFormat: 2
@@ -23,23 +23,26 @@ MonoBehaviour:
     SerializationNodes:
     - Name: behaviourConfig
       Entry: 7
-      Data: 0|BurningStatusBehaviourConfig, Assembly-CSharp
-    - Name: baseDurationInTurns
+      Data: 0|PoisonStatusBehaviourConfig, Assembly-CSharp
+    - Name: initialStacks
       Entry: 3
-      Data: 2
-    - Name: damagePerTurn
-      Entry: 4
-      Data: 5
-    - Name: maxTotalTurns
+      Data: 3
+    - Name: stacksPerApply
+      Entry: 3
+      Data: 3
+    - Name: decayPerTurn
+      Entry: 3
+      Data: 1
+    - Name: maxStacks
       Entry: 3
       Data: 0
     - Name: 
       Entry: 8
       Data: 
-  statusID: Burning
-  displayName: "\u70B9\u71C3"
-  icon: {fileID: -16178199480744190, guid: 7d1bc9c5317e5f84099e1221c2ea1a23, type: 3}
-  iconColor: {r: 0.7132075, g: 0, b: 0, a: 1}
+  statusID: Poison
+  displayName: "\u4E2D\u6BD2"
+  icon: {fileID: -294017728544139394, guid: 212d9fd9557d11f4eaa3db55011eecd4, type: 3}
+  iconColor: {r: 0.27663967, g: 0.6754716, b: 0.019117005, a: 1}
   description: "\u6301\u7EED\u9020\u6210\u706B\u7130\u4F24\u5BB3"
   triggerPhase: 6
   vfxPrefab: {fileID: 0}
@@ -48,4 +51,4 @@ MonoBehaviour:
   legacyBaseDamagePerTurn: 5
   legacyMaxStacks: 0
   behaviourConfigInitialized: 1
-  behaviourConfigTypeName: BurningStatusBehaviourConfig
+  behaviourConfigTypeName: PoisonStatusBehaviourConfig

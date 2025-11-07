@@ -50,7 +50,7 @@ public class TurnBasedStatusEffectConfig : EffectBase
             return "回合制状态: 未配置";
         }
         
-        return $"回合制状态: {statusData.displayName} ({statusData.baseDurationInTurns}回合，{statusData.baseDamagePerTurn}伤害/回合)";
+        return $"回合制状态: {statusData.GetDebugDescription()}";
     }
 }
 
