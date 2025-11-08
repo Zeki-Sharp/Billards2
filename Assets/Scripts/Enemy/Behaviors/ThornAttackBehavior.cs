@@ -8,7 +8,7 @@ using MoreMountains.Feedbacks;
 public class ThornAttackBehavior : BaseAttackBehavior
 {
     private int currentRound = 0;
-    private int lastActivateRound = 1;  // 初始化为1，让第一回合处于冷却状态（灰色，不伤害玩家）
+    private int lastActivateRound = 0;  // 初始化为0，让第一次Telegraph进入冷却，下一次即可激活
     private bool isThornActive = false;
     private float lastDamageTime = 0f;
     
@@ -21,6 +21,7 @@ public class ThornAttackBehavior : BaseAttackBehavior
         if (!ValidateAttackParams(enemyTransform, playerTransform, enemyData, levelConfig, attackRange))
             return BehaviorStatus.Failure;
         
+        // 回合计数从0开始，对应 Telegraph 调用次数
         currentRound++;
         ThornAttackConfig config = levelConfig.thornConfig;
         
@@ -117,6 +118,22 @@ public class ThornAttackBehavior : BaseAttackBehavior
         
         runtimeState.currentAttackState = "Attacking";
         runtimeState.lastAttackTime = Time.time;
+        
+        // 攻击阶段结束后关闭棘刺（下一阶段不再携带激活状态移动）
+        ThornAttackConfig config = levelConfig.thornConfig;
+        EnemyBehavior enemyBehavior = enemyTransform.GetComponent<EnemyBehavior>();
+        var blackboard = enemyTransform.gameObject.GetBlackboard();
+        
+        isThornActive = false;
+        SetColliderEnabled(attackRange, false);
+        UpdateVisual(attackRange, false, config);
+        
+        if (enemyBehavior != null)
+        {
+            enemyBehavior.SetTrapMode(false);
+        }
+        blackboard.Set("IsTrap", false);
+        
         return BehaviorStatus.Success;
     }
     
