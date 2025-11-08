@@ -221,13 +221,6 @@ public class EnemyBehavior : MonoBehaviour, IDamageable
             return;
         }
         
-        // 更新攻击范围
-        if (attackArea != null)
-        {
-            // 显示攻击范围
-            attackArea.gameObject.SetActive(true);
-        }
-        
         // 使用攻击行为系统执行预告
         if (attackBehavior != null && attackRange != null && CurrentLevelConfig != null)
         {
@@ -697,10 +690,7 @@ public class EnemyBehavior : MonoBehaviour, IDamageable
     /// </summary>
     public void HideAttackRange()
     {
-        if (attackRange != null)
-        {
-            attackRange.HideTelegraph();
-        }
+        attackBehavior?.CleanupAttack(transform, attackRange, runtimeState);
     }
     
     #endregion

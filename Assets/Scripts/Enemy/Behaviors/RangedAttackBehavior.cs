@@ -110,6 +110,9 @@ public class RangedAttackBehavior : BaseAttackBehavior
         // ✅ 简化方案：恢复原始本地位置
         attackRange.transform.localPosition = originalLocalPosition;
         
+        // ✅ 统一显隐责任：在清理时隐藏攻击范围
+        attackRange.HideTelegraph();
+        
         runtimeState.currentAttackState = "";
         return BehaviorStatus.Success;
     }

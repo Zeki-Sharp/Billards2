@@ -31,7 +31,7 @@ MonoBehaviour:
     attackRange: 3
     attackType: 1
     rangedConfig:
-      detectionRange: 8
+      detectionRange: 12
       projectionDistance: 0
       useRandomOffset: 0
       randomOffsetRange: 0

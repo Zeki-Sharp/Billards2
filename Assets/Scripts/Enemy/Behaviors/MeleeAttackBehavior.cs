@@ -72,6 +72,12 @@ public class MeleeAttackBehavior : BaseAttackBehavior
         var blackboard = enemyTransform.gameObject.GetBlackboard();
         blackboard.Set("CanAttack", false);
         
+        // ✅ 统一显隐责任：在清理时隐藏攻击范围
+        if (attackRange != null)
+        {
+            attackRange.HideTelegraph();
+        }
+        
         runtimeState.currentAttackState = "";
         return BehaviorStatus.Success;
     }

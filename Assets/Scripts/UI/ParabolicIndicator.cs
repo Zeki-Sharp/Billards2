@@ -62,7 +62,7 @@ public class ParabolicIndicator : MonoBehaviour
     void Start()
     {
         // 初始隐藏
-        Hide();
+        //Hide();
     }
     
     void Update()

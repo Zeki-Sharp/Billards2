@@ -33,7 +33,6 @@ public class ThornAttackBehavior : BaseAttackBehavior
         var blackboard = enemyTransform.gameObject.GetBlackboard();
         
         // 确保攻击范围始终显示
-        attackRange.gameObject.SetActive(true);
         attackRange.ShowTelegraph();
         
         if (isInCooldown)

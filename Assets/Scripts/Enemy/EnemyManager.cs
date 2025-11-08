@@ -287,9 +287,6 @@ public class EnemyManager : SingletonManager<EnemyManager>
             }
         }
         
-        // 延迟关闭攻击范围，让特效有时间播放
-        Invoke(nameof(CloseAllAttackRanges), 0.5f);
-        
         if (showDebugInfo)
         {
             Debug.Log($"EnemyManager: 攻击阶段执行完成，{activeEnemies.Count} 个已激活敌人参与攻击");
@@ -357,18 +354,4 @@ public class EnemyManager : SingletonManager<EnemyManager>
         }
     }
     
-    /// <summary>
-    /// 关闭所有敌人的攻击范围
-    /// </summary>
-    void CloseAllAttackRanges()
-    {
-        // 关闭已激活敌人的攻击范围
-        foreach (Enemy enemy in activeEnemies)
-        {
-            if (enemy != null)
-            {
-                enemy.HideAttackRange();
-            }
-        }
-    }
 }
