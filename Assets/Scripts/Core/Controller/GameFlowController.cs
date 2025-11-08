@@ -155,6 +155,12 @@ public class GameFlowController : SingletonManager<GameFlowController>
         currentState = GameFlowState.EnemyPhaseStart;
         GameEventBus.PublishGameFlowStateChanged(GameFlowState.EnemyPhaseStart);
         
+        // 敌人回合前：生成当回合需要的敌人并注册为激活
+        if (EnemyManager.Instance != null)
+        {
+            EnemyManager.Instance.PrepareEnemiesBeforeEnemyPhase();
+        }
+        
         // 启动敌人阶段
         if (enemyPhaseController != null)
         {

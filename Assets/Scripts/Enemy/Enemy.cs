@@ -10,7 +10,6 @@ using DeepSpaceLabs.SAM;
 public class Enemy : MonoBehaviour, IEnemyTurnSkipper
 {
     [Header("子对象引用")]
-    public Transform spawnPreview;        // 攻击预告预制体（首次出现用）
     public Transform enemyItem;           // 敌人物体
     public Transform attackArea;          // 攻击范围预制体
     
@@ -23,10 +22,6 @@ public class Enemy : MonoBehaviour, IEnemyTurnSkipper
     
     private EnemyState currentState = EnemyState.None;
     private EnemyBehavior enemyBehavior;
-    
-    [Header("状态管理")]
-    private bool isFirstAppearance = true;  // 是否首次出现
-    
     
     [Header("特效配置")]
     [Tooltip("敌人特效配置列表，在 Inspector 中直接拖拽 MMF_Player 组件")]
@@ -78,31 +73,8 @@ public class Enemy : MonoBehaviour, IEnemyTurnSkipper
     {
         Debug.Log($"Enemy {name}: 开始预告");
         SetState(EnemyState.Telegraphing);
-        
-        if (isFirstAppearance)
-        {
-            // 首次出现：显示攻击预告预制体
-            if (enemyItem != null)
-            {
-                enemyItem.gameObject.SetActive(false);
-            }
-            
-            if (spawnPreview != null)
-            {
-                spawnPreview.gameObject.SetActive(true);
-            }
-            
-            // 执行攻击预告逻辑（包括远程攻击的投射）
-            enemyBehavior?.ExecuteTelegraphPhase();
-            
-            Debug.Log($"Enemy {name}: 首次出现，显示攻击预告并执行攻击行为");
-        }
-        else
-        {
-            // 后续循环：更新攻击范围
-            enemyBehavior?.ExecuteTelegraphPhase();
-            Debug.Log($"Enemy {name}: 后续循环，更新攻击范围");
-        }
+        // 统一逻辑：每回合进行一次攻击范围/方向的计算与（可选）展示
+        enemyBehavior?.ExecuteTelegraphPhase();
     }
     
     /// <summary>
@@ -112,31 +84,12 @@ public class Enemy : MonoBehaviour, IEnemyTurnSkipper
     {
         Debug.Log($"Enemy {name}: 开始生成");
         SetState(EnemyState.Spawning);
-        
-        if (isFirstAppearance)
+
+        // 直接设置为活跃状态（不再使用 spawnPreview/首次出现逻辑）
+        if (enemyItem != null)
         {
-            // 首次出现：关闭攻击预告，显示敌人物体
-            if (spawnPreview != null)
-            {
-                spawnPreview.gameObject.SetActive(false);
-            }
-            
-            if (enemyItem != null)
-            {
-                enemyItem.gameObject.SetActive(true);
-            }
-            
-            // 标记为已出现，后续不再参与生成阶段
-            isFirstAppearance = false;
-            Debug.Log($"Enemy {name}: 首次生成完成，后续不再参与生成阶段");
+            enemyItem.gameObject.SetActive(true);
         }
-        else
-        {
-            // 后续循环：跳过生成阶段
-            Debug.Log($"Enemy {name}: 后续循环，跳过生成阶段");
-        }
-        
-        // 生成完成后设置为活跃状态
         SetState(EnemyState.Active);
         OnSpawnComplete?.Invoke(this);
     }

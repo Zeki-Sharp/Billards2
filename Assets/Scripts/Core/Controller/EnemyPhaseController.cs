@@ -11,8 +11,7 @@ using UnityEngine;
 /// 【阶段逻辑】：
 /// - 攻击：攻击上一回合预告的位置
 /// - 移动：敌人移动
-/// - 生成：生成上一回合预告的位置
-/// - 预告：预告下一个位置
+/// - 预告：预告下一个位置（去除 Spawn 子阶段）
 /// 
 /// 【执行顺序】：CONTROLLER 层 (0)
 /// 【依赖】：SYSTEM 层, EnemyManager (CONTROLLER 层)
@@ -27,11 +26,10 @@ public class EnemyPhaseController : SingletonManager<EnemyPhaseController>
     // 当前敌人阶段
     private EnemyPhase currentEnemyPhase = EnemyPhase.None;
     
-    // 敌人阶段顺序
+    // 敌人阶段顺序（去除 Spawn，过渡到三阶段模式）
     private readonly EnemyPhase[] enemyPhaseSequence = {
         EnemyPhase.Attack,     // 攻击（攻击上一回合预告的位置）
         EnemyPhase.Move,       // 移动
-        EnemyPhase.Spawn,      // 生成（生成上一回合预告的位置）
         EnemyPhase.Telegraph   // 预告（更新下一个位置）
     };
     

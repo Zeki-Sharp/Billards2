@@ -39,7 +39,11 @@ MonoBehaviour:
       m_Bits: 328
     checkRadius: 0.6
     maxObstacleCheckAttempts: 30
-  waves: []
+  waves:
+  - enemySpawns:
+    - enemyData: {fileID: 11400000, guid: ce82a34099b9d1f4899931eb09ed10ce, type: 2}
+      level: 1
+      count: 2
   waveEnemySpawnRange:
     coordinateSystem: 0
     rangeShape: 0

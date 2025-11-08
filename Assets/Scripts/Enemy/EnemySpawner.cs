@@ -97,10 +97,11 @@ public class EnemySpawner : BaseSpawner<EnemyData>
         {
             enemy.SetEnemyData(data, level);  // ✅ 传递等级参数
             
-            // 注册到预告列表（新生成的敌人先进入预告阶段）
+            // 直接完成一次生成阶段以切换可见性，并注册为激活敌人（统一单列表管理）
             if (enemyManager != null)
             {
-                enemyManager.RegisterTelegraphingEnemy(enemy);
+                enemy.StartPhase(EnemyPhase.Spawn);
+                enemyManager.RegisterActiveEnemy(enemy);
             }
             
         }
