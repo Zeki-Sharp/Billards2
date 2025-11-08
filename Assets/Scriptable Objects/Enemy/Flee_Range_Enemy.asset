@@ -28,10 +28,10 @@ MonoBehaviour:
     damage: 10
     moveSpeed: 3
     attackCooldown: 1
-    attackRange: 3
+    attackRange: 15
     attackType: 1
     rangedConfig:
-      detectionRange: 12
+      detectionRange: 15
       projectionDistance: 0
       useRandomOffset: 0
       randomOffsetRange: 0

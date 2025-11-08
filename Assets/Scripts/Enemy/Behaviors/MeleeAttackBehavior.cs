@@ -17,9 +17,8 @@ public class MeleeAttackBehavior : BaseAttackBehavior
             return BehaviorStatus.Failure;
         }
         
-        // 近战攻击：AttackRange 在预制体中已经是敌人子物体，保持预制体中的父子关系和位置
-        // 只需要显示攻击预告，不改变任何位置
-        attackRange.ShowTelegraph();
+        // 近战攻击：攻击范围与敌人保持父子关系，只需面向目标玩家
+        attackRange.ShowTelegraph(playerTransform.position);
         
         runtimeState.currentAttackState = "Telegraph";
         return BehaviorStatus.Success;

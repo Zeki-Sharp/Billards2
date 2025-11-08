@@ -80,14 +80,35 @@ public class AttackRange : MonoBehaviour
     /// </summary>
     public void ShowTelegraph()
     {
+        Player player = FindAnyObjectByType<Player>();
+        if (player != null)
+        {
+            ShowTelegraph(player.transform.position);
+        }
+        else
+        {
+            gameObject.SetActive(true);
+            UpdateTelegraphDirection(null);
+
+            if (showDebugInfo)
+            {
+                Debug.Log($"AttackRange {name}: 显示攻击预告（未找到玩家，使用默认方向）");
+            }
+        }
+    }
+
+    /// <summary>
+    /// 显示预告并指定目标位置
+    /// </summary>
+    /// <param name="targetPosition">需要朝向的目标世界坐标</param>
+    public void ShowTelegraph(Vector3 targetPosition)
+    {
         gameObject.SetActive(true);
-        
-        // 预告阶段：获取当前玩家位置并保存朝向
-        UpdateTelegraphDirection();
-        
+        UpdateTelegraphDirection(targetPosition);
+
         if (showDebugInfo)
         {
-            Debug.Log($"AttackRange {name}: 显示攻击预告，保存朝向: {telegraphedDirection}");
+            Debug.Log($"AttackRange {name}: 显示攻击预告，目标位置: {targetPosition}, 方向: {telegraphedDirection}");
         }
     }
     
@@ -110,25 +131,29 @@ public class AttackRange : MonoBehaviour
     /// <summary>
     /// 预告阶段：更新并保存攻击方向
     /// </summary>
-    void UpdateTelegraphDirection()
+    void UpdateTelegraphDirection(Vector3? targetPosition)
     {
-        // 获取当前玩家位置
-        Player player = FindAnyObjectByType<Player>();
-        if (player != null)
+        Vector3 target;
+        if (targetPosition.HasValue)
         {
-            telegraphedDirection = (player.transform.position - transform.position).normalized;
-            isDirectionSet = true;
-            
-            // 立即应用朝向
-            SetAttackDirection(telegraphedDirection);
+            target = targetPosition.Value;
         }
         else
         {
-            // 默认方向
-            telegraphedDirection = Vector2.right;
-            isDirectionSet = true;
-            SetAttackDirection(telegraphedDirection);
+            Player fallbackPlayer = FindAnyObjectByType<Player>();
+            target = fallbackPlayer != null ? fallbackPlayer.transform.position : transform.position + Vector3.right;
         }
+
+        Vector2 direction = ((Vector2)target - (Vector2)transform.position).normalized;
+        if (direction == Vector2.zero)
+        {
+            direction = Vector2.right;
+        }
+
+        telegraphedDirection = direction;
+        isDirectionSet = true;
+
+        SetAttackDirection(telegraphedDirection);
     }
     
     /// <summary>

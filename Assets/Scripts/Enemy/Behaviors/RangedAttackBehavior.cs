@@ -23,10 +23,8 @@ public class RangedAttackBehavior : BaseAttackBehavior
         
         // 检测玩家是否在检测范围内
         float distanceToPlayer = Vector2.Distance(enemyTransform.position, playerTransform.position);
-        if (distanceToPlayer > levelConfig.rangedConfig.detectionRange)
-        {
-            return BehaviorStatus.Failure; // 玩家不在范围，攻击失败
-        }
+        // 不再因为超出检测范围而直接失败：始终给出预告，但将落点夹在最大可投射距离内
+        Debug.Log($"[RangedTelegraph] {enemyTransform.name}: dist={distanceToPlayer:F2}, detectionRange={levelConfig.rangedConfig.detectionRange}, projectionDistance={levelConfig.rangedConfig.projectionDistance}");
         
         // 保存原始本地位置（用于恢复）
         originalLocalPosition = attackRange.transform.localPosition;
@@ -34,13 +32,11 @@ public class RangedAttackBehavior : BaseAttackBehavior
         // 计算投射位置（世界坐标）
         projectedPosition = CalculateProjectionPosition(enemyTransform.position, playerTransform.position, levelConfig.rangedConfig);
         
-        // ✅ 简化方案：转换为相对于敌人的本地坐标偏移
-        // 保持父子关系，跟随敌人移动
-        Vector2 localOffset = projectedPosition - (Vector2)enemyTransform.position;
-        attackRange.transform.localPosition = localOffset;
+        // 直接使用世界坐标定位落点（不改变父子关系）
+        attackRange.transform.position = projectedPosition;
         
         // 显示攻击预告（这会激活 GameObject 并设置方向）
-        attackRange.ShowTelegraph();
+        attackRange.ShowTelegraph(projectedPosition);
         
         // 显示抛物线指示器
         if (levelConfig.rangedConfig.showParabolicIndicator)
@@ -122,15 +118,30 @@ public class RangedAttackBehavior : BaseAttackBehavior
     /// </summary>
     private Vector2 CalculateProjectionPosition(Vector2 enemyPosition, Vector2 playerPosition, RangedAttackConfig config)
     {
-        // 基础位置：玩家位置向敌人方向偏移指定距离
+        // 方向（敌人 -> 玩家）
         Vector2 directionToPlayer = (playerPosition - enemyPosition).normalized;
-        Vector2 basePosition = playerPosition - directionToPlayer * config.projectionDistance;
+        
+        // 期望的从敌人出发的投射距离：玩家距离 - 回缩量
+        float rawDesiredDistance = Vector2.Distance(enemyPosition, playerPosition) - config.projectionDistance;
+        // 夹到 [0, detectionRange]
+        float clampedDistance = Mathf.Clamp(rawDesiredDistance, 0f, config.detectionRange);
+        
+        // 基础落点：从敌人位置沿方向前进 clampedDistance
+        Vector2 basePosition = (Vector2)enemyPosition + directionToPlayer * clampedDistance;
         
         // 添加随机偏移
         if (config.useRandomOffset)
         {
             Vector2 randomOffset = Random.insideUnitCircle * config.randomOffsetRange;
             basePosition += randomOffset;
+            
+            // 偏移后再次限制到最大可投射圆内
+            Vector2 fromEnemy = basePosition - (Vector2)enemyPosition;
+            float afterOffsetDistance = fromEnemy.magnitude;
+            if (afterOffsetDistance > config.detectionRange)
+            {
+                basePosition = (Vector2)enemyPosition + fromEnemy.normalized * config.detectionRange;
+            }
         }
         
         return basePosition;

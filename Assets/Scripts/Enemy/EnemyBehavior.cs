@@ -49,6 +49,8 @@ public class EnemyBehavior : MonoBehaviour, IDamageable
     [Header("陷阱系统")]
     private bool isTrapMode = false;   // 是否处于陷阱模式（玩家碰撞时触发陷阱伤害而非攻击敌人）
     
+    [SerializeField] private bool showDebugInfo = false;
+    
     /// <summary>
     /// 是否处于陷阱模式（公开属性，供 PlayerCore 检查）
     /// </summary>
@@ -144,14 +146,30 @@ public class EnemyBehavior : MonoBehaviour, IDamageable
         {
             // 跳过已死亡的角色
             if (!character.isAlive)
+            {
+                if (showDebugInfo)
+                {
+                    Debug.Log($"[EnemyBehavior] {name}: 角色 {character.characterID} 已死亡，跳过");
+                }
                 continue;
+            }
             
             // 检查角色的游戏对象引用
             if (character.ballInstance == null)
+            {
+                if (showDebugInfo)
+                {
+                    Debug.LogWarning($"[EnemyBehavior] {name}: 角色 {character.characterID} 的 ballInstance 为 null");
+                }
                 continue;
+            }
             
             // 计算距离
             float distance = Vector3.Distance(transform.position, character.ballInstance.transform.position);
+            if (showDebugInfo)
+            {
+                Debug.Log($"[EnemyBehavior] {name}: 角色 {character.characterID} 距离 {distance:F2}");
+            }
             
             // 更新最近玩家
             if (distance < nearestDistance)
@@ -165,6 +183,10 @@ public class EnemyBehavior : MonoBehaviour, IDamageable
         if (nearestPlayer == null)
         {
             Debug.LogWarning($"[EnemyBehavior] {name}: 没有找到存活的玩家");
+        }
+        else if (showDebugInfo)
+        {
+            Debug.Log($"[EnemyBehavior] {name}: 最近玩家 {nearestPlayer.name} 距离 {nearestDistance:F2}");
         }
         
         return nearestPlayer;

@@ -47,7 +47,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b174bde790db6bc4f904b94447e341e4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  spawnPreview: {fileID: 4180532071809075890}
   enemyItem: {fileID: 3210614334249002462}
   attackArea: {fileID: 8794704125978389554}
   effects:
@@ -79,6 +78,7 @@ MonoBehaviour:
   attackRange: {fileID: 4942167022313840919}
   attackEffect: {fileID: 8813354259064772836}
   healthBar: {fileID: 1530455533771931172}
+  showDebugInfo: 1
 --- !u!1001 &1960770933747990719
 PrefabInstance:
   m_ObjectHideFlags: 0
