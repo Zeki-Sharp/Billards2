@@ -45,6 +45,36 @@ public class EnemyManager : SingletonManager<EnemyManager>
     // 公共属性
     public List<Enemy> ActiveEnemies => activeEnemies.Where(e => e != null).ToList();
     public List<Enemy> AllEnemies => ActiveEnemies;
+    /// <summary>
+    /// 检查所有激活敌人是否已经停止移动
+    /// </summary>
+    public bool AreAllEnemiesStopped()
+    {
+        foreach (Enemy enemy in activeEnemies)
+        {
+            if (enemy == null)
+            {
+                continue;
+            }
+
+            // 检查 EnemyBehavior 是否仍在移动
+            EnemyBehavior behavior = enemy.GetComponentInChildren<EnemyBehavior>();
+            if (behavior != null && behavior.IsMoving())
+            {
+                return false;
+            }
+
+            // 检查 BallPhysics 是否仍在运动（若启用）
+            BallPhysics ballPhysics = enemy.GetComponentInChildren<BallPhysics>();
+            if (ballPhysics != null && ballPhysics.IsMoving())
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
     public int ActiveEnemyCount => activeEnemies.Count(e => e != null);
     public int TotalEnemyCount => ActiveEnemyCount;
     

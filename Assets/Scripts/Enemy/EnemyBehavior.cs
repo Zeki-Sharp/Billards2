@@ -289,6 +289,8 @@ public class EnemyBehavior : MonoBehaviour, IDamageable
         {
             Debug.LogWarning($"EnemyBehavior {name}: 移动行为组件未设置，无法执行移动！");
         }
+
+        NotifyEnemyStoppedIfNeeded();
     }
     
     /// <summary>
@@ -326,6 +328,8 @@ public class EnemyBehavior : MonoBehaviour, IDamageable
         runtimeState.isMoving = false;
         
         Debug.Log($"EnemyBehavior {name}: 移动完成，最终位置: {transform.position}");
+
+        NotifyEnemyStoppedIfNeeded();
     }
     
     /// <summary>
@@ -342,6 +346,23 @@ public class EnemyBehavior : MonoBehaviour, IDamageable
     public bool IsMoving()
     {
         return runtimeState.isMoving;
+    }
+
+    /// <summary>
+    /// 在敌人停止时通知 GameEventBus（供回合同步使用）
+    /// </summary>
+    void NotifyEnemyStoppedIfNeeded()
+    {
+        if (runtimeState.isMoving)
+        {
+            return;
+        }
+
+        BallPhysics physics = GetComponentInChildren<BallPhysics>();
+        if (physics != null)
+        {
+            GameEventBus.PublishBallStopped(physics);
+        }
     }
     
     /// <summary>

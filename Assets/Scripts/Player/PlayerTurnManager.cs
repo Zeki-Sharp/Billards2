@@ -161,24 +161,7 @@ public class PlayerTurnManager : MonoBehaviour
         if (!isWaitingForAllBallsToStop)
             return;
         
-        // 检查是否是玩家球
-        if (!IsPlayerBall(ball))
-            return;
-        
-        // 检查所有玩家球是否都停止
-        if (AreAllPlayerBallsStopped())
-        {
-            if (showDebugInfo)
-            {
-                Debug.Log($"[PlayerTurnManager] ✅✅ 所有玩家球停止运动，回合结束！");
-            }
-            
-            // 停止监控
-            isWaitingForAllBallsToStop = false;
-            
-            // 触发回合完成事件
-            OnTurnComplete?.Invoke();
-        }
+        TryCompleteTurn();
     }
     
     /// <summary>
@@ -240,6 +223,40 @@ public class PlayerTurnManager : MonoBehaviour
         
         // 所有球都停止了
         return true;
+    }
+
+    /// <summary>
+    /// 检查玩家与敌人是否全部停止，满足则完成回合
+    /// </summary>
+    void TryCompleteTurn()
+    {
+        if (!isWaitingForAllBallsToStop)
+        {
+            return;
+        }
+
+        bool playersStopped = AreAllPlayerBallsStopped();
+        bool enemiesStopped = true;
+
+        if (EnemyManager.Instance != null)
+        {
+            enemiesStopped = EnemyManager.Instance.AreAllEnemiesStopped();
+        }
+
+        if (playersStopped && enemiesStopped)
+        {
+            if (showDebugInfo)
+            {
+                Debug.Log($"[PlayerTurnManager] ✅✅ 所有玩家与敌人均已停止，回合结束！");
+            }
+
+            isWaitingForAllBallsToStop = false;
+            OnTurnComplete?.Invoke();
+        }
+        else if (showDebugInfo)
+        {
+            Debug.Log($"[PlayerTurnManager] 等待中：玩家停止? {playersStopped}, 敌人停止? {enemiesStopped}");
+        }
     }
     
     #endregion
