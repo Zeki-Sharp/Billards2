@@ -273,7 +273,15 @@ public class SkillArgs
     /// </summary>
     public static SkillArgs FromEventData(object eventData)
     {
-        return new SkillArgs(eventData);
+        switch (eventData)
+        {
+            case GameObject go:
+                return new SkillArgs(go, eventData);
+            case Component component when component != null:
+                return new SkillArgs(component.gameObject, eventData);
+            default:
+                return new SkillArgs(eventData);
+        }
     }
     
     #endregion

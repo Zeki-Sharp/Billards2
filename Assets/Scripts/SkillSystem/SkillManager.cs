@@ -151,6 +151,8 @@ public class SkillManager : SingletonManager<SkillManager>
                         {
                             Debug.Log($"SkillManager: 重新初始化技能实例 - {skillConfig.skillName} (归属: {kvp.Key})");
                         }
+
+                        TryExecuteImmediateSkill(skillInstance);
                     }
                 }
             }
@@ -488,6 +490,8 @@ public class SkillManager : SingletonManager<SkillManager>
             {
                 Debug.Log($"[SkillManager] ✅ 添加技能 '{skillConfig.skillName}' 到角色 '{characterID}'");
             }
+
+            TryExecuteImmediateSkill(skillInstance);
         }
         else
         {
@@ -664,6 +668,28 @@ public class SkillManager : SingletonManager<SkillManager>
         skillInstances.TryGetValue(skillName, out SkillInstance skillInstance);
         return skillInstance;
     }
+
+    /// <summary>
+    /// 尝试立即执行无需事件驱动的技能（如被动属性增益）
+    /// </summary>
+    /// <param name="skillInstance">技能实例</param>
+    private void TryExecuteImmediateSkill(SkillInstance skillInstance)
+    {
+        if (skillInstance?.currentLevelInstance?.trigger is AlwaysTrueTrigger)
+        {
+            // 允许重新执行一次
+            skillInstance.currentLevelInstance?.effect?.SetCanExecute(true);
+
+            bool executed = skillInstance.ProcessEvent(null);
+            
+            if (enableDebugLog)
+            {
+                Debug.Log(executed
+                    ? $"[SkillManager] 被动技能 '{skillInstance.config.skillName}' 立即生效"
+                    : $"[SkillManager] 被动技能 '{skillInstance.config.skillName}' 立即生效失败，等待后续事件");
+            }
+        }
+    }
     
     /// <summary>
     /// 获取所有技能名称
@@ -746,6 +772,8 @@ public class SkillManager : SingletonManager<SkillManager>
             // 更新DropItem技能列表
             UpdateDropItemSkillList(skillName, skillInstance);
             
+            TryExecuteImmediateSkill(skillInstance);
+            
             if (enableDebugLog)
             {
                 Debug.Log($"SkillManager: 技能 {skillName} 升级到等级 {newLevel}");
@@ -786,6 +814,26 @@ public class SkillManager : SingletonManager<SkillManager>
         }
         
         return skillInstances[skillName].GetNextLevel();
+    }
+    
+    /// <summary>
+    /// 角色生成后通知技能管理器，重新激活该角色的被动技能效果
+    /// </summary>
+    /// <param name="characterID">角色ID</param>
+    public void NotifyCharacterSpawned(string characterID)
+    {
+        if (string.IsNullOrEmpty(characterID))
+        {
+            return;
+        }
+
+        foreach (var kvp in skillInstances)
+        {
+            if (skillOwnership.TryGetValue(kvp.Key, out var owner) && owner == characterID)
+            {
+                TryExecuteImmediateSkill(kvp.Value);
+            }
+        }
     }
     
     /// <summary>

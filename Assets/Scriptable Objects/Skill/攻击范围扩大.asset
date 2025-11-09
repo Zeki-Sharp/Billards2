@@ -26,13 +26,12 @@ MonoBehaviour:
   skillLevels:
   - level: 1
     isActive: 1
-    levelDescription: 
+    levelDescription: "\u6269\u5927\u653B\u51FB\u8303\u56F4"
     triggerConfig:
-      rid: 832807104352092240
+      rid: 6937075251696107654
     conditionConfig:
       logicType: 0
-      conditions:
-      - rid: -2
+      conditions: []
     effectConfig:
       rid: 832807104352092292
     resetConditionConfig:
@@ -61,9 +60,6 @@ MonoBehaviour:
     RefIds:
     - rid: -2
       type: {class: , ns: , asm: }
-    - rid: 832807104352092240
-      type: {class: AlwaysTrueTriggerConfig, ns: , asm: Assembly-CSharp}
-      data: 
     - rid: 832807104352092250
       type: {class: AlwaysTrueTriggerConfig, ns: , asm: Assembly-CSharp}
       data: 
@@ -102,4 +98,7 @@ MonoBehaviour:
       data: 
     - rid: 6937075115761074251
       type: {class: NeverResetConditionConfig, ns: , asm: Assembly-CSharp}
+      data: 
+    - rid: 6937075251696107654
+      type: {class: AlwaysTrueTriggerConfig, ns: , asm: Assembly-CSharp}
       data: 

@@ -31,6 +31,15 @@ public class ConditionConfig
             return new AlwaysTrueCondition();
         }
         
+        // 过滤掉空条件配置
+        conditions.RemoveAll(conditionConfig => conditionConfig == null);
+        
+        // 如果过滤后列表为空，视为无条件
+        if (conditions.Count == 0)
+        {
+            return new AlwaysTrueCondition();
+        }
+        
         // 如果只有一个条件，直接返回该条件
         if (conditions.Count == 1)
         {

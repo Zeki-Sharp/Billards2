@@ -104,6 +104,8 @@ public class Player : MonoBehaviour
         {
             Debug.Log("Player: 初始化完成，所有组件已准备就绪");
         }
+
+        SkillManager.Instance?.NotifyCharacterSpawned(characterID);
     }
     
     /// <summary>

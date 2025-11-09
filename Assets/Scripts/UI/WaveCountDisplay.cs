@@ -95,18 +95,20 @@ public class WaveCountDisplay : MonoBehaviour
 		UpdateText();
 	}
 	
-	private void OnWaveEnemiesSpawnComplete()
-	{
-		// 开始新的一波：标记进入进行中状态（等待清空后扣减）
-		waveInProgress = true;
-		UpdateText();
-	}
+    private void OnWaveEnemiesSpawnComplete()
+    {
+        HandleWaveSpawned("WaveEnemiesSpawnComplete");
+    }
 	
 	private void OnInitialWaveSpawnComplete()
 	{
-		// 初始波次生成完成，也视为开始一波
-		waveInProgress = true;
-		UpdateText();
+        // 初始波次只标记为进行中，不扣减剩余波次
+        waveInProgress = true;
+        if (showDebugInfo)
+        {
+            Debug.Log("[WaveCountDisplay] 初始波次生成完成");
+        }
+        UpdateText();
 	}
 	
 	private void OnAnyDeath(DeathData deathData)
@@ -125,13 +127,12 @@ public class WaveCountDisplay : MonoBehaviour
 		var enemyMgr = EnemyManager.Instance;
 		if (enemyMgr == null) yield break;
 		
-		if (waveInProgress && remainingWaves > 0 && enemyMgr.ActiveEnemyCount == 0)
+        if (waveInProgress && enemyMgr.ActiveEnemyCount == 0)
 		{
-			remainingWaves = Mathf.Max(0, remainingWaves - 1);
 			waveInProgress = false;
 			if (showDebugInfo)
 			{
-				Debug.Log($"[WaveCountDisplay] Wave cleared -> remaining={remainingWaves}");
+                Debug.Log("[WaveCountDisplay] 当前波次已清空");
 			}
 			UpdateText();
 		}
@@ -166,6 +167,31 @@ public class WaveCountDisplay : MonoBehaviour
 		
 		waveText.text = $"关卡波次:{Mathf.Clamp(remainingWaves, 0, totalWaves)}/{totalWaves}";
 	}
+    
+    /// <summary>
+    /// 处理波次生成事件，直接扣减剩余波次数
+    /// </summary>
+    private void HandleWaveSpawned(string source)
+    {
+        if (loopWaves)
+        {
+            return;
+        }
+        
+        if (remainingWaves > 0)
+        {
+            remainingWaves = Mathf.Max(0, remainingWaves - 1);
+        }
+        
+        waveInProgress = true;
+        
+        if (showDebugInfo)
+        {
+            Debug.Log($"[WaveCountDisplay] {source} -> 剩余波次: {remainingWaves}/{totalWaves}");
+        }
+        
+        UpdateText();
+    }
 	
 	/// <summary>
 	/// 若已能获取 Provider/LevelConfig，则据此初始化总波次数；仅在 totals 尚未初始化时调用

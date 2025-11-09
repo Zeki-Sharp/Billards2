@@ -32,6 +32,7 @@ public class EnemyManager : SingletonManager<EnemyManager>
     [Header("生成器引用")]
     private EnemySpawner enemySpawner;
     private Game.SpawnSystem.Triggers.WaveSpawnTrigger waveSpawnTrigger;
+    private bool isGeneratingWave = false;
     
     [Header("阶段执行")]
     private EnemyPhase currentExecutingPhase = EnemyPhase.None;
@@ -172,7 +173,52 @@ public class EnemyManager : SingletonManager<EnemyManager>
             {
                 Debug.Log($"EnemyManager: 注销敌人 {enemy.name}");
             }
+
+            // 检查是否需要立即生成下一波
+            if (ActiveEnemyCount == 0)
+            {
+                TrySpawnNextWaveImmediately("EnemyManager.UnregisterEnemy");
+            }
         }
+    }
+
+    /// <summary>
+    /// 当场上无敌人时尝试立即生成下一波
+    /// </summary>
+    /// <param name="reason">调试信息来源</param>
+    private void TrySpawnNextWaveImmediately(string reason)
+    {
+        if (waveSpawnTrigger == null)
+        {
+            return;
+        }
+
+        if (isGeneratingWave)
+        {
+            return;
+        }
+
+        if (ActiveEnemyCount > 0)
+        {
+            return;
+        }
+
+        if (!waveSpawnTrigger.ShouldGenerateWaveEnemies())
+        {
+            if (showDebugInfo)
+            {
+                Debug.Log("[EnemyManager] 所有敌人已清空，但没有更多波次需要生成");
+            }
+            return;
+        }
+
+        isGeneratingWave = true;
+        if (showDebugInfo)
+        {
+            Debug.Log($"[EnemyManager] 所有敌人已清空，立即生成下一波（触发源: {reason}）");
+        }
+        waveSpawnTrigger.GenerateCurrentWave();
+        isGeneratingWave = false;
     }
     
     /// <summary>

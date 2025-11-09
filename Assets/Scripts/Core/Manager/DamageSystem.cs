@@ -373,21 +373,19 @@ public class DamageSystem : SingletonManager<DamageSystem>
     private void ProcessCircleDamage(DamageRuleConfig rule, StoppedEvent evt)
     {
         // 确定攻击范围
-        float range = rule.attackRange;
-        
-        // 如果规则未配置范围，从 PlayerData 读取
+        float range = GetStoppedAttackRange(rule, evt.Source);
         if (range <= 0f)
         {
-            var playerBehavior = evt.Source.GetComponent<PlayerBehavior>();
-            if (playerBehavior != null && playerBehavior.PlayerData != null)
+            if (enableDebugLog)
             {
-                range = playerBehavior.PlayerData.areaRadius;
+                Debug.LogWarning($"[DamageSystem] 规则 '{rule.ruleName}' 计算到的范围 <= 0，跳过范围伤害");
             }
-            else
-            {
-                Debug.LogWarning($"[DamageSystem] Stopped 规则 '{rule.ruleName}' 未配置范围，且无法从 PlayerData 读取");
-                return;
-            }
+            return;
+        }
+
+        if (enableDebugLog)
+        {
+            Debug.Log($"[DamageSystem] 规则 '{rule.ruleName}' 使用攻击范围: {range}");
         }
         
         // 使用 Physics2D.OverlapCircleAll 检测范围内的目标
@@ -422,6 +420,57 @@ public class DamageSystem : SingletonManager<DamageSystem>
             
             ProcessDamage(rule, collisionEvt);
         }
+    }
+
+    /// <summary>
+    /// 获取停止事件的攻击范围，优先使用实时属性
+    /// </summary>
+    private float GetStoppedAttackRange(DamageRuleConfig rule, GameObject source)
+    {
+        // 1. 规则自带数值优先
+        if (rule.attackRange > 0f)
+        {
+            return rule.attackRange;
+        }
+
+        // 2. 从 PlayerStats（实时属性）读取
+        var playerStats = source.GetComponent<PlayerStats>();
+        if (playerStats == null && source.transform.parent != null)
+        {
+            playerStats = source.transform.parent.GetComponent<PlayerStats>();
+        }
+        if (playerStats == null && source.TryGetComponent(out PlayerBehavior behaviorFromSource) && behaviorFromSource != null)
+        {
+            playerStats = behaviorFromSource.GetComponent<PlayerStats>();
+        }
+
+        if (playerStats != null)
+        {
+            if (enableDebugLog)
+            {
+                Debug.Log($"[DamageSystem] 通过 PlayerStats 获取 AreaRadius: {playerStats.FinalAreaRadius} 来自 {playerStats.name}");
+            }
+            return playerStats.FinalAreaRadius;
+        }
+
+        // 3. 回退到 PlayerData 的基础值
+        var playerBehavior = source.GetComponent<PlayerBehavior>();
+        if (playerBehavior == null && source.transform.parent != null)
+        {
+            playerBehavior = source.transform.parent.GetComponent<PlayerBehavior>();
+        }
+
+        if (playerBehavior?.PlayerData != null)
+        {
+            if (enableDebugLog)
+            {
+                Debug.Log($"[DamageSystem] 回退使用 PlayerData.AreaRadius: {playerBehavior.PlayerData.areaRadius}");
+            }
+            return playerBehavior.PlayerData.areaRadius;
+        }
+
+        Debug.LogWarning($"[DamageSystem] Stopped 规则 '{rule.ruleName}' 未配置范围，且无法从 PlayerStats 或 PlayerData 读取");
+        return 0f;
     }
     
     /// <summary>

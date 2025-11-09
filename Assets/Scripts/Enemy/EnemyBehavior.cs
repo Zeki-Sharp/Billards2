@@ -687,6 +687,12 @@ public class EnemyBehavior : MonoBehaviour, IDamageable
         GameEventBus.PublishDeath(deathData);
         
         Debug.Log($"EnemyBehavior {name}: 发布死亡事件，击杀者：{attackerCharacterID ?? "无"}");
+
+        // 通知敌人管理器移除该敌人
+        if (enemy != null)
+        {
+            EnemyManager.Instance?.UnregisterEnemy(enemy);
+        }
         
         /// 禁用collider（解决碰撞问题）
         Collider2D[] colliders = GetComponentsInChildren<Collider2D>();

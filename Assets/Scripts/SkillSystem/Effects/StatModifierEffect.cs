@@ -218,6 +218,12 @@ public class StatModifierEffect : IEffect
         
         Debug.Log($"[{EffectName}] ✅ 创建新的属性修改器: {targetStat} {(isPercent ? $"+{value * 100}%" : $"+{value}")}, 当前句柄数量: {appliedHandles.Count}");
         
+        if (statsManager != null)
+        {
+            float finalValue = statsManager.GetFinalStat(targetStat);
+            Debug.Log($"[{EffectName}] ▶ 当前 {targetStat} 最终值: {finalValue}");
+        }
+        
         // 触发表现效果
         TriggerVisualEffect();
         
@@ -237,64 +243,66 @@ public class StatModifierEffect : IEffect
     /// </summary>
     private bool GetTargetPlayer()
     {
-        if (targetPlayer == null)
+        if (string.IsNullOrEmpty(targetCharacterID))
         {
-            // ✅ 多角色系统：根据 targetCharacterID 查找对应角色
-            if (!string.IsNullOrEmpty(targetCharacterID))
+            Debug.LogError($"[{EffectName}] 未指定目标角色ID，属性修改效果无法执行！");
+            return false;
+        }
+
+        var teamData = GameSession.Instance?.GetTeamData();
+        if (teamData == null)
+        {
+            Debug.LogWarning($"[{EffectName}] TeamData 为空，无法查找目标角色");
+            return false;
+        }
+
+        var character = teamData.characters.Find(c => c.characterID == targetCharacterID);
+        if (character == null || character.ballInstance == null)
+        {
+            Debug.LogWarning($"[{EffectName}] 找不到角色 {targetCharacterID} 或其球体实例");
+            return false;
+        }
+
+        var newPlayer = character.ballInstance.GetComponent<PlayerBehavior>();
+        if (newPlayer == null)
+        {
+            Debug.LogError($"[{EffectName}] 角色 {targetCharacterID} 的球体没有 PlayerBehavior 组件");
+            return false;
+        }
+
+        if (targetPlayer != newPlayer)
+        {
+            // 切换到新的玩家实例，先移除旧的效果
+            if (targetPlayer != null && statsManager != null && appliedHandles.Count > 0)
             {
-                var teamData = GameSession.Instance?.GetTeamData();
-                if (teamData != null)
-                {
-                    var character = teamData.characters.Find(c => c.characterID == targetCharacterID);
-                    if (character != null && character.ballInstance != null)
-                    {
-                        targetPlayer = character.ballInstance.GetComponent<PlayerBehavior>();
-                        
-                        if (targetPlayer == null)
-                        {
-                            Debug.LogError($"[{EffectName}] 角色 {targetCharacterID} 的球体没有 PlayerBehavior 组件");
-                            return false;
-                        }
-                    }
-                    else
-                    {
-                        Debug.LogWarning($"[{EffectName}] 找不到角色 {targetCharacterID} 或其球体实例");
-                        return false;
-                    }
-                }
-                else
-                {
-                    Debug.LogWarning($"[{EffectName}] TeamData 为空，无法查找目标角色");
-                    return false;
-                }
+                RemoveEffect();
             }
-            else
+
+            targetPlayer = newPlayer;
+            statsManager = targetPlayer.GetComponent<PlayerStats>();
+            if (statsManager == null)
             {
-                // ❌ 多角色系统：必须指定目标角色ID
-                Debug.LogError($"[{EffectName}] 未指定目标角色ID，属性修改效果无法执行！");
+                Debug.LogError($"[{EffectName}] 未找到PlayerStatsManagerV2，无法应用效果");
+                targetPlayer = null;
                 return false;
             }
-            
-            if (targetPlayer != null)
+
+            hasTriggered = false;
+            canExecute = true;
+
+            Debug.Log($"[{EffectName}] 动态绑定目标玩家: {targetPlayer.name}");
+        }
+        else if (statsManager == null)
+        {
+            statsManager = targetPlayer.GetComponent<PlayerStats>();
+            if (statsManager == null)
             {
-                // 查找属性管理器
-                statsManager = targetPlayer.GetComponent<PlayerStats>();
-                if (statsManager == null)
-                {
-                    Debug.LogError($"[{EffectName}] 未找到PlayerStatsManagerV2，无法应用效果");
-                    targetPlayer = null;
-                    return false;
-                }
-                
-                Debug.Log($"[{EffectName}] 动态找到目标玩家: {targetPlayer.name}");
-            }
-            else
-            {
-                Debug.LogWarning($"[{EffectName}] 未找到PlayerCore，可能玩家还未初始化");
+                Debug.LogError($"[{EffectName}] 未找到PlayerStatsManagerV2，无法应用效果");
+                targetPlayer = null;
                 return false;
             }
         }
-        
+
         // 检查玩家是否就绪
         if (!IsPlayerReady(targetPlayer))
         {
@@ -303,7 +311,7 @@ public class StatModifierEffect : IEffect
             statsManager = null;
             return false;
         }
-        
+
         return true;
     }
     

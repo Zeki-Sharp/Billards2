@@ -90,7 +90,7 @@ MonoBehaviour:
       placeholder: 1
   - level: 2
     enemyImage: {fileID: 0}
-    maxHealth: 40
+    maxHealth: 60
     damage: 10
     moveSpeed: 3
     attackCooldown: 1
