@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Collections;
+using System.Linq;
 using MoreMountains.Feedbacks;
 
 /// <summary>
@@ -88,15 +89,24 @@ public class EnemyBehavior : MonoBehaviour, IDamageable
         GameEventBus.OnDamage += OnDamageReceived;
         
         // ✅ 新伤害系统：注册到 DamageSystem
-        if (enemyData != null && enemyData.damageProfile != null)
+        if (enemyData != null)
         {
-            DamageSystem.Instance.RegisterEntity(gameObject, enemyData.damageProfile);
-            Debug.Log($"[EnemyBehavior] {name} 注册到 DamageSystem，Profile: {enemyData.damageProfile.profileName}");
+            var profiles = enemyData.GetDamageProfiles();
+            if (profiles != null && profiles.Count > 0)
+            {
+                DamageSystem.Instance.RegisterEntity(gameObject, profiles);
+                if (showDebugInfo)
+                {
+                    string profileNames = string.Join(", ", profiles.Select(p => p != null ? p.profileName : "NULL"));
+                    Debug.Log($"[EnemyBehavior] {name} 注册到 DamageSystem，Profile 数量: {profiles.Count}, 列表: [{profileNames}]");
+                }
+            }
+            else
+            {
+                Debug.LogWarning($"[EnemyBehavior] {name} 未配置任何 DamageProfile，无法主动攻击");
+            }
         }
-        else
-        {
-            Debug.LogWarning($"[EnemyBehavior] {name} 未配置 DamageProfile，无法主动攻击");
-        }
+        
         
         Debug.Log($"EnemyBehavior {name}: Start 完成 (订阅伤害事件)");
     }

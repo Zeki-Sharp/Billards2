@@ -1,7 +1,11 @@
 using UnityEngine;
+using UnityEngine.Serialization;
 using Sirenix.OdinInspector;
 using System.Collections.Generic;
 using System.Linq;
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 
 [CreateAssetMenu(fileName = "EnemyData", menuName = "Game/Enemy Data")]
 public class EnemyData : ScriptableObject
@@ -35,6 +39,8 @@ public class EnemyData : ScriptableObject
     private void OnValidate()
     {
         #if UNITY_EDITOR
+        bool assetDirty = false;
+        
         if (enemyLevels != null && enemyLevels.Count > 0)
         {
             for (int i = 0; i < enemyLevels.Count; i++)
@@ -44,6 +50,32 @@ public class EnemyData : ScriptableObject
                     enemyLevels[i].level = i + 1;
                 }
             }
+        }
+        
+        if (legacyDamageProfile != null)
+        {
+            if (damageProfiles == null)
+            {
+                damageProfiles = new List<DamageProfile>();
+            }
+            
+            if (!damageProfiles.Contains(legacyDamageProfile))
+            {
+                damageProfiles.Insert(0, legacyDamageProfile);
+            }
+            
+            legacyDamageProfile = null;
+            assetDirty = true;
+        }
+        
+        if (damageProfiles != null && damageProfiles.RemoveAll(p => p == null) > 0)
+        {
+            assetDirty = true;
+        }
+        
+        if (assetDirty)
+        {
+            EditorUtility.SetDirty(this);
         }
         #endif
     }
@@ -56,9 +88,14 @@ public class EnemyData : ScriptableObject
     public BallData ballData;
     
     [BoxGroup("新伤害系统配置")]
-    [LabelText("伤害配置")]
-    [Tooltip("敌人的伤害规则配置（新伤害系统）")]
-    public DamageProfile damageProfile;
+    [LabelText("伤害配置列表")]
+    [Tooltip("敌人的伤害规则配置列表（新伤害系统），支持组合多个 Profile 以实现更复杂的攻击逻辑")]
+    [ListDrawerSettings(ShowIndexLabels = true)]
+    public List<DamageProfile> damageProfiles = new List<DamageProfile>();
+    
+    [FormerlySerializedAs("damageProfile")]
+    [SerializeField, HideInInspector]
+    private DamageProfile legacyDamageProfile;
     
     #region 多等级配置管理
     
@@ -115,6 +152,20 @@ public class EnemyData : ScriptableObject
         }
         
         return levels;
+    }
+    
+    /// <summary>
+    /// 获取所有有效的伤害配置（运行时自动过滤空引用）
+    /// </summary>
+    public List<DamageProfile> GetDamageProfiles()
+    {
+        if (damageProfiles == null)
+        {
+            damageProfiles = new List<DamageProfile>();
+        }
+        
+        damageProfiles.RemoveAll(p => p == null);
+        return damageProfiles;
     }
     
     #endregion

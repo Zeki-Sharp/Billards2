@@ -66,25 +66,10 @@
 
 ---
 
-### 4. 玩家回合敌人被撞击运动处理 ⭐⭐
-
-**问题**：玩家回合中，玩家球撞击敌人后，敌人开始运动，但当前回合结束逻辑不等待敌人停止，导致敌人在回合切换时仍在运动。  
-**方案**：①玩家回合等待所有敌人停止（完整但复杂） ②敌人运动延续到敌人回合（简单但需敌人回合开始时等待） ③添加敌人被动运动标记。  
-**影响**：视觉上敌人可能在回合间运动，但不影响逻辑。玩家球已正确等待。优先级中等。  
-**时机**：观察游戏体验，如有明显问题再处理。建议先实施方案②。
 
 ---
 
-### 5. 敌人系统单Profile改造 ⭐⭐
-
-**问题**：`EnemyData` 使用单个 `damageProfile`，而 `PlayerData` 已改用 `damageProfiles` 列表，架构不统一。阻塞 `DamageSystem` 单Profile系统清理（~80行冗余代码）。  
-**方案**：①将 `EnemyData.damageProfile` 改为 `damageProfiles` 列表 ②修改 `EnemyBehavior` 注册逻辑 ③更新所有敌人配置文件 ④删除 `DamageSystem` 单Profile注册代码。  
-**影响**：影响3个文件（EnemyData/EnemyBehavior/DamageSystem），需更新所有敌人SO配置。不影响功能，仅架构统一。  
-**时机**：敌人系统稳定运行后，择时改造。建议在添加新敌人类型前完成。
-
----
-
-### 6. 敌人架构组件查找优化 ⭐⭐
+### 4. 敌人架构组件查找优化 ⭐⭐
 
 **问题**：EnemyBehavior 从根物体移到 enemyItem 后，多处代码使用 GetComponentInChildren/Parent 查找，造成性能开销和逻辑复杂度。  
 **方案**：①Enemy.cs 已优化（enemyItem.GetComponent） ②AttackRange.cs 需通过 Enemy.enemyItem 间接查找 ③状态系统保持容错查找（支持灵活结构） ④WeakPointManager/DamageTextManager 等外部系统优化。  
@@ -93,7 +78,16 @@
 
 ---
 
-### 7. 字符串引用更新 ⭐
+### 5. PlayerStats 实时属性同步方案落地 ⭐⭐
+
+**问题**：PlayerData → PlayerStats → DamageSystem 的数值链路存在覆盖和回退逻辑，技能执行顺序稍有差异就会失效。  
+**方案**：参见《PlayerStats 实时属性同步改造计划》，按照计划统一初始化流程与读取口径。  
+**影响**：影响 Player/PlayerStats/SkillManager/DamageSystem 等核心模块，需完整回归。  
+**时机**：Phase 4 前完成，确保后续技能开发基于统一的实时属性体系。
+
+---
+
+### 6. 字符串引用更新 ⭐
 
 **问题**：日志和注释中仍使用旧名称 `PlayerStatsManagerV2`（已改为 `PlayerStats`）。  
 **方案**：全局搜索替换 `PlayerStatsManagerV2` → `PlayerStats`。  
