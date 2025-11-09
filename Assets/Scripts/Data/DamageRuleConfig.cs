@@ -108,14 +108,25 @@ public class DamageRuleConfig : ScriptableObject
             return baseDamage;
         }
         
-        // 否则从 PlayerData 读取攻击力
+        // 否则优先从实时属性系统读取最终攻击力
+        PlayerStats playerStats = source?.GetComponent<PlayerStats>();
+        if (playerStats == null && source != null && source.transform.parent != null)
+        {
+            playerStats = source.transform.parent.GetComponent<PlayerStats>();
+        }
+        
+        if (playerStats != null)
+        {
+            return playerStats.FinalDamage;
+        }
+        
+        // 回退：使用 PlayerBehavior 的 PlayerData（静态基础值）
         var playerBehavior = source?.GetComponent<PlayerBehavior>();
         if (playerBehavior?.PlayerData != null)
         {
             return playerBehavior.PlayerData.attackPower;
         }
         
-        // 回退：尝试从父级获取
         if (source != null && source.transform.parent != null)
         {
             playerBehavior = source.transform.parent.GetComponent<PlayerBehavior>();
