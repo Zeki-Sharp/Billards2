@@ -40,6 +40,9 @@ public class PlayerTurnManager : MonoBehaviour
     
     // ✅ 回合结束监控
     private bool isWaitingForAllBallsToStop = false;  // 是否在等待所有玩家球停止
+    [SerializeField] private float turnCompletionPollInterval = 0.2f; // 轮询间隔
+    private float nextTurnCheckTime = 0f;
+    private bool hasLoggedWaitingStatus = false;
     
     // 场景单例
     private static PlayerTurnManager instance;
@@ -144,6 +147,8 @@ public class PlayerTurnManager : MonoBehaviour
         if (remainingLaunches <= 0)
         {
             isWaitingForAllBallsToStop = true;
+            nextTurnCheckTime = Time.time + turnCompletionPollInterval;
+            hasLoggedWaitingStatus = false;
             
             if (showDebugInfo)
             {
@@ -162,6 +167,20 @@ public class PlayerTurnManager : MonoBehaviour
             return;
         
         TryCompleteTurn();
+    }
+
+    void Update()
+    {
+        if (!isWaitingForAllBallsToStop)
+        {
+            return;
+        }
+
+        if (Time.time >= nextTurnCheckTime)
+        {
+            nextTurnCheckTime = Time.time + turnCompletionPollInterval;
+            TryCompleteTurn();
+        }
     }
     
     /// <summary>
@@ -251,11 +270,13 @@ public class PlayerTurnManager : MonoBehaviour
             }
 
             isWaitingForAllBallsToStop = false;
+            hasLoggedWaitingStatus = false;
             OnTurnComplete?.Invoke();
         }
-        else if (showDebugInfo)
+        else if (showDebugInfo && !hasLoggedWaitingStatus)
         {
             Debug.Log($"[PlayerTurnManager] 等待中：玩家停止? {playersStopped}, 敌人停止? {enemiesStopped}");
+            hasLoggedWaitingStatus = true;
         }
     }
     
