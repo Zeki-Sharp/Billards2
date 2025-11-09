@@ -23,9 +23,6 @@ MonoBehaviour:
   - enemyData: {fileID: 11400000, guid: 2b3490ac9962fd84fbac65c5de60aa85, type: 2}
     level: 2
     count: 2
-  - enemyData: {fileID: 11400000, guid: 225c4e3fd0e08ed4d874f966804296bc, type: 2}
-    level: 1
-    count: 1
   initialEnemySpawnRange:
     coordinateSystem: 0
     rangeShape: 0
@@ -47,22 +44,16 @@ MonoBehaviour:
     - enemyData: {fileID: 11400000, guid: 8d46072aeaab4c44fab958850bbe7872, type: 2}
       level: 1
       count: 3
-  - enemySpawns: []
   - enemySpawns:
     - enemyData: {fileID: 11400000, guid: 2b3490ac9962fd84fbac65c5de60aa85, type: 2}
       level: 2
       count: 2
     - enemyData: {fileID: 11400000, guid: ce82a34099b9d1f4899931eb09ed10ce, type: 2}
       level: 2
-      count: 3
-  - enemySpawns: []
-  - enemySpawns:
-    - enemyData: {fileID: 11400000, guid: 2b3490ac9962fd84fbac65c5de60aa85, type: 2}
-      level: 1
-      count: 3
-    - enemyData: {fileID: 11400000, guid: 8d46072aeaab4c44fab958850bbe7872, type: 2}
-      level: 2
       count: 2
+    - enemyData: {fileID: 11400000, guid: 225c4e3fd0e08ed4d874f966804296bc, type: 2}
+      level: 1
+      count: 1
   waveEnemySpawnRange:
     coordinateSystem: 0
     rangeShape: 0
