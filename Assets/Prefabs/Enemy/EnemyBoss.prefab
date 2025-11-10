@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 7459211324280403568}
   - component: {fileID: 8860770280083431608}
   m_Layer: 0
-  m_Name: Enemy Boss
+  m_Name: EnemyBoss
   m_TagString: Enemy
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -414,7 +414,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7919498441484997525, guid: 92bb8c5569acb9348bf9d53ecaefe6fb, type: 3}
       propertyPath: m_Color.r
-      value: 0.4037736
+      value: 0.3886792
       objectReference: {fileID: 0}
     - target: {fileID: 8032071825288820372, guid: 92bb8c5569acb9348bf9d53ecaefe6fb, type: 3}
       propertyPath: m_Layer

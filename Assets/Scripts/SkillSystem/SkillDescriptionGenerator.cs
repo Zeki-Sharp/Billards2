@@ -435,6 +435,12 @@ public static class SkillDescriptionGenerator
         {
             return GetDropItemDescription(current);
         }
+        else if (current.effectConfig is RegisterDamageModifierEffectConfig)
+        {
+            var currentRegister = current.effectConfig as RegisterDamageModifierEffectConfig;
+            var previousRegister = previous?.effectConfig as RegisterDamageModifierEffectConfig;
+            return GetRegisterDamageModifierDescriptionWithComparison(currentRegister, previousRegister);
+        }
         else
         {
             return "产生效果";
@@ -506,6 +512,55 @@ public static class SkillDescriptionGenerator
         }
         
         return $"{FormatNumberWithColor(currentMin, GREEN_COLOR)}-{FormatNumberWithColor(currentMax, GREEN_COLOR)}";
+    }
+
+    private static string GetRegisterDamageModifierDescriptionWithComparison(
+        RegisterDamageModifierEffectConfig currentConfig,
+        RegisterDamageModifierEffectConfig previousConfig)
+    {
+        if (currentConfig == null)
+        {
+            return "产生效果";
+        }
+
+        string statusName = currentConfig.targetStatusData != null
+            ? currentConfig.targetStatusData.displayName
+            : "指定状态";
+
+        if (currentConfig.increaseType == DamageIncreaseType.Percentage)
+        {
+            float currentPercent = Mathf.Max(0f, (currentConfig.damageMultiplier - 1f) * 100f);
+            string currentValue = FormatNumberWithColor(currentPercent, GREEN_COLOR);
+
+            if (previousConfig != null)
+            {
+                float previousPercent = Mathf.Max(0f, (previousConfig.damageMultiplier - 1f) * 100f);
+                if (!Mathf.Approximately(currentPercent, previousPercent))
+                {
+                    string previousValue = FormatNumberWithColor(previousPercent, RED_COLOR);
+                    return $"对{statusName}目标伤害提升{currentValue}%({previousValue}%)";
+                }
+            }
+
+            return $"对{statusName}目标伤害提升{currentValue}%";
+        }
+        else
+        {
+            float currentBonus = currentConfig.fixedDamageBonus;
+            string currentValue = FormatNumberWithColor(currentBonus, GREEN_COLOR);
+
+            if (previousConfig != null)
+            {
+                float previousBonus = previousConfig.fixedDamageBonus;
+                if (!Mathf.Approximately(currentBonus, previousBonus))
+                {
+                    string previousValue = FormatNumberWithColor(previousBonus, RED_COLOR);
+                    return $"对{statusName}目标额外造成{currentValue}({previousValue})点伤害";
+                }
+            }
+
+            return $"对{statusName}目标额外造成{currentValue}点伤害";
+        }
     }
 
     #endregion

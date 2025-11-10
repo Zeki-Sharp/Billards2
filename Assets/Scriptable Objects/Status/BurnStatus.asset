@@ -29,7 +29,7 @@ MonoBehaviour:
       Data: 2
     - Name: damagePerTurn
       Entry: 4
-      Data: 5
+      Data: 10
     - Name: maxTotalTurns
       Entry: 3
       Data: 0
