@@ -16,7 +16,7 @@ MonoBehaviour:
     name: "\u649E\u51FB\u89D2\u8272"
     acronym: 
     description: "\u76F4\u63A5\u649E\u51FB\u654C\u4EBA\u9020\u6210\u4F24\u5BB3"
-    icon: {fileID: 8861807583729448495, guid: 943ed9a96a0bc0c4599dae896cf2ef36, type: 3}
+    icon: {fileID: -5828329696384875631, guid: 9707b1157196b2b428923f130029fb86, type: 3}
     color: {r: 1, g: 1, b: 1, a: 1}
     characterID: cha_collision
     characterClass: 
@@ -29,6 +29,8 @@ MonoBehaviour:
   damageProfiles:
   - {fileID: 11400000, guid: d281aacbffa44e54bb1f170b47d3fe96, type: 2}
   - {fileID: 11400000, guid: 32740c0502038ce489f8a8342a362557, type: 2}
+  animatorController: {fileID: 9100000, guid: da3d1a6912491c64fa1e61cf3648ee71, type: 2}
+  attackTriggerCooldown: 0.1
   baseMicroMoveSpeed: 2
   canLevelUp: 0
   startingLevel: 1

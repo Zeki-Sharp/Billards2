@@ -48,6 +48,17 @@ public class PlayerData : ScriptableObject
     [ListDrawerSettings(ShowIndexLabels = true)]
     public List<DamageProfile> damageProfiles = new List<DamageProfile>();
     
+    [BoxGroup("视觉配置")]
+    [LabelText("动画控制器")]
+    [Tooltip("角色使用的 Animator Controller（可为基础或 Override），不配置则保持基础动画/静态图标")]
+    public RuntimeAnimatorController animatorController;
+    
+    [BoxGroup("视觉配置")]
+    [LabelText("攻击动画冷却")]
+    [Tooltip("两次触发攻击动画的最小时间间隔（秒）")]
+    [MinValue(0f)]
+    public float attackTriggerCooldown = 0.1f;
+    
     [BoxGroup("移动配置")]
     [LabelText("基础微调移动速度")]
     [Tooltip("基础微调移动速度")]

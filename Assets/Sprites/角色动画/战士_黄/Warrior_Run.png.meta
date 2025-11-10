@@ -1,16 +1,25 @@
 fileFormatVersion: 2
-guid: c79736ec6bfe89442b17091ce678a378
+guid: 8f8098352a258cd4ba18c54d2b11df11
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: 4871824575876247642
-    second: "\u672A\u6807\u9898-3_0"
+      213: -432731726981308715
+    second: Warrior_Run_0
   - first:
-      213: 8480469982480948311
-    second: "\u672A\u6807\u9898-3_1"
+      213: 8551124423323264409
+    second: Warrior_Run_1
   - first:
-      213: -6339252008182084762
-    second: "\u672A\u6807\u9898-3_2"
+      213: -8600065048725663906
+    second: Warrior_Run_2
+  - first:
+      213: 3241423924572654580
+    second: Warrior_Run_3
+  - first:
+      213: -5828329696384875631
+    second: Warrior_Run_4
+  - first:
+      213: 2022560608615539102
+    second: Warrior_Run_5
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -57,7 +66,7 @@ TextureImporter:
   spriteMeshType: 1
   alignment: 0
   spritePivot: {x: 0.5, y: 0.5}
-  spritePixelsToUnits: 400
+  spritePixelsToUnits: 100
   spriteBorder: {x: 0, y: 0, z: 0, w: 0}
   spriteGenerateFallbackPhysicsShape: 1
   alphaUsage: 1
@@ -106,13 +115,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: "\u672A\u6807\u9898-3_0"
+      name: Warrior_Run_0
       rect:
         serializedVersion: 2
-        x: 349
-        y: 3818
-        width: 685
-        height: 994
+        x: 61
+        y: 54
+        width: 78
+        height: 86
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -121,20 +130,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: a503f15c3a23c9340800000000000000
-      internalID: 4871824575876247642
+      spriteID: 5dedc3a79c0aef9f0800000000000000
+      internalID: -432731726981308715
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: "\u672A\u6807\u9898-3_1"
+      name: Warrior_Run_1
       rect:
         serializedVersion: 2
-        x: 1240
-        y: 3836
-        width: 868
-        height: 955
+        x: 256
+        y: 54
+        width: 69
+        height: 93
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -143,20 +152,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 75cd322848ea0b570800000000000000
-      internalID: 8480469982480948311
+      spriteID: 995a9527b52bba670800000000000000
+      internalID: 8551124423323264409
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: "\u672A\u6807\u9898-3_2"
+      name: Warrior_Run_2
       rect:
         serializedVersion: 2
-        x: 2236
-        y: 3838
-        width: 760
-        height: 960
+        x: 448
+        y: 54
+        width: 69
+        height: 93
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -165,8 +174,74 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 66b00a6a2e37608a0800000000000000
-      internalID: -6339252008182084762
+      spriteID: e5f447d376e66a880800000000000000
+      internalID: -8600065048725663906
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Warrior_Run_3
+      rect:
+        serializedVersion: 2
+        x: 637
+        y: 54
+        width: 78
+        height: 87
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4fb0b96b2e9dbfc20800000000000000
+      internalID: 3241423924572654580
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Warrior_Run_4
+      rect:
+        serializedVersion: 2
+        x: 820
+        y: 54
+        width: 95
+        height: 93
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1938e1d550d9d1fa0800000000000000
+      internalID: -5828329696384875631
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Warrior_Run_5
+      rect:
+        serializedVersion: 2
+        x: 1013
+        y: 54
+        width: 90
+        height: 91
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e912a355824911c10800000000000000
+      internalID: 2022560608615539102
       vertices: []
       indices: 
       edges: []
@@ -184,10 +259,7 @@ TextureImporter:
     secondaryTextures: []
     spriteCustomMetadata:
       entries: []
-    nameFileIdTable:
-      "\u672A\u6807\u9898-3_0": 4871824575876247642
-      "\u672A\u6807\u9898-3_1": 8480469982480948311
-      "\u672A\u6807\u9898-3_2": -6339252008182084762
+    nameFileIdTable: {}
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

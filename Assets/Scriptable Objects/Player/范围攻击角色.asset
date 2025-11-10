@@ -16,7 +16,7 @@ MonoBehaviour:
     name: "\u8303\u56F4\u653B\u51FB\u89D2\u8272"
     acronym: 
     description: "\u8FD0\u52A8\u505C\u6B62\u65F6\u9020\u6210\u8303\u56F4\u4F24\u5BB3"
-    icon: {fileID: -8265326783544323283, guid: 36d1de35597400f479eca08ebb1188e9, type: 3}
+    icon: {fileID: -5828329696384875631, guid: d8dcd9df77f1fd541930b009605a887b, type: 3}
     color: {r: 1, g: 1, b: 1, a: 1}
     characterID: cha_range
     characterClass: 
@@ -29,6 +29,8 @@ MonoBehaviour:
   damageProfiles:
   - {fileID: 11400000, guid: d281aacbffa44e54bb1f170b47d3fe96, type: 2}
   - {fileID: 11400000, guid: d2ae35bd97815d34b80ca2adb661c5ed, type: 2}
+  animatorController: {fileID: 9100000, guid: 19b502583a645044982627639f04c1b7, type: 2}
+  attackTriggerCooldown: 0.1
   baseMicroMoveSpeed: 2
   canLevelUp: 0
   startingLevel: 1

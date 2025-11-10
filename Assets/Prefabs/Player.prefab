@@ -41,7 +41,7 @@ SpriteRenderer:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 235715822444511359}
-  m_Enabled: 1
+  m_Enabled: 0
   m_CastShadows: 0
   m_ReceiveShadows: 0
   m_DynamicOccludee: 1
@@ -251,13 +251,14 @@ GameObject:
   m_Component:
   - component: {fileID: 8937868678750751350}
   - component: {fileID: 2728483234486459623}
+  - component: {fileID: 1053991744787529949}
   m_Layer: 3
   m_Name: "\u7ACB\u7ED8"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &8937868678750751350
 Transform:
   m_ObjectHideFlags: 0
@@ -267,9 +268,9 @@ Transform:
   m_GameObject: {fileID: 472778836737191473}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.057, y: 0.542, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1.5, y: 1.5, z: 1.5}
+  m_ConstrainProportionsScale: 1
   m_Children: []
   m_Father: {fileID: 1519473896359051963}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -325,9 +326,31 @@ SpriteRenderer:
   m_Size: {x: 1, y: 1}
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
-  m_WasSpriteAssigned: 1
+  m_WasSpriteAssigned: 0
   m_MaskInteraction: 0
   m_SpriteSortPoint: 0
+--- !u!95 &1053991744787529949
+Animator:
+  serializedVersion: 7
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 472778836737191473}
+  m_Enabled: 1
+  m_Avatar: {fileID: 0}
+  m_Controller: {fileID: 9100000, guid: da3d1a6912491c64fa1e61cf3648ee71, type: 2}
+  m_CullingMode: 0
+  m_UpdateMode: 0
+  m_ApplyRootMotion: 0
+  m_LinearVelocityBlending: 0
+  m_StabilizeFeet: 0
+  m_AnimatePhysics: 0
+  m_WarningMessage: 
+  m_HasTransformHierarchy: 1
+  m_AllowConstantClipSamplingOptimization: 1
+  m_KeepAnimatorStateOnDisable: 0
+  m_WriteDefaultValuesOnDisable: 0
 --- !u!1 &862364907768078743
 GameObject:
   m_ObjectHideFlags: 0
@@ -8120,8 +8143,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 741f4aeb8d382574ba9fa0be9370b368, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  characterSpriteRenderer: {fileID: 3628134178026449795}
+  characterSpriteRenderer: {fileID: 2728483234486459623}
+  characterAnimator: {fileID: 1053991744787529949}
   showDebugInfo: 0
+  defaultAttackTriggerCooldown: 0.1
 --- !u!1 &3901620891104444660
 GameObject:
   m_ObjectHideFlags: 0
