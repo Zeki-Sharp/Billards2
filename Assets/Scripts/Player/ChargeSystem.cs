@@ -66,8 +66,8 @@ public class ChargeSystem : MonoBehaviour
     // 拉弓模式状态
     private Vector3 bowPullStartPosition; // 拉弓开始位置（世界坐标）
     private float currentPullDistance = 0f; // 当前拉弓距离
-    private Vector2 bowPullDirection = Vector2.zero; // 拉弓方向（从起始位置指向当前位置）
-    private Vector2 launchDirection = Vector2.zero; // 发射方向（拉弓方向的反向）
+    private Vector3 bowPullDirection = Vector3.zero; // 拉弓方向（从起始位置指向当前位置，XZ 平面）
+    private Vector3 launchDirection = Vector3.zero; // 发射方向（拉弓方向的反向，XZ 平面）
     
     // 滚轮模式状态
     private float scrollAccumulatedValue = 0f; // 累计滚轮输入值
@@ -200,8 +200,8 @@ public class ChargeSystem : MonoBehaviour
         currentForce = 0f;
         currentPullDistance = 0f;
         bowPullStartPosition = Vector3.zero;
-        bowPullDirection = Vector2.zero;
-        launchDirection = Vector2.zero;
+        bowPullDirection = Vector3.zero;
+        launchDirection = Vector3.zero;
         scrollAccumulatedValue = 0f;
         
         GameEventBus.PublishChargingProgressChanged(0f);
@@ -259,12 +259,26 @@ public class ChargeSystem : MonoBehaviour
         // 获取球的当前位置（拉弓中心）
         Vector3 ballPosition = playerBehavior.transform.position;
         
-        // 获取当前鼠标位置（世界坐标）
-        Vector3 mouseWorldPos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-        mouseWorldPos.z = 0;
+        // 获取当前鼠标位置（世界坐标，投射到与球同一高度的水平面上）
+        Camera cam = targetCamera != null ? targetCamera : Camera.main;
+        if (cam == null)
+        {
+            Debug.LogError("ChargeSystem [拉弓模式]: 未找到 Camera，无法计算拉弓方向！");
+            return;
+        }
         
-        // 计算拉弓方向和距离（从球的位置指向鼠标位置）
+        Ray ray = cam.ScreenPointToRay(Input.mousePosition);
+        // 与球所在高度的水平面求交点
+        Plane plane = new Plane(Vector3.up, new Vector3(ballPosition.x, ballPosition.y, ballPosition.z));
+        if (!plane.Raycast(ray, out float enter))
+        {
+            return;
+        }
+        Vector3 mouseWorldPos = ray.GetPoint(enter);
+        
+        // 计算拉弓方向和距离（从球的位置指向鼠标位置，XZ 平面）
         Vector3 pullVector = mouseWorldPos - ballPosition;
+        pullVector.y = 0f;
         currentPullDistance = pullVector.magnitude;
         
         // 计算拉弓方向（归一化）
@@ -388,24 +402,40 @@ public class ChargeSystem : MonoBehaviour
     }
     
     /// <summary>
-    /// 获取发射方向（根据当前模式）
+    /// 获取发射方向（根据当前模式，返回世界空间 3D 方向，XZ 平面）
     /// </summary>
-    /// <param name="ballPosition">球的位置（用于时间模式）</param>
-    /// <returns>发射方向</returns>
-    public Vector2 GetLaunchDirection(Vector3 ballPosition)
+    /// <param name="ballPosition">球的位置（用于时间/滚轮模式）</param>
+    /// <returns>发射方向（单位向量），失败时返回 Vector3.zero</returns>
+    public Vector3 GetLaunchDirection(Vector3 ballPosition)
     {
         if (chargeMode == ChargeMode.BowPull)
         {
-            // 拉弓模式：使用计算好的发射方向（拉弓反向）
-            return launchDirection;
+            // 拉弓模式：使用计算好的发射方向（XZ 平面）
+            Vector3 dir = launchDirection;
+            dir.y = 0f;
+            return dir.sqrMagnitude > 0.0001f ? dir.normalized : Vector3.zero;
         }
         else
         {
-            // 时间模式和滚轮模式：从球指向鼠标
-            Vector3 mouseWorldPos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-            mouseWorldPos.z = 0;
-            Vector2 direction = (mouseWorldPos - ballPosition).normalized;
-            return direction;
+            // 时间模式和滚轮模式：从球指向鼠标（射线投射到与球同一高度的水平面上）
+            Camera cam = targetCamera != null ? targetCamera : Camera.main;
+            if (cam == null)
+            {
+                Debug.LogError("ChargeSystem: 未找到 Camera，无法计算发射方向！");
+                return Vector3.zero;
+            }
+            
+            Ray ray = cam.ScreenPointToRay(Input.mousePosition);
+            Plane plane = new Plane(Vector3.up, new Vector3(ballPosition.x, ballPosition.y, ballPosition.z));
+            if (!plane.Raycast(ray, out float enter))
+            {
+                return Vector3.zero;
+            }
+            Vector3 hitPoint = ray.GetPoint(enter);
+            
+            Vector3 dir = hitPoint - ballPosition;
+            dir.y = 0f;
+            return dir.sqrMagnitude > 0.0001f ? dir.normalized : Vector3.zero;
         }
     }
     
@@ -423,9 +453,12 @@ public class ChargeSystem : MonoBehaviour
         // 限制在 0-1 范围内
         scrollAccumulatedValue = Mathf.Clamp01(scrollAccumulatedValue);
         
+        // 立即刷新当前力度与事件（避免等待下一帧 Update）
+        UpdateChargingProgress_ScrollBased();
+        
         if (showDebugInfo)
         {
-            Debug.Log($"ChargeSystem [滚轮模式]: 滚轮输入={scrollDelta:F2}, 累计值={scrollAccumulatedValue:F2}");
+            Debug.Log($"ChargeSystem [滚轮模式]: 滚轮输入={scrollDelta:F2}, 累计值={scrollAccumulatedValue:F2}，当前力度={currentForce:F2}");
         }
     }
     
@@ -471,8 +504,8 @@ public class ChargeSystem : MonoBehaviour
     public ChargeMode CurrentChargeMode => chargeMode;
     public float CurrentPullDistance => currentPullDistance;
     public Vector3 BowPullStartPosition => bowPullStartPosition;
-    public Vector2 BowPullDirection => bowPullDirection;
-    public Vector2 LaunchDirection => launchDirection;
+    public Vector3 BowPullDirection => bowPullDirection;
+    public Vector3 LaunchDirection => launchDirection;
     public float LaunchForceThreshold => launchForceThreshold;
     public float ScrollAccumulatedValue => scrollAccumulatedValue;
     

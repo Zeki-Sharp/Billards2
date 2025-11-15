@@ -733,7 +733,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &341060859
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -8872,7 +8872,7 @@ Transform:
   m_GameObject: {fileID: 859979522}
   serializedVersion: 2
   m_LocalRotation: {x: 0.6427876, y: 0, z: 0, w: 0.7660445}
-  m_LocalPosition: {x: 0, y: 9.19, z: 8.33}
+  m_LocalPosition: {x: 0, y: 9.7, z: 8.24}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -9062,6 +9062,7 @@ GameObject:
   - component: {fileID: 1008677073}
   - component: {fileID: 1008677072}
   - component: {fileID: 1008677071}
+  - component: {fileID: 1008677075}
   m_Layer: 9
   m_Name: Ground
   m_TagString: Untagged
@@ -9159,6 +9160,27 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!65 &1008677075
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1008677070}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 9.999999, y: 2.220446e-16, z: 10}
+  m_Center: {x: 0, y: 0, z: 0}
 --- !u!1 &1009389295
 GameObject:
   m_ObjectHideFlags: 0
@@ -9262,74 +9284,6 @@ MonoBehaviour:
   enableDropPositionOffset: 1
   dropOffsetRange: 0.5
   offsetMode: 0
---- !u!1 &1078788256
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1078788259}
-  - component: {fileID: 1078788258}
-  - component: {fileID: 1078788257}
-  m_Layer: 0
-  m_Name: TrajectorySimulationManager
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!114 &1078788257
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1078788256}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7c83bee196abec0458a32cd488a34d2b, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  dynamicObjectTags:
-  - Player
-  - Enemy
-  staticObjectTags:
-  - Wall
-  replicateBallPhysics: 1
-  replicatePhysicsMaterial: 1
-  showDebugLog: 1
---- !u!114 &1078788258
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1078788256}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 72f4b418bbeee8b4fbf2825ec40fc4ee, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  simulationSceneName: TrajectorySimulationScene
-  createOnAwake: 1
-  showDebugLog: 1
---- !u!4 &1078788259
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1078788256}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 1.8909961, y: 0.056954145, z: -0.04567779}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1158436817
 GameObject:
   m_ObjectHideFlags: 0
@@ -11407,7 +11361,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &1807813347
 Transform:
   m_ObjectHideFlags: 0
@@ -12282,7 +12236,6 @@ SceneRoots:
   - {fileID: 1822264093}
   - {fileID: 1462007128}
   - {fileID: 548811387}
-  - {fileID: 1078788259}
   - {fileID: 38867660}
   - {fileID: 285867179}
   - {fileID: 1637308597}

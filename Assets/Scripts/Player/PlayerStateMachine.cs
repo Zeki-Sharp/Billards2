@@ -527,7 +527,8 @@ public class PlayerStateMachine : MonoBehaviour
             // ✅ 球体自己执行发射（事件驱动）
             if (playerBehavior != null)
             {
-                Vector2 planarDirection = new Vector2(direction.x, direction.y);
+                // 使用 XZ 平面方向作为 2D 发射向量
+                Vector2 planarDirection = new Vector2(direction.x, direction.z);
                 playerBehavior.Launch(planarDirection, force);
                 
                 if (showDebugInfo)

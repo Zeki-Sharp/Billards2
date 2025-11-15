@@ -1,33 +1,62 @@
 using UnityEngine;
+using Core.Physics.Geometry;
 
 public class BallPhysics : MonoBehaviour
 {
     [Header("物理数据")]
     public BallData ballData;
     
-    [Header("模拟设置")]
-    [Tooltip("是否为影子场景模拟模式（禁用Update和事件发布）")]
-    public bool isSimulationMode = false;
-    
-    private Rigidbody2D rb;
-    private Collider2D ballCollider;  // 改为通用Collider2D，支持Circle/Box/Polygon等
-    private PhysicsMaterial2D material;
+    // 3D 物理组件（几何模拟依附的可视刚体）
+    private Rigidbody rb3D;
+    private Collider ballCollider3D;
+    private PhysicsMaterial material3D;
     private bool isInitialized = false;
     
-    // 动态物理参数缓存
-    private float lastBounciness = -1f;
-    private float lastDamping = -1f;
-    private float lastUpdateTime = 0f;
+    #region 几何物理重构（Phase G）字段
     
-    // 时间阻尼相关变量
+    [Header("几何物理配置")]
+    [Tooltip("阶段性开关：启用后将逐步替换为几何物理流程（当前阶段默认开启）")]
+    public bool enableGeometrySimulation = true;
+    
+    [Header("几何物理 - 场景配置")]
+    [Tooltip("几何模拟：用于检测墙体/障碍的 LayerMask")]
+    public LayerMask geometryWallMask = ~0;
+    
+    [Tooltip("几何模拟：用于检测其他球体的 LayerMask")]
+    public LayerMask geometryBallMask = 0;
+    
+    [Tooltip("几何模拟：SphereCast 半径（0 则自动从 SphereCollider 推断）")]
+    public float geometrySphereRadius = 0f;
+    
+    [Header("几何物理 - 调试")]
+    [Tooltip("几何模拟：初始速度（调试/自定义发射时使用）")]
+    public float geometryInitialSpeed = 0f;
+    
+    [Tooltip("几何模拟：初始方向（XZ 平面），调试用")]
+    public Vector3 geometryInitialDirection = Vector3.forward;
+    
+    public bool showGeometryDebug = false;
+    public Color geometryDebugRayColor = Color.cyan;
+    
+    // 几何模拟运行时状态（从 ballData 读取配置）
+    private Vector3 geometryDirection = Vector3.forward;
+    private float geometrySpeed = 0f;
+    private bool geometryIsMoving = false;
+    private float geometryElapsedTime = 0f;
     private float ballStartTime = 0f;
-    private bool isMoving = false;
+    private bool geometryAutoEnableWarningLogged = false;
+    private const float GEOMETRY_SURFACE_BACKOFF = 0.001f;
     
-    // 模拟模式专用时间追踪
-    private float simulationLastUpdateTime = 0f;
+    // 从 ballData 读取的几何参数（运行时缓存）
+    private float geometryMinSpeedThreshold;
+    private float geometryHighSpeedPhaseDuration;
+    private float geometryHighPhaseDamping;
+    private float geometryLowPhaseDamping;
+    private float geometryWallBounceFactor;
+    private float geometryBallBounceFactor;
+    private float geometryKnockbackScale;
     
-    // 反弹方向检测
-    private Vector2 lastReflectionDirection = Vector2.zero;
+    #endregion
     
     // 事件（已移除组件级事件，统一使用GameEventBus）
     
@@ -35,6 +64,15 @@ public class BallPhysics : MonoBehaviour
     {
         InitializePhysics();
     }
+#if UNITY_EDITOR
+    private void OnValidate()
+    {
+        if (!Application.isPlaying)
+        {
+            ApplyGeometryConfigFromData();
+        }
+    }
+#endif
     
     void Update()
     {
@@ -43,17 +81,327 @@ public class BallPhysics : MonoBehaviour
     
     void FixedUpdate()
     {
-        // 模拟模式下不执行（由手动调用控制）
-        // 所有物理相关逻辑在FixedUpdate中执行，与物理引擎完全同步
-        if (isInitialized && !isSimulationMode)
+        if (!isInitialized)
         {
-            CheckMovement();
-            UpdateDynamicPhysics();
+            return;
         }
+        
+        EnsureGeometrySimulationEnabled();
+        SimulateGeometryStep(Time.fixedDeltaTime);
+    }
+    
+    private void EnsureGeometrySimulationEnabled()
+    {
+        if (enableGeometrySimulation)
+        {
+            return;
+        }
+        
+        if (!geometryAutoEnableWarningLogged)
+        {
+            Debug.LogWarning($"BallPhysics on {gameObject.name}: 几何物理被关闭，但当前版本已移除旧物理，已自动启用。");
+            geometryAutoEnableWarningLogged = true;
+        }
+        enableGeometrySimulation = true;
+    }
+    
+    private void SimulateGeometryStep(float dt)
+    {
+        if (!enableGeometrySimulation)
+        {
+            return;
+        }
+        
+        if (geometrySpeed <= geometryMinSpeedThreshold)
+        {
+            geometrySpeed = 0f;
+            OnGeometryMovementStopped();
+            return;
+        }
+        
+        OnGeometryMovementStarted();
+        
+        Vector3 currentPos = transform.position;
+        Vector3 displacement = geometryDirection * geometrySpeed * dt;
+        float distance = displacement.magnitude;
+        if (distance <= 0f)
+        {
+            geometrySpeed = 0f;
+            OnGeometryMovementStopped();
+            return;
+        }
+        
+        float sphereRadius = GetEffectiveGeometrySphereRadius();
+        Ray ray = new Ray(currentPos, geometryDirection);
+        
+        RaycastHit ballHit = default;
+        bool hitBall = geometryBallMask != 0 &&
+                       Physics.SphereCast(ray, sphereRadius, out ballHit, distance, geometryBallMask, QueryTriggerInteraction.Ignore);
+        if (hitBall && IsSelfCollider(ballHit.collider))
+        {
+            hitBall = false;
+        }
+        
+        RaycastHit wallHit = default;
+        bool hitWall = Physics.SphereCast(ray, sphereRadius, out wallHit, distance, geometryWallMask, QueryTriggerInteraction.Ignore);
+        if (hitWall && IsSelfCollider(wallHit.collider))
+        {
+            hitWall = false;
+        }
+        
+        if (!hitBall && !hitWall)
+        {
+            transform.position = currentPos + displacement;
+            ApplyGeometryDamping(dt);
+            return;
+        }
+        
+        float ballT = hitBall ? Mathf.Clamp01(ballHit.distance / distance) : float.PositiveInfinity;
+        float wallT = hitWall ? Mathf.Clamp01(wallHit.distance / distance) : float.PositiveInfinity;
+        
+        bool resolveBall = ballT < wallT;
+        RaycastHit hitInfo = resolveBall ? ballHit : wallHit;
+        float travelT = Mathf.Min(ballT, wallT);
+        if (float.IsInfinity(travelT))
+        {
+            transform.position = currentPos + displacement;
+            ApplyGeometryDamping(dt);
+            return;
+        }
+        
+        float travelDistance = travelT * distance;
+        Vector3 hitPos = currentPos + geometryDirection * travelDistance;
+        transform.position = hitPos - geometryDirection * GEOMETRY_SURFACE_BACKOFF;
+        
+        float remainingDt = Mathf.Max(0f, dt * (1f - travelT));
+        if (resolveBall)
+        {
+            HandleGeometryBallCollision(hitInfo, remainingDt);
+        }
+        else
+        {
+            HandleGeometryWallCollision(hitInfo, remainingDt);
+        }
+        
+        if (geometrySpeed <= geometryMinSpeedThreshold)
+        {
+            geometrySpeed = 0f;
+            OnGeometryMovementStopped();
+        }
+    }
+    
+    private void HandleGeometryWallCollision(RaycastHit hitInfo, float remainingDt)
+    {
+        Vector3 normal = hitInfo.normal;
+        normal.y = 0f;
+        if (normal.sqrMagnitude < 0.0001f)
+        {
+            normal = -geometryDirection;
+        }
+        normal.Normalize();
+        
+        Vector3 reflected = Vector3.Reflect(geometryDirection, normal);
+        reflected.y = 0f;
+        if (reflected.sqrMagnitude < 0.0001f)
+        {
+            reflected = -geometryDirection;
+        }
+        reflected.Normalize();
+        
+        geometryDirection = reflected;
+        geometrySpeed *= geometryWallBounceFactor;
+        
+        if (hitInfo.collider != null)
+        {
+            PublishGeometryCollisionEvent(hitInfo.collider.gameObject, hitInfo.point, normal);
+        }
+        
+        ApplyGeometryDamping(remainingDt);
+    }
+    
+    private void HandleGeometryBallCollision(RaycastHit hitInfo, float remainingDt)
+    {
+        Collider otherCollider = hitInfo.collider;
+        if (otherCollider == null)
+        {
+            HandleGeometryWallCollision(hitInfo, remainingDt);
+            return;
+        }
+        
+        BallPhysics other = otherCollider.GetComponentInParent<BallPhysics>();
+        if (other == null || other == this)
+        {
+            HandleGeometryWallCollision(hitInfo, remainingDt);
+            return;
+        }
+        
+        Vector3 normal = (other.transform.position - transform.position);
+        normal.y = 0f;
+        if (normal.sqrMagnitude < 0.0001f)
+        {
+            normal = hitInfo.normal;
+            normal.y = 0f;
+        }
+        if (normal.sqrMagnitude < 0.0001f)
+        {
+            normal = -geometryDirection;
+        }
+        normal.Normalize();
+        
+        Vector3 v1 = geometryDirection * geometrySpeed;
+        Vector3 v2 = other.GetGeometryDirection() * other.GetGeometrySpeed();
+        
+        float v1n = Vector3.Dot(v1, normal);
+        float v2n = Vector3.Dot(v2, normal);
+        
+        Vector3 v1t = v1 - v1n * normal;
+        Vector3 v2t = v2 - v2n * normal;
+        
+        Vector3 v1After = v1t + v2n * normal;
+        Vector3 v2After = v2t + v1n * normal;
+        
+        v1After *= geometryBallBounceFactor * geometryKnockbackScale;
+        v2After *= other.GetGeometryBallBounceFactor() * other.GetGeometryKnockbackScale();
+        
+        ApplyGeometryVelocity(v1After, false);
+        other.ApplyExternalGeometryVelocity(v2After);
+        
+        GameEventBus.PublishBallCollision(this, other);
+        PublishGeometryCollisionEvent(other.gameObject, hitInfo.point, normal);
+        
+        ApplyGeometryDamping(remainingDt);
+    }
+    
+    private void ApplyGeometryDamping(float dt)
+    {
+        if (dt <= 0f || geometrySpeed <= 0f)
+        {
+            return;
+        }
+        
+        geometryElapsedTime += dt;
+        float damping = geometryHighPhaseDamping;
+        if (geometryElapsedTime > geometryHighSpeedPhaseDuration)
+        {
+            damping = geometryLowPhaseDamping;
+        }
+        
+        geometrySpeed = Mathf.Max(0f, geometrySpeed - damping * dt);
+    }
+    
+    private void ApplyGeometryVelocity(Vector3 velocity, bool resetElapsedTime)
+    {
+        UpdateGeometryVelocity(velocity, resetElapsedTime);
+    }
+    
+    internal void ApplyExternalGeometryVelocity(Vector3 velocity)
+    {
+        UpdateGeometryVelocity(velocity, true);
+    }
+    
+    private void UpdateGeometryVelocity(Vector3 velocity, bool resetElapsedTime)
+    {
+        velocity.y = 0f;
+        float newSpeed = velocity.magnitude;
+        if (newSpeed <= geometryMinSpeedThreshold)
+        {
+            geometrySpeed = 0f;
+            OnGeometryMovementStopped();
+            return;
+        }
+        
+        if (velocity.sqrMagnitude > 0f)
+        {
+            Vector3 newDir = velocity.normalized;
+            newDir.y = 0f;
+            if (newDir.sqrMagnitude < 0.0001f)
+            {
+                newDir = Vector3.forward;
+            }
+            geometryDirection = newDir.normalized;
+        }
+        
+        geometrySpeed = newSpeed;
+        if (resetElapsedTime)
+        {
+            geometryElapsedTime = 0f;
+        }
+        OnGeometryMovementStarted();
+    }
+    
+    private void PublishGeometryCollisionEvent(GameObject target, Vector3 contactPoint, Vector3 normal)
+    {
+        if (target == null)
+        {
+            return;
+        }
+        
+        CollisionEvent evt = new CollisionEvent
+        {
+            Source = gameObject,
+            Target = target,
+            ContactPoint = new Vector2(contactPoint.x, contactPoint.z),
+            ContactNormal = new Vector2(normal.x, normal.z),
+            Velocity = geometrySpeed,
+            CollisionTime = Time.time
+        };
+        GameEventBus.PublishCollision(evt);
+    }
+    
+    private void OnGeometryMovementStarted()
+    {
+        if (geometryIsMoving)
+        {
+            return;
+        }
+        
+        geometryIsMoving = true;
+        ballStartTime = Time.fixedTime;
+        GameEventBus.PublishBallStarted(this);
+    }
+    
+    private void OnGeometryMovementStopped()
+    {
+        if (!geometryIsMoving)
+        {
+            geometrySpeed = 0f;
+            return;
+        }
+        
+        geometryIsMoving = false;
+        geometrySpeed = 0f;
+        GameEventBus.PublishBallStopped(this);
+    }
+    
+    private float GetEffectiveGeometrySphereRadius()
+    {
+        if (geometrySphereRadius > 0f)
+        {
+            return geometrySphereRadius;
+        }
+        
+        SphereCollider sphereCollider = ballCollider3D as SphereCollider;
+        if (sphereCollider != null)
+        {
+            geometrySphereRadius = sphereCollider.radius * Mathf.Max(transform.lossyScale.x, transform.lossyScale.y, transform.lossyScale.z);
+            return geometrySphereRadius;
+        }
+        
+        return 0.5f * Mathf.Max(transform.lossyScale.x, transform.lossyScale.z);
+    }
+    
+    private bool IsSelfCollider(Collider collider)
+    {
+        if (collider == null)
+        {
+            return true;
+        }
+        return collider == ballCollider3D || collider.transform == transform;
     }
     
     /// <summary>
     /// 初始化物理组件（公共方法，供影子场景手动调用）
+    /// S2: 重写为仅支持3D，配置为kinematic模式，为几何模拟做准备
     /// </summary>
     public void InitializePhysics()
     {
@@ -63,151 +411,148 @@ public class BallPhysics : MonoBehaviour
             return;
         }
         
-        // 设置刚体
-        rb = GetComponent<Rigidbody2D>();
-        if (rb == null)
+        ApplyGeometryConfigFromData();
+        
+        
+        // ==== 3D 物理初始化（S2：移除2D分支，统一使用3D） ====
+        
+        rb3D = GetComponent<Rigidbody>();
+        if (rb3D == null)
         {
-            rb = gameObject.AddComponent<Rigidbody2D>();
+            rb3D = gameObject.AddComponent<Rigidbody>();
         }
         
-        rb.mass = ballData.mass;
-        rb.gravityScale = 0f;
-        rb.linearDamping = ballData.linearDamping;
-        rb.angularDamping = 0f; // 不需要角阻尼，因为禁用了旋转
-        rb.freezeRotation = true;
+        // S2: 配置为kinematic，几何模拟不依赖物理引擎的速度计算
+        rb3D.isKinematic = true;
+        rb3D.useGravity = false;
+        rb3D.linearDamping = 0f;  // 几何模拟中不使用物理阻尼
+        rb3D.angularDamping = 0f;
+        // 只锁定 Y 轴位移，允许旋转（用于视觉效果）
+        rb3D.constraints = RigidbodyConstraints.FreezePositionY;
         
-        // 设置碰撞器（支持任意Collider2D类型）
-        ballCollider = GetComponent<Collider2D>();
-        if (ballCollider == null)
+        // 设置 3D 碰撞器（确保是SphereCollider，用于几何模拟的半径推断）
+        ballCollider3D = GetComponent<Collider>();
+        if (ballCollider3D == null)
         {
-            // 如果没有任何碰撞器，默认添加CircleCollider2D
-            ballCollider = gameObject.AddComponent<CircleCollider2D>();
-            Debug.Log($"BallPhysics: {gameObject.name} 没有碰撞器，已添加 CircleCollider2D");
+            ballCollider3D = gameObject.AddComponent<SphereCollider>();
+            Debug.Log($"BallPhysics: {gameObject.name} 没有3D碰撞器，已添加 SphereCollider");
         }
         else
         {
-            Debug.Log($"BallPhysics: {gameObject.name} 检测到碰撞器类型: {ballCollider.GetType().Name}");
+            Debug.Log($"BallPhysics: {gameObject.name} 检测到3D碰撞器类型: {ballCollider3D.GetType().Name}");
         }
         
-        // 设置碰撞器属性
-        if (ballCollider != null)
+        // S2: 确保是SphereCollider，用于推断geometrySphereRadius
+        SphereCollider sphereCollider = ballCollider3D as SphereCollider;
+        if (sphereCollider == null)
         {
-            ballCollider.isTrigger = false;
+            Debug.LogWarning($"BallPhysics: {gameObject.name} 的碰撞器不是SphereCollider，无法自动推断半径。请手动设置geometrySphereRadius。");
         }
-        
-        // 创建并应用物理材质（支持所有Collider2D类型）
-        if (ballCollider != null)
+        else
         {
-            material = new PhysicsMaterial2D("BallMaterial");
-            material.bounciness = ballData.bounceDamping; // 使用BallData中的反弹系数
-            material.friction = ballData.friction; // 使用BallData中的摩擦系数
-            ballCollider.sharedMaterial = material;
+            // 推断几何模拟半径（考虑缩放）
+            if (geometrySphereRadius <= 0f)
+            {
+                geometrySphereRadius = sphereCollider.radius * Mathf.Max(transform.lossyScale.x, transform.lossyScale.y, transform.lossyScale.z);
+                Debug.Log($"BallPhysics: {gameObject.name} 自动推断geometrySphereRadius = {geometrySphereRadius:F3}");
+            }
         }
         
-        // 初始化动态参数缓存
-        lastBounciness = ballData.bounceDamping;
-        lastDamping = ballData.linearDamping;
+        ballCollider3D.isTrigger = false;
+        
+        // 创建并应用 3D 物理材质（保留用于碰撞检测，但几何模拟不依赖其参数）
+        material3D = new PhysicsMaterial("BallMaterial3D");
+        material3D.bounciness = ballData.bounceDamping;
+        material3D.dynamicFriction = ballData.friction;
+        material3D.staticFriction = ballData.friction;
+        ballCollider3D.material = material3D;
+        
+        // S2: 初始化几何模拟状态
+        geometryDirection = geometryInitialDirection;
+        geometryDirection.y = 0f;
+        if (geometryDirection.sqrMagnitude < 0.0001f)
+        {
+            geometryDirection = Vector3.forward;
+        }
+        geometryDirection.Normalize();
+        
+        geometrySpeed = geometryInitialSpeed > 0f ? geometryInitialSpeed : 0f;
+        geometryIsMoving = geometrySpeed > geometryMinSpeedThreshold;
+        geometryElapsedTime = 0f;
         
         isInitialized = true;
-        Debug.Log($"BallPhysics initialized for {gameObject.name}");
+        Debug.Log($"BallPhysics initialized for {gameObject.name} (3D kinematic mode, geometrySphereRadius={geometrySphereRadius:F3})");
     }
+
     
-    void CheckMovement()
+    
+    private void ApplyGeometryConfigFromData()
     {
-        float currentSpeed = rb.linearVelocity.magnitude;
-        
-        // 确保球不会旋转
-        if (rb.angularVelocity != 0f)
+        if (ballData == null)
         {
-            rb.angularVelocity = 0f;
+            return;
         }
         
-        // 记录运动状态
-        if (currentSpeed > ballData.stopThreshold)
-        {
-            // 球在运动，记录开始运动时间
-            if (!isMoving)
-            {
-                isMoving = true;
-                ballStartTime = Time.fixedTime;
-                Debug.Log($"BallPhysics: 球开始运动，记录时间 {ballStartTime:F2}");
-                // 发布到GameEventBus（模拟模式下不发布）
-                if (!isSimulationMode)
-                {
-                    GameEventBus.PublishBallStarted(this);
-                }
-            }
-        }
-        else
-        {
-            // 球停止运动 - 只在状态变化时发布事件
-            if (isMoving)
-            {
-                isMoving = false;
-                float movementDuration = Time.fixedTime - ballStartTime;
-                Debug.Log($"BallPhysics: 球停止运动，运动时长 {movementDuration:F2} 秒");
-                
-                // 发布球停止事件（模拟模式下不发布）
-                if (!isSimulationMode)
-                {
-                    GameEventBus.PublishBallStopped(this);
-                }
-            }
-            
-            // 如果速度低于停止阈值，强制停止
-            if (currentSpeed <= ballData.stopThreshold && currentSpeed > 0.01f)
-            {
-                rb.linearVelocity = Vector2.zero;
-                rb.angularVelocity = 0f;
-            }
-            else if (currentSpeed <= 0.01f)
-            {
-                // 速度极低时也认为已停止
-                rb.linearVelocity = Vector2.zero;
-                rb.angularVelocity = 0f;
-            }
-        }
-        
-        // 限制最大速度
-        if (currentSpeed > ballData.maxSpeed)
-        {
-            rb.linearVelocity = rb.linearVelocity.normalized * ballData.maxSpeed;
-        }
+        geometryMinSpeedThreshold = Mathf.Max(0.001f, ballData.geometryMinSpeedThreshold);
+        geometryHighSpeedPhaseDuration = Mathf.Max(0f, ballData.geometryHighSpeedPhaseDuration);
+        geometryHighPhaseDamping = Mathf.Max(0f, ballData.geometryHighPhaseDamping);
+        geometryLowPhaseDamping = Mathf.Max(0f, ballData.geometryLowPhaseDamping);
+        geometryWallBounceFactor = Mathf.Clamp01(ballData.geometryWallBounceFactor);
+        geometryBallBounceFactor = Mathf.Clamp01(ballData.geometryBallBounceFactor);
+        geometryKnockbackScale = Mathf.Max(0f, ballData.geometryKnockbackScale);
     }
     
     /// <summary>
-    /// 计算动态物理参数（纯函数，无副作用）
+    /// 获取几何球体碰撞速度保留比例（供其他球体访问）
     /// </summary>
-    /// <param name="currentTime">当前时间</param>
-    /// <param name="currentSpeed">当前速度</param>
-    /// <returns>计算得到的弹性系数和阻尼值</returns>
-    private (float bounciness, float damping) CalculateDynamicPhysics(float currentTime, float currentSpeed)
+    public float GetGeometryBallBounceFactor()
     {
-        float normalizedSpeed = Mathf.Clamp01(currentSpeed / ballData.maxSpeed);
-        
-        // 计算动态弹性系数
-        float bounciness = ballData.speedToBounciness.Evaluate(normalizedSpeed);
-        bounciness = Mathf.Lerp(ballData.minBounciness, ballData.maxBounciness, bounciness);
-        
-        // 计算动态阻尼
-        float damping = ballData.speedToDamping.Evaluate(normalizedSpeed);
-        damping = Mathf.Lerp(ballData.minDamping, ballData.maxDamping, damping);
-        
-        // 添加时间阻尼
-        if (ballData.enableTimeDamping && isMoving)
+        return geometryBallBounceFactor;
+    }
+    
+    /// <summary>
+    /// 获取几何 Knockback 缩放（供其他球体访问）
+    /// </summary>
+    public float GetGeometryKnockbackScale()
+    {
+        return geometryKnockbackScale;
+    }
+    
+    public GeometrySimulationConfig CreateGeometryConfig()
+    {
+        return new GeometrySimulationConfig
         {
-            float timeSinceStart = currentTime - ballStartTime;
-            if (timeSinceStart > ballData.timeDampingStartTime)
-            {
-                float timeDamping = Mathf.Min(
-                    ballData.timeDampingRate * (timeSinceStart - ballData.timeDampingStartTime),
-                    ballData.maxTimeDamping
-                );
-                damping += timeDamping;
-            }
-        }
-        
-        return (bounciness, damping);
+            MinSpeedThreshold = geometryMinSpeedThreshold,
+            HighSpeedPhaseDuration = geometryHighSpeedPhaseDuration,
+            HighPhaseDamping = geometryHighPhaseDamping,
+            LowPhaseDamping = geometryLowPhaseDamping,
+            WallBounceFactor = geometryWallBounceFactor,
+            BallBounceFactor = geometryBallBounceFactor,
+            KnockbackScale = geometryKnockbackScale,
+            SphereRadius = GetEffectiveGeometrySphereRadius(),
+            WallMask = geometryWallMask,
+            BallMask = geometryBallMask,
+            ShowDebug = showGeometryDebug,
+            DebugColor = geometryDebugRayColor,
+            SourceTransform = transform,
+            SourceCollider = ballCollider3D
+        };
+    }
+    
+    /// <summary>
+    /// 获取几何方向（供其他球体访问）
+    /// </summary>
+    public Vector3 GetGeometryDirection()
+    {
+        return geometryDirection;
+    }
+    
+    /// <summary>
+    /// 获取几何速度（供其他球体访问）
+    /// </summary>
+    public float GetGeometrySpeed()
+    {
+        return geometrySpeed;
     }
     
     /// <summary>
@@ -215,301 +560,70 @@ public class BallPhysics : MonoBehaviour
     /// </summary>
     /// <param name="targetBounciness">目标弹性系数</param>
     /// <param name="targetDamping">目标阻尼值</param>
-    private void ApplyDynamicPhysics(float targetBounciness, float targetDamping)
-    {
-        // 检查参数变化是否超过阈值
-        bool bouncinessChanged = Mathf.Abs(targetBounciness - lastBounciness) > ballData.updateThreshold;
-        bool dampingChanged = Mathf.Abs(targetDamping - lastDamping) > ballData.updateThreshold;
-        
-        // 更新弹性系数
-        if (bouncinessChanged && material != null)
-        {
-            material.bounciness = targetBounciness;
-            lastBounciness = targetBounciness;
-        }
-        
-        // 更新阻尼
-        if (dampingChanged)
-        {
-            rb.linearDamping = targetDamping;
-            lastDamping = targetDamping;
-        }
-    }
-    
-    void UpdateDynamicPhysics()
-    {
-        // 检查更新间隔
-        if (Time.fixedTime - lastUpdateTime < ballData.updateInterval)
-        {
-            return;
-        }
-        
-        float currentSpeed = rb.linearVelocity.magnitude;
-        
-        // 计算动态物理参数
-        var (targetBounciness, targetDamping) = CalculateDynamicPhysics(Time.fixedTime, currentSpeed);
-        
-        // 应用参数到物理组件
-        ApplyDynamicPhysics(targetBounciness, targetDamping);
-        
-        // 更新缓存时间
-        lastUpdateTime = Time.fixedTime;
-    }
-    
-    void OnCollisionEnter2D(Collision2D collision)
-    {
-        BallPhysics otherBall = collision.gameObject.GetComponent<BallPhysics>();
-        if (otherBall != null)
-        {
-            // 触发球体碰撞事件（模拟模式下不发布）
-            if (!isSimulationMode)
-            {
-                GameEventBus.PublishBallCollision(this, otherBall);
-            }
-        }
-        
-        // ✅ 统一发布通用碰撞事件（供 DamageSystem、PlayerBehavior 等处理）
-        // 所有球体（玩家、敌人）的碰撞都通过这里统一发布
-        if (!isSimulationMode)
-        {
-            GameEventBus.PublishCollision(CollisionEvent.Create(gameObject, collision));
-        }
-        
-        // 处理墙面碰撞的角度修正
-        if (collision.gameObject.CompareTag("Wall"))
-        {
-            HandleWallCollision(collision);
-        }
-    }
-    
-    void HandleWallCollision(Collision2D collision)
-    {
-        // 获取墙面法向量
-        Vector2 wallNormal = collision.contacts[0].normal;
-        
-        // 计算当前速度
-        float currentSpeed = rb.linearVelocity.magnitude;
-        Vector2 velocityDirection = rb.linearVelocity.normalized;
-        
-        // 计算反弹角度
-        float angle = Vector2.Angle(velocityDirection, -wallNormal);
-        
-        // 计算标准反射方向
-        Vector2 reflectionDirection = Vector2.Reflect(velocityDirection, wallNormal);
-        
-        // 使用纯物理反射，不进行角度修正
-        // 让物理引擎自然处理反弹
-        
-        
-        // 记录这次反射方向
-        lastReflectionDirection = reflectionDirection;
-    }
-    
     
     
     public void ApplyForce(Vector2 force, ForceMode2D mode = ForceMode2D.Impulse)
     {
-        if (rb != null)
-        {
-            rb.AddForce(force, mode);
-        }
+        _ = mode; // 兼容旧接口，保留参数但不再使用
+        Vector3 currentVelocity = geometryDirection * geometrySpeed;
+        Vector3 force3D = new Vector3(force.x, 0f, force.y);
+        currentVelocity += force3D;
+        ApplyGeometryVelocity(currentVelocity, false);
     }
     
     public void SetVelocity(Vector2 velocity)
-    {
-        if (rb != null)
         {
             // 发射时使用固定的物理参数，确保一致性
             SetFixedPhysicsForLaunch();
-            rb.linearVelocity = velocity;
-        }
-        else
-        {
-            Debug.LogError("BallPhysics.SetVelocity: rb 为 null！");
-        }
+        Vector3 v3 = new Vector3(velocity.x, 0f, velocity.y);
+        ApplyGeometryVelocity(v3, true);
     }
     
-    // 发射时设置固定的物理参数
+    // 发射时设置固定的物理参数（几何版：只同步 3D 物理材质 + 几何计时）
     void SetFixedPhysicsForLaunch()
     {
-        if (material != null)
+        if (material3D != null)
         {
-            // 使用基础反弹系数，不使用动态值
-            material.bounciness = ballData.bounceDamping;
-            material.friction = ballData.friction;
+            material3D.bounciness = ballData.bounceDamping;
+            material3D.dynamicFriction = ballData.friction;
+            material3D.staticFriction = ballData.friction;
         }
         
-        // 使用基础阻尼，不使用动态值
-        if (rb != null)
-        {
-            rb.linearDamping = ballData.linearDamping;
-            // 确保刚体处于正确状态
-            rb.angularVelocity = 0f;
-        }
-        
-        // 重置动态参数缓存，避免动态系统干扰
-        lastBounciness = ballData.bounceDamping;
-        lastDamping = ballData.linearDamping;
-        lastUpdateTime = Time.fixedTime;
-        
-        // 重置时间阻尼状态
-        isMoving = false;
-        ballStartTime = 0f;
+        // 重置几何衰减计时，让每次发射都从“高速阶段”开始
+        geometryElapsedTime = 0f;
     }
     
     // 公共方法：重置球体状态
     public void ResetBallState()
     {
-        if (rb != null)
-        {
-            rb.linearVelocity = Vector2.zero;
-            rb.angularVelocity = 0f;
-        }
+        geometrySpeed = 0f;
+        geometryDirection = Vector3.forward;
+        geometryElapsedTime = 0f;
+        OnGeometryMovementStopped();
         SetFixedPhysicsForLaunch();
     }
     
     public Vector2 GetVelocity()
     {
-        return rb != null ? rb.linearVelocity : Vector2.zero;
+        Vector3 v = geometryDirection * geometrySpeed;
+        return new Vector2(v.x, v.z);
     }
     
     public float GetSpeed()
     {
-        return rb != null ? rb.linearVelocity.magnitude : 0f;
+        return geometrySpeed;
     }
     
     public bool IsMoving()
     {
-        return rb != null && rb.linearVelocity.magnitude > ballData.stopThreshold;
+        return geometryIsMoving;
     }
     
     public void ResetBall()
     {
-        if (rb != null)
-        {
-            rb.linearVelocity = Vector2.zero;
-            rb.angularVelocity = 0f;
-        }
+        ResetBallState();
     }
     
-    /// <summary>
-    /// 获取球体的实际半径（考虑缩放）
-    /// 注：此方法主要用于旧的手动轨迹预测，新的物理模拟系统不需要
-    /// </summary>
-    public float GetRadius()
-    {
-        if (ballCollider == null)
-        {
-            return 0.5f; // 默认值
-        }
-        
-        // 根据不同Collider类型返回近似半径
-        if (ballCollider is CircleCollider2D circleCollider)
-        {
-            return circleCollider.radius * Mathf.Max(transform.lossyScale.x, transform.lossyScale.y);
-        }
-        else if (ballCollider is BoxCollider2D boxCollider)
-        {
-            // Box的近似半径：取宽高的平均值的一半
-            float avgSize = (boxCollider.size.x + boxCollider.size.y) / 2f;
-            return avgSize * 0.5f * Mathf.Max(transform.lossyScale.x, transform.lossyScale.y);
-        }
-        else if (ballCollider is PolygonCollider2D polygonCollider)
-        {
-            // Polygon的近似半径：基于bounds
-            Bounds bounds = polygonCollider.bounds;
-            float avgExtent = (bounds.extents.x + bounds.extents.y) / 2f;
-            return avgExtent;
-        }
-        else
-        {
-            // 其他类型：基于bounds
-            Bounds bounds = ballCollider.bounds;
-            float avgExtent = (bounds.extents.x + bounds.extents.y) / 2f;
-            return avgExtent;
-        }
-    }
-    
-    #region 模拟模式专用方法
-    
-    /// <summary>
-    /// 初始化模拟状态（用于影子场景）
-    /// 设置初始状态，使物理参数计算从0开始
-    /// </summary>
-    public void InitializeSimulationState()
-    {
-        if (!isSimulationMode)
-        {
-            Debug.LogWarning("InitializeSimulationState 应该在 isSimulationMode = true 时调用");
-        }
-        
-        // 重置时间追踪
-        ballStartTime = 0f;
-        simulationLastUpdateTime = 0f;
-        
-        // 设置为运动状态（因为即将开始模拟）
-        isMoving = true;
-        
-        // 重置动态参数缓存
-        lastBounciness = ballData.bounceDamping;
-        lastDamping = ballData.linearDamping;
-        
-        Debug.Log($"BallPhysics: 初始化模拟状态完成");
-    }
-    
-    /// <summary>
-    /// 手动更新物理参数（用于影子场景模拟）
-    /// 保持与主场景相同的更新频率和计算逻辑
-    /// </summary>
-    /// <param name="simulationTime">当前累积的模拟时间（秒）</param>
-    public void ManualPhysicsUpdate(float simulationTime)
-    {
-        if (!isInitialized) return;
-        
-        // 检查更新间隔（与主场景保持一致）
-        if (simulationTime - simulationLastUpdateTime < ballData.updateInterval)
-        {
-            // 即使不更新参数，也要执行物理约束
-            EnforcePhysicsConstraints();
-            return;
-        }
-        
-        float currentSpeed = rb.linearVelocity.magnitude;
-        
-        // 使用相同的计算逻辑（复用纯函数）
-        var (targetBounciness, targetDamping) = CalculateDynamicPhysics(simulationTime, currentSpeed);
-        
-        // 应用参数到物理组件
-        ApplyDynamicPhysics(targetBounciness, targetDamping);
-        
-        // 更新模拟时间戳
-        simulationLastUpdateTime = simulationTime;
-        
-        // 执行物理约束
-        EnforcePhysicsConstraints();
-    }
-    
-    /// <summary>
-    /// 执行物理约束（速度限制、禁止旋转）
-    /// </summary>
-    private void EnforcePhysicsConstraints()
-    {
-        if (rb == null) return;
-        
-        // 限制最大速度
-        float currentSpeed = rb.linearVelocity.magnitude;
-        if (currentSpeed > ballData.maxSpeed)
-        {
-            rb.linearVelocity = rb.linearVelocity.normalized * ballData.maxSpeed;
-        }
-        
-        // 确保球不会旋转
-        if (rb.angularVelocity != 0f)
-        {
-            rb.angularVelocity = 0f;
-        }
-    }
-    
-    #endregion
+
 }
 

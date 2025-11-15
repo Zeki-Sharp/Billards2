@@ -50,7 +50,7 @@ public class AimController : MonoBehaviour
     // 私有变量
     private Camera cam;
     private bool isVisible = false; // 是否显示瞄准线
-    private Vector2 aimDirection;
+    private Vector3 aimDirection; // 3D 方向（XZ 平面）
     
     // 组件引用（本地，在 AimController GameObject 上）
     private AimLineLandingPointManager landingPointManager;
@@ -317,8 +317,11 @@ public class AimController : MonoBehaviour
         // 根据蓄力系统的模式获取瞄准方向
         if (chargeSystem != null)
         {
-            // 使用ChargeSystem的GetLaunchDirection方法获取正确的发射方向
-            Vector2 direction = chargeSystem.GetLaunchDirection(playerCore.transform.position);
+            // 使用ChargeSystem的GetLaunchDirection方法获取正确的发射方向（已经是 Vector3）
+            Vector3 direction = chargeSystem.GetLaunchDirection(playerCore.transform.position);
+            
+            // 确保方向在 XZ 平面上（Y=0）
+            direction.y = 0f;
             
             if (direction.magnitude > 0.1f) // 避免零向量
             {
@@ -333,6 +336,9 @@ public class AimController : MonoBehaviour
             Vector3 mouseWorldPos = GetMouseWorldPosition(mouseScreenPos);
             Vector3 direction = mouseWorldPos - playerCore.transform.position;
             
+            // 确保方向在 XZ 平面上（Y=0）
+            direction.y = 0f;
+            
             if (direction.magnitude > 0.1f)
             {
                 aimDirection = direction.normalized;
@@ -342,16 +348,18 @@ public class AimController : MonoBehaviour
     
     Vector3 GetMouseWorldPosition(Vector3 mouseScreenPos)
     {
-        // 使用稳定的2D世界坐标转换方法
-        float screenWidth = Screen.width;
-        float screenHeight = Screen.height;
-        float cameraSize = cam.orthographicSize;
-        float aspectRatio = (float)screenWidth / screenHeight;
+        // 3D 场景：使用射线与地面平面（Y=0）相交
+        Ray ray = cam.ScreenPointToRay(mouseScreenPos);
+        Plane groundPlane = new Plane(Vector3.up, Vector3.zero); // Y=0 平面
         
-        float worldX = (mouseScreenPos.x / screenWidth - 0.5f) * cameraSize * aspectRatio * 2f;
-        float worldY = (mouseScreenPos.y / screenHeight - 0.5f) * cameraSize * 2f;
+        if (groundPlane.Raycast(ray, out float distance))
+        {
+            Vector3 hitPoint = ray.GetPoint(distance);
+            return hitPoint;
+        }
         
-        return new Vector3(worldX, worldY, 0f);
+        // 如果射线没有与地面相交，返回相机前方的默认点
+        return ray.GetPoint(10f);
     }
     
     /// <summary>
@@ -531,7 +539,7 @@ public class AimController : MonoBehaviour
             currentForce = chargeSystem.GetCurrentForce();
         }
         
-        Vector2 initialVelocity = aimDirection * currentForce;
+        Vector3 initialVelocity = aimDirection * currentForce;
         List<Vector3> pathPoints = trajectoryPredictor.PredictTrajectory(startPos, initialVelocity);
         List<Vector3> collisionPoints = trajectoryPredictor.GetCollisionPoints();
         
@@ -616,7 +624,7 @@ public class AimController : MonoBehaviour
         return isVisible;
     }
     
-    public Vector2 GetAimDirection()
+    public Vector3 GetAimDirection()
     {
         return aimDirection;
     }

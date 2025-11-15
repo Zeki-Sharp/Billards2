@@ -308,8 +308,9 @@ public class PlayerBehavior : MonoBehaviour, IDamageable
         float chargingPower = chargeSystem.GetChargingPower();
         float currentForce = chargeSystem.GetCurrentForce();
         
-        // 获取发射方向（根据当前蓄力模式）
-        Vector2 direction = chargeSystem.GetLaunchDirection(transform.position);
+        // 获取发射方向（根据当前蓄力模式，3D → 2D 平面投影）
+        Vector3 launchDir3D = chargeSystem.GetLaunchDirection(transform.position);
+        Vector2 direction = new Vector2(launchDir3D.x, launchDir3D.z);
         
         // 使用蓄力系统的力度（直接使用蓄力系统计算的力度）
         float force = currentForce;

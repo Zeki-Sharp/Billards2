@@ -35,91 +35,95 @@ public class BallData : ScriptableObject
     [Tooltip("摩擦系数")]
     public float friction = 0.1f;
     
-    // 三、运动阻尼
-    [BoxGroup("运动阻尼")]
-    [LabelText("线性阻尼")]
-    [MinValue(0f)]
-    [Tooltip("线性阻尼，让球逐渐减速")]
+    // 三、运动阻尼（已废弃，保留用于兼容）
+    [HideInInspector]
     public float linearDamping = 0.1f;
     
-    // 四、动态调控（速度曲线）
-    [BoxGroup("动态调控（速度曲线）")]
-    [LabelText("速度到弹性曲线")]
-    [Tooltip("速度到弹性的曲线 (0=静止, 1=最大速度)")]
+    // 四、动态调控（速度曲线）（已废弃，保留用于兼容）
+    [HideInInspector]
     public AnimationCurve speedToBounciness = AnimationCurve.Linear(0f, 0.3f, 1f, 1f);
     
-    [BoxGroup("动态调控（速度曲线）")]
-    [LabelText("速度到阻尼曲线")]
-    [Tooltip("速度到阻尼的曲线 (0=静止, 1=最大速度)")]
+    [HideInInspector]
     public AnimationCurve speedToDamping = AnimationCurve.Linear(0f, 0.8f, 1f, 0.1f);
     
-    // 五、动态参数范围（夹紧）
-    [BoxGroup("动态参数范围")]
-    [LabelText("最小弹性")]
-    [Range(0f, 1f)]
-    [Tooltip("最小弹性")]
+    // 五、动态参数范围（已废弃，保留用于兼容）
+    [HideInInspector]
     public float minBounciness = 0.3f;
     
-    [BoxGroup("动态参数范围")]
-    [LabelText("最大弹性")]
-    [Range(0f, 1f)]
-    [Tooltip("最大弹性")]
+    [HideInInspector]
     public float maxBounciness = 1.0f;
     
-    [BoxGroup("动态参数范围")]
-    [LabelText("最小阻尼")]
-    [Range(0f, 1f)]
-    [Tooltip("最小阻尼")]
+    [HideInInspector]
     public float minDamping = 0.1f;
     
-    [BoxGroup("动态参数范围")]
-    [LabelText("最大阻尼")]
-    [Range(0f, 1f)]
-    [Tooltip("最大阻尼")]
+    [HideInInspector]
     public float maxDamping = 0.8f;
     
-    // 六、时间阻尼系统
-    [BoxGroup("时间阻尼系统")]
-    [LabelText("启用时间阻尼")]
-    [Tooltip("是否启用时间阻尼")]
+    // 六、时间阻尼系统（已废弃，保留用于兼容）
+    [HideInInspector]
     public bool enableTimeDamping = true;
     
-    [BoxGroup("时间阻尼系统/参数")]
-    [LabelText("时间阻尼开始时间")]
-    [MinValue(0f)]
-    [Tooltip("时间阻尼开始时间（秒）")]
+    [HideInInspector]
     public float timeDampingStartTime = 2.0f;
     
-    [BoxGroup("时间阻尼系统/参数")]
-    [LabelText("时间阻尼增长速率")]
-    [MinValue(0f)]
-    [Tooltip("时间阻尼增长速率")]
+    [HideInInspector]
     public float timeDampingRate = 0.2f;
     
-    [BoxGroup("时间阻尼系统/参数")]
-    [LabelText("最大时间阻尼值")]
-    [MinValue(0f)]
-    [Tooltip("最大时间阻尼值")]
+    [HideInInspector]
     public float maxTimeDamping = 1.5f;
     
-    // 七、受击补偿（撞墙充能）
-    [BoxGroup("受击补偿（撞墙充能）")]
-    [LabelText("受击补偿力大小")]
-    [MinValue(0f)]
-    [Tooltip("受击补偿力大小")]
+    // 七、受击补偿（已废弃，保留用于兼容）
+    [HideInInspector]
     public float hitBoostForce = 1f;
     
-    [BoxGroup("受击补偿（撞墙充能）")]
-    [LabelText("受击补偿力倍数")]
-    [MinValue(0f)]
-    [Tooltip("受击补偿力倍数")]
+    [HideInInspector]
     public float hitBoostMultiplier = 1f;
     
-    [BoxGroup("受击补偿（撞墙充能）")]
-    [LabelText("补偿力速度阈值")]
-    [MinValue(0f)]
-    [Tooltip("获得补偿力的最小速度阈值")]
+    [HideInInspector]
     public float boostSpeedThreshold = 20f;
+    
+    // 九、几何物理参数（新物理系统）
+    [BoxGroup("几何物理")]
+    [BoxGroup("几何物理/基础")]
+    [LabelText("停止阈值")]
+    [MinValue(0f)]
+    [Tooltip("几何模拟速度低于该值时视为停止")]
+    public float geometryMinSpeedThreshold = 0.2f;
+    
+    [BoxGroup("几何物理/分段阻尼")]
+    [LabelText("高速阶段持续时间（秒）")]
+    [MinValue(0f)]
+    [Tooltip("在此时间内速度衰减很小，保持较高速度")]
+    public float geometryHighSpeedPhaseDuration = 0.5f;
+    
+    [BoxGroup("几何物理/分段阻尼")]
+    [LabelText("高速阶段线性阻尼")]
+    [MinValue(0f)]
+    [Tooltip("高速阶段的线性衰减系数（建议较小）")]
+    public float geometryHighPhaseDamping = 0.2f;
+    
+    [BoxGroup("几何物理/分段阻尼")]
+    [LabelText("低速阶段线性阻尼")]
+    [MinValue(0f)]
+    [Tooltip("减速阶段的线性衰减系数（建议明显大于高速阶段）")]
+    public float geometryLowPhaseDamping = 40f;
+    
+    [BoxGroup("几何物理/碰撞")]
+    [LabelText("墙体速度保留比例")]
+    [Range(0f, 1f)]
+    [Tooltip("墙体碰撞后速度保留比例")]
+    public float geometryWallBounceFactor = 0.95f;
+    
+    [BoxGroup("几何物理/碰撞")]
+    [LabelText("球体速度保留比例")]
+    [Range(0f, 1f)]
+    [Tooltip("球↔球碰撞后速度保留比例（全局弹性）")]
+    public float geometryBallBounceFactor = 0.98f;
+    
+    [BoxGroup("几何物理/碰撞")]
+    [LabelText("Knockback 缩放")]
+    [Tooltip("自身被击中时速度缩放（1=标准质量，<1=更重，>1=更轻）")]
+    public float geometryKnockbackScale = 1f;
     
     // 八、性能与刷新
     [BoxGroup("性能与刷新")]

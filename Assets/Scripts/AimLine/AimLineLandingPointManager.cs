@@ -52,6 +52,16 @@ public class AimLineLandingPointManager : MonoBehaviour
     [Tooltip("是否显示调试信息")]
     public bool showDebugInfo = false;
     
+    [Header("投射设置")]
+    [Tooltip("是否将落点与范围贴地投射（Y=groundHeight）")]
+    public bool projectToGround = true;
+    [Tooltip("地面高度")]
+    public float groundHeight = 0f;
+    [Tooltip("落点贴地时的高度偏移，避免与地面重合")]
+    public float landingPointOffset = 0.01f;
+    [Tooltip("范围圈贴地时的高度偏移")]
+    public float rangeCircleOffset = 0.01f;
+    
     #endregion
     
     #region 私有变量
@@ -164,14 +174,16 @@ public class AimLineLandingPointManager : MonoBehaviour
             return;
         }
         
+        Vector3 displayPosition = GetLandingDisplayPosition(position);
+        
         // 如果落点已显示且位置相同，无需更新
-        if (isLandingPointVisible && Vector3.Distance(position, lastLandingPosition) < 0.01f)
+        if (isLandingPointVisible && currentLandingPoint != null && Vector3.Distance(displayPosition, currentLandingPoint.transform.position) < 0.01f)
         {
             return;
         }
         
         // 创建或更新落点
-        CreateOrUpdateLandingPoint(position);
+        CreateOrUpdateLandingPoint(displayPosition);
         
         // 更新状态
         isLandingPointVisible = true;
@@ -286,6 +298,9 @@ public class AimLineLandingPointManager : MonoBehaviour
     {
         GameObject indicatorObj = new GameObject("LandingPoint");
         indicatorObj.transform.SetParent(landingPointContainer.transform);
+        indicatorObj.transform.localPosition = Vector3.zero;
+        indicatorObj.transform.localRotation = Quaternion.identity;
+        ApplyGroundFacingRotation(indicatorObj.transform);
         
         // 添加SpriteRenderer组件
         SpriteRenderer spriteRenderer = indicatorObj.AddComponent<SpriteRenderer>();
@@ -512,6 +527,8 @@ public class AimLineLandingPointManager : MonoBehaviour
     /// <param name="position">位置</param>
     void ShowAttackRangeCircle(Vector3 position)
     {
+        Vector3 displayPosition = GetRangeDisplayPosition(position);
+        
         // 获取攻击范围半径
         float radius = GetAttackRangeRadius();
         if (radius <= 0f)
@@ -522,7 +539,7 @@ public class AimLineLandingPointManager : MonoBehaviour
         // 如果攻击范围圆形已存在，直接更新位置和大小
         if (currentAttackRangeCircle != null)
         {
-            currentAttackRangeCircle.transform.position = position;
+            currentAttackRangeCircle.transform.position = displayPosition;
             currentAttackRangeCircle.transform.localScale = Vector3.one * radius * 2f; // 直径
             return;
         }
@@ -530,8 +547,9 @@ public class AimLineLandingPointManager : MonoBehaviour
         // 创建攻击范围圆形对象
         GameObject circleObj = new GameObject("AttackRangeCircle");
         circleObj.transform.SetParent(landingPointContainer.transform);
-        circleObj.transform.position = position;
+        circleObj.transform.position = displayPosition;
         circleObj.transform.localScale = Vector3.one * radius * 2f; // 直径
+        ApplyGroundFacingRotation(circleObj.transform);
         
         // 添加SpriteRenderer组件
         SpriteRenderer spriteRenderer = circleObj.AddComponent<SpriteRenderer>();
@@ -552,6 +570,36 @@ public class AimLineLandingPointManager : MonoBehaviour
         spriteRenderer.sortingOrder = attackRangeCircleSortingOrder;
         
         currentAttackRangeCircle = circleObj;
+    }
+    
+    Vector3 GetLandingDisplayPosition(Vector3 source)
+    {
+        if (!projectToGround)
+        {
+            return source;
+        }
+        
+        return new Vector3(source.x, groundHeight + landingPointOffset, source.z);
+    }
+    
+    Vector3 GetRangeDisplayPosition(Vector3 source)
+    {
+        if (!projectToGround)
+        {
+            return source;
+        }
+        
+        return new Vector3(source.x, groundHeight + rangeCircleOffset, source.z);
+    }
+    
+    void ApplyGroundFacingRotation(Transform target)
+    {
+        if (!projectToGround || target == null)
+        {
+            return;
+        }
+        
+        target.rotation = Quaternion.LookRotation(Vector3.up, Vector3.forward);
     }
     
     /// <summary>

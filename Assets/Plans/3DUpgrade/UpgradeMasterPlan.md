@@ -17,6 +17,7 @@
 - **PhaseA_TaskList.md**：Phase A 任务拆解与进度表。
 - **DependencyAudit.md**：Vector2、Physics2D、Sprite 资源等依赖清单与迁移策略。
 - **PlayerControl3DPlan.md**：玩家输入/蓄力/发射/物理改写路线（阶段 P0~P3）。
+- **BallPhysicsGeometryPlan.md**：球体物理几何化方案（几何反射 + 简单衰减 + 影子场景统一模拟）。
 - （预留）`Vector2UsageAudit.md`、`Physics2DUsageAudit.md`、`SpriteBasedAssets.md` 等后续子文档，用于记录直接迁移的详细列表。
 
 文档创建后请在此处补充链接与一句话描述，保持目录清晰。

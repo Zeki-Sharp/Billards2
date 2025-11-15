@@ -39,6 +39,14 @@ public class AimLineRenderer : MonoBehaviour
     [Header("调试设置")]
     [SerializeField] private bool showDebugInfo = false;
     
+    [Header("投射设置")]
+    [SerializeField] private bool projectIndicatorsToGround = true;
+    [SerializeField] private float groundHeight = 0f;
+    [SerializeField] private float indicatorHeightOffset = 0.01f;
+    [SerializeField] private bool flattenIndicators = true;
+    [SerializeField] private bool projectLineToGround = true;
+    [SerializeField] private float lineHeightOffset = 0.01f;
+    
     // 渲染对象管理
     private List<LineRenderer> segmentLines = new List<LineRenderer>();
     private List<GameObject> collisionIndicators = new List<GameObject>();
@@ -87,6 +95,8 @@ public class AimLineRenderer : MonoBehaviour
         
         lineContainer = new GameObject("AimLineContainer");
         lineContainer.transform.SetParent(transform);
+        lineContainer.transform.localPosition = Vector3.zero;
+        lineContainer.transform.localRotation = Quaternion.identity;
     }
     
     /// <summary>
@@ -101,6 +111,8 @@ public class AimLineRenderer : MonoBehaviour
         
         indicatorContainer = new GameObject("CollisionIndicatorContainer");
         indicatorContainer.transform.SetParent(transform);
+        indicatorContainer.transform.localPosition = Vector3.zero;
+        indicatorContainer.transform.localRotation = Quaternion.identity;
     }
     
     
@@ -151,8 +163,17 @@ public class AimLineRenderer : MonoBehaviour
         segmentLines.Add(trajectoryLine);
         
         // 设置所有路径点
-        trajectoryLine.positionCount = pathPoints.Count;
-        trajectoryLine.SetPositions(pathPoints.ToArray());
+        Vector3[] positions = pathPoints.ToArray();
+        if (projectLineToGround)
+        {
+            for (int i = 0; i < positions.Length; i++)
+            {
+                positions[i].y = groundHeight + lineHeightOffset;
+            }
+        }
+        
+        trajectoryLine.positionCount = positions.Length;
+        trajectoryLine.SetPositions(positions);
         
         // 应用材质效果（末端渐隐）
         if (materialController != null)
@@ -266,6 +287,8 @@ public class AimLineRenderer : MonoBehaviour
     {
         GameObject segmentObj = new GameObject($"AimLineSegment_{segmentIndex}");
         segmentObj.transform.SetParent(lineContainer.transform);
+        segmentObj.transform.localPosition = Vector3.zero;
+        segmentObj.transform.localRotation = Quaternion.identity;
         
         LineRenderer segmentLine = segmentObj.AddComponent<LineRenderer>();
         
@@ -322,7 +345,7 @@ public class AimLineRenderer : MonoBehaviour
         lineRenderer.useWorldSpace = true;
         lineRenderer.numCapVertices = defaultCapVertices;
         lineRenderer.numCornerVertices = defaultCornerVertices;  // ✅ 转角圆滑处理
-        lineRenderer.alignment = LineAlignment.TransformZ;
+        lineRenderer.alignment = LineAlignment.View;
     }
     
     /// <summary>
@@ -387,7 +410,8 @@ public class AimLineRenderer : MonoBehaviour
     {
         GameObject indicatorObj = new GameObject($"CollisionIndicator_{index}");
         indicatorObj.transform.SetParent(indicatorContainer.transform);
-        indicatorObj.transform.position = position;
+        indicatorObj.transform.position = ProjectIndicatorPosition(position);
+        ApplyGroundFacingRotation(indicatorObj.transform);
         
         // 添加SpriteRenderer组件
         SpriteRenderer spriteRenderer = indicatorObj.AddComponent<SpriteRenderer>();
@@ -412,7 +436,7 @@ public class AimLineRenderer : MonoBehaviour
         
         if (showDebugInfo)
         {
-            Debug.Log($"AimLineRenderer: 创建碰撞指示器 - 位置: {position}, 索引: {index}");
+            Debug.Log($"AimLineRenderer: 创建碰撞指示器 - 位置: {indicatorObj.transform.position}, 索引: {index}");
         }
     }
     
@@ -433,6 +457,26 @@ public class AimLineRenderer : MonoBehaviour
         texture.Apply();
         
         return Sprite.Create(texture, new Rect(0, 0, 32, 32), new Vector2(0.5f, 0.5f));
+    }
+    
+    Vector3 ProjectIndicatorPosition(Vector3 source)
+    {
+        if (!projectIndicatorsToGround)
+        {
+            return source;
+        }
+        
+        return new Vector3(source.x, groundHeight + indicatorHeightOffset, source.z);
+    }
+    
+    void ApplyGroundFacingRotation(Transform target)
+    {
+        if (!flattenIndicators || target == null)
+        {
+            return;
+        }
+        
+        target.rotation = Quaternion.LookRotation(Vector3.up, Vector3.forward);
     }
     /// <summary>
     /// 设置材质控制器引用
