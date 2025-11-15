@@ -121,7 +121,7 @@ public class PlayerTurnManager : MonoBehaviour
     /// <summary>
     /// ✅ 处理角色发射事件（球发射瞬间计数）
     /// </summary>
-    void OnCharacterLaunched(string characterID, Vector2 direction, float force)
+    void OnCharacterLaunched(string characterID, Vector3 direction, float force)
     {
         // 检查是否已经记录过（防止重复计数）
         if (launchedCharacterIDs.Contains(characterID))

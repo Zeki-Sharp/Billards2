@@ -13,9 +13,10 @@
 ---
 
 ## 2. 阶段划分（子系统内部）
-1. **Stage P0 - 输入与事件**
-   - 将 `GlobalInputManager` 改为 `Camera.ScreenPointToRay + Physics.Raycast`。
-   - `GameEventBus` 中与玩家发射、瞄准相关的委托全部改为 `Vector3`/3D 数据结构。
+1. **Stage P0 - 输入与事件**（进行中）
+   - 将 `GlobalInputManager` 改为 `Camera.ScreenPointToRay + Physics.Raycast`（已实现：2025-11-15）。
+   - `GameEventBus` 中与玩家发射、瞄准相关的委托改为 `Vector3`/3D 数据结构（已实现：2025-11-15）。
+   - 订阅者（`PlayerTurnManager`, `PlayerStateMachine`, `TopBarController`) 与 `ChargeController` 完成新签名适配。
 2. **Stage P1 - 蓄力/发射**
    - `ChargeSystem`、`ChargeController`、`PlayerTurnManager` 把方向/速度/状态字段迁移到 `Vector3`，并在 Inspector 配置中增加 Z 轴约束选项。
 3. **Stage P2 - 球体物理**

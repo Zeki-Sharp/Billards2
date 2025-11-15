@@ -277,7 +277,7 @@ public class GlobalInputManager : MonoBehaviour
     #region 射线检测
     
     /// <summary>
-    /// 射线检测球体（2D游戏使用2D射线检测）
+    /// 射线检测球体（3D 射线）
     /// </summary>
     GameObject RaycastForBall(Vector2 screenPosition)
     {
@@ -287,42 +287,36 @@ public class GlobalInputManager : MonoBehaviour
             return null;
         }
         
-        // 将屏幕坐标转换为世界坐标（2D）
-        Vector3 worldPoint = mainCamera.ScreenToWorldPoint(screenPosition);
-        Vector2 worldPoint2D = new Vector2(worldPoint.x, worldPoint.y);
+        Ray ray = mainCamera.ScreenPointToRay(new Vector3(screenPosition.x, screenPosition.y, 0f));
         
-        // 调试：记录射线信息
         if (showDebugInfo)
         {
-            Debug.Log($"GlobalInputManager: 2D射线检测 - 屏幕坐标={screenPosition}, 世界坐标={worldPoint2D}, Layer={playerBallLayer.value}");
+            Debug.Log($"GlobalInputManager: 3D射线检测 - 屏幕坐标={screenPosition}, RayOrigin={ray.origin}, RayDir={ray.direction}, LayerMask={playerBallLayer.value}");
         }
         
-        // 使用 2D 射线检测（点击检测）
-        RaycastHit2D hit = Physics2D.Raycast(worldPoint2D, Vector2.zero, 0f, playerBallLayer);
-        
-        if (hit.collider != null)
+        if (Physics.Raycast(ray, out RaycastHit hitInfo, raycastDistance, playerBallLayer))
         {
             if (showDebugInfo)
             {
-                Debug.Log($"GlobalInputManager: ✅ 2D射线击中球体 - {hit.collider.gameObject.name}, Layer={LayerMask.LayerToName(hit.collider.gameObject.layer)}");
+                Debug.Log($"GlobalInputManager: ✅ 3D射线击中球体 - {hitInfo.collider.gameObject.name}, Layer={LayerMask.LayerToName(hitInfo.collider.gameObject.layer)}");
             }
-            return hit.collider.gameObject;
+            return hitInfo.collider.gameObject;
         }
         
-        // 如果没击中，尝试用OverlapPoint（更适合点击检测）
-        Collider2D[] colliders = Physics2D.OverlapPointAll(worldPoint2D, playerBallLayer);
-        if (colliders.Length > 0)
+        // 使用 SphereCast 提高点击容错
+        const float sphereRadius = 0.15f;
+        if (Physics.SphereCast(ray, sphereRadius, out RaycastHit sphereHit, raycastDistance, playerBallLayer))
         {
             if (showDebugInfo)
             {
-                Debug.Log($"GlobalInputManager: ✅ OverlapPoint检测到球体 - {colliders[0].gameObject.name}");
+                Debug.Log($"GlobalInputManager: ✅ SphereCast 检测到球体 - {sphereHit.collider.gameObject.name}");
             }
-            return colliders[0].gameObject;
+            return sphereHit.collider.gameObject;
         }
         
         if (showDebugInfo)
         {
-            Debug.Log($"GlobalInputManager: 2D射线没有击中任何球体");
+            Debug.Log("GlobalInputManager: 3D射线没有击中任何球体");
         }
         
         return null;

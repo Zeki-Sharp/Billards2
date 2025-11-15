@@ -222,7 +222,7 @@ public class TopBarController : MonoBehaviour
     /// <summary>
     /// ✅ 角色发射事件 - 更新发射次数显示 + 标记槽位状态
     /// </summary>
-    void OnCharacterLaunched(string characterID, Vector2 direction, float force)
+    void OnCharacterLaunched(string characterID, Vector3 direction, float force)
     {
         // 延迟一帧更新，确保 PlayerTurnManager 先处理完
         StartCoroutine(UpdateLaunchCountNextFrame());

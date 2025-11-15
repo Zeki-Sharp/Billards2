@@ -16,6 +16,7 @@
 - **P2（长期保留 2D）**
   - UI/Canvas 工具：`UI/Drawing/*`, `DamageText`, `MapViewUI` 等。
 - **行动**：Phase A 期间完成 `Vector2UsageAudit` 清单，并为 P0 系统排定直接改写顺序；完成后在此表打勾。
+  - 2025-11-15：玩家输入/事件链（`GlobalInputManager`, `GameEventBus`, `ChargeController`, `PlayerStateMachine`, `PlayerTurnManager`, `TopBarController`）已切换到 `Vector3` 事件流程。
 
 ## 2. Physics2D / 2D 刚体依赖
 - **关键脚本**

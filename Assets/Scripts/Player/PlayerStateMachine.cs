@@ -509,7 +509,7 @@ public class PlayerStateMachine : MonoBehaviour
     /// <summary>
     /// 角色发射事件处理（多角色系统）
     /// </summary>
-    void OnCharacterLaunched(string characterID, Vector2 direction, float force)
+    void OnCharacterLaunched(string characterID, Vector3 direction, float force)
     {
         // 检查是否是当前球体
         if (!IsMyCharacter(characterID))
@@ -527,7 +527,8 @@ public class PlayerStateMachine : MonoBehaviour
             // ✅ 球体自己执行发射（事件驱动）
             if (playerBehavior != null)
             {
-                playerBehavior.Launch(direction, force);
+                Vector2 planarDirection = new Vector2(direction.x, direction.y);
+                playerBehavior.Launch(planarDirection, force);
                 
                 if (showDebugInfo)
                 {

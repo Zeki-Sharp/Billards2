@@ -96,6 +96,15 @@
 
 ---
 
+### 7. 关卡场景名称硬编码 & SceneTransitionManager 未生效 ⭐⭐
+
+**问题**：当前战斗关卡场景通过 `MapPlayerTracker` 采用硬编码方式按层级加载场景名（`Layer 0 → "Level1"` 等），而角色选择场景中的 `SceneTransitionManager.level1SceneName` 配置不会参与实际战斗场景跳转，导致文档/配置与真实流程不一致，也增加了 3D 版关卡（如 `Level1_3D`）接入难度。  
+**方案**：① 将 `MapPlayerTracker` 的场景名称改为从统一配置（例如 LevelManager/ScriptableObject 或 `SceneTransitionManager`）读取，而不是字符串拼接 ② 或者在 `SceneTransitionManager` 中提供“从地图节点加载战斗场景”的统一入口，由地图系统调用 ③ 长期目标是消除所有 `"LevelX"` 字符串硬编码，只保留一个权威场景列表。  
+**影响**：影响地图→战斗场景的跳转逻辑，以及后续新增/重命名战斗场景时的维护成本；对运行时功能无直接 bug，但容易产生“改了配置不生效”的混淆。  
+**时机**：在 3D 关卡稳定后、开始整理关卡/地图系统时统一清理（建议在 3D 升级 Phase B～C 之间处理）。
+
+---
+
 ## 📝 备注
 
 - 所有遗留问题都不影响当前功能

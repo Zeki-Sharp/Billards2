@@ -86,18 +86,26 @@ public class SpawnRangeConfig
     {
         Vector3 localOffset = GetRandomLocalOffset();
         
-        // 根据坐标系统计算最终位置
+        // 根据坐标系统计算最终位置（3D 版本：使用 XZ 平面作为生成平面，Y 作为高度）
         Vector3 finalPosition;
         switch (coordinateSystem)
         {
             case SpawnCoordinateSystem.WorldSpace:
-                // 世界坐标：直接使用范围配置 + 偏移
-                finalPosition = worldCenter + localOffset;
+                // 世界坐标：在 XZ 平面上偏移，Y 保持 worldCenter.y 不变
+                finalPosition = new Vector3(
+                    worldCenter.x + localOffset.x,
+                    worldCenter.y,
+                    worldCenter.z + localOffset.z
+                );
                 break;
             case SpawnCoordinateSystem.RelativeSpace:
-                // 相对坐标：原点 + 偏移
+                // 相对坐标：以 origin 为中心，在 XZ 平面上偏移
                 Vector3 baseOrigin = origin ?? Vector3.zero;
-                finalPosition = baseOrigin + localOffset;
+                finalPosition = new Vector3(
+                    baseOrigin.x + localOffset.x,
+                    baseOrigin.y,
+                    baseOrigin.z + localOffset.z
+                );
                 break;
             default:
                 finalPosition = Vector3.zero;
@@ -139,9 +147,9 @@ public class SpawnRangeConfig
         if (enablePositionOffset && offsetRange > 0f)
         {
             Vector3 randomOffset = new Vector3(
-                Random.Range(-offsetRange, offsetRange),
-                Random.Range(-offsetRange, offsetRange),
-                0f
+                Random.Range(-offsetRange, offsetRange), // X 偏移
+                0f,                                      // 高度不在这里随机
+                Random.Range(-offsetRange, offsetRange)  // Z 偏移
             );
             finalOffset = baseOffset + randomOffset;
         }
@@ -159,9 +167,9 @@ public class SpawnRangeConfig
         Vector2 size = coordinateSystem == SpawnCoordinateSystem.WorldSpace ? worldSize : relativeSize;
         
         return new Vector3(
-            Random.Range(-size.x * 0.5f, size.x * 0.5f),
-            Random.Range(-size.y * 0.5f, size.y * 0.5f),
-            0f
+            Random.Range(-size.x * 0.5f, size.x * 0.5f), // X
+            0f,                                          // Y 高度由 worldCenter 决定
+            Random.Range(-size.y * 0.5f, size.y * 0.5f)  // Z（由原来的 Y 尺寸映射而来）
         );
     }
     
@@ -178,9 +186,9 @@ public class SpawnRangeConfig
         float distance = Random.Range(0f, radius);
         
         return new Vector3(
-            Mathf.Cos(angle) * distance,
-            Mathf.Sin(angle) * distance,
-            0f
+            Mathf.Cos(angle) * distance, // X
+            0f,                          // Y 高度不在这里随机
+            Mathf.Sin(angle) * distance  // Z
         );
     }
     
@@ -197,9 +205,9 @@ public class SpawnRangeConfig
         float distance = Random.Range(radius * 0.5f, radius); // 环形：内半径到外半径
         
         return new Vector3(
-            Mathf.Cos(angle) * distance,
-            Mathf.Sin(angle) * distance,
-            0f
+            Mathf.Cos(angle) * distance, // X
+            0f,                          // Y 高度不在这里随机
+            Mathf.Sin(angle) * distance  // Z
         );
     }
     
@@ -232,15 +240,17 @@ public class SpawnRangeConfig
         {
             case SpawnRangeShape.Rectangle:
                 Vector2 size = coordinateSystem == SpawnCoordinateSystem.WorldSpace ? worldSize : relativeSize;
+                // 仅在 XZ 平面上做范围校验
                 return localPosition.x >= (-size.x * 0.5f - tolerance) && localPosition.x <= (size.x * 0.5f + tolerance) && 
-                       localPosition.y >= (-size.y * 0.5f - tolerance) && localPosition.y <= (size.y * 0.5f + tolerance);
+                       localPosition.z >= (-size.y * 0.5f - tolerance) && localPosition.z <= (size.y * 0.5f + tolerance);
             case SpawnRangeShape.Circle:
                 float radius = coordinateSystem == SpawnCoordinateSystem.WorldSpace ? worldRadius : relativeRadius;
-                float distance = localPosition.magnitude;
+                // 使用 XZ 平面距离
+                float distance = new Vector2(localPosition.x, localPosition.z).magnitude;
                 return distance <= (radius + tolerance);
             case SpawnRangeShape.Ring:
                 float ringRadius = coordinateSystem == SpawnCoordinateSystem.WorldSpace ? worldRadius : relativeRadius;
-                float ringDistance = localPosition.magnitude;
+                float ringDistance = new Vector2(localPosition.x, localPosition.z).magnitude;
                 return ringDistance >= (ringRadius * 0.5f - tolerance) && ringDistance <= (ringRadius + tolerance);
             default:
                 return true;
@@ -304,12 +314,11 @@ public class SpawnRangeConfig
     /// <returns>true = 位置有效（无障碍物），false = 有障碍物</returns>
     public bool IsPositionClear(Vector3 position, float checkRadius, LayerMask obstacleLayer)
     {
-        // 使用 Physics2D.OverlapCircle 检测是否与障碍物重叠
-        Collider2D hit = Physics2D.OverlapCircle(position, checkRadius, obstacleLayer);
+        // 使用 3D 球体检测是否与障碍物重叠（3D 版本）
+        Collider[] hits = Physics.OverlapSphere(position, checkRadius, obstacleLayer);
         
-        // null = 没有检测到任何障碍物 → 位置有效 ✅
-        // non-null = 检测到障碍物（墙/玩家/敌人） → 位置无效 ❌
-        return hit == null;
+        // 无碰撞体 = 位置有效 ✅；否则视为无效位置
+        return hits == null || hits.Length == 0;
     }
     
     /// <summary>

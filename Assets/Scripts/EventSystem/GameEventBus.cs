@@ -51,9 +51,9 @@ public static class GameEventBus
     public static event System.Action<DeathData> OnDeath;
     
     /// <summary>
-    /// 发射事件
+    /// 发射事件（3D方向）
     /// </summary>
-    public static event System.Action<Vector2, float> OnLaunch;
+    public static event System.Action<Vector3, float> OnLaunch;
     
     #endregion
     
@@ -315,9 +315,9 @@ public static class GameEventBus
     public static event System.Action<string, float> OnCharacterChargingStopped;
     
     /// <summary>
-    /// 特定角色发射事件
+    /// 特定角色发射事件（3D方向）
     /// </summary>
-    public static event System.Action<string, Vector2, float> OnCharacterLaunched;
+    public static event System.Action<string, Vector3, float> OnCharacterLaunched;
     
     /// <summary>
     /// 特定角色完成发射事件（进入 Completed 状态）
@@ -363,9 +363,9 @@ public static class GameEventBus
     #region UI/表现事件
     
     /// <summary>
-    /// 瞄准方向变化事件
+    /// 瞄准方向变化事件（3D方向）
     /// </summary>
-    public static event System.Action<Vector2> OnAimDirectionChanged;
+    public static event System.Action<Vector3> OnAimDirectionChanged;
     
     /// <summary>
     /// 瞄准线可见性变化事件
@@ -394,7 +394,7 @@ public static class GameEventBus
     /// <summary>
     /// 发布发射事件
     /// </summary>
-    public static void PublishLaunch(Vector2 direction, float force) => OnLaunch?.Invoke(direction, force);
+    public static void PublishLaunch(Vector3 direction, float force) => OnLaunch?.Invoke(direction, force);
     
     /// <summary>
     /// 发布技能激活事件
@@ -564,7 +564,7 @@ public static class GameEventBus
     /// <summary>
     /// 发布瞄准方向变化事件
     /// </summary>
-    public static void PublishAimDirectionChanged(Vector2 direction) => OnAimDirectionChanged?.Invoke(direction);
+    public static void PublishAimDirectionChanged(Vector3 direction) => OnAimDirectionChanged?.Invoke(direction);
     
     /// <summary>
     /// 发布瞄准线可见性变化事件
@@ -636,9 +636,9 @@ public static class GameEventBus
     /// 发布特定角色发射事件
     /// </summary>
     /// <param name="characterID">角色ID</param>
-    /// <param name="direction">发射方向</param>
+    /// <param name="direction">发射方向（世界空间）</param>
     /// <param name="force">发射力度</param>
-    public static void PublishCharacterLaunched(string characterID, Vector2 direction, float force) => OnCharacterLaunched?.Invoke(characterID, direction, force);
+    public static void PublishCharacterLaunched(string characterID, Vector3 direction, float force) => OnCharacterLaunched?.Invoke(characterID, direction, force);
     
     /// <summary>
     /// 发布特定角色完成发射事件

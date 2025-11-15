@@ -215,7 +215,8 @@ public class ChargeController : MonoBehaviour
         }
         
         Vector3 ballPosition = ballObject.transform.position;
-        Vector2 direction = currentChargeSystem.GetLaunchDirection(ballPosition);
+        Vector2 direction2D = currentChargeSystem.GetLaunchDirection(ballPosition);
+        Vector3 direction = new Vector3(direction2D.x, direction2D.y, 0f);
         
         // 停止蓄力
         currentChargeSystem.StopCharging();
