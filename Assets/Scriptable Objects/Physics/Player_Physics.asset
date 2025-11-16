@@ -98,7 +98,7 @@ MonoBehaviour:
   geometryMinSpeedThreshold: 0.2
   geometryHighSpeedPhaseDuration: 0.5
   geometryHighPhaseDamping: 1
-  geometryLowPhaseDamping: 20
+  geometryLowPhaseDamping: 8
   geometryWallBounceFactor: 0.95
   geometryBallBounceFactor: 0.8
   geometryKnockbackScale: 1
