@@ -496,48 +496,32 @@ public class BallPhysics : MonoBehaviour
     }
     
     /// <summary>
-    /// ✅ 地面对齐：通过脚底点向下检测地面，计算物体应该的Y位置并设置一次
+    /// ✅ 地面对齐：计算物体应该的Y位置（2D的(x,y) -> 3D的(x,z,y)，其中z=脚底偏移）
     /// </summary>
     private void AlignToGround()
     {
         if (footPositionRef == null)
         {
+            // 如果没有脚底点，保持当前位置（假设物体中心就是定位点）
+            Debug.LogWarning($"BallPhysics {gameObject.name}: 未设置 footPositionRef，无法对齐地面！");
             return;
         }
         
-        // 从脚底点向下射线检测地面
-        Vector3 footWorldPos = footPositionRef.position;
-        Ray ray = new Ray(footWorldPos, Vector3.down);
-        RaycastHit hit;
+        // 计算脚底相对于物体中心的偏移（考虑缩放）
+        // 如果脚底点在本地坐标 (0, -z, 0)，则 footOffsetY = -z * scaleY
+        float footOffsetY = footPositionRef.localPosition.y * transform.lossyScale.y;
         
-        // 使用 geometryWallMask 检测地面（地面应该在 Obstacle 层）
-        if (Physics.Raycast(ray, out hit, 10f, geometryWallMask, QueryTriggerInteraction.Ignore))
-        {
-            float groundY = hit.point.y;
-            
-            // 计算脚底相对于物体中心的偏移（考虑缩放）
-            float footOffsetY = footPositionRef.localPosition.y * transform.lossyScale.y;
-            
-            // 计算物体中心应该的Y位置：groundY - footOffsetY
-            // 例如：脚底在 localY = -0.5，地面在 Y=0，则物体中心应该在 Y = 0 - (-0.5) = 0.5
-            float targetCenterY = groundY - footOffsetY;
-            
-            // 设置物体位置（只修改Y，保持XZ不变）
-            Vector3 currentPos = transform.position;
-            transform.position = new Vector3(currentPos.x, targetCenterY, currentPos.z);
-            
-            if (showGeometryDebug)
-            {
-                Debug.Log($"BallPhysics {gameObject.name}: 地面对齐完成 - 地面Y={groundY:F3}, 脚底偏移={footOffsetY:F3}, 物体中心Y={targetCenterY:F3}");
-            }
-        }
-        else
-        {
-            if (showGeometryDebug)
-            {
-                Debug.LogWarning($"BallPhysics {gameObject.name}: 未检测到地面，保持当前位置");
-            }
-        }
+        // 如果脚底在本地 Y = -z，那么要让脚底在地面（Y=0），物体中心应该在 Y = z
+        // 例如：脚底在 localY = -0.5，要让脚底在 Y=0，则物体中心应该在 Y = 0.5
+        float groundY = 0f; // 地面在Y=0
+        float targetCenterY = groundY - footOffsetY; // 地面Y - 脚底偏移
+        
+        // 设置物体位置（只修改Y，保持XZ不变）
+        Vector3 currentPos = transform.position;
+        Vector3 newPos = new Vector3(currentPos.x, targetCenterY, currentPos.z);
+        transform.position = newPos;
+        
+        Debug.Log($"BallPhysics {gameObject.name}: 地面对齐 - 当前位置Y={currentPos.y:F3}, 脚底本地Y={footPositionRef.localPosition.y:F3}, 脚底偏移={footOffsetY:F3}, 目标中心Y={targetCenterY:F3}, 新位置={newPos}");
     }
 
     

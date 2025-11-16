@@ -267,7 +267,7 @@ MonoBehaviour:
     m_Bits: 769
   geometryBallMask:
     serializedVersion: 2
-    m_Bits: 8
+    m_Bits: 72
   geometrySphereRadius: 0
   geometryInitialSpeed: 0
   geometryInitialDirection: {x: 0, y: 0, z: 1}
@@ -292,11 +292,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2050217528864470944, guid: e719b1822f259c14cb3dd6f62d9c465d, type: 3}
       propertyPath: rangeCircleOffset
-      value: 0.5
+      value: 0.25
       objectReference: {fileID: 0}
     - target: {fileID: 2050217528864470944, guid: e719b1822f259c14cb3dd6f62d9c465d, type: 3}
       propertyPath: landingPointOffset
-      value: 0.5
+      value: 0.25
       objectReference: {fileID: 0}
     - target: {fileID: 5125386412533849888, guid: e719b1822f259c14cb3dd6f62d9c465d, type: 3}
       propertyPath: m_Name
@@ -364,7 +364,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8943938372370279972, guid: e719b1822f259c14cb3dd6f62d9c465d, type: 3}
       propertyPath: lineHeightOffset
-      value: 0.5
+      value: 0.25
       objectReference: {fileID: 0}
     - target: {fileID: 8943938372370279972, guid: e719b1822f259c14cb3dd6f62d9c465d, type: 3}
       propertyPath: projectLineToGround
@@ -372,7 +372,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8943938372370279972, guid: e719b1822f259c14cb3dd6f62d9c465d, type: 3}
       propertyPath: indicatorHeightOffset
-      value: 0.5
+      value: 0.25
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

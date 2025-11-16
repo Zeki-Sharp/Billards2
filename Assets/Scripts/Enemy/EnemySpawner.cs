@@ -52,10 +52,10 @@ public class EnemySpawner : BaseSpawner<EnemyData>
     }
     
     /// <summary>
-    /// 实例化敌人对象（像旧系统一样直接指定位置和父对象）
+    /// 实例化敌人对象
     /// </summary>
     /// <param name="data">敌人数据</param>
-    /// <param name="position">生成位置</param>
+    /// <param name="position">生成位置（3D坐标，来自SpawnRangeConfig.GetValidRandomPosition()）</param>
     /// <param name="parent">父对象</param>
     /// <returns>实例化的敌人GameObject</returns>
     protected override GameObject InstantiateObject(EnemyData data, Vector3 position, Transform parent)
@@ -66,9 +66,14 @@ public class EnemySpawner : BaseSpawner<EnemyData>
             return null;
         }
         
-        // 像旧系统一样直接指定位置和父对象
+        // ✅ position 已经是3D坐标 (x, y, z)，直接使用
+        // Y坐标会在BallPhysics.InitializePhysics()中通过AlignToGround()调整
         GameObject enemyInstance = Instantiate(data.enemyContainerPrefab, position, Quaternion.identity, parent);
         
+        if (showDebugInfo)
+        {
+            Debug.Log($"EnemySpawner: 生成敌人 {data.info.name} 在位置 {position}");
+        }
         
         return enemyInstance;
     }
