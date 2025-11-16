@@ -9293,6 +9293,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1158436818}
+  - component: {fileID: 1158436819}
   m_Layer: 8
   m_Name: Wall
   m_TagString: Untagged
@@ -9319,6 +9320,25 @@ Transform:
   - {fileID: 1897777977}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1158436819
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1158436817}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 85008b1232e490d4f80b51604078e973, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  wallHitEffectCooldown: 0.2
+  minWallHitSpeed: 1
+  effects:
+  - effectType: 2
+    mmfPlayer: {fileID: 1398340947}
+    enableDebugLog: 0
+  enableDebugLog: 1
 --- !u!1 &1261885040
 GameObject:
   m_ObjectHideFlags: 0
