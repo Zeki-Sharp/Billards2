@@ -6,6 +6,9 @@ public class BallPhysics : MonoBehaviour
     [Header("物理数据")]
     public BallData ballData;
     
+    [Tooltip("（可选）主动移动时使用的几何物理配置。如果为空，则复用上面的 ballData 配置")]
+    public BallData moveBallData;
+    
     // 3D 物理组件（几何模拟依附的可视刚体）
     private Rigidbody rb3D;
     private Collider ballCollider3D;
@@ -59,6 +62,37 @@ public class BallPhysics : MonoBehaviour
     private float geometryWallBounceFactor;
     private float geometryBallBounceFactor;
     private float geometryKnockbackScale;
+    
+    /// <summary>
+    /// 几何运动模式：区分「击退/发射」与「主动移动」两种配置
+    /// </summary>
+    private enum GeometryMotionMode
+    {
+        /// <summary>默认模式：玩家发射、击退等使用（使用 ballData）</summary>
+        Knockback = 0,
+        /// <summary>主动移动模式：小兵行走等使用（使用 moveBallData，若为空则退回 ballData）</summary>
+        ActiveMove = 1
+    }
+    
+    [SerializeField]
+    private GeometryMotionMode geometryMotionMode = GeometryMotionMode.Knockback;
+    
+    // 缓存两套几何参数：击退/发射用 与 主动移动用
+    private float knockbackMinSpeedThreshold;
+    private float knockbackHighSpeedPhaseDuration;
+    private float knockbackHighPhaseDamping;
+    private float knockbackLowPhaseDamping;
+    private float knockbackWallBounceFactor;
+    private float knockbackBallBounceFactor;
+    private float knockbackKnockbackScale;
+    
+    private float moveMinSpeedThreshold;
+    private float moveHighSpeedPhaseDuration;
+    private float moveHighPhaseDamping;
+    private float moveLowPhaseDamping;
+    private float moveWallBounceFactor;
+    private float moveBallBounceFactor;
+    private float moveKnockbackScale;
     
     #endregion
     
@@ -642,18 +676,67 @@ public class BallPhysics : MonoBehaviour
     
     private void ApplyGeometryConfigFromData()
     {
-        if (ballData == null)
+        // 如果两份配置都为空，直接返回
+        if (ballData == null && moveBallData == null)
         {
             return;
         }
         
-        geometryMinSpeedThreshold = Mathf.Max(0.001f, ballData.geometryMinSpeedThreshold);
-        geometryHighSpeedPhaseDuration = Mathf.Max(0f, ballData.geometryHighSpeedPhaseDuration);
-        geometryHighPhaseDamping = Mathf.Max(0f, ballData.geometryHighPhaseDamping);
-        geometryLowPhaseDamping = Mathf.Max(0f, ballData.geometryLowPhaseDamping);
-        geometryWallBounceFactor = Mathf.Clamp01(ballData.geometryWallBounceFactor);
-        geometryBallBounceFactor = Mathf.Clamp01(ballData.geometryBallBounceFactor);
-        geometryKnockbackScale = Mathf.Max(0f, ballData.geometryKnockbackScale);
+        // 击退/发射使用的配置（优先使用 ballData）
+        BallData knockbackData = ballData != null ? ballData : moveBallData;
+        // 主动移动使用的配置（优先使用 moveBallData，若为空则退回到 knockbackData）
+        BallData moveData = moveBallData != null ? moveBallData : knockbackData;
+        
+        // 缓存击退/发射配置
+        knockbackMinSpeedThreshold = Mathf.Max(0.001f, knockbackData.geometryMinSpeedThreshold);
+        knockbackHighSpeedPhaseDuration = Mathf.Max(0f, knockbackData.geometryHighSpeedPhaseDuration);
+        knockbackHighPhaseDamping = Mathf.Max(0f, knockbackData.geometryHighPhaseDamping);
+        knockbackLowPhaseDamping = Mathf.Max(0f, knockbackData.geometryLowPhaseDamping);
+        knockbackWallBounceFactor = Mathf.Clamp01(knockbackData.geometryWallBounceFactor);
+        knockbackBallBounceFactor = Mathf.Clamp01(knockbackData.geometryBallBounceFactor);
+        knockbackKnockbackScale = Mathf.Max(0f, knockbackData.geometryKnockbackScale);
+        
+        // 缓存主动移动配置（通常阻尼会比击退小，以近似匀速）
+        moveMinSpeedThreshold = Mathf.Max(0.001f, moveData.geometryMinSpeedThreshold);
+        moveHighSpeedPhaseDuration = Mathf.Max(0f, moveData.geometryHighSpeedPhaseDuration);
+        moveHighPhaseDamping = Mathf.Max(0f, moveData.geometryHighPhaseDamping);
+        moveLowPhaseDamping = Mathf.Max(0f, moveData.geometryLowPhaseDamping);
+        moveWallBounceFactor = Mathf.Clamp01(moveData.geometryWallBounceFactor);
+        moveBallBounceFactor = Mathf.Clamp01(moveData.geometryBallBounceFactor);
+        moveKnockbackScale = Mathf.Max(0f, moveData.geometryKnockbackScale);
+        
+        // 根据当前运动模式应用生效配置（默认是 Knockback，以兼容现有行为）
+        ApplyActiveGeometryConfigForCurrentMode();
+    }
+    
+    /// <summary>
+    /// 根据当前几何运动模式，将缓存的配置应用到运行时参数上
+    /// </summary>
+    private void ApplyActiveGeometryConfigForCurrentMode()
+    {
+        switch (geometryMotionMode)
+        {
+            case GeometryMotionMode.ActiveMove:
+                geometryMinSpeedThreshold = moveMinSpeedThreshold;
+                geometryHighSpeedPhaseDuration = moveHighSpeedPhaseDuration;
+                geometryHighPhaseDamping = moveHighPhaseDamping;
+                geometryLowPhaseDamping = moveLowPhaseDamping;
+                geometryWallBounceFactor = moveWallBounceFactor;
+                geometryBallBounceFactor = moveBallBounceFactor;
+                geometryKnockbackScale = moveKnockbackScale;
+                break;
+            
+            case GeometryMotionMode.Knockback:
+            default:
+                geometryMinSpeedThreshold = knockbackMinSpeedThreshold;
+                geometryHighSpeedPhaseDuration = knockbackHighSpeedPhaseDuration;
+                geometryHighPhaseDamping = knockbackHighPhaseDamping;
+                geometryLowPhaseDamping = knockbackLowPhaseDamping;
+                geometryWallBounceFactor = knockbackWallBounceFactor;
+                geometryBallBounceFactor = knockbackBallBounceFactor;
+                geometryKnockbackScale = knockbackKnockbackScale;
+                break;
+        }
     }
     
     /// <summary>
@@ -670,6 +753,24 @@ public class BallPhysics : MonoBehaviour
     public float GetGeometryKnockbackScale()
     {
         return geometryKnockbackScale;
+    }
+    
+    /// <summary>
+    /// 切换到「主动移动」运动模式（使用 moveBallData 配置）
+    /// </summary>
+    public void UseActiveMoveGeometryConfig()
+    {
+        geometryMotionMode = GeometryMotionMode.ActiveMove;
+        ApplyActiveGeometryConfigForCurrentMode();
+    }
+    
+    /// <summary>
+    /// 切换到「击退/发射」运动模式（使用 ballData 配置）
+    /// </summary>
+    public void UseKnockbackGeometryConfig()
+    {
+        geometryMotionMode = GeometryMotionMode.Knockback;
+        ApplyActiveGeometryConfigForCurrentMode();
     }
     
     public GeometrySimulationConfig CreateGeometryConfig()

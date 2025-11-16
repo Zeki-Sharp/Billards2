@@ -1,0 +1,97 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b436cf91027441b4bb7b770dc1daec81, type: 3}
+  m_Name: Enemy_MovePhysics
+  m_EditorClassIdentifier: 
+  mass: 1
+  maxSpeed: 40
+  stopThreshold: 1
+  bounceDamping: 0.2
+  friction: 0.2
+  linearDamping: 0.4
+  speedToBounciness:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 2
+      outSlope: 2
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 1
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  speedToDamping:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 1
+      inSlope: -0.3086366
+      outSlope: -0.3086366
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0.7848787
+    - serializedVersion: 3
+      time: 0.24170595
+      value: 0.8410736
+      inSlope: -1.6497272
+      outSlope: -1.6497272
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    - serializedVersion: 3
+      time: 1.0089242
+      value: -0.0031666448
+      inSlope: -0.17630103
+      outSlope: -0.17630103
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.45478535
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  minBounciness: 0.3
+  maxBounciness: 1
+  minDamping: 0.3
+  maxDamping: 1
+  enableTimeDamping: 1
+  timeDampingStartTime: 2
+  timeDampingRate: 0.2
+  maxTimeDamping: 1.5
+  hitBoostForce: 1
+  hitBoostMultiplier: 1
+  boostSpeedThreshold: 20
+  geometryMinSpeedThreshold: 0.2
+  geometryHighSpeedPhaseDuration: 0
+  geometryHighPhaseDamping: 0
+  geometryLowPhaseDamping: 0
+  geometryWallBounceFactor: 0.95
+  geometryBallBounceFactor: 0.8
+  geometryKnockbackScale: 0.5
+  updateThreshold: 0.1
+  updateInterval: 0.02

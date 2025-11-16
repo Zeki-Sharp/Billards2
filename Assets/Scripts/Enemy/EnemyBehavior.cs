@@ -29,6 +29,8 @@ public class EnemyBehavior : MonoBehaviour, IDamageable
     [Header("组件引用")]
     public AttackRange attackRange;
     public MMFeedbacks attackEffect;  // 攻击特效MMF组件（直接引用）
+    [Tooltip("敌人的几何物理组件（如果未手动指定，将在 Awake 中自动查找子节点中的 BallPhysics）")]
+    [SerializeField] private BallPhysics ballPhysics;
     private Transform player;
     private Vector2 currentMovementDirection = Vector2.zero;
     
@@ -67,6 +69,16 @@ public class EnemyBehavior : MonoBehaviour, IDamageable
     {
         // ✅ 在 Awake 中初始化 EnemyStats，确保在 SetEnemyData 调用前完成
         InitializeStatsManager();
+        
+        // ✅ 初始化 BallPhysics 引用（用于主动移动和击退几何模拟）
+        if (ballPhysics == null)
+        {
+            ballPhysics = GetComponentInChildren<BallPhysics>();
+            if (ballPhysics == null)
+            {
+                Debug.LogWarning($"EnemyBehavior {name}: 未找到 BallPhysics 组件，敌人将无法使用几何物理移动与碰撞");
+            }
+        }
     }
     
     void Start()
@@ -334,48 +346,122 @@ public class EnemyBehavior : MonoBehaviour, IDamageable
     }
     
     /// <summary>
-    /// ✅ E2: 平滑移动到目标位置（3D XZ 平面移动，保持Y坐标不变）
+    /// ✅ 使用几何物理系统平滑移动到目标位置（3D XZ 平面移动，保持Y坐标不变）
+    /// 敌人主动移动也视为一次「发射」，由 BallPhysics 负责位移与碰撞
     /// </summary>
     IEnumerator MoveToTarget(Vector2 targetPosition)
     {
-        // ✅ E2: 将 2D 逻辑坐标转换为 3D 世界坐标（XZ 平面）
-        Vector3 startPosition3D = transform.position;
+        // 如果没有几何物理组件，回退到旧的 Lerp 逻辑（保证兼容性）
+        if (ballPhysics == null)
+        {
+            if (showDebugInfo)
+            {
+                Debug.LogWarning($"EnemyBehavior {name}: BallPhysics 为空，MoveToTarget 回退到直接 Lerp 位移");
+            }
+            
+            Vector3 startPos = transform.position;
+            Vector3 targetPos = new Vector3(targetPosition.x, startPos.y, targetPosition.y);
+            float distance = Vector3.Distance(startPos, targetPos);
+            float speed = GetCurrentMoveSpeed();
+            float moveTime = distance > 0f && speed > 0f ? distance / speed : 0f;
+            
+            runtimeState.isMoving = true;
+            
+            float elapsed = 0f;
+            while (elapsed < moveTime)
+            {
+                elapsed += Time.deltaTime;
+                float t = moveTime > 0f ? Mathf.Clamp01(elapsed / moveTime) : 1f;
+                transform.position = Vector3.Lerp(startPos, targetPos, t);
+                yield return null;
+            }
+            
+            transform.position = targetPos;
+            runtimeState.isMoving = false;
+            NotifyEnemyStoppedIfNeeded();
+            yield break;
+        }
         
-        // ✅ E2: 2D targetPosition (x, y) -> 3D (x, groundY, y)
-        // 保持当前Y坐标不变（已经在初始化时通过BallPhysics的脚底对齐调整好了）
+        // ✅ 将 2D 逻辑坐标转换为 3D 世界坐标（XZ 平面）
+        Vector3 startPosition3D = transform.position;
         Vector3 targetPosition3D = new Vector3(targetPosition.x, startPosition3D.y, targetPosition.y);
         
-        float distance = Vector3.Distance(startPosition3D, targetPosition3D);
+        float distanceToTarget = Vector3.Distance(startPosition3D, targetPosition3D);
+        if (distanceToTarget <= 0.01f)
+        {
+            runtimeState.isMoving = false;
+            NotifyEnemyStoppedIfNeeded();
+            yield break;
+        }
         
-        // 标记开始移动（即使距离为0，也要标记，以便 Enemy.cs 正确等待）
+        // 标记开始移动（即使距离为0，也要标记，以便 EnemyManager 正确等待）
         runtimeState.isMoving = true;
         
-        // 根据行为类型获取对应的移动速度
-        float currentMoveSpeed = GetCurrentMoveSpeed();
-        float moveTime = distance / currentMoveSpeed;
+        // 使用主动移动配置（近似匀速）
+        ballPhysics.UseActiveMoveGeometryConfig();
         
+        float moveSpeed = GetCurrentMoveSpeed();
+        Vector3 moveDir = (targetPosition3D - startPosition3D);
+        moveDir.y = 0f;
+        moveDir.Normalize();
+        
+        // 记录当前移动方向，用于行为树查询
+        runtimeState.currentDirection = new Vector2(moveDir.x, moveDir.z);
+        
+        // 将敌人视为一次「发射」——设置几何初速度
+        ballPhysics.ApplyExternalGeometryVelocity(moveDir * moveSpeed);
+        
+        // 允许的到达误差 & 超时保护
+        const float arriveThreshold = 0.05f;
+        float maxMoveTime = distanceToTarget / Mathf.Max(0.1f, moveSpeed) * 1.5f; // 最多走两倍预估时间
         float elapsedTime = 0f;
         
-        while (elapsedTime < moveTime)
+        while (true)
         {
-            elapsedTime += Time.deltaTime;
-            float progress = elapsedTime / moveTime;
+            // 如果几何物理已经判定停止（速度低于阈值），结束移动
+            if (!ballPhysics.IsMoving())
+            {
+                if (showDebugInfo)
+                {
+                    Debug.Log($"EnemyBehavior {name}: BallPhysics 停止移动，结束 MoveToTarget");
+                }
+                break;
+            }
             
-            // ✅ E2: 使用 Vector3.Lerp 在 XZ 平面上移动，保持 Y 坐标不变
-            transform.position = Vector3.Lerp(startPosition3D, targetPosition3D, progress);
+            // 距离足够近，认为到达目标
+            float currentDistance = Vector3.Distance(transform.position, targetPosition3D);
+            if (currentDistance <= arriveThreshold)
+            {
+                if (showDebugInfo)
+                {
+                    Debug.Log($"EnemyBehavior {name}: 接近目标点（{currentDistance:F3}），结束 MoveToTarget");
+                }
+                break;
+            }
+            
+            // 超时保护，防止由于反弹等原因长时间不结束
+            elapsedTime += Time.deltaTime;
+            if (elapsedTime >= maxMoveTime)
+            {
+                if (showDebugInfo)
+                {
+                    Debug.LogWarning($"EnemyBehavior {name}: MoveToTarget 超时（{elapsedTime:F2}s），强制结束");
+                }
+                break;
+            }
             
             yield return null;
         }
         
-        // ✅ E2: 确保最终位置准确（3D 坐标）
-        transform.position = targetPosition3D;
+        // 停止几何移动，并切回击退配置
+        ballPhysics.ApplyExternalGeometryVelocity(Vector3.zero);
+        ballPhysics.UseKnockbackGeometryConfig();
         
-        // 重置移动状态（通过 RuntimeState 管理）
         runtimeState.isMoving = false;
         
         if (showDebugInfo)
         {
-            Debug.Log($"EnemyBehavior {name}: 移动完成，最终位置: {transform.position}");
+            Debug.Log($"EnemyBehavior {name}: MoveToTarget 结束，最终位置: {transform.position}");
         }
 
         NotifyEnemyStoppedIfNeeded();
