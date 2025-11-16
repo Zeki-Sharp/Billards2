@@ -25,10 +25,9 @@ public class BallPhysics : MonoBehaviour
     [Tooltip("几何模拟：用于检测其他球体的 LayerMask")]
     public LayerMask geometryBallMask = 0;
     
-    [Tooltip("几何模拟：SphereCast 半径（0 则自动从 SphereCollider 推断）")]
-    public float geometrySphereRadius = 0f;
-    
     [Header("几何物理 - 调试")]
+    [Tooltip("几何模拟：SphereCast 半径（高级选项，0=自动从碰撞器推断，>0=手动设置。通常不需要修改，系统会自动从碰撞器推断）")]
+    public float geometrySphereRadius = 0f;
     [Tooltip("几何模拟：初始速度（调试/自定义发射时使用）")]
     public float geometryInitialSpeed = 0f;
     
@@ -378,21 +377,82 @@ public class BallPhysics : MonoBehaviour
         GameEventBus.PublishBallStopped(this);
     }
     
+    /// <summary>
+    /// 获取有效的几何球体半径（自动从碰撞器推断，支持多种碰撞器类型）
+    /// </summary>
     private float GetEffectiveGeometrySphereRadius()
     {
+        // 如果手动设置了，直接返回
         if (geometrySphereRadius > 0f)
         {
             return geometrySphereRadius;
         }
         
+        // 如果碰撞器未初始化，返回默认值
+        if (ballCollider3D == null)
+        {
+            return 0.5f * Mathf.Max(transform.lossyScale.x, transform.lossyScale.z);
+        }
+        
+        // 根据碰撞器类型自动推断半径
+        float inferredRadius = 0f;
+        Vector3 lossyScale = transform.lossyScale;
+        
+        // SphereCollider：直接使用半径
         SphereCollider sphereCollider = ballCollider3D as SphereCollider;
         if (sphereCollider != null)
         {
-            geometrySphereRadius = sphereCollider.radius * Mathf.Max(transform.lossyScale.x, transform.lossyScale.y, transform.lossyScale.z);
-            return geometrySphereRadius;
+            inferredRadius = sphereCollider.radius * Mathf.Max(lossyScale.x, lossyScale.y, lossyScale.z);
+        }
+        // BoxCollider：使用最大边的一半作为等效半径
+        else if (ballCollider3D is BoxCollider boxCollider)
+        {
+            Vector3 scaledSize = Vector3.Scale(boxCollider.size, lossyScale);
+            inferredRadius = Mathf.Max(scaledSize.x, scaledSize.y, scaledSize.z) * 0.5f;
+        }
+        // CapsuleCollider：使用半径（考虑高度，取较大值）
+        else if (ballCollider3D is CapsuleCollider capsuleCollider)
+        {
+            float radius = capsuleCollider.radius * Mathf.Max(lossyScale.x, lossyScale.z);
+            float halfHeight = capsuleCollider.height * 0.5f * lossyScale.y;
+            inferredRadius = Mathf.Max(radius, halfHeight);
+        }
+        // MeshCollider：使用 bounds（如果可用）或默认值
+        else if (ballCollider3D is MeshCollider)
+        {
+            // MeshCollider 的 bounds 在运行时才计算，这里使用 bounds.size
+            Bounds bounds = ballCollider3D.bounds;
+            if (bounds.size.sqrMagnitude > 0.001f)
+            {
+                Vector3 scaledSize = Vector3.Scale(bounds.size, lossyScale);
+                inferredRadius = Mathf.Max(scaledSize.x, scaledSize.y, scaledSize.z) * 0.5f;
+            }
+        }
+        // 其他类型：使用碰撞器的 bounds
+        else
+        {
+            Bounds bounds = ballCollider3D.bounds;
+            if (bounds.size.sqrMagnitude > 0.001f)
+            {
+                Vector3 scaledSize = Vector3.Scale(bounds.size, lossyScale);
+                inferredRadius = Mathf.Max(scaledSize.x, scaledSize.y, scaledSize.z) * 0.5f;
+            }
         }
         
-        return 0.5f * Mathf.Max(transform.lossyScale.x, transform.lossyScale.z);
+        // 缓存推断结果
+        if (inferredRadius > 0f)
+        {
+            geometrySphereRadius = inferredRadius;
+            Debug.Log($"BallPhysics: {gameObject.name} 自动推断 geometrySphereRadius = {geometrySphereRadius:F3} (碰撞器类型: {ballCollider3D.GetType().Name})");
+        }
+        else
+        {
+            // 如果推断失败，使用默认值
+            geometrySphereRadius = 0.5f * Mathf.Max(lossyScale.x, lossyScale.z);
+            Debug.LogWarning($"BallPhysics: {gameObject.name} 无法从碰撞器推断半径，使用默认值 {geometrySphereRadius:F3}");
+        }
+        
+        return geometrySphereRadius;
     }
     
     private bool IsSelfCollider(Collider collider)
@@ -435,32 +495,25 @@ public class BallPhysics : MonoBehaviour
         // 只锁定 Y 轴位移，允许旋转（用于视觉效果）
         rb3D.constraints = RigidbodyConstraints.FreezePositionY;
         
-        // 设置 3D 碰撞器（确保是SphereCollider，用于几何模拟的半径推断）
+        // ✅ 设置 3D 碰撞器（支持任意类型，会自动推断等效半径）
         ballCollider3D = GetComponent<Collider>();
         if (ballCollider3D == null)
         {
+            // 如果没有碰撞器，添加一个默认的 SphereCollider
             ballCollider3D = gameObject.AddComponent<SphereCollider>();
-            Debug.Log($"BallPhysics: {gameObject.name} 没有3D碰撞器，已添加 SphereCollider");
+            Debug.Log($"BallPhysics: {gameObject.name} 没有3D碰撞器，已添加默认 SphereCollider");
         }
         else
         {
-            Debug.Log($"BallPhysics: {gameObject.name} 检测到3D碰撞器类型: {ballCollider3D.GetType().Name}");
+            Debug.Log($"BallPhysics: {gameObject.name} 检测到3D碰撞器类型: {ballCollider3D.GetType().Name}，将自动推断等效半径");
         }
         
-        // S2: 确保是SphereCollider，用于推断geometrySphereRadius
-        SphereCollider sphereCollider = ballCollider3D as SphereCollider;
-        if (sphereCollider == null)
+        // ✅ 自动推断几何模拟半径（支持多种碰撞器类型）
+        // 如果 geometrySphereRadius <= 0，会在 GetEffectiveGeometrySphereRadius() 中自动推断
+        if (geometrySphereRadius <= 0f)
         {
-            Debug.LogWarning($"BallPhysics: {gameObject.name} 的碰撞器不是SphereCollider，无法自动推断半径。请手动设置geometrySphereRadius。");
-        }
-        else
-        {
-            // 推断几何模拟半径（考虑缩放）
-            if (geometrySphereRadius <= 0f)
-            {
-                geometrySphereRadius = sphereCollider.radius * Mathf.Max(transform.lossyScale.x, transform.lossyScale.y, transform.lossyScale.z);
-                Debug.Log($"BallPhysics: {gameObject.name} 自动推断geometrySphereRadius = {geometrySphereRadius:F3}");
-            }
+            // 预计算并缓存半径（避免每次调用都重新计算）
+            GetEffectiveGeometrySphereRadius();
         }
         
         ballCollider3D.isTrigger = false;

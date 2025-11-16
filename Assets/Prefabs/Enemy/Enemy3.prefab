@@ -4618,7 +4618,7 @@ MonoBehaviour:
   geometryBallMask:
     serializedVersion: 2
     m_Bits: 72
-  geometrySphereRadius: 1
+  geometrySphereRadius: 0
   geometryInitialSpeed: 0
   geometryInitialDirection: {x: 0, y: 0, z: 1}
   showGeometryDebug: 0
