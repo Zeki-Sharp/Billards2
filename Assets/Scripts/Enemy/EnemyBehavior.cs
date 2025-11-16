@@ -326,12 +326,18 @@ public class EnemyBehavior : MonoBehaviour, IDamageable
     }
     
     /// <summary>
-    /// 平滑移动到目标位置
+    /// ✅ E2: 平滑移动到目标位置（3D XZ 平面移动，保持Y坐标不变）
     /// </summary>
     IEnumerator MoveToTarget(Vector2 targetPosition)
     {
-        Vector2 startPosition = transform.position;
-        float distance = Vector2.Distance(startPosition, targetPosition);
+        // ✅ E2: 将 2D 逻辑坐标转换为 3D 世界坐标（XZ 平面）
+        Vector3 startPosition3D = transform.position;
+        
+        // ✅ E2: 2D targetPosition (x, y) -> 3D (x, groundY, y)
+        // 保持当前Y坐标不变（已经在初始化时通过BallPhysics的脚底对齐调整好了）
+        Vector3 targetPosition3D = new Vector3(targetPosition.x, startPosition3D.y, targetPosition.y);
+        
+        float distance = Vector3.Distance(startPosition3D, targetPosition3D);
         
         // 标记开始移动（即使距离为0，也要标记，以便 Enemy.cs 正确等待）
         runtimeState.isMoving = true;
@@ -347,19 +353,22 @@ public class EnemyBehavior : MonoBehaviour, IDamageable
             elapsedTime += Time.deltaTime;
             float progress = elapsedTime / moveTime;
             
-            // 使用线性插值平滑移动
-            transform.position = Vector2.Lerp(startPosition, targetPosition, progress);
+            // ✅ E2: 使用 Vector3.Lerp 在 XZ 平面上移动，保持 Y 坐标不变
+            transform.position = Vector3.Lerp(startPosition3D, targetPosition3D, progress);
             
             yield return null;
         }
         
-        // 确保最终位置准确
-        transform.position = targetPosition;
+        // ✅ E2: 确保最终位置准确（3D 坐标）
+        transform.position = targetPosition3D;
         
         // 重置移动状态（通过 RuntimeState 管理）
         runtimeState.isMoving = false;
         
-        Debug.Log($"EnemyBehavior {name}: 移动完成，最终位置: {transform.position}");
+        if (showDebugInfo)
+        {
+            Debug.Log($"EnemyBehavior {name}: 移动完成，最终位置: {transform.position}");
+        }
 
         NotifyEnemyStoppedIfNeeded();
     }

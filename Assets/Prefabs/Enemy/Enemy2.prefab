@@ -78,6 +78,7 @@ MonoBehaviour:
   attackRange: {fileID: 8136012771172445174}
   attackEffect: {fileID: 4999783584758929191}
   healthBar: {fileID: 2197969343429393169}
+  showDebugInfo: 0
 --- !u!1001 &1960770933747990719
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -97,6 +98,14 @@ PrefabInstance:
     - target: {fileID: 930823290301597472, guid: 92bb8c5569acb9348bf9d53ecaefe6fb, type: 3}
       propertyPath: m_Layer
       value: 6
+      objectReference: {fileID: 0}
+    - target: {fileID: 962260911802970077, guid: 92bb8c5569acb9348bf9d53ecaefe6fb, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 962260911802970077, guid: 92bb8c5569acb9348bf9d53ecaefe6fb, type: 3}
+      propertyPath: m_SizeDelta.y
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 1079019666961750530, guid: 92bb8c5569acb9348bf9d53ecaefe6fb, type: 3}
       propertyPath: m_Layer

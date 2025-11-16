@@ -38,6 +38,11 @@ public class BallPhysics : MonoBehaviour
     public bool showGeometryDebug = false;
     public Color geometryDebugRayColor = Color.cyan;
     
+    [Header("地面对齐")]
+    [Tooltip("脚底位置参考点（Transform）。如果设置，初始化时会向下检测地面，确保脚底贴地")]
+    [SerializeField]
+    private Transform footPositionRef;
+    
     // 几何模拟运行时状态（从 ballData 读取配置）
     private Vector3 geometryDirection = Vector3.forward;
     private float geometrySpeed = 0f;
@@ -480,8 +485,59 @@ public class BallPhysics : MonoBehaviour
         geometryIsMoving = geometrySpeed > geometryMinSpeedThreshold;
         geometryElapsedTime = 0f;
         
+        // ✅ 地面对齐：如果设置了脚底点，初始化时检测地面并调整Y位置
+        if (footPositionRef != null)
+        {
+            AlignToGround();
+        }
+        
         isInitialized = true;
         Debug.Log($"BallPhysics initialized for {gameObject.name} (3D kinematic mode, geometrySphereRadius={geometrySphereRadius:F3})");
+    }
+    
+    /// <summary>
+    /// ✅ 地面对齐：通过脚底点向下检测地面，计算物体应该的Y位置并设置一次
+    /// </summary>
+    private void AlignToGround()
+    {
+        if (footPositionRef == null)
+        {
+            return;
+        }
+        
+        // 从脚底点向下射线检测地面
+        Vector3 footWorldPos = footPositionRef.position;
+        Ray ray = new Ray(footWorldPos, Vector3.down);
+        RaycastHit hit;
+        
+        // 使用 geometryWallMask 检测地面（地面应该在 Obstacle 层）
+        if (Physics.Raycast(ray, out hit, 10f, geometryWallMask, QueryTriggerInteraction.Ignore))
+        {
+            float groundY = hit.point.y;
+            
+            // 计算脚底相对于物体中心的偏移（考虑缩放）
+            float footOffsetY = footPositionRef.localPosition.y * transform.lossyScale.y;
+            
+            // 计算物体中心应该的Y位置：groundY - footOffsetY
+            // 例如：脚底在 localY = -0.5，地面在 Y=0，则物体中心应该在 Y = 0 - (-0.5) = 0.5
+            float targetCenterY = groundY - footOffsetY;
+            
+            // 设置物体位置（只修改Y，保持XZ不变）
+            Vector3 currentPos = transform.position;
+            transform.position = new Vector3(currentPos.x, targetCenterY, currentPos.z);
+            
+            if (showGeometryDebug)
+            {
+                Debug.Log($"BallPhysics {gameObject.name}: 地面对齐完成 - 地面Y={groundY:F3}, 脚底偏移={footOffsetY:F3}, 物体中心Y={targetCenterY:F3}");
+            }
+        }
+        else
+        {
+            if (showGeometryDebug)
+            {
+                Debug.LogWarning($"BallPhysics {gameObject.name}: 未检测到地面，保持当前位置");
+            }
+        }
     }
 
     

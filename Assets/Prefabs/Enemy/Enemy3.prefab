@@ -47,7 +47,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b174bde790db6bc4f904b94447e341e4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  spawnPreview: {fileID: 4180532071809075890}
   enemyItem: {fileID: 3210614334249002462}
   attackArea: {fileID: 8794704125978389554}
   effects:
@@ -79,6 +78,7 @@ MonoBehaviour:
   attackRange: {fileID: 4942167022313840919}
   attackEffect: {fileID: 8813354259064772836}
   healthBar: {fileID: 4278073460279227384}
+  showDebugInfo: 0
 --- !u!1001 &909185202641907042
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -232,6 +232,14 @@ PrefabInstance:
       propertyPath: m_Layer
       value: 6
       objectReference: {fileID: 0}
+    - target: {fileID: 962260911802970077, guid: 92bb8c5569acb9348bf9d53ecaefe6fb, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 962260911802970077, guid: 92bb8c5569acb9348bf9d53ecaefe6fb, type: 3}
+      propertyPath: m_SizeDelta.y
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 1079019666961750530, guid: 92bb8c5569acb9348bf9d53ecaefe6fb, type: 3}
       propertyPath: m_Layer
       value: 6
@@ -247,6 +255,22 @@ PrefabInstance:
     - target: {fileID: 1512415263863062524, guid: 92bb8c5569acb9348bf9d53ecaefe6fb, type: 3}
       propertyPath: m_Layer
       value: 6
+      objectReference: {fileID: 0}
+    - target: {fileID: 2000399398227645647, guid: 92bb8c5569acb9348bf9d53ecaefe6fb, type: 3}
+      propertyPath: m_SpriteTilingProperty.pivot.x
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 2000399398227645647, guid: 92bb8c5569acb9348bf9d53ecaefe6fb, type: 3}
+      propertyPath: m_SpriteTilingProperty.pivot.y
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 2000399398227645647, guid: 92bb8c5569acb9348bf9d53ecaefe6fb, type: 3}
+      propertyPath: m_SpriteTilingProperty.oldSize.x
+      value: 1.69
+      objectReference: {fileID: 0}
+    - target: {fileID: 2000399398227645647, guid: 92bb8c5569acb9348bf9d53ecaefe6fb, type: 3}
+      propertyPath: m_SpriteTilingProperty.oldSize.y
+      value: 1.65
       objectReference: {fileID: 0}
     - target: {fileID: 2161087141868333465, guid: 92bb8c5569acb9348bf9d53ecaefe6fb, type: 3}
       propertyPath: m_LocalScale.x
