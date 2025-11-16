@@ -87,9 +87,9 @@ MonoBehaviour:
   hitBoostMultiplier: 1
   boostSpeedThreshold: 20
   geometryMinSpeedThreshold: 0.2
-  geometryHighSpeedPhaseDuration: 0
-  geometryHighPhaseDamping: 0.2
-  geometryLowPhaseDamping: 20
+  geometryHighSpeedPhaseDuration: 0.2
+  geometryHighPhaseDamping: 5
+  geometryLowPhaseDamping: 10
   geometryWallBounceFactor: 0.95
   geometryBallBounceFactor: 0.8
   geometryKnockbackScale: 0.5

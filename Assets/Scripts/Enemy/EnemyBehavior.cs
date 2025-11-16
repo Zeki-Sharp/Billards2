@@ -309,6 +309,14 @@ public class EnemyBehavior : MonoBehaviour, IDamageable
                 // 从 RuntimeState 读取移动方向
                 currentMovementDirection = runtimeState.currentDirection;
                 
+                // ✅ 调试：输出移动目标位置
+                if (showDebugInfo)
+                {
+                    Vector3 currentPos = transform.position;
+                    Vector3 target3D = new Vector3(targetPosition.x, currentPos.y, targetPosition.y);
+                    Debug.Log($"EnemyBehavior {name}: 移动目标 - 2D坐标({targetPosition.x:F2}, {targetPosition.y:F2}) -> 3D坐标({target3D.x:F2}, {target3D.y:F2}, {target3D.z:F2}), 当前位置({currentPos.x:F2}, {currentPos.y:F2}, {currentPos.z:F2})");
+                }
+                
                 // 开始平滑移动
                 StartCoroutine(MoveToTarget(targetPosition));
             }

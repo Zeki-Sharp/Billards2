@@ -23,8 +23,10 @@ public class MoveTowardsBehavior : BaseMovementBehavior
     /// </summary>
     public override BehaviorStatus ExecuteMovement(Transform enemyTransform, Transform playerTransform, EnemyData enemyData, EnemyLevelConfig levelConfig, EnemyRuntimeState runtimeState, out Vector2 targetPosition)
     {
-        // 默认目标位置为当前位置
-        targetPosition = enemyTransform.position;
+        // ✅ 默认目标位置为当前位置（3D转2D：使用 x 和 z，忽略 y）
+        Vector3 enemyPos3D = enemyTransform.position;
+        Vector2 enemyPos2D = new Vector2(enemyPos3D.x, enemyPos3D.z);
+        targetPosition = enemyPos2D;
         
         // 验证参数
         if (!ValidateMovementParams(enemyTransform, playerTransform, enemyData))
@@ -42,8 +44,10 @@ public class MoveTowardsBehavior : BaseMovementBehavior
         float actualMinDistance = levelConfig.moveTowardsConfig?.minDistance ?? minDistance;
         float actualMoveDistance = levelConfig.moveTowardsConfig?.moveDistance ?? moveDistance;
         
-        // 计算与玩家的距离
-        float distanceToPlayer = Vector2.Distance(enemyTransform.position, playerTransform.position);
+        // ✅ 计算与玩家的距离（3D转2D：使用 x 和 z）
+        Vector3 playerPos3D = playerTransform.position;
+        Vector2 playerPos2D = new Vector2(playerPos3D.x, playerPos3D.z);
+        float distanceToPlayer = Vector2.Distance(enemyPos2D, playerPos2D);
         
         // 如果已经在最小距离内，不移动
         if (distanceToPlayer <= actualMinDistance)
@@ -54,8 +58,8 @@ public class MoveTowardsBehavior : BaseMovementBehavior
             return BehaviorStatus.Success; // 已到达目标
         }
         
-        // 计算向玩家移动的方向
-        Vector2 direction = (playerTransform.position - enemyTransform.position).normalized;
+        // ✅ 计算向玩家移动的方向（2D XZ 平面）
+        Vector2 direction = (playerPos2D - enemyPos2D).normalized;
         runtimeState.currentDirection = direction;
         
         // 计算实际移动距离：确保不会超过最小距离
@@ -69,8 +73,8 @@ public class MoveTowardsBehavior : BaseMovementBehavior
             return BehaviorStatus.Success; // 已到达目标
         }
         
-        // 计算目标位置
-        targetPosition = CalculateTargetPosition(enemyTransform.position, direction, clampedMoveDistance);
+        // ✅ 计算目标位置（2D XZ 平面）
+        targetPosition = CalculateTargetPosition(enemyPos2D, direction, clampedMoveDistance);
         runtimeState.targetPosition = targetPosition;
         runtimeState.isMoving = true;
         runtimeState.currentMovementState = "MoveTowards_Moving";

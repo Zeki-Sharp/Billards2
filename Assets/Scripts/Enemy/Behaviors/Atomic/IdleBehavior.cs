@@ -11,8 +11,9 @@ public class IdleBehavior : BaseMovementBehavior
     /// </summary>
     public override BehaviorStatus ExecuteMovement(Transform enemyTransform, Transform playerTransform, EnemyData enemyData, EnemyLevelConfig levelConfig, EnemyRuntimeState runtimeState, out Vector2 targetPosition)
     {
-        // 目标位置为当前位置
-        targetPosition = enemyTransform.position;
+        // ✅ 目标位置为当前位置（3D转2D：使用 x 和 z，忽略 y）
+        Vector3 currentPos = enemyTransform.position;
+        targetPosition = new Vector2(currentPos.x, currentPos.z);
         
         // 验证参数
         if (!ValidateMovementParams(enemyTransform, playerTransform, enemyData))
