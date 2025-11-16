@@ -879,13 +879,18 @@ public class DamageSystem : SingletonManager<DamageSystem>
         GameObject attacker = rule.selfDamage ? evt.Target : evt.Source;
         
         // 5. 创建 AttackData（兼容现有 DamageProcessor）
+        // ✅ 优先使用3D碰撞点（用于特效定位），如果没有则使用2D投影
+        Vector3 attackPosition = evt.ContactPoint3D.HasValue 
+            ? evt.ContactPoint3D.Value 
+            : new Vector3(evt.ContactPoint.x, 0f, evt.ContactPoint.y); // 2D投影转换为3D（Y=0）
+        
         AttackData attackData = new AttackData
         {
             Attacker = attacker,  // ✅ 修复：使用正确的攻击者
             Target = damageTarget,
             Damage = baseDamage,
             AttackType = rule.triggerType.ToString(),
-            Position = evt.ContactPoint,
+            Position = attackPosition,  // ✅ 使用真实的3D碰撞点
             Direction = evt.ContactNormal,
             AttackTime = Time.time,
             AttackerTag = attacker.tag,  // ✅ 使用攻击者的 Tag

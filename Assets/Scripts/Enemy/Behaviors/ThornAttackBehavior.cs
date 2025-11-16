@@ -106,9 +106,18 @@ public class ThornAttackBehavior : BaseAttackBehavior
                 {
                     lastDamageTime = Time.time;
                     
-                    // ✅ 新伤害系统：发布碰撞事件
-                    CollisionEvent evt = CollisionEvent.CreateFromTrigger(attackRange.gameObject, target.GetComponent<Collider2D>());
-                    GameEventBus.PublishCollision(evt);
+                    // ✅ 3D化：使用 3D Collider
+                    Collider targetCollider = target.GetComponent<Collider>();
+                    if (targetCollider != null)
+                    {
+                        // ✅ 新伤害系统：发布碰撞事件
+                        CollisionEvent evt = CollisionEvent.CreateFromTrigger(attackRange.gameObject, targetCollider);
+                        GameEventBus.PublishCollision(evt);
+                    }
+                    else
+                    {
+                        Debug.LogWarning($"ThornAttackBehavior: 目标 {target.name} 没有 Collider 组件！");
+                    }
                     
                     // 播放伤害特效（只在造成伤害时）
                     PlayAttackEffect(attackEffect, enemyTransform.name);

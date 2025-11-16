@@ -40,10 +40,13 @@ public struct CollisionEvent
 {
     public GameObject Source;           // 碰撞发起方
     public GameObject Target;           // 碰撞目标
-    public Vector2 ContactPoint;        // 碰撞点
+    public Vector2 ContactPoint;        // 碰撞点（2D，向后兼容）
     public Vector2 ContactNormal;       // 碰撞法线
     public float Velocity;              // 碰撞时速度
     public float CollisionTime;         // 碰撞时间戳
+    
+    // ✅ 3D扩展：真实的3D碰撞点（可选，用于特效定位）
+    public Vector3? ContactPoint3D;     // 3D碰撞点（nullable，如果为null则使用ContactPoint）
     
     /// <summary>
     /// 创建碰撞事件（物理碰撞）
@@ -62,6 +65,7 @@ public struct CollisionEvent
             Source = source,
             Target = targetObject,  // ✅ 使用实际碰撞的 Collider 的 GameObject
             ContactPoint = collision.contacts.Length > 0 ? collision.contacts[0].point : Vector2.zero,
+            ContactPoint3D = null,  // 2D碰撞没有3D点
             ContactNormal = collision.contacts.Length > 0 ? collision.contacts[0].normal : Vector2.zero,
             Velocity = rb != null ? rb.linearVelocity.magnitude : 0f,
             CollisionTime = Time.time
@@ -69,7 +73,7 @@ public struct CollisionEvent
     }
     
     /// <summary>
-    /// 从 Trigger 碰撞创建碰撞事件
+    /// 从 Trigger 碰撞创建碰撞事件（2D版本，保留向后兼容）
     /// 用于 OnTriggerEnter2D 的场景（如 AttackRange）
     /// </summary>
     public static CollisionEvent CreateFromTrigger(GameObject source, Collider2D targetCollider)
@@ -83,7 +87,42 @@ public struct CollisionEvent
             Source = source,
             Target = targetCollider.gameObject,
             ContactPoint = targetCollider.ClosestPoint(sourcePos),
+            ContactPoint3D = null,  // 2D碰撞没有3D点
             ContactNormal = (sourcePos - targetPos).normalized,
+            Velocity = rb != null ? rb.linearVelocity.magnitude : 0f,
+            CollisionTime = Time.time
+        };
+    }
+    
+    /// <summary>
+    /// 从 Trigger 碰撞创建碰撞事件（3D版本）
+    /// 用于 OnTriggerEnter 的场景（如 AttackRange 3D化后）
+    /// </summary>
+    public static CollisionEvent CreateFromTrigger(GameObject source, Collider targetCollider)
+    {
+        Rigidbody rb = source.GetComponent<Rigidbody>();
+        Vector3 sourcePos = source.transform.position;
+        Vector3 targetPos = targetCollider.transform.position;
+        
+        // ✅ 计算真实的3D接触点（用于特效定位）
+        Vector3 contactPoint3D = targetCollider.ClosestPoint(sourcePos);
+        
+        // 保留XZ平面投影用于向后兼容（逻辑计算可能仍需要2D）
+        Vector2 contactPoint = new Vector2(contactPoint3D.x, contactPoint3D.z);
+        
+        // 计算法线（XZ 平面，用于逻辑计算）
+        Vector3 normal3D = (sourcePos - targetPos);
+        normal3D.y = 0f; // 只考虑 XZ 平面（用于逻辑计算）
+        normal3D.Normalize();
+        Vector2 contactNormal = new Vector2(normal3D.x, normal3D.z);
+        
+        return new CollisionEvent
+        {
+            Source = source,
+            Target = targetCollider.gameObject,
+            ContactPoint = contactPoint,        // 2D投影（向后兼容）
+            ContactPoint3D = contactPoint3D,    // ✅ 真实的3D碰撞点（用于特效）
+            ContactNormal = contactNormal,
             Velocity = rb != null ? rb.linearVelocity.magnitude : 0f,
             CollisionTime = Time.time
         };

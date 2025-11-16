@@ -28,6 +28,11 @@ public class AttackRange : MonoBehaviour
     private Vector2 telegraphedDirection = Vector2.right;  // 预告阶段保存的朝向
     private bool isDirectionSet = false;  // 是否已设置朝向
     
+    // 3D组件引用
+    [Header("3D碰撞体引用")]
+    [Tooltip("攻击范围的3D碰撞体（MeshCollider），如果为空则自动从当前GameObject获取")]
+    [SerializeField] private Collider attackCollider3D;
+    
     void Start()
     {
         // 自动查找EnemyBehavior
@@ -38,22 +43,27 @@ public class AttackRange : MonoBehaviour
             return;
         }
         
-        // 检查子物体Image是否有碰撞体组件
-        Transform imageTransform = transform.Find("Image");
-        if (imageTransform == null)
+        // 如果未手动指定碰撞体，从当前GameObject获取
+        if (attackCollider3D == null)
         {
-            Debug.LogError($"【攻击范围检测】{name}: 未找到子物体Image！");
-        }
-        else
-        {
-            Collider2D collider = imageTransform.GetComponent<Collider2D>();
-            if (collider == null)
+            attackCollider3D = GetComponent<Collider>();
+            if (attackCollider3D == null)
             {
-                Debug.LogError($"【攻击范围检测】{name}: Image子物体上未找到碰撞体组件！");
+                Debug.LogError($"【攻击范围检测】{name}: 未找到3D碰撞体组件！请手动指定或确保当前GameObject上有Collider组件。");
             }
             else
             {
-                Debug.Log($"【攻击范围检测】{name}: 找到Image子物体上的碰撞体组件: {collider.GetType().Name}, IsTrigger: {collider.isTrigger}");
+                if (showDebugInfo)
+                {
+                    Debug.Log($"【攻击范围检测】{name}: 自动找到3D碰撞体组件: {attackCollider3D.GetType().Name}, IsTrigger: {attackCollider3D.isTrigger}");
+                }
+            }
+        }
+        else
+        {
+            if (showDebugInfo)
+            {
+                Debug.Log($"【攻击范围检测】{name}: 使用手动指定的3D碰撞体: {attackCollider3D.GetType().Name}, IsTrigger: {attackCollider3D.isTrigger}");
             }
         }
         
@@ -62,7 +72,7 @@ public class AttackRange : MonoBehaviour
         
         if (showDebugInfo)
         {
-            Debug.Log($"AttackRange {name}: 初始化完成");
+            Debug.Log($"AttackRange {name}: 初始化完成 (3D模式)");
         }
     }
     
@@ -129,7 +139,7 @@ public class AttackRange : MonoBehaviour
     }
     
     /// <summary>
-    /// 预告阶段：更新并保存攻击方向
+    /// 预告阶段：更新并保存攻击方向（3D版本：XZ平面）
     /// </summary>
     void UpdateTelegraphDirection(Vector3? targetPosition)
     {
@@ -144,13 +154,18 @@ public class AttackRange : MonoBehaviour
             target = fallbackPlayer != null ? fallbackPlayer.transform.position : transform.position + Vector3.right;
         }
 
-        Vector2 direction = ((Vector2)target - (Vector2)transform.position).normalized;
-        if (direction == Vector2.zero)
+        // 计算XZ平面上的方向（忽略Y轴）
+        Vector3 direction3D = target - transform.position;
+        direction3D.y = 0f; // 只考虑XZ平面
+        direction3D.Normalize();
+        
+        if (direction3D == Vector3.zero)
         {
-            direction = Vector2.right;
+            direction3D = Vector3.right;
         }
 
-        telegraphedDirection = direction;
+        // 转换为Vector2（x, z）用于缓存
+        telegraphedDirection = new Vector2(direction3D.x, direction3D.z);
         isDirectionSet = true;
 
         SetAttackDirection(telegraphedDirection);
@@ -172,29 +187,24 @@ public class AttackRange : MonoBehaviour
     }
     
     /// <summary>
-    /// 设置攻击方向
+    /// 设置攻击方向（3D版本：XZ平面，绕Y轴旋转）
     /// </summary>
     void SetAttackDirection(Vector2 direction)
     {
         if (direction != Vector2.zero)
         {
-            // 获取攻击范围的两个点
-            Vector2 startPoint = transform.position;
-            Vector2 endPoint = GetEndPointWorldPosition();
+            // 将2D方向转换为3D XZ平面方向
+            Vector3 direction3D = new Vector3(direction.x, 0f, direction.y);
             
-            // 计算攻击范围当前的方向向量
-            Vector2 currentRangeDirection = (endPoint - startPoint).normalized;
+            // 计算目标旋转（让forward方向指向目标方向）
+            Quaternion targetRotation = Quaternion.LookRotation(direction3D, Vector3.up);
             
-            // 计算需要旋转的角度，让当前方向与目标方向一致
-            float angle = Vector2.SignedAngle(currentRangeDirection, direction);
-            
-            // 旋转攻击范围
-            transform.rotation = Quaternion.AngleAxis(angle, Vector3.forward) * transform.rotation;
+            // 设置旋转（只绕Y轴旋转）
+            transform.rotation = targetRotation;
             
             if (showDebugInfo)
             {
-                Debug.Log($"AttackRange {name}: 当前方向 {currentRangeDirection}, 目标方向 {direction}");
-                Debug.Log($"AttackRange {name}: 旋转角度 {angle:F2} 度");
+                Debug.Log($"AttackRange {name}: 设置攻击方向 - 2D方向:{direction}, 3D方向:{direction3D}, 旋转:{targetRotation.eulerAngles}");
             }
         }
     }
@@ -227,42 +237,52 @@ public class AttackRange : MonoBehaviour
     }
     
     /// <summary>
-    /// 获取攻击范围内的目标（由Enemy调用）
+    /// 获取攻击范围内的目标（由Enemy调用，3D版本）
     /// </summary>
     public List<GameObject> GetTargetsInRange()
     {
         List<GameObject> targets = new List<GameObject>();
         
-        // 查找子物体Image上的碰撞体
-        Transform imageTransform = transform.Find("Image");
-        if (imageTransform == null)
+        if (attackCollider3D == null)
         {
-            Debug.LogError($"【攻击范围检测】{name}: 未找到子物体Image！");
+            Debug.LogError($"【攻击范围检测】{name}: 3D碰撞体未找到！请确保在Inspector中指定或当前GameObject上有Collider组件。");
             return targets;
         }
         
-        Collider2D attackCollider = imageTransform.GetComponent<Collider2D>();
-        if (attackCollider == null)
+        try
         {
-            Debug.LogError($"【攻击范围检测】{name}: Image子物体上未找到碰撞体组件！");
-            return targets;
-        }
-        
-        // 使用OverlapCollider检测与当前碰撞体重叠的目标
-        List<Collider2D> overlappingColliders = new List<Collider2D>();
-        ContactFilter2D contactFilter = new ContactFilter2D();
-        contactFilter.useTriggers = true; // 只检测触发器
-        contactFilter.useLayerMask = true;
-        contactFilter.layerMask = Physics2D.AllLayers; // 检测所有层
-        
-        int overlapCount = attackCollider.Overlap(contactFilter, overlappingColliders);
-        
-        foreach (var collider in overlappingColliders)
-        {
-            if (collider.CompareTag("Player"))
+            // 使用3D Physics检测重叠目标
+            Vector3 center = attackCollider3D.bounds.center;
+            float radius = attackCollider3D.bounds.extents.magnitude; // 使用bounds的最大半径
+            
+            // 获取Player层的LayerMask
+            int playerLayer = LayerMask.NameToLayer("Player");
+            LayerMask playerLayerMask = playerLayer >= 0 ? (1 << playerLayer) : -1; // 如果找不到Player层，检测所有层
+            
+            // 先用球形检测获取候选目标（快速）
+            Collider[] candidateColliders = Physics.OverlapSphere(center, radius, playerLayerMask, QueryTriggerInteraction.Ignore);
+            
+            // 对每个候选目标，检查是否在MeshCollider的bounds内
+            foreach (var candidateCollider in candidateColliders)
             {
-                targets.Add(collider.gameObject);
+                if (candidateCollider != null && candidateCollider.CompareTag("Player"))
+                {
+                    // 检查目标是否在MeshCollider的bounds内
+                    if (attackCollider3D.bounds.Contains(candidateCollider.transform.position))
+                    {
+                        targets.Add(candidateCollider.gameObject);
+                    }
+                }
             }
+            
+            if (showDebugInfo && targets.Count > 0)
+            {
+                Debug.Log($"【攻击范围检测】{name}: 检测到 {targets.Count} 个目标");
+            }
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError($"【攻击范围检测】{name}: 检测过程中发生异常 - {e.Message}\n{e.StackTrace}");
         }
         
         return targets;

@@ -75,9 +75,18 @@ public class RangedAttackBehavior : BaseAttackBehavior
         {
             if (target.CompareTag("Player"))
             {
-                // 使用 AttackRange 作为 source（Tag = EnemyAttackRange）
-                CollisionEvent evt = CollisionEvent.CreateFromTrigger(attackRange.gameObject, target.GetComponent<Collider2D>());
-                GameEventBus.PublishCollision(evt);
+                // ✅ 3D化：使用 3D Collider
+                Collider targetCollider = target.GetComponent<Collider>();
+                if (targetCollider != null)
+                {
+                    // 使用 AttackRange 作为 source（Tag = EnemyAttackRange）
+                    CollisionEvent evt = CollisionEvent.CreateFromTrigger(attackRange.gameObject, targetCollider);
+                    GameEventBus.PublishCollision(evt);
+                }
+                else
+                {
+                    Debug.LogWarning($"RangedAttackBehavior: 目标 {target.name} 没有 Collider 组件！");
+                }
             }
         }
         
