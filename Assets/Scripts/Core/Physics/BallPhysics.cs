@@ -281,6 +281,7 @@ public class BallPhysics : MonoBehaviour
         
         if (hitInfo.collider != null)
         {
+            // 将几何墙体碰撞转换为统一的 CollisionEvent（用于伤害与特效系统）
             PublishGeometryCollisionEvent(hitInfo.collider.gameObject, hitInfo.point, normal);
         }
         
@@ -421,15 +422,24 @@ public class BallPhysics : MonoBehaviour
             return;
         }
         
+        // 将 3D 接触点与法线映射到 CollisionEvent：
+        // - ContactPoint3D：真实 3D 碰撞点（用于特效定位）
+        // - ContactPoint：XZ 平面投影（兼容旧 2D 逻辑）
+        // - ContactNormal：XZ 平面法线（用于逻辑计算）
+        Vector2 contactPoint2D = new Vector2(contactPoint.x, contactPoint.z);
+        Vector2 contactNormal2D = new Vector2(normal.x, normal.z);
+
         CollisionEvent evt = new CollisionEvent
         {
             Source = gameObject,
             Target = target,
-            ContactPoint = new Vector2(contactPoint.x, contactPoint.z),
-            ContactNormal = new Vector2(normal.x, normal.z),
+            ContactPoint = contactPoint2D,
+            ContactNormal = contactNormal2D,
             Velocity = geometrySpeed,
-            CollisionTime = Time.time
+            CollisionTime = Time.time,
+            ContactPoint3D = contactPoint
         };
+
         GameEventBus.PublishCollision(evt);
     }
     

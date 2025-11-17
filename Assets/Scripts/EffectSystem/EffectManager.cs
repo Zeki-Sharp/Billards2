@@ -76,6 +76,7 @@ namespace DeepSpaceLabs.SAM
         
         GameEventBus.OnEffect += OnEffectEvent;
         GameEventBus.OnDamage += OnDamageEvent;
+        GameEventBus.OnCollision += OnCollisionEvent;   // 新增：直接监听几何碰撞事件（用于通用爆炸特效）
         GameEventBus.OnDeath += OnDeathEvent;
         
         if (enableDebugLog)
@@ -88,6 +89,7 @@ namespace DeepSpaceLabs.SAM
     {
         GameEventBus.OnEffect -= OnEffectEvent;
         GameEventBus.OnDamage -= OnDamageEvent;
+        GameEventBus.OnCollision -= OnCollisionEvent;
         GameEventBus.OnDeath -= OnDeathEvent;
     }
     
@@ -531,13 +533,23 @@ namespace DeepSpaceLabs.SAM
     /// </summary>
     public void OnDamageEvent(DamageEvent damageEvent)
     {
+        // 计算 3D 击中位置与方向：
+        // 1) 优先使用 3D 接触点（HitPosition3D）
+        // 2) 否则使用 2D HitPosition 的 XZ 投影（Y 取 0）
+        Vector3 hitPosition3D = damageEvent.HitPosition3D.HasValue
+            ? damageEvent.HitPosition3D.Value
+            : new Vector3(damageEvent.HitPosition.x, 0f, damageEvent.HitPosition.y);
+
+        // 方向同样从 2D 转成 XZ 平面的 3D 向量
+        Vector3 hitDirection3D = new Vector3(damageEvent.HitDirection.x, 0f, damageEvent.HitDirection.y);
+
         // 转换为 AttackData 格式（复用现有特效逻辑）
         AttackData attackData = new AttackData
         {
             Attacker = damageEvent.Source,
             Target = damageEvent.Target,
-            Position = damageEvent.HitPosition,
-            Direction = damageEvent.HitDirection,
+            Position = hitPosition3D,
+            Direction = hitDirection3D,
             AttackType = "Hit",
             Damage = damageEvent.FinalDamage,
             AttackTime = damageEvent.EventTime,
@@ -547,6 +559,43 @@ namespace DeepSpaceLabs.SAM
         };
         
         // 复用现有特效播放逻辑
+        PlayAttackerEffect(attackData);
+        PlayGlobalEffect(attackData);
+        PlayTargetEffect(attackData);
+    }
+
+    /// <summary>
+    /// 处理几何碰撞事件（用于通用「接触点爆炸」特效）
+    /// </summary>
+    public void OnCollisionEvent(CollisionEvent evt)
+    {
+        if (evt.Source == null || evt.Target == null) return;
+
+        // 计算 3D 碰撞位置和方向（与 OnDamageEvent 保持一致）
+        Vector3 hitPosition3D = evt.ContactPoint3D.HasValue
+            ? evt.ContactPoint3D.Value
+            : new Vector3(evt.ContactPoint.x, 0f, evt.ContactPoint.y);
+        Vector3 hitDirection3D = new Vector3(evt.ContactNormal.x, 0f, evt.ContactNormal.y);
+
+        // 构造 AttackData，用于驱动通用特效
+        AttackData attackData = new AttackData
+        {
+            Attacker    = evt.Source,
+            Target      = evt.Target,
+            Position    = hitPosition3D,
+            Direction   = hitDirection3D,
+            AttackType  = AttackTypes.Hit,
+            Damage      = 0f,
+            AttackTime  = evt.CollisionTime,
+            AttackerTag = evt.Source.tag,
+            TargetTag   = evt.Target.tag,
+            HitSpeed    = evt.Velocity
+        };
+
+        // 统一使用现有播放逻辑：
+        // - Hit：攻击者局部特效
+        // - GlobalHitAttack：玩家发起的 Hit 在接触点的全局爆炸
+        // - BeHit：目标受击特效（若有配置）
         PlayAttackerEffect(attackData);
         PlayGlobalEffect(attackData);
         PlayTargetEffect(attackData);

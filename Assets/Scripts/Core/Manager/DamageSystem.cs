@@ -919,7 +919,8 @@ public class DamageSystem : SingletonManager<DamageSystem>
             FinalDamage = attackData.Damage,
             Type = rule.damageType,
             TriggerType = rule.triggerType,
-            HitPosition = evt.ContactPoint,
+            HitPosition = evt.ContactPoint,              // 2D 投影（兼容旧逻辑）
+            HitPosition3D = evt.ContactPoint3D,         // 3D 真实接触点（用于特效）
             HitDirection = evt.ContactNormal,
             VelocityAtHit = evt.Velocity,
             KnockbackForce = rule.knockbackForce,

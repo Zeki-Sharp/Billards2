@@ -205,9 +205,12 @@ public struct DamageEvent
     public DamageTriggerType TriggerType; // 触发类型
     
     // 上下文信息
-    public Vector2 HitPosition;         // 击中位置
-    public Vector2 HitDirection;        // 击中方向
+    public Vector2 HitPosition;         // 击中位置（2D，向后兼容，用于旧逻辑）
+    public Vector2 HitDirection;        // 击中方向（2D，向后兼容）
     public float VelocityAtHit;         // 击中时速度
+    
+    // 3D 扩展：真实的 3D 击中位置（可选，用于特效定位）
+    public Vector3? HitPosition3D;      // 如果为 null，则使用 HitPosition 的 XZ 投影
     
     // 附加效果
     public float KnockbackForce;        // 击退力度
