@@ -428,7 +428,12 @@ namespace DeepSpaceLabs.SAM
             
             // 全局特效始终使用真实碰撞位置，不使用墙壁偏移
             bool isGlobalEffect = effectKey == EffectType.GlobalHitAttack.ToString();
-            bool isWallHit = !isGlobalEffect && MMFPlayerParameterSetter.IsWallHitEffect(effectKey);
+            
+            // 旧实现仅通过字符串判断是否为“墙体撞击”，会把 Player/Enemy 的 BeHit 也当成墙
+            // 这里增加一层约束：只有目标标签确认为 Wall 的 BeHit 才视为墙体特效
+            bool isWallHit = !isGlobalEffect 
+                             && attackData.TargetTag == "Wall"
+                             && MMFPlayerParameterSetter.IsWallHitEffect(effectKey);
             
             MMFPlayerParameterSetter.SetEffectPosition(
                 mmfPlayer, 

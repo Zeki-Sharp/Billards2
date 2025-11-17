@@ -189,22 +189,6 @@ public class WallManager : MonoBehaviour
             return;
         }
         
-        // 自动查找并使用现有的 Controller 计算特效数据
-        float rotationAngle = 0f;
-        Vector3 positionOffset = Vector3.zero;
-        
-        var rotationController = GetComponentInChildren<WallHitRotationController>();
-        if (rotationController != null)
-        {
-            rotationAngle = rotationController.CalculateRotationAngle(wallHitPosition, hitNormal, currentSpeed);
-        }
-        
-        var positionController = GetComponentInChildren<WallHitPositionController>();
-        if (positionController != null)
-        {
-            positionOffset = positionController.CalculatePositionOffset(wallHitPosition, hitNormal, wallHitDirection, currentSpeed);
-        }
-        
         // 特效播放
         if (ShouldPlayWallHitEffect(hitObject, currentSpeed))
         {
@@ -222,8 +206,9 @@ public class WallManager : MonoBehaviour
                 TargetTag = wallTransform.gameObject.tag,
                 HitNormal = hitNormal,
                 HitSpeed = currentSpeed,
-                WallHitRotationAngle = rotationAngle,
-                WallHitPositionOffset = positionOffset
+                // 旧版墙体位移/旋转计算已由 3D 计算器 + StaticHitReceiver 接管，这里仅保留基础 AttackData
+                WallHitRotationAngle = 0f,
+                WallHitPositionOffset = Vector3.zero
             };
             
             // 播放完整的撞墙特效组

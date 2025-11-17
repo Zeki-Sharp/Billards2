@@ -31,13 +31,13 @@ public class WallHitRotationCalculator3D : MonoBehaviour
     /// </summary>
     /// <param name="wallRoot">作为整体移动/旋转的 Wall 根物体</param>
     /// <param name="hitPositionWorld">世界空间撞击点</param>
-    /// <param name="hitDirectionWorld">世界空间撞击方向（可选，用于后续扩展）</param>
+    /// <param name="hitNormalWorld">世界空间法线（用于力矩方向，决定是哪一面墙）</param>
     /// <param name="hitSpeed">撞击速度</param>
     /// <returns>绕本地 Y 轴的旋转角度</returns>
     public float CalculateRotationAngle(
         Transform wallRoot,
         Vector3 hitPositionWorld,
-        Vector3 hitDirectionWorld,
+        Vector3 hitNormalWorld,
         float hitSpeed)
     {
         if (wallRoot == null)
@@ -55,25 +55,38 @@ public class WallHitRotationCalculator3D : MonoBehaviour
 
         if (localHitXZ.sqrMagnitude <= Mathf.Epsilon)
         {
-            // 正好撞在中心：只按速度给一个很小的角度或直接 0
-            float speedMultiplierCenter = CalculateSpeedMultiplier(hitSpeed);
-            float centerAngle = Mathf.Lerp(0f, minRotationAngle, speedMultiplierCenter);
-
+            // 正好撞在中心：近似认为没有力矩，不产生旋转
             if (enableDebugLog)
             {
-                Debug.Log($"[WallHitRotationCalculator3D] Hit at center, angle={centerAngle:F2}");
+                Debug.Log("[WallHitRotationCalculator3D] Hit at center, no torque, angle=0");
             }
 
-            return centerAngle;
+            return 0f;
         }
 
-        // 2. 旋转方向：由 localHitXZ 所在象限决定一个符号
-        // 这里先采用简单规则：相对于本地前方向 (0,1) 的有符号角度作为符号来源
-        Vector2 forward2D = Vector2.up;
-        float signedAngle = Vector2.SignedAngle(forward2D, localHitXZ.normalized);
+        // 2. 旋转方向：使用「力矩」(torque) 的符号来决定
+        //    r = center → hit，本地 XZ
+        //    f = 法线方向（本地 XZ），只随墙面朝向变化，与入射角无关
+        //    τ_y = r_x * f_z - r_z * f_x
+        //    τ_y > 0 → 逆时针（正号），τ_y < 0 → 顺时针（负号）
+        Vector3 localNormal3D = wallRoot.InverseTransformDirection(hitNormalWorld);
+        Vector2 localNormalXZ = new Vector2(localNormal3D.x, localNormal3D.z);
 
-        // 符号：左侧为负，右侧为正（可在以后通过配置扩展）
-        float directionSign = Mathf.Sign(signedAngle);
+        if (localNormalXZ.sqrMagnitude <= Mathf.Epsilon)
+        {
+            // 法线退化时，默认使用 Z 轴向前方向
+            localNormalXZ = Vector2.up;
+        }
+
+        Vector2 r = localHitXZ;
+        Vector2 f = localNormalXZ.normalized;
+
+        float torqueY = r.x * f.y - r.y * f.x;
+        float directionSign = Mathf.Sign(torqueY);
+        if (Mathf.Approximately(directionSign, 0f))
+        {
+            directionSign = 1f; // 极少数完全对称情况，默认给正号
+        }
 
         // 3. 旋转大小：由速度决定
         float speedMultiplier = CalculateSpeedMultiplier(hitSpeed);
@@ -84,7 +97,8 @@ public class WallHitRotationCalculator3D : MonoBehaviour
         if (enableDebugLog)
         {
             Debug.Log(
-                $"[WallHitRotationCalculator3D] hitLocal={localHitXZ}, signedAngle={signedAngle:F2}, " +
+                $"[WallHitRotationCalculator3D] hitLocal={localHitXZ}, normalLocal={localNormalXZ}, " +
+                $"r=({r.x:F2},{r.y:F2}), f=({f.x:F2},{f.y:F2}), torqueY={torqueY:F2}, " +
                 $"dirSign={directionSign}, speed={hitSpeed:F2}, mult={speedMultiplier:F2}, angle={finalAngle:F2}");
         }
 

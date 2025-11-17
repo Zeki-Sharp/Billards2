@@ -27,14 +27,15 @@ public class StaticHitReceiver : MonoBehaviour
     public MMF_Player hitEffectPlayer;
 
     [Header("高级摇晃参数（可选）")]
-    [Tooltip("如果为 true，则使用 WallHit 计算器计算旋转角度和位置偏移，并写入 MMF_Player")]
+    [Tooltip("如果为 true，则使用 3D 版 WallHit 计算器计算旋转角度和位置偏移，并写入 MMF_Player")]
     public bool useWallHitCalculators = true;
 
-    [Tooltip("旋转计算器（通常挂在 hitEffectPlayer 同一个对象上，留空则自动查找）")]
-    public WallHitRotationController rotationController;
+    [Header("3D 计算器")]
+    [Tooltip("3D 旋转计算器（通常挂在 hitEffectPlayer 同一个对象上，留空则自动查找）")]
+    public WallHitRotationCalculator3D rotationCalculator3D;
 
-    [Tooltip("位置偏移计算器（通常挂在 hitEffectPlayer 同一个对象上，留空则自动查找）")]
-    public WallHitPositionController positionController;
+    [Tooltip("3D 位置偏移计算器（通常挂在 hitEffectPlayer 同一个对象上，留空则自动查找）")]
+    public WallHitPositionCalculator3D positionCalculator3D;
 
     private float lastHitTime;
 
@@ -90,8 +91,20 @@ public class StaticHitReceiver : MonoBehaviour
 
         Vector3 sourcePos = source.transform.position;
 
-        Vector3 dir3D = sourcePos - hitPos3D; // 从墙指向球
-        dir3D.y = 0f;
+        // 撞击方向：优先使用 BallPhysics 的几何速度方向，其次退化为“从撞击点指向球心”
+        Vector3 dir3D;
+        BallPhysics ballPhysics = source.GetComponent<BallPhysics>();
+        if (ballPhysics != null)
+        {
+            Vector2 v2 = ballPhysics.GetVelocity();
+            dir3D = new Vector3(v2.x, 0f, v2.y);
+        }
+        else
+        {
+            dir3D = sourcePos - hitPos3D; // 从墙指向球
+            dir3D.y = 0f;
+        }
+
         if (dir3D.sqrMagnitude < 0.0001f)
         {
             dir3D = Vector3.forward;
@@ -105,36 +118,59 @@ public class StaticHitReceiver : MonoBehaviour
         }
         normal3D.Normalize();
 
-        // 将世界 XZ 投影到计算器的 XY 平面（逻辑保持一致，坐标系从 XY 换成 XZ）
-        Vector3 calcPos = new Vector3(hitPos3D.x, hitPos3D.z, 0f);
-        Vector3 calcNormal = new Vector3(normal3D.x, normal3D.z, 0f);
-        Vector3 calcDir = new Vector3(dir3D.x, dir3D.z, 0f);
-
         float speed = evt.Velocity;
 
         if (useWallHitCalculators && hitEffectPlayer != null)
         {
-            var rotCtrl = rotationController != null
-                ? rotationController
-                : hitEffectPlayer.GetComponent<WallHitRotationController>();
+            // 优先使用 3D 计算器（世界空间 → Wall 本地 XZ 由计算器内部处理）
+            var rot3D = rotationCalculator3D != null
+                ? rotationCalculator3D
+                : hitEffectPlayer.GetComponent<WallHitRotationCalculator3D>();
 
-            var posCtrl = positionController != null
-                ? positionController
-                : hitEffectPlayer.GetComponent<WallHitPositionController>();
+            var pos3D = positionCalculator3D != null
+                ? positionCalculator3D
+                : hitEffectPlayer.GetComponent<WallHitPositionCalculator3D>();
 
-            // 旋转角度
-            if (rotCtrl != null)
+            bool used3D = false;
+            Transform wallRoot = transform;
+
+            float angle3D = 0f;
+            Vector3 offsetWorld = Vector3.zero;
+
+            // 3D 旋转（只负责计算角度）
+            if (rot3D != null)
             {
-                float angle = rotCtrl.CalculateRotationAngle(calcPos, calcNormal, speed);
-                MMFPlayerParameterSetter.SetRotationEffect(hitEffectPlayer, angle);
+                used3D = true;
+                // 使用法线作为力矩方向，使同一面墙 + 同一象限的符号稳定
+                angle3D = rot3D.CalculateRotationAngle(wallRoot, hitPos3D, normal3D, speed);
             }
 
-            // 位置偏移（计算器返回的是 XY，转换回 XZ）
-            if (posCtrl != null)
+            // 3D 位移（只负责计算偏移向量）
+            if (pos3D != null)
             {
-                Vector3 offset2D = posCtrl.CalculatePositionOffset(calcPos, calcNormal, calcDir, speed);
-                Vector3 offset3D = new Vector3(offset2D.x, 0f, offset2D.y);
-                MMFPlayerParameterSetter.SetPositionSpringEffect(hitEffectPlayer, offset3D);
+                used3D = true;
+                offsetWorld = pos3D.CalculatePositionOffset(wallRoot, hitPos3D, dir3D, speed);
+            }
+
+            // 统一通过 AttackData + SetWallHitParameters 传参（与 2D 方案保持一致）
+            if (used3D)
+            {
+                AttackData attackData = new AttackData
+                {
+                    Position = hitPos3D,
+                    Direction = dir3D,
+                    Attacker = source,
+                    Target = gameObject,
+                    AttackTime = Time.time,
+                    AttackerTag = source.tag,
+                    TargetTag = gameObject.tag,
+                    HitNormal = normal3D,
+                    HitSpeed = speed,
+                    WallHitRotationAngle = angle3D,
+                    WallHitPositionOffset = offsetWorld
+                };
+
+                MMFPlayerParameterSetter.SetWallHitParameters(hitEffectPlayer, attackData);
             }
         }
 

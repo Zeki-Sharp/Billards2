@@ -11993,7 +11993,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   chargeMode: 2
   showModeInfo: 1
-  maxForce: 30
+  maxForce: 25
   chargeTime: 2
   maxPullDistance: 2
   minPullDistance: 0.5

@@ -40,7 +40,7 @@ namespace DeepSpaceLabs.SAM
         public static void SetWallHitParameters(MMF_Player mmfPlayer, AttackData attackData)
         {
             if (mmfPlayer == null || attackData.HitNormal == Vector3.zero) return;
-            
+
             SetPositionSpringEffect(mmfPlayer, attackData.WallHitPositionOffset);
             SetRotationEffect(mmfPlayer, attackData.WallHitRotationAngle);
             SetScaleEffect(mmfPlayer, attackData.HitSpeed);
@@ -55,7 +55,7 @@ namespace DeepSpaceLabs.SAM
         {
             var positionSpringFeedbacks = mmfPlayer.GetFeedbacksOfType<MMF_PositionSpring>();
             if (positionSpringFeedbacks == null || positionSpringFeedbacks.Count == 0) return;
-            
+
             foreach (var springFeedback in positionSpringFeedbacks)
             {
                 springFeedback.BumpPositionMin = Vector3.zero;
@@ -72,7 +72,7 @@ namespace DeepSpaceLabs.SAM
         {
             var rotationFeedbacks = mmfPlayer.GetFeedbacksOfType<MMF_Rotation>();
             if (rotationFeedbacks == null || rotationFeedbacks.Count == 0) return;
-            
+
             foreach (var rotationFeedback in rotationFeedbacks)
             {
                 rotationFeedback.RemapCurveOne = rotationAngle;
