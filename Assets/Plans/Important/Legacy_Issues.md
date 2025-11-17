@@ -105,6 +105,42 @@
 
 ---
 
+### 8. 墙体撞击旋转/位移特效参数与 3D 坐标不一致 ⭐⭐
+
+**问题**：墙体 BeHit 特效的旋转角度与位移偏移仍基于旧的 2D 屏幕坐标（XY）计算，简单映射到 3D XZ 后左右墙表现不一致，正面撞击反馈方向容易出错。  
+**方案**：① 为墙体定义统一的局部坐标系（沿墙/法线）并重写 WallHit 计算器输入 ② 或重写 3D 专用旋转/位移计算器，摒弃 2D 屏幕坐标假设 ③ 提供调试 Gizmo（显示撞击点/法线/偏移向量）便于调参。  
+**影响**：直接影响玩家对撞墙反馈的感知和后续所有基于 StaticHitReceiver 的静态物体特效，属于 3D 视觉反馈质量问题。  
+**时机**：在 3D 碰撞流水线稳定、功能完成后统一整理（3D 升级 Phase C 之前）。  
+
+---
+
+### 9. 静态物体几何“材质”缺失，行为完全由球体 BallData 决定 ⭐⭐
+
+**问题**：当前几何模拟中，静态物体（墙/障碍物）没有自己的几何“材质”配置，所有反弹/阻尼行为完全由 BallData 决定，无法表达“不同墙面/地面行为不同”的需求。  
+**方案**：① 设计 GeometrySurfaceData（bounce/friction 等），通过 StaticHitReceiver 或单独组件挂在静态物体上 ② BallPhysics 在 HandleGeometryWallCollision 中读取 surfaceData 作为 BallData 的乘数 ③ 后续可扩展到伤害规则/音效/特效选择。  
+**影响**：目前功能上可以接受，但会限制 3D 场景中“冰面/弹簧墙/软垫”等丰富行为设计，属于中优先级扩展点。  
+**时机**：墙体基础特效和静态受击链路稳定后再做（3D 升级 Phase C 或之后）。  
+
+---
+
+### 10. 墙体受击系统存在临时参数与废弃 2D 路径未收敛 ⭐⭐
+
+**问题**：WallManager/WallCollisionDetector/EffectManager 里仍保留多套 2D 方案和临时字段（如 wallBeHitPlayer、OnWallHit 2D 重载、旧的 BeHit 注册逻辑），与新引入的 StaticHitReceiver 共存，容易造成理解混乱和误用。  
+**方案**：① 明确静态受击的唯一入口（推荐 StaticHitReceiver + OnCollisionEvent）② 将 WallManager 撞墙逻辑瘦身为“防抖+统计/调试” ③ 标记并移除不再使用的 2D 路径与临时参数，更新文档。  
+**影响**：主要影响维护成本和新同事理解成本，短期功能正常但长期会积累技术债。  
+**时机**：在 StaticHitReceiver 应用到主要静态物体后统一清理（3D 升级 Phase B 收尾阶段）。  
+
+---
+
+### 11. 敌人与敌人 / 角色之间碰撞的受击规则不一致 ⭐⭐
+
+**问题**：DamageSystem 中敌人-敌人、玩家-玩家、玩家-敌人之间的碰撞规则不统一，部分走旧的 2D Trigger/Collider 流程，部分走新 CollisionEvent 流程，导致某些组合下受击/特效触发逻辑“看起来正常但语义不清晰”。  
+**方案**：① 全面梳理 DamageProfile 和规则表，明确每种组合（Player→Enemy、Enemy→Player、Enemy↔Enemy 等）的 Source/Target 定义 ② 统一改为基于 CollisionEvent 的规则驱动，废弃旧 OnCollision/OnTrigger 入口 ③ 补充碰撞单元测试或最小验证场景。  
+**影响**：可能在以后扩展敌人种类或加入友军单位时暴露出边缘 bug，属于逻辑一致性和可扩展性问题。  
+**时机**：3D 物理事件链路确认稳定后，集中一轮整理 DamageSystem 规则（建议在 3D 升级 Phase C 之前处理）。  
+
+---
+
 ## 📝 备注
 
 - 所有遗留问题都不影响当前功能

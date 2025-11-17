@@ -26,6 +26,10 @@ public class WallManager : MonoBehaviour
     
     // 防抖字典：存储每个球体的最后撞墙时间
     private Dictionary<GameObject, float> lastHitTimes = new Dictionary<GameObject, float>();
+
+    [Header("简易撞墙特效引用")]
+    [Tooltip("直接在这里拖入墙体受击的 MMF_Player，不走注册表")]
+    public MMF_Player wallBeHitPlayer;
     
     void Start()
     {
@@ -35,13 +39,18 @@ public class WallManager : MonoBehaviour
     
     void OnEnable()
     {
-        // 注册特效
+        // 以前的注册机制保留，以兼容旧逻辑
         RegisterEffects();
+
+        // 订阅几何碰撞事件，用于触发简易墙体特效
+        GameEventBus.OnCollision += HandleWallCollisionEvent;
     }
     
     void OnDisable()
     {
-        // 注销特效
+        GameEventBus.OnCollision -= HandleWallCollisionEvent;
+
+        // 注销特效（兼容旧逻辑）
         UnregisterEffects();
     }
     
@@ -99,7 +108,7 @@ public class WallManager : MonoBehaviour
     }
     
     /// <summary>
-    /// 处理墙壁被撞击（由子墙壁调用）
+    /// 处理墙壁被撞击（由子墙壁调用，2D版本）
     /// </summary>
     public void OnWallHit(Collision2D collision, Transform wallTransform)
     {
@@ -120,6 +129,65 @@ public class WallManager : MonoBehaviour
         Vector3 wallHitPosition = collision.contacts[0].point;
         Vector3 wallHitDirection = ((Vector2)hitObject.transform.position - collision.contacts[0].point).normalized;
         Vector3 hitNormal = collision.contacts[0].normal;
+        
+        // 调用统一的处理逻辑
+        ProcessWallHit(hitObject, wallHitPosition, wallHitDirection, hitNormal, currentSpeed, wallTransform);
+    }
+    
+    /// <summary>
+    /// 处理墙壁被撞击（由子墙壁调用，3D版本）
+    /// </summary>
+    public void OnWallHit(Collision collision, Transform wallTransform)
+    {
+        GameObject hitObject = collision.gameObject;
+        string objectTag = hitObject.tag;
+        
+        // 只处理球体对象的撞墙
+        if (objectTag != "Player" && objectTag != "Enemy")
+        {
+            return;
+        }
+        
+        // 获取球体的物理组件和速度
+        BallPhysics ballPhysics = hitObject.GetComponent<BallPhysics>();
+        float currentSpeed = ballPhysics != null ? ballPhysics.GetSpeed() : 0f;
+        
+        // 计算撞墙信息（3D版本）
+        Vector3 wallHitPosition = collision.contacts[0].point;
+        Vector3 hitObjectPos = hitObject.transform.position;
+        Vector3 wallHitDirection = (hitObjectPos - wallHitPosition);
+        wallHitDirection.y = 0f;
+        if (wallHitDirection.sqrMagnitude < 0.0001f)
+        {
+            wallHitDirection = Vector3.forward;
+        }
+        wallHitDirection.Normalize();
+        
+        Vector3 hitNormal = collision.contacts[0].normal;
+        hitNormal.y = 0f;
+        if (hitNormal.sqrMagnitude < 0.0001f)
+        {
+            hitNormal = (wallHitPosition - hitObjectPos);
+            hitNormal.y = 0f;
+        }
+        hitNormal.Normalize();
+        
+        // 调用统一的处理逻辑
+        ProcessWallHit(hitObject, wallHitPosition, wallHitDirection, hitNormal, currentSpeed, wallTransform);
+    }
+    
+    /// <summary>
+    /// 统一的墙体撞击处理逻辑（2D和3D共用）
+    /// </summary>
+    private void ProcessWallHit(GameObject hitObject, Vector3 wallHitPosition, Vector3 wallHitDirection, Vector3 hitNormal, float currentSpeed, Transform wallTransform)
+    {
+        string objectTag = hitObject.tag;
+        
+        // 只处理球体对象的撞墙（已在调用前检查，这里再次确认）
+        if (objectTag != "Player" && objectTag != "Enemy")
+        {
+            return;
+        }
         
         // 自动查找并使用现有的 Controller 计算特效数据
         float rotationAngle = 0f;
@@ -299,5 +367,69 @@ public class WallManager : MonoBehaviour
     }
     
     #endregion
-    
+
+    #region 简易 3D 撞墙特效（直接引用 MMF_Player）
+
+    /// <summary>
+    /// 从几何碰撞事件中，筛选出“球撞墙”的情况，直接播放 WallManager 引用的 MMF_Player
+    /// </summary>
+    private void HandleWallCollisionEvent(CollisionEvent evt)
+    {
+        if (evt.Source == null || evt.Target == null)
+        {
+            return;
+        }
+
+        // 只关心墙段（Tag=Wall）
+        if (!evt.Target.CompareTag("Wall"))
+        {
+            return;
+        }
+
+        // 确认墙段属于当前 WallManager
+        WallManager owner = evt.Target.GetComponentInParent<WallManager>();
+        if (owner != this)
+        {
+            return;
+        }
+
+        GameObject hitObject = evt.Source;
+        if (hitObject == null)
+        {
+            return;
+        }
+
+        // 只处理玩家 / 敌人
+        if (!hitObject.CompareTag("Player") && !hitObject.CompareTag("Enemy"))
+        {
+            return;
+        }
+
+        float currentSpeed = evt.Velocity;
+        if (!ShouldPlayWallHitEffect(hitObject, currentSpeed))
+        {
+            return;
+        }
+
+        if (wallBeHitPlayer == null)
+        {
+            if (enableDebugLog)
+            {
+                Debug.LogWarning("[WallManager] wallBeHitPlayer 为空，无法播放墙体受击特效");
+            }
+            return;
+        }
+
+        // 直接播放引用的 MMF_Player，相当于在 Inspector 中点击 Play
+        wallBeHitPlayer.PlayFeedbacks();
+
+        lastHitTimes[hitObject] = Time.time;
+
+        if (enableDebugLog)
+        {
+            Debug.Log($"[WallManager] 撞墙特效播放: Wall={gameObject.name}, Source={hitObject.name}, Speed={currentSpeed:F2}");
+        }
+    }
+
+    #endregion
 }

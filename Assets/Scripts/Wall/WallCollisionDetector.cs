@@ -18,7 +18,16 @@ public class WallCollisionDetector : MonoBehaviour
     
     void OnCollisionEnter2D(Collision2D collision)
     {
-        // 通知父级墙壁管理器
+        // 通知父级墙壁管理器（2D版本）
+        if (parentWallManager != null)
+        {
+            parentWallManager.OnWallHit(collision, transform);
+        }
+    }
+    
+    void OnCollisionEnter(Collision collision)
+    {
+        // 通知父级墙壁管理器（3D版本）
         if (parentWallManager != null)
         {
             parentWallManager.OnWallHit(collision, transform);

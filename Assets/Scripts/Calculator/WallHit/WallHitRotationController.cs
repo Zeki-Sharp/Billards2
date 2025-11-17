@@ -117,7 +117,6 @@ public class WallHitRotationController : MonoBehaviour
         return speedMultiplier;
     }
 }
-
 /// <summary>
 /// 墙面类型枚举
 /// </summary>
@@ -126,3 +125,4 @@ public enum WallType
     Horizontal, // 横墙
     Vertical    // 竖墙
 }
+

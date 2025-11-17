@@ -571,6 +571,12 @@ namespace DeepSpaceLabs.SAM
     {
         if (evt.Source == null || evt.Target == null) return;
 
+        // ★ 如果目标或其父节点上挂了 StaticHitReceiver，则由它自己处理受击特效，这里直接返回
+        if (evt.Target.GetComponentInParent<StaticHitReceiver>() != null)
+        {
+            return;
+        }
+
         // 计算 3D 碰撞位置和方向（与 OnDamageEvent 保持一致）
         Vector3 hitPosition3D = evt.ContactPoint3D.HasValue
             ? evt.ContactPoint3D.Value
@@ -589,6 +595,7 @@ namespace DeepSpaceLabs.SAM
             AttackTime  = evt.CollisionTime,
             AttackerTag = evt.Source.tag,
             TargetTag   = evt.Target.tag,
+            HitNormal   = -hitDirection3D,   // 从球指向墙
             HitSpeed    = evt.Velocity
         };
 
