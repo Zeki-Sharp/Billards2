@@ -361,6 +361,10 @@ public class EnemyBehavior : MonoBehaviour, IDamageable
             
             Vector3 startPos = transform.position;
             Vector3 targetPos = new Vector3(targetPosition.x, startPos.y, targetPosition.y);
+            
+            // ✅ 移动前先旋转朝向目标位置
+            RotateTowardsPosition(targetPos);
+            
             float distance = Vector3.Distance(startPos, targetPos);
             float speed = GetCurrentMoveSpeed();
             float moveTime = distance > 0f && speed > 0f ? distance / speed : 0f;
@@ -393,6 +397,9 @@ public class EnemyBehavior : MonoBehaviour, IDamageable
             NotifyEnemyStoppedIfNeeded();
             yield break;
         }
+        
+        // ✅ 移动前先旋转朝向目标位置
+        RotateTowardsPosition(targetPosition3D);
         
         // 标记开始移动（即使距离为0，也要标记，以便 EnemyManager 正确等待）
         runtimeState.isMoving = true;
@@ -465,6 +472,29 @@ public class EnemyBehavior : MonoBehaviour, IDamageable
         }
 
         NotifyEnemyStoppedIfNeeded();
+    }
+    
+    /// <summary>
+    /// 旋转朝向指定位置（XZ平面，只绕Y轴旋转）
+    /// </summary>
+    /// <param name="targetPosition">目标位置（世界坐标）</param>
+    private void RotateTowardsPosition(Vector3 targetPosition)
+    {
+        Vector3 direction = targetPosition - transform.position;
+        direction.y = 0f; // 只考虑XZ平面
+        
+        if (direction != Vector3.zero)
+        {
+            Quaternion targetRotation = Quaternion.LookRotation(direction, Vector3.up);
+            // 确保只绕Y轴旋转
+            float yAngle = targetRotation.eulerAngles.y;
+            transform.rotation = Quaternion.Euler(0f, yAngle, 0f);
+            
+            if (showDebugInfo)
+            {
+                Debug.Log($"EnemyBehavior {name}: 旋转朝向目标 - 目标位置:{targetPosition}, 方向:{direction.normalized}, Y轴角度:{yAngle:F2}°");
+            }
+        }
     }
     
     /// <summary>
