@@ -20,7 +20,7 @@ MonoBehaviour:
     color: {r: 1, g: 1, b: 1, a: 1}
     enemyType: 
     threatLevel: "\u4F4E"
-  enemyContainerPrefab: {fileID: 7420645124294310907, guid: a2eee87d86847b34284a88c1430f39ea, type: 3}
+  enemyContainerPrefab: {fileID: 7420645124294310907, guid: 855541076d498834a81fa6a75350c2ab, type: 3}
   enemyLevels:
   - level: 1
     enemyImage: {fileID: 0}
@@ -155,4 +155,6 @@ MonoBehaviour:
     idleConfig:
       placeholder: 1
   ballData: {fileID: 11400000, guid: d1c30c129175ecf48a42f1070d15a627, type: 2}
-  damageProfile: {fileID: 11400000, guid: 3ed9e342e2b5772499eee9862c6ed959, type: 2}
+  damageProfiles:
+  - {fileID: 11400000, guid: 3ed9e342e2b5772499eee9862c6ed959, type: 2}
+  legacyDamageProfile: {fileID: 0}
