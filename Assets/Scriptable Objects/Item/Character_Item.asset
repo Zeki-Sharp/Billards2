@@ -21,6 +21,6 @@ MonoBehaviour:
   targetCharacterName: 
   pickupRestriction: 1
   restrictedCharacterName: cha_collect
-  itemPrefab: {fileID: 5612692153959467649, guid: 8e91ead9ab52bff4d879d9e0a1d74782, type: 3}
+  itemPrefab: {fileID: 4837179974575696317, guid: 4351a79785a3cc244aaeb7811ade35b2, type: 3}
   pickupEffect: {fileID: 0}
   pickupSound: {fileID: 0}

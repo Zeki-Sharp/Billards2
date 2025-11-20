@@ -4,12 +4,22 @@ using UnityEngine;
 /// 场景道具实体 - 处理道具的拾取和效果触发
 /// 职责：碰撞检测、效果应用、视听反馈、自身销毁
 /// </summary>
-[RequireComponent(typeof(Collider2D))]
+[RequireComponent(typeof(Collider))]
 public class ItemPickup : MonoBehaviour
 {
     [Header("道具配置")]
     [Tooltip("道具配置数据")]
     public ItemConfig itemConfig;
+    
+    [Header("脚底对齐")]
+    [Tooltip("脚底参考点，用于让道具脚底贴地")]
+    [SerializeField] private Transform footPoint;
+    [Tooltip("用于对齐地面的射线长度")]
+    [SerializeField] private float groundAlignRaycastDistance = 2f;
+    [Tooltip("用于检测地面的 Layer Mask")]
+    [SerializeField] private LayerMask groundLayers = ~0;
+    [Tooltip("进入场景时立即执行脚底对齐")]
+    [SerializeField] private bool alignOnStart = true;
     
     [Header("调试设置")]
     [Tooltip("是否显示调试日志")]
@@ -41,12 +51,24 @@ public class ItemPickup : MonoBehaviour
             return;
         }
         
-        // 确保Collider是触发器
-        var collider = GetComponent<Collider2D>();
-        if (collider != null && !collider.isTrigger)
+        // 确保Collider是触发器（3D）
+        var collider = GetComponent<Collider>();
+        if (collider != null)
         {
-            Debug.LogWarning($"[ItemPickup] {gameObject.name} 的Collider不是触发器，已自动设置为触发器");
-            collider.isTrigger = true;
+            if (!collider.isTrigger)
+            {
+                Debug.LogWarning($"[ItemPickup] {gameObject.name} 的Collider不是触发器，已自动设置为触发器");
+                collider.isTrigger = true;
+            }
+        }
+        else
+        {
+            Debug.LogError($"[ItemPickup] {gameObject.name} 未找到 Collider 组件，拾取将无法工作！");
+        }
+        
+        if (alignOnStart)
+        {
+            AlignFootPointToGround();
         }
         
         if (enableDebugLog)
@@ -55,7 +77,7 @@ public class ItemPickup : MonoBehaviour
         }
     }
     
-    void OnTriggerEnter2D(Collider2D other)
+    void OnTriggerEnter(Collider other)
     {
         // 只响应玩家
         if (!other.CompareTag("Player"))
@@ -81,6 +103,35 @@ public class ItemPickup : MonoBehaviour
         
         // 执行拾取
         PickupItem(other.gameObject);
+    }
+    
+    #endregion
+    
+    #region 脚底对齐
+    
+    private void AlignFootPointToGround()
+    {
+        if (footPoint == null)
+        {
+            return;
+        }
+        
+        Vector3 rayOrigin = footPoint.position + Vector3.up * 0.05f;
+        if (Physics.Raycast(rayOrigin, Vector3.down, out RaycastHit hit, groundAlignRaycastDistance, groundLayers, QueryTriggerInteraction.Ignore))
+        {
+            Vector3 offset = transform.position - footPoint.position;
+            Vector3 newPosition = hit.point + offset;
+            transform.position = newPosition;
+            
+            if (enableDebugLog)
+            {
+                Debug.Log($"[ItemPickup] 脚底对齐成功：hitY={hit.point.y:F3}, 新位置={newPosition}");
+            }
+        }
+        else if (enableDebugLog)
+        {
+            Debug.LogWarning($"[ItemPickup] 无法完成脚底对齐（未检测到地面 Layer: {groundLayers}）");
+        }
     }
     
     #endregion
@@ -504,12 +555,24 @@ public class ItemPickup : MonoBehaviour
     {
         if (itemConfig == null) return;
         
-        // 绘制拾取范围
         Gizmos.color = new Color(0, 1, 0, 0.3f);
-        var collider = GetComponent<Collider2D>();
-        if (collider is CircleCollider2D circleCollider)
+        var collider = GetComponent<Collider>();
+        if (collider is SphereCollider sphereCollider)
         {
-            Gizmos.DrawWireSphere(transform.position, circleCollider.radius);
+            Gizmos.DrawWireSphere(sphereCollider.bounds.center, sphereCollider.radius * Mathf.Max(transform.lossyScale.x, transform.lossyScale.y, transform.lossyScale.z));
+        }
+        else if (collider is BoxCollider boxCollider)
+        {
+            Matrix4x4 prevMatrix = Gizmos.matrix;
+            Gizmos.matrix = Matrix4x4.TRS(boxCollider.transform.TransformPoint(boxCollider.center), boxCollider.transform.rotation, boxCollider.transform.lossyScale);
+            Gizmos.DrawWireCube(Vector3.zero, boxCollider.size);
+            Gizmos.matrix = prevMatrix;
+        }
+        
+        if (footPoint != null)
+        {
+            Gizmos.color = Color.yellow;
+            Gizmos.DrawSphere(footPoint.position, 0.02f);
         }
     }
     
