@@ -365,12 +365,12 @@ MonoBehaviour:
           ButtonText: 
         Owner: {fileID: 449473815224375414}
         DebugActive: 0
-        TargetRenderer: {fileID: 0}
+        TargetRenderer: {fileID: 4372155668155967635}
         ExtraTargetRenderers: []
         MaterialID: 0
-        PropertyName: _FlashAmount
-        PropertyType: 1
-        NewColor: {r: 1, g: 0, b: 0, a: 1}
+        PropertyName: _EmissionColor
+        PropertyType: 0
+        NewColor: {r: 63.999996, g: 63.999996, b: 63.999996, a: 1}
         NewFloat: 1
         NewInt: 0
         NewTexture: {fileID: 0}
@@ -502,7 +502,7 @@ MonoBehaviour:
           ButtonText: 
         Owner: {fileID: 449473815224375414}
         DebugActive: 0
-        AnimateScaleTarget: {fileID: 0}
+        AnimateScaleTarget: {fileID: 7059074934559455044}
         DeclaredDuration: 0
         DampingX: 0.4
         FrequencyX: 6
@@ -902,13 +902,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1571611603057482429}
   serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalRotation: {x: 0.7071068, y: 0, z: 0, w: 0.7071068}
+  m_LocalPosition: {x: 0, y: 0.674, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 1
   m_Children: []
   m_Father: {fileID: 2402893808814183854}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 90, y: 0, z: 0}
 --- !u!212 &4037694395245490174
 SpriteRenderer:
   m_ObjectHideFlags: 0
@@ -1332,7 +1332,7 @@ MonoBehaviour:
           ButtonText: 
         Owner: {fileID: 8419464080632728091}
         DebugActive: 0
-        AnimateScaleTarget: {fileID: 0}
+        AnimateScaleTarget: {fileID: 7059074934559455044}
         DeclaredDuration: 0
         DampingX: 0.4
         FrequencyX: 6
@@ -1730,7 +1730,7 @@ MonoBehaviour:
         Owner: {fileID: 8419464080632728091}
         DebugActive: 0
         Mode: 0
-        AnimateScaleTarget: {fileID: 0}
+        AnimateScaleTarget: {fileID: 7059074934559455044}
         MovementMode: 0
         AnimateScaleDuration: 0.2
         AnimatePositionSpeed: 1
