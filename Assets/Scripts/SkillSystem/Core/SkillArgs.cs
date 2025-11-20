@@ -16,6 +16,11 @@ using System.Collections.Generic;
 /// - ✅ 性能提升（组件缓存）
 /// - ✅ 代码可读性增强
 /// - ✅ 更好的 IDE 支持
+/// 
+/// 【3D 位置数据访问】：
+/// - ✅ 统一通过便捷方法访问 3D 位置数据，而不是直接访问事件字段
+/// - 推荐使用：GetHitPosition3D()、GetStoppedPosition3D()、GetDeathPosition3D() 等
+/// - 这些方法会自动处理 3D/2D 转换和后备方案，确保数据一致性
 /// </summary>
 public class SkillArgs
 {
@@ -221,6 +226,120 @@ public class SkillArgs
     {
         sourceComponentCache.Clear();
         targetComponentCache.Clear();
+    }
+    
+    #endregion
+    
+    #region 3D 位置便捷方法（用于技能系统3D适配）
+    
+    /// <summary>
+    /// ✅ 3D适配：获取击中位置的XZ平面投影（用于逻辑计算）
+    /// 优先从 DamageEvent 获取，如果没有则返回 Vector2.zero
+    /// 
+    /// 【使用场景】：范围判定、距离计算等需要 2D 投影的逻辑
+    /// 【推荐】：需要 3D 位置时使用 GetHitPosition3D() 替代
+    /// </summary>
+    public Vector2 GetHitPositionXZ()
+    {
+        if (TryGetEventData<DamageEvent>(out var damageEvent))
+        {
+            return damageEvent.HitPosition;  // 已经是 XZ 投影
+        }
+        return Vector2.zero;
+    }
+    
+    /// <summary>
+    /// ✅ 3D适配：获取击中位置的真实3D坐标（用于特效定位）
+    /// 优先从 DamageEvent.HitPosition3D 获取，如果没有则从 HitPosition 投影回3D
+    /// 
+    /// 【使用场景】：特效播放、视觉反馈、3D 判定等需要精确位置的地方
+    /// 【推荐】：所有需要位置信息的效果都应该使用此方法，而不是直接访问 DamageEvent 字段
+    /// </summary>
+    public Vector3 GetHitPosition3D()
+    {
+        if (TryGetEventData<DamageEvent>(out var damageEvent))
+        {
+            if (damageEvent.HitPosition3D.HasValue)
+            {
+                return damageEvent.HitPosition3D.Value;
+            }
+            // 后备：从 XZ 投影重建（假设 Y=0，或从 Target 获取）
+            float y = Target != null ? Target.transform.position.y : 0f;
+            return new Vector3(damageEvent.HitPosition.x, y, damageEvent.HitPosition.y);
+        }
+        return Vector3.zero;
+    }
+    
+    /// <summary>
+    /// ✅ 3D适配：获取停止位置的真实3D坐标（用于范围技能）
+    /// 优先从 StoppedEvent.StoppedPosition3D 获取，如果没有则从 BallPhysics 获取
+    /// 
+    /// 【使用场景】：范围攻击、停球后效果等需要球停止位置的地方
+    /// 【推荐】：所有基于 MovingEndTrigger 的效果都应该使用此方法获取位置
+    /// </summary>
+    public Vector3 GetStoppedPosition3D()
+    {
+        // 优先从 StoppedEvent 获取
+        if (TryGetEventData<StoppedEvent>(out var stoppedEvent))
+        {
+            if (stoppedEvent.StoppedPosition3D.HasValue)
+            {
+                return stoppedEvent.StoppedPosition3D.Value;
+            }
+            // 后备：从 XZ 投影重建（假设 Y=0，或从 Source 获取）
+            float y = Source != null ? Source.transform.position.y : 0f;
+            return new Vector3(stoppedEvent.StoppedPosition.x, y, stoppedEvent.StoppedPosition.y);
+        }
+        
+        // 后备：从 BallPhysics 获取
+        if (TryGetEventData<BallPhysics>(out var ballPhysics))
+        {
+            return ballPhysics.transform.position;
+        }
+        
+        return Vector3.zero;
+    }
+    
+    /// <summary>
+    /// ✅ 3D适配：获取发射位置的真实3D坐标（用于轨迹技能）
+    /// 优先从 StoppedEvent.LaunchPosition3D 获取
+    /// </summary>
+    public Vector3? GetLaunchPosition3D()
+    {
+        if (TryGetEventData<StoppedEvent>(out var stoppedEvent))
+        {
+            return stoppedEvent.LaunchPosition3D;
+        }
+        return null;
+    }
+    
+    /// <summary>
+    /// ✅ 3D适配：获取第一碰撞点的真实3D坐标（用于轨迹技能）
+    /// 优先从 StoppedEvent.FirstCollisionPoint3D 获取
+    /// </summary>
+    public Vector3? GetFirstCollisionPoint3D()
+    {
+        if (TryGetEventData<StoppedEvent>(out var stoppedEvent))
+        {
+            return stoppedEvent.FirstCollisionPoint3D;
+        }
+        return null;
+    }
+    
+    /// <summary>
+    /// ✅ 3D适配：获取死亡位置的真实3D坐标（用于掉落等效果）
+    /// 从 DeathData.Position 获取（已经是 Vector3）
+    /// 
+    /// 【使用场景】：道具掉落、死亡特效等需要死亡位置的地方
+    /// 【推荐】：所有基于死亡事件的效果都应该使用此方法获取位置
+    /// </summary>
+    public Vector3 GetDeathPosition3D()
+    {
+        if (TryGetEventData<DeathData>(out var deathData))
+        {
+            return deathData.Position;  // DeathData.Position 已经是 Vector3
+        }
+        return Vector3.zero;
     }
     
     #endregion

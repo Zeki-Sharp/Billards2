@@ -37,13 +37,36 @@ public class MovingEndTrigger : ITrigger
     
     /// <summary>
     /// 检查事件 - 检查是否球刚停止
+    /// ✅ 3D适配：优先使用StoppedEvent（带轨迹数据），后备使用BallPhysics
     /// </summary>
     /// <param name="args">技能参数</param>
     /// <returns>是否触发</returns>
     public bool CheckEvent(SkillArgs args)
     {
-        // 检查是否是球停止事件
-        if (args.TryGetEventData<BallPhysics>(out var ballPhysics))
+        // ✅ 3D适配：优先检查 StoppedEvent（带3D轨迹数据）
+        if (args.TryGetEventData<StoppedEvent>(out var stoppedEvent))
+        {
+            // 检查是否是玩家球
+            if (stoppedEvent.Source == null || !stoppedEvent.Source.CompareTag("Player"))
+            {
+                return false;
+            }
+            
+            // ✅ 多角色系统：检查是否是归属角色的球停止事件
+            if (!TriggerHelper.CheckEventSource(stoppedEvent, ownerCharacterID))
+            {
+                return false;  // 不是归属角色，不触发
+            }
+            
+            // 检查是否已触发过（每次停止只触发一次）
+            if (!hasTriggered)
+            {
+                hasTriggered = true;
+                return true;
+            }
+        }
+        // 后备：检查 BallPhysics（向后兼容）
+        else if (args.TryGetEventData<BallPhysics>(out var ballPhysics))
         {
             // 检查是否是玩家球
             if (!ballPhysics.gameObject.CompareTag("Player"))
