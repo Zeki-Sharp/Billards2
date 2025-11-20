@@ -1373,7 +1373,7 @@ MonoBehaviour:
         Owner: {fileID: 296282128}
         DebugActive: 0
         AnimatePositionTarget: {fileID: 1086684535}
-        DeclaredDuration: 0.2
+        DeclaredDuration: 0.1
         Space: 0
         DampingX: 0.4
         FrequencyX: 1
