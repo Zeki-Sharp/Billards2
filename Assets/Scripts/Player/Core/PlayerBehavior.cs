@@ -719,19 +719,15 @@ public class PlayerBehavior : MonoBehaviour, IDamageable
     /// </summary>
     public void OnDamageReceived(DamageEvent damageEvent)
     {
-        Debug.Log($"[PlayerCore] OnDamageReceived -> Target={damageEvent.Target?.name}, Expected={gameObject.name}, Damage={damageEvent.FinalDamage:F2}");
-
         // 检查是否是针对自己的伤害
         if (damageEvent.Target != gameObject)
         {
-            Debug.Log($"[PlayerCore] 忽略伤害：目标不是自己。");
             return;
         }
         
         // 检查是否可以受伤
         if (!CanTakeDamage())
         {
-            Debug.Log($"[PlayerCore] 忽略伤害：当前状态不可受伤。");
             return;
         }
         

@@ -22,10 +22,8 @@ public class RangedAttackBehavior : BaseAttackBehavior
             return BehaviorStatus.Failure;
         }
         
-        // 检测玩家是否在检测范围内（用于调试日志，仅作参考）
+        // 检测玩家是否在检测范围内（用于调试，仅作参考）
         float distanceToPlayer = Vector2.Distance(enemyTransform.position, playerTransform.position);
-        // 不再因为超出检测范围而直接失败：始终给出预告，但将落点夹在最大可投射距离内
-        Debug.Log($"[RangedTelegraph] {enemyTransform.name}: dist={distanceToPlayer:F2}, detectionRange={levelConfig.rangedConfig.detectionRange}, projectionDistance={levelConfig.rangedConfig.projectionDistance}");
         
         // 保存原始本地位置（用于恢复）
         originalLocalPosition = attackRange.transform.localPosition;
@@ -36,8 +34,6 @@ public class RangedAttackBehavior : BaseAttackBehavior
 
         // 直接使用世界坐标定位落点（不改变父子关系）
         attackRange.transform.position = projectedPosition;
-
-        Debug.Log($"[RangedTelegraph] {enemyTransform.name}: 计算落点 projectedXZ={projectedXZ}, projectedPos3D={projectedPosition}, playerPos={playerTransform.position}");
 
         // 显示攻击预告（这会激活 GameObject 并设置方向）
         attackRange.ShowTelegraph(projectedPosition);
@@ -74,7 +70,6 @@ public class RangedAttackBehavior : BaseAttackBehavior
         
         // ✅ 新伤害系统：主动检测范围内的玩家并发布碰撞事件
         var targets = attackRange.GetTargetsInRange();
-        Debug.Log($"[RangedAttack] ExecuteAttack: attackRangePos={attackRange.transform.position}, rotation={attackRange.transform.rotation.eulerAngles}, targetsInRange={targets.Count}");
         
         foreach (var target in targets)
         {
@@ -84,7 +79,6 @@ public class RangedAttackBehavior : BaseAttackBehavior
                 Collider targetCollider = target.GetComponent<Collider>();
                 if (targetCollider != null)
                 {
-                    Debug.Log($"[RangedAttack] 命中玩家 {target.name}, 准备发布 CollisionEvent");
                     // 使用 AttackRange 作为 source（Tag = EnemyAttackRange）
                     CollisionEvent evt = CollisionEvent.CreateFromTrigger(attackRange.gameObject, targetCollider);
                     GameEventBus.PublishCollision(evt);
