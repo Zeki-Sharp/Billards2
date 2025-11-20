@@ -100,7 +100,7 @@ MonoBehaviour:
   geometryHighPhaseDamping: 1
   geometryLowPhaseDamping: 8
   geometryWallBounceFactor: 0.95
-  geometryBallBounceFactor: 0.8
+  geometryBallBounceFactor: 0.9
   geometryKnockbackScale: 1
   updateThreshold: 0.05
   updateInterval: 0.02
