@@ -209,6 +209,11 @@ public class CollectorStrikeEffect : IEffect
         }
         
         // 构造伤害事件
+        // ✅ 3D适配：使用XZ平面投影和真实3D位置
+        Vector3 enemyPos3D = enemyObj.transform.position;
+        Vector3 sourcePos3D = sourceObj.transform.position;
+        Vector3 direction3D = (enemyPos3D - sourcePos3D).normalized;
+        
         DamageEvent damageEvent = new DamageEvent
         {
             Source = sourceObj,
@@ -216,8 +221,9 @@ public class CollectorStrikeEffect : IEffect
             FinalDamage = damage,
             Type = DamageType.Physical,
             TriggerType = DamageTriggerType.Skill,  // 技能触发的伤害
-            HitPosition = enemyObj.transform.position,
-            HitDirection = (enemyObj.transform.position - sourceObj.transform.position).normalized,
+            HitPosition = new Vector2(enemyPos3D.x, enemyPos3D.z),  // XZ平面投影（向后兼容）
+            HitPosition3D = enemyPos3D,  // ✅ 真实3D位置（用于特效定位）
+            HitDirection = new Vector2(direction3D.x, direction3D.z),  // XZ平面方向
             VelocityAtHit = 0f,
             KnockbackForce = 0f,  // 收集打击不击退
             StunDuration = 0f,

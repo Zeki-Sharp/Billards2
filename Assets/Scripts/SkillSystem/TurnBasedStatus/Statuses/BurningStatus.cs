@@ -34,6 +34,9 @@ public class BurningStatus : TurnBasedStatusComponent
         }
         
         // 构造伤害事件
+        // ✅ 3D适配：使用XZ平面投影和真实3D位置
+        Vector3 pos3D = transform.position;
+        
         DamageEvent damageEvent = new DamageEvent
         {
             Source = source,
@@ -41,8 +44,9 @@ public class BurningStatus : TurnBasedStatusComponent
             FinalDamage = damagePerTurn,
             Type = DamageType.Physical,  // ✅ 简化版：普通物理伤害
             TriggerType = DamageTriggerType.Interval,  // 持续伤害是间隔触发
-            HitPosition = transform.position,
-            HitDirection = Vector2.zero,
+            HitPosition = new Vector2(pos3D.x, pos3D.z),  // XZ平面投影（向后兼容）
+            HitPosition3D = pos3D,  // ✅ 真实3D位置（用于特效定位）
+            HitDirection = Vector2.zero,  // 持续伤害无方向
             VelocityAtHit = 0f,
             KnockbackForce = 0f,  // 持续伤害不击退
             StunDuration = 0f,

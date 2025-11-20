@@ -41,6 +41,9 @@ public class PoisonStatus : TurnBasedStatusComponent
         float turnDamage = Mathf.Max(0f, currentStacks);
         SetDamagePerTurn(turnDamage);
 
+        // ✅ 3D适配：使用XZ平面投影和真实3D位置
+        Vector3 pos3D = transform.position;
+        
         DamageEvent damageEvent = new DamageEvent
         {
             Source = source,
@@ -48,8 +51,9 @@ public class PoisonStatus : TurnBasedStatusComponent
             FinalDamage = turnDamage,
             Type = DamageType.Magical,
             TriggerType = DamageTriggerType.Interval,
-            HitPosition = transform.position,
-            HitDirection = Vector2.zero,
+            HitPosition = new Vector2(pos3D.x, pos3D.z),  // XZ平面投影（向后兼容）
+            HitPosition3D = pos3D,  // ✅ 真实3D位置（用于特效定位）
+            HitDirection = Vector2.zero,  // 持续伤害无方向
             VelocityAtHit = 0f,
             KnockbackForce = 0f,
             StunDuration = 0f,

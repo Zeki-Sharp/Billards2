@@ -245,6 +245,22 @@ public class GlobalInputManager : MonoBehaviour
                 return;
             }
             
+            // ✅ 优先级检查：如果已选中角色且正在蓄力，所有点击都视为发射操作
+            if (CharacterSelectionController.Instance != null && 
+                CharacterSelectionController.Instance.HasSelection &&
+                ChargeController.Instance != null && 
+                ChargeController.Instance.IsCharging())
+            {
+                // 蓄力状态下，点击任何位置（包括其他球）都视为发射
+                GameEventBus.PublishLaunchInput();
+                
+                if (showDebugInfo)
+                {
+                    Debug.Log("GlobalInputManager: 蓄力状态下点击，发布发射输入（忽略球体检测）");
+                }
+                return;
+            }
+            
             // 射线检测
             Vector2 mousePos = mousePositionAction.ReadValue<Vector2>();
             GameObject hitBall = RaycastForBall(mousePos);
