@@ -718,6 +718,16 @@ public class DamageSystem : SingletonManager<DamageSystem>
             }
         }
         
+        // 检查回合要求
+        if (!IsTurnRequirementSatisfied(rule.turnRequirement))
+        {
+            if (showRuleMatching)
+            {
+                Debug.Log($"[DamageSystem] 规则 '{rule.ruleName}' 不匹配：当前回合不满足 {rule.turnRequirement}");
+            }
+            return false;
+        }
+        
         // 检查攻击者状态要求
         if (!string.IsNullOrEmpty(rule.requireSourceState))
         {
@@ -849,6 +859,38 @@ public class DamageSystem : SingletonManager<DamageSystem>
         }
         
         return null;
+    }
+    
+    /// <summary>
+    /// 检查当前回合是否满足规则要求
+    /// </summary>
+    private bool IsTurnRequirementSatisfied(DamageTurnRequirement requirement)
+    {
+        if (requirement == DamageTurnRequirement.Any)
+        {
+            return true;
+        }
+        
+        var flowController = GameFlowController.Instance;
+        if (flowController == null)
+        {
+            // 若没有流程控制器，默认视为不满足以避免错误结算
+            if (showRuleMatching)
+            {
+                Debug.LogWarning("[DamageSystem] 无法获取 GameFlowController，回合要求判定失败");
+            }
+            return false;
+        }
+        
+        switch (requirement)
+        {
+            case DamageTurnRequirement.PlayerTurn:
+                return flowController.IsPlayerPhase;
+            case DamageTurnRequirement.EnemyTurn:
+                return flowController.IsEnemyPhase;
+            default:
+                return true;
+        }
     }
     
     #endregion

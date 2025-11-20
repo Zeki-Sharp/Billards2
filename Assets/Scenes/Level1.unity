@@ -1114,7 +1114,7 @@ MonoBehaviour:
         AnimateRotationDuration: 0.2
         AnimatePositionSpeed: 1
         RemapCurveZero: 0
-        RemapCurveOne: 10
+        RemapCurveOne: 0
         AnimateX: 0
         AnimateRotationTweenX:
           MMTweenDefinitionType: 1
@@ -1385,8 +1385,8 @@ MonoBehaviour:
         MoveToPositionMin: {x: 1, y: 1, z: 1}
         MoveToPositionMax: {x: 2, y: 2, z: 2}
         MoveToTransform: {fileID: 0}
-        BumpPositionMin: {x: 10, y: 0, z: 10}
-        BumpPositionMax: {x: 15, y: 0, z: 15}
+        BumpPositionMin: {x: 0, y: 0, z: 0}
+        BumpPositionMax: {x: 0, y: 0, z: 0}
         ForceAbsolute: 0
 --- !u!1 &341060858
 GameObject:

@@ -25,6 +25,7 @@ MonoBehaviour:
   velocityMultiplier: 0
   rangeShape: 0
   attackRange: 0
+  turnRequirement: 1
   baseDamage: 10
   damageMultiplier: 1
   damageType: 0

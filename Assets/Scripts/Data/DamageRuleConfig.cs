@@ -11,6 +11,16 @@ public enum RangeShapeType
 }
 
 /// <summary>
+/// 回合要求
+/// </summary>
+public enum DamageTurnRequirement
+{
+    Any,         // 任意回合均可触发
+    PlayerTurn,  // 仅玩家回合
+    EnemyTurn    // 仅敌人回合
+}
+
+/// <summary>
 /// 伤害规则配置 - ScriptableObject
 /// 定义实体在什么情况下造成伤害
 /// 
@@ -65,6 +75,10 @@ public class DamageRuleConfig : ScriptableObject
     
     [Tooltip("攻击范围（仅 Stopped 类型使用，0 表示从 PlayerData 读取）")]
     public float attackRange = 0f;
+    
+    [Header("回合要求")]
+    [Tooltip("限制此规则在指定回合内生效")]
+    public DamageTurnRequirement turnRequirement = DamageTurnRequirement.Any;
     
     [Header("伤害计算")]
     [Tooltip("基础伤害（0 = 从 PlayerData.attackPower 读取）")]
