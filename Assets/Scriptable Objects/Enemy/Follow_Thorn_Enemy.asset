@@ -20,7 +20,7 @@ MonoBehaviour:
     color: {r: 1, g: 1, b: 1, a: 1}
     enemyType: 
     threatLevel: "\u4F4E"
-  enemyContainerPrefab: {fileID: 7420645124294310907, guid: 855541076d498834a81fa6a75350c2ab, type: 3}
+  enemyContainerPrefab: {fileID: 7420645124294310907, guid: a2eee87d86847b34284a88c1430f39ea, type: 3}
   enemyLevels:
   - level: 1
     enemyImage: {fileID: 0}

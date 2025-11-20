@@ -18,9 +18,13 @@ MonoBehaviour:
   sourceTag: EnemyAttackRange
   targetTag: Player
   requireSourceState: CanAttack
+  requireSourceNotState: 
   requireTargetState: 
+  requireTargetNotState: 
   minVelocity: 0
   velocityMultiplier: 0
+  rangeShape: 0
+  attackRange: 0
   baseDamage: 10
   damageMultiplier: 1
   damageType: 0

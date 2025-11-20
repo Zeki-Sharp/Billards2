@@ -914,7 +914,7 @@ Transform:
   m_GameObject: {fileID: 296282124}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -2.8349924, y: -2.9821064, z: -0.016005814}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -9600,7 +9600,7 @@ MonoBehaviour:
     mmfPlayer: {fileID: 1398340947}
     enableDebugLog: 1
   enableDebugLog: 1
-  wallBeHitPlayer: {fileID: 0}
+  wallBeHitPlayer: {fileID: 296282128}
 --- !u!114 &1158436820
 MonoBehaviour:
   m_ObjectHideFlags: 0

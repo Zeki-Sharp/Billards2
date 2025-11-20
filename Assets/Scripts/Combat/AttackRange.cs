@@ -261,23 +261,58 @@ public class AttackRange : MonoBehaviour
             
             // 先用球形检测获取候选目标（快速）
             Collider[] candidateColliders = Physics.OverlapSphere(center, radius, playerLayerMask, QueryTriggerInteraction.Ignore);
+
+            if (showDebugInfo)
+            {
+                Debug.Log($"【攻击范围检测】{name}: OverlapSphere center={center}, radius={radius:F2}, 候选数={candidateColliders.Length}");
+            }
             
-            // 对每个候选目标，检查是否在MeshCollider的bounds内
+            // 对每个候选目标，检查是否与攻击范围碰撞体有实际重叠
             foreach (var candidateCollider in candidateColliders)
             {
                 if (candidateCollider != null && candidateCollider.CompareTag("Player"))
                 {
-                    // 检查目标是否在MeshCollider的bounds内
-                    if (attackCollider3D.bounds.Contains(candidateCollider.transform.position))
+                    // 统一使用挂有 PlayerBehavior 的根对象作为伤害目标，避免命中玩家子节点导致无法扣血
+                    GameObject targetGO = null;
+                    var playerBehavior = candidateCollider.GetComponentInParent<PlayerBehavior>();
+                    if (playerBehavior != null)
                     {
-                        targets.Add(candidateCollider.gameObject);
+                        targetGO = playerBehavior.gameObject;
+                    }
+                    else
+                    {
+                        // 回退：直接使用碰撞到的这个 GameObject
+                        targetGO = candidateCollider.gameObject;
+                    }
+
+                    Vector3 targetPos = targetGO.transform.position;
+                    
+                    // 原来的逻辑：只要玩家“中心点”在 bounds 内才算命中，太严格
+                    bool centerInsideBounds = attackCollider3D.bounds.Contains(targetPos);
+                    
+                    // 更合理的逻辑：只要两个碰撞体的 bounds 有重叠，就认为在范围内
+                    bool boundsOverlap = attackCollider3D.bounds.Intersects(candidateCollider.bounds);
+
+                    if (showDebugInfo)
+                    {
+                        Debug.Log(
+                            $"【攻击范围检测】{name}: 检查 collider={candidateCollider.name}, 目标={targetGO.name}, 位置={targetPos}, " +
+                            $"中心在bounds内={centerInsideBounds}, bounds重叠={boundsOverlap}");
+                    }
+
+                    if (boundsOverlap)
+                    {
+                        if (!targets.Contains(targetGO))
+                        {
+                            targets.Add(targetGO);
+                        }
                     }
                 }
             }
             
-            if (showDebugInfo && targets.Count > 0)
+            if (showDebugInfo)
             {
-                Debug.Log($"【攻击范围检测】{name}: 检测到 {targets.Count} 个目标");
+                Debug.Log($"【攻击范围检测】{name}: 最终命中目标数={targets.Count}");
             }
         }
         catch (System.Exception e)
