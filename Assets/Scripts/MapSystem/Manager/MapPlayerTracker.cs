@@ -116,7 +116,7 @@ namespace Map
             // 根据层级确定场景名称
             // Layer 0 使用 3D 版第一关，其余保持原有命名约定：
             // Layer 0 → Level1_3D, Layer 1 → Level2, ..., Layer 4 → Level5
-            string sceneName = layer == 0 ? "Level1_3D" : $"Level{layer + 1}";
+            string sceneName = layer == 0 ? "Level1" : $"Level{layer + 1}";
             
             Debug.Log($"MapPlayerTracker: 加载战斗场景 - {sceneName} (Layer {layer}, NodeType: {mapNode.Node.nodeType})");
             

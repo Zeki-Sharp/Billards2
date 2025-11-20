@@ -7,7 +7,8 @@ using MoreMountains.Feedbacks;
 /// </summary>
 public class RangedAttackBehavior : BaseAttackBehavior
 {
-    private Vector2 projectedPosition; // 保存投射位置
+    // ⚠️ 注意：投射逻辑基于 XZ 平面（地面），但需要完整的 3D 世界坐标来放置 AttackRange
+    private Vector3 projectedPosition; // 保存投射位置（世界坐标，Y 与敌人相同）
     private Vector3 originalLocalPosition; // 保存原始本地位置
     private ParabolicIndicator parabolicIndicator; // 抛物线指示器
     
@@ -29,8 +30,9 @@ public class RangedAttackBehavior : BaseAttackBehavior
         // 保存原始本地位置（用于恢复）
         originalLocalPosition = attackRange.transform.localPosition;
         
-        // 计算投射位置（世界坐标）
-        projectedPosition = CalculateProjectionPosition(enemyTransform.position, playerTransform.position, levelConfig.rangedConfig);
+        // 计算投射位置（XZ 平面）并映射到世界坐标（保持与敌人相同的 Y 高度）
+        Vector2 projectedXZ = CalculateProjectionPositionXZ(enemyTransform.position, playerTransform.position, levelConfig.rangedConfig);
+        projectedPosition = new Vector3(projectedXZ.x, enemyTransform.position.y, projectedXZ.y);
         
         // 直接使用世界坐标定位落点（不改变父子关系）
         attackRange.transform.position = projectedPosition;
@@ -123,10 +125,14 @@ public class RangedAttackBehavior : BaseAttackBehavior
     }
     
     /// <summary>
-    /// 计算投射位置
+    /// 计算投射位置（XZ 平面上的 2D 坐标，x=x, y=z）
     /// </summary>
-    private Vector2 CalculateProjectionPosition(Vector2 enemyPosition, Vector2 playerPosition, RangedAttackConfig config)
+    private Vector2 CalculateProjectionPositionXZ(Vector3 enemyPosition3D, Vector3 playerPosition3D, RangedAttackConfig config)
     {
+        // 将 3D 位置映射到 XZ 平面上的 2D 坐标
+        Vector2 enemyPosition = new Vector2(enemyPosition3D.x, enemyPosition3D.z);
+        Vector2 playerPosition = new Vector2(playerPosition3D.x, playerPosition3D.z);
+        
         // 方向（敌人 -> 玩家）
         Vector2 directionToPlayer = (playerPosition - enemyPosition).normalized;
         
@@ -136,7 +142,7 @@ public class RangedAttackBehavior : BaseAttackBehavior
         float clampedDistance = Mathf.Clamp(rawDesiredDistance, 0f, config.detectionRange);
         
         // 基础落点：从敌人位置沿方向前进 clampedDistance
-        Vector2 basePosition = (Vector2)enemyPosition + directionToPlayer * clampedDistance;
+        Vector2 basePosition = enemyPosition + directionToPlayer * clampedDistance;
         
         // 添加随机偏移
         if (config.useRandomOffset)
@@ -145,11 +151,11 @@ public class RangedAttackBehavior : BaseAttackBehavior
             basePosition += randomOffset;
             
             // 偏移后再次限制到最大可投射圆内
-            Vector2 fromEnemy = basePosition - (Vector2)enemyPosition;
+            Vector2 fromEnemy = basePosition - enemyPosition;
             float afterOffsetDistance = fromEnemy.magnitude;
             if (afterOffsetDistance > config.detectionRange)
             {
-                basePosition = (Vector2)enemyPosition + fromEnemy.normalized * config.detectionRange;
+                basePosition = enemyPosition + fromEnemy.normalized * config.detectionRange;
             }
         }
         
