@@ -169,12 +169,12 @@ public class PlayerAttackManager : MonoBehaviour
         cachedLaunchPos = launchPos;
         cachedFirstCollisionPos = firstCollisionPos;
         
-        // ✅ 新伤害系统：发布停止事件（带轨迹数据）
-        StoppedEvent stoppedEvent = StoppedEvent.CreateWithTrajectory(
-            gameObject, 
-            ballPosition, 
-            launchPos, 
-            firstCollisionPos
+        // ✅ 新伤害系统：发布停止事件（带轨迹数据 + 3D 坐标）
+        StoppedEvent stoppedEvent = StoppedEvent.CreateWithTrajectory3D(
+            gameObject,
+            ballPosition,
+            Convert2DTo3D(launchPos, ballPosition.y),
+            Convert2DTo3D(firstCollisionPos, ballPosition.y)
         );
         GameEventBus.PublishStopped(stoppedEvent);
         
@@ -377,6 +377,16 @@ public class PlayerAttackManager : MonoBehaviour
             currentAreaCircle = null;
             Debug.Log("[PlayerAttackManager] 隐藏范围圈");
         }
+    }
+    
+    #endregion
+    
+    #region 辅助方法
+    
+    private Vector3? Convert2DTo3D(Vector2? value, float y)
+    {
+        if (!value.HasValue) return null;
+        return new Vector3(value.Value.x, y, value.Value.y);
     }
     
     #endregion

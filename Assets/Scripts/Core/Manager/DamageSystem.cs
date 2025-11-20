@@ -388,8 +388,9 @@ public class DamageSystem : SingletonManager<DamageSystem>
             Debug.Log($"[DamageSystem] 规则 '{rule.ruleName}' 使用攻击范围: {range}");
         }
         
-        // 使用 Physics2D.OverlapCircleAll 检测范围内的目标
-        Collider2D[] colliders = Physics2D.OverlapCircleAll(evt.StoppedPosition, range);
+        Vector3 center3D = evt.StoppedPosition3D ?? new Vector3(evt.StoppedPosition.x, 0f, evt.StoppedPosition.y);
+        
+        Collider[] colliders = Physics.OverlapSphere(center3D, range, ~0, QueryTriggerInteraction.Ignore);
         
         foreach (var collider in colliders)
         {
@@ -407,13 +408,25 @@ public class DamageSystem : SingletonManager<DamageSystem>
                 if (!evt.Source.CompareTag(rule.sourceTag)) continue;
             }
             
-            // 创建模拟的碰撞事件用于伤害计算
+            // 只检测地面投影距离是否在范围内（忽略高度差）
+            Vector3 targetPos = collider.bounds.center;
+            Vector3 planarDelta = targetPos - center3D;
+            planarDelta.y = 0f;
+            if (planarDelta.sqrMagnitude > range * range) continue;
+            
+            Vector3 contactPoint3D = collider.ClosestPoint(center3D);
+            Vector2 contactPoint2D = new Vector2(contactPoint3D.x, contactPoint3D.z);
+            Vector2 contactNormal2D = planarDelta.sqrMagnitude > Mathf.Epsilon
+                ? new Vector2(planarDelta.x, planarDelta.z).normalized
+                : Vector2.zero;
+            
             CollisionEvent collisionEvt = new CollisionEvent
             {
                 Source = evt.Source,
                 Target = target,
-                ContactPoint = evt.StoppedPosition,
-                ContactNormal = (target.transform.position - (Vector3)evt.StoppedPosition).normalized,
+                ContactPoint = contactPoint2D,
+                ContactPoint3D = contactPoint3D,
+                ContactNormal = contactNormal2D,
                 Velocity = 0f,
                 CollisionTime = evt.StoppedTime
             };
@@ -489,10 +502,11 @@ public class DamageSystem : SingletonManager<DamageSystem>
             return;
         }
         
-        // 获取三角形三个顶点
+        // 获取三角形三个顶点（XZ 平面）
         Vector2 p1 = evt.LaunchPosition.Value;      // 起点
         Vector2 p2 = evt.FirstCollisionPoint.Value; // 第一碰撞点
         Vector2 p3 = evt.StoppedPosition;           // 终点
+        float centerY = evt.StoppedPosition3D?.y ?? 0f;
         
         // 验证三角形有效性
         if (!IsValidTriangle(p1, p2, p3, out float area))
@@ -517,8 +531,10 @@ public class DamageSystem : SingletonManager<DamageSystem>
         Vector2 boxCenter = new Vector2((minX + maxX) / 2, (minY + maxY) / 2);
         Vector2 boxSize = new Vector2(maxX - minX, maxY - minY);
         
-        // 粗筛选：使用包围盒检测所有可能的目标
-        Collider2D[] colliders = Physics2D.OverlapBoxAll(boxCenter, boxSize, 0f);
+        Vector3 boxCenter3D = new Vector3(boxCenter.x, centerY, boxCenter.y);
+        Vector3 halfExtents = new Vector3(Mathf.Max(boxSize.x / 2f, 0.1f), 2f, Mathf.Max(boxSize.y / 2f, 0.1f));
+        
+        Collider[] colliders = Physics.OverlapBox(boxCenter3D, halfExtents, Quaternion.identity, ~0, QueryTriggerInteraction.Ignore);
         
         if (enableDebugLog)
         {
@@ -549,8 +565,10 @@ public class DamageSystem : SingletonManager<DamageSystem>
                 if (!evt.Source.CompareTag(rule.sourceTag)) continue;
             }
             
-            // 精确检测：判断碰撞体是否与三角形区域相交
-            if (!IsColliderIntersectTriangle(collider, p1, p2, p3))
+            Vector2 targetPos2D = new Vector2(collider.bounds.center.x, collider.bounds.center.z);
+            
+            // 精确检测：判断碰撞体是否在三角形区域内
+            if (!IsPointInTriangle(targetPos2D, p1, p2, p3))
             {
                 if (showRuleMatching)
                 {
@@ -561,20 +579,22 @@ public class DamageSystem : SingletonManager<DamageSystem>
             
             hitCount++;
             
-            Vector2 targetPos = target.transform.position;
+            Vector3 contactPoint3D = collider.ClosestPoint(boxCenter3D);
+            Vector2 contactPoint2D = new Vector2(contactPoint3D.x, contactPoint3D.z);
+            Vector2 contactNormal2D = (targetPos2D - p3).normalized;
             
             if (enableDebugLog)
             {
                 Debug.Log($"[DamageSystem] ✅ {target.name} 在三角形内，准备造成伤害");
             }
             
-            // 创建模拟的碰撞事件用于伤害计算
             CollisionEvent collisionEvt = new CollisionEvent
             {
                 Source = evt.Source,
                 Target = target,
-                ContactPoint = targetPos,
-                ContactNormal = (targetPos - evt.StoppedPosition).normalized,
+                ContactPoint = contactPoint2D,
+                ContactPoint3D = contactPoint3D,
+                ContactNormal = contactNormal2D,
                 Velocity = 0f,
                 CollisionTime = evt.StoppedTime
             };
@@ -614,59 +634,6 @@ public class DamageSystem : SingletonManager<DamageSystem>
         // 面积阈值：小于0.1的三角形视为无效（三点接近共线）
         const float MIN_AREA = 0.1f;
         return area >= MIN_AREA;
-    }
-    
-    /// <summary>
-    /// 判断碰撞体是否与三角形区域相交
-    /// </summary>
-    /// <param name="collider">目标碰撞体</param>
-    /// <param name="p1">三角形顶点1</param>
-    /// <param name="p2">三角形顶点2</param>
-    /// <param name="p3">三角形顶点3</param>
-    /// <returns>是否相交</returns>
-    private bool IsColliderIntersectTriangle(Collider2D collider, Vector2 p1, Vector2 p2, Vector2 p3)
-    {
-        // 策略：检查碰撞体的多个采样点是否有任何一个在三角形内
-        // 这样可以处理各种形状的碰撞体（圆形、方形、多边形等）
-        
-        Vector2 center = collider.bounds.center;
-        float radius = Mathf.Max(collider.bounds.extents.x, collider.bounds.extents.y);
-        
-        // 1. 检查碰撞体中心点
-        if (IsPointInTriangle(center, p1, p2, p3))
-        {
-            return true;
-        }
-        
-        // 2. 检查碰撞体边界的8个采样点（上下左右 + 四个角）
-        Vector2[] samplePoints = new Vector2[]
-        {
-            center + new Vector2(radius, 0),        // 右
-            center + new Vector2(-radius, 0),       // 左
-            center + new Vector2(0, radius),        // 上
-            center + new Vector2(0, -radius),       // 下
-            center + new Vector2(radius, radius),   // 右上
-            center + new Vector2(-radius, radius),  // 左上
-            center + new Vector2(radius, -radius),  // 右下
-            center + new Vector2(-radius, -radius)  // 左下
-        };
-        
-        foreach (var point in samplePoints)
-        {
-            if (IsPointInTriangle(point, p1, p2, p3))
-            {
-                return true;
-            }
-        }
-        
-        // 3. 检查三角形的三个顶点是否在碰撞体内（反向检测）
-        if (collider.OverlapPoint(p1) || collider.OverlapPoint(p2) || collider.OverlapPoint(p3))
-        {
-            return true;
-        }
-        
-        // 如果所有检测都不通过，认为不相交
-        return false;
     }
     
     /// <summary>

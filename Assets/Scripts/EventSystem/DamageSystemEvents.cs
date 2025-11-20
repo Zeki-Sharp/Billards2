@@ -140,13 +140,20 @@ public struct CollisionEvent
 public struct StoppedEvent
 {
     public GameObject Source;           // 停止的对象（玩家）
-    public Vector2 StoppedPosition;     // 停止位置
+    public Vector2 StoppedPosition;     // 停止位置（2D 投影，兼容旧逻辑）
     public float StoppedTime;           // 停止时间戳
+    
+    // ✅ 3D 扩展：真实世界坐标
+    public Vector3? StoppedPosition3D;
     
     // 【三角形攻击】轨迹数据（可选）
     public Vector2? LaunchPosition;     // 发射起点（nullable）
     public Vector2? FirstCollisionPoint; // 第一碰撞点（nullable）
     public bool HasCollision;           // 是否发生碰撞
+    
+    // ✅ 3D 扩展：真实轨迹
+    public Vector3? LaunchPosition3D;
+    public Vector3? FirstCollisionPoint3D;
     
     /// <summary>
     /// 创建停止事件（简单版本，向后兼容）
@@ -160,7 +167,10 @@ public struct StoppedEvent
             StoppedTime = Time.time,
             LaunchPosition = null,
             FirstCollisionPoint = null,
-            HasCollision = false
+            HasCollision = false,
+            StoppedPosition3D = null,
+            LaunchPosition3D = null,
+            FirstCollisionPoint3D = null
         };
     }
     
@@ -180,7 +190,33 @@ public struct StoppedEvent
             StoppedTime = Time.time,
             LaunchPosition = launchPos,
             FirstCollisionPoint = firstCollisionPos,
-            HasCollision = firstCollisionPos.HasValue
+            HasCollision = firstCollisionPos.HasValue,
+            StoppedPosition3D = null,
+            LaunchPosition3D = null,
+            FirstCollisionPoint3D = null
+        };
+    }
+    
+    /// <summary>
+    /// ✅ 3D 版本：记录真实的 3D 坐标
+    /// </summary>
+    public static StoppedEvent CreateWithTrajectory3D(
+        GameObject source,
+        Vector3 stoppedPos3D,
+        Vector3? launchPos3D,
+        Vector3? firstCollisionPos3D)
+    {
+        return new StoppedEvent
+        {
+            Source = source,
+            StoppedPosition = new Vector2(stoppedPos3D.x, stoppedPos3D.z),
+            StoppedTime = Time.time,
+            LaunchPosition = launchPos3D.HasValue ? new Vector2(launchPos3D.Value.x, launchPos3D.Value.z) : (Vector2?)null,
+            FirstCollisionPoint = firstCollisionPos3D.HasValue ? new Vector2(firstCollisionPos3D.Value.x, firstCollisionPos3D.Value.z) : (Vector2?)null,
+            HasCollision = firstCollisionPos3D.HasValue,
+            StoppedPosition3D = stoppedPos3D,
+            LaunchPosition3D = launchPos3D,
+            FirstCollisionPoint3D = firstCollisionPos3D
         };
     }
 }
