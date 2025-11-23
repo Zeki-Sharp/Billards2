@@ -407,10 +407,10 @@ MonoBehaviour:
         DebugActive: 0
         TargetRenderer: {fileID: 8857550894429055542}
         ExtraTargetRenderers: []
-        MaterialID: 0
-        PropertyName: _FlashAmount
-        PropertyType: 1
-        NewColor: {r: 1, g: 0, b: 0, a: 1}
+        MaterialID: 1
+        PropertyName: _BaseColor
+        PropertyType: 0
+        NewColor: {r: 1, g: 1, b: 1, a: 1}
         NewFloat: 1
         NewInt: 0
         NewTexture: {fileID: 0}
@@ -418,7 +418,7 @@ MonoBehaviour:
         NewScale: {x: 0, y: 0}
         NewVector: {x: 0, y: 0, z: 0, w: 0}
         InterpolateValue: 1
-        Duration: 0.3
+        Duration: 0.2
         InterpolationCurve:
           MMTweenDefinitionType: 1
           MMTweenCurve: 4
@@ -428,15 +428,15 @@ MonoBehaviour:
             - serializedVersion: 3
               time: 0
               value: 0
-              inSlope: 3.4815001
-              outSlope: 3.4815001
+              inSlope: 3.5367417
+              outSlope: 3.5367417
               tangentMode: 34
               weightedMode: 0
               inWeight: 0
               outWeight: 0.33333334
             - serializedVersion: 3
-              time: 0.28544745
-              value: 0.9937853
+              time: 0.2788404
+              value: 0.98618644
               inSlope: 0.17126699
               outSlope: 0.17126699
               tangentMode: 0
@@ -11842,6 +11842,7 @@ MeshRenderer:
   m_RendererPriority: 0
   m_Materials:
   - {fileID: 2100000, guid: 74117f645ca87544896e430b75e9a316, type: 2}
+  - {fileID: 2100000, guid: 0193588091737e941ae7e44fbd33c004, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0

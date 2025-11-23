@@ -47,55 +47,9 @@ public struct CollisionEvent
     
     // ✅ 3D扩展：真实的3D碰撞点（可选，用于特效定位）
     public Vector3? ContactPoint3D;     // 3D碰撞点（nullable，如果为null则使用ContactPoint）
-    
+
     /// <summary>
-    /// 创建碰撞事件（物理碰撞）
-    /// </summary>
-    public static CollisionEvent Create(GameObject source, Collision2D collision)
-    {
-        Rigidbody2D rb = source.GetComponent<Rigidbody2D>();
-        
-        // ✅ 修复：使用实际碰撞的 Collider 的 GameObject
-        // collision.gameObject 返回有 Rigidbody2D 的父级（如 EnemyItem）
-        // collision.collider.gameObject 返回实际碰撞的 Collider 所属的 GameObject（如 AttackRange/Image）
-        GameObject targetObject = collision.collider != null ? collision.collider.gameObject : collision.gameObject;
-        
-        return new CollisionEvent
-        {
-            Source = source,
-            Target = targetObject,  // ✅ 使用实际碰撞的 Collider 的 GameObject
-            ContactPoint = collision.contacts.Length > 0 ? collision.contacts[0].point : Vector2.zero,
-            ContactPoint3D = null,  // 2D碰撞没有3D点
-            ContactNormal = collision.contacts.Length > 0 ? collision.contacts[0].normal : Vector2.zero,
-            Velocity = rb != null ? rb.linearVelocity.magnitude : 0f,
-            CollisionTime = Time.time
-        };
-    }
-    
-    /// <summary>
-    /// 从 Trigger 碰撞创建碰撞事件（2D版本，保留向后兼容）
-    /// 用于 OnTriggerEnter2D 的场景（如 AttackRange）
-    /// </summary>
-    public static CollisionEvent CreateFromTrigger(GameObject source, Collider2D targetCollider)
-    {
-        Rigidbody2D rb = source.GetComponent<Rigidbody2D>();
-        Vector2 sourcePos = source.transform.position;
-        Vector2 targetPos = targetCollider.transform.position;
-        
-        return new CollisionEvent
-        {
-            Source = source,
-            Target = targetCollider.gameObject,
-            ContactPoint = targetCollider.ClosestPoint(sourcePos),
-            ContactPoint3D = null,  // 2D碰撞没有3D点
-            ContactNormal = (sourcePos - targetPos).normalized,
-            Velocity = rb != null ? rb.linearVelocity.magnitude : 0f,
-            CollisionTime = Time.time
-        };
-    }
-    
-    /// <summary>
-    /// 从 Trigger 碰撞创建碰撞事件（3D版本）
+    /// ✅ 3D适配：从 Trigger 碰撞创建碰撞事件
     /// 用于 OnTriggerEnter 的场景（如 AttackRange 3D化后）
     /// </summary>
     public static CollisionEvent CreateFromTrigger(GameObject source, Collider targetCollider)

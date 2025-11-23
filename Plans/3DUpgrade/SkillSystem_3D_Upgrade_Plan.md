@@ -388,25 +388,21 @@
 
 #### CollisionEvent.CreateFromTrigger (2D版本)
 - **文件**：`Assets/Scripts/EventSystem/DamageSystemEvents.cs`
-- **方法**：`CreateFromTrigger(GameObject source, Collider2D targetCollider)`
-- **状态**：保留用于 2D 场景的向后兼容
-- **注释**：`// 从 Trigger 碰撞创建碰撞事件（2D版本，保留向后兼容）`
-- **保留原因**：支持旧的 2D 碰撞检测代码（如 `PlayerBehavior.OnTriggerEnter2D`）
-- **使用位置**：第 79 行
+- **状态**：✅ **已清理** - 已移除，现在只使用 3D 版本
+- **清理原因**：所有使用处都已迁移到 3D 版本（`Collider`），不再需要 2D 版本
+- **清理时间**：2024年（3D升级阶段）
 
 #### CollisionEvent.Create (2D版本)
 - **文件**：`Assets/Scripts/EventSystem/DamageSystemEvents.cs`
-- **方法**：`Create(GameObject source, Collision2D collision)`
-- **状态**：保留用于 2D 场景的向后兼容
-- **保留原因**：支持旧的 2D 物理碰撞代码
-- **使用位置**：第 54 行
+- **状态**：✅ **已清理** - 已移除，未被使用
+- **清理原因**：代码库中没有任何地方调用此方法
+- **清理时间**：2024年（3D升级阶段）
 
 #### PlayerBehavior.OnTriggerEnter2D
 - **文件**：`Assets/Scripts/Player/Core/PlayerBehavior.cs`
-- **方法**：`void OnTriggerEnter2D(Collider2D other)`
-- **状态**：保留用于 2D 碰撞检测
-- **保留原因**：玩家碰撞检测仍使用 2D 触发器
-- **使用位置**：第 403 行
+- **状态**：✅ **已清理** - 已移除
+- **清理原因**：架构问题，玩家触发器不应该被动响应敌人攻击范围（已由敌人系统主动处理）
+- **清理时间**：2024年（3D升级阶段）
 
 ### 8.7 总结
 
@@ -419,6 +415,9 @@
 - ✅ `SkillManager.HandleBallStoppedEvent()` - 已移除，现在只使用 `HandleStoppedEvent(StoppedEvent)`
 - ✅ `MovingEndTrigger` 的 `BallPhysics` 后备方案 - 已移除，现在只使用 `StoppedEvent`
 - ✅ `SkillArgs.GetStoppedPosition3D()` 中的 `BallPhysics` 后备方案 - 已移除，现在只使用 `StoppedEvent`
+- ✅ `CollisionEvent.Create(Collision2D)` - 已移除，未被使用
+- ✅ `CollisionEvent.CreateFromTrigger(Collider2D)` - 已移除，现在只使用 3D 版本
+- ✅ `PlayerBehavior.OnTriggerEnter2D` - 已移除，架构问题
 
 #### 待修复的 2D 残留（弱点系统相关，暂不处理）
 - 🔴 `WeakPointData.GetLocalPosition()` - 应改为 `Vector3` 或明确注释为 XZ 平面
@@ -427,9 +426,7 @@
 
 #### 保留的向后兼容代码
 - ✅ 事件数据结构中的 `Vector2` 字段（用于逻辑计算，XZ 平面投影）
-- ✅ `CollisionEvent` 的 2D 创建方法
 - ✅ `SkillArgs.GetHitPositionXZ()` 方法（用于逻辑计算）
-- ✅ `PlayerBehavior.OnTriggerEnter2D`（2D 碰撞检测）
 
 #### 建议
 1. **短期**：为所有 `Vector2` 使用处添加明确注释（XY 平面或 XZ 平面）

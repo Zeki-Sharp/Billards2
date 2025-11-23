@@ -119,20 +119,21 @@ public class DeathManager : SingletonManager<DeathManager>
         Vector3 deathPosition = ballObject.transform.position;
         ballObject.PublishDeath("PlayerDeath", deathPosition, null);
         
-        // 第2步 - 禁用物理（停止移动）
-        var rigidbody = ballObject.GetComponent<Rigidbody2D>();
-        if (rigidbody != null)
+        // 第2步 - 停止 BallPhysics 的几何模拟（如果存在）
+        // ✅ 3D适配：系统使用几何模拟，Rigidbody 是 kinematic，不参与运动计算
+        var ballPhysics = ballObject.GetComponent<BallPhysics>();
+        if (ballPhysics != null)
         {
-            rigidbody.linearVelocity = Vector2.zero;
-            rigidbody.angularVelocity = 0f;
-            rigidbody.simulated = false;  // 完全禁用物理模拟
+            // 重置球体状态，停止几何模拟
+            ballPhysics.ResetBallState();
         }
         
         // 第3步 - 禁用碰撞器（避免死亡后仍然碰撞）
-        var collider = ballObject.GetComponent<Collider2D>();
-        if (collider != null)
+        // ✅ 3D适配：系统使用 3D 碰撞器（Collider）
+        var collider3D = ballObject.GetComponent<Collider>();
+        if (collider3D != null)
         {
-            collider.enabled = false;
+            collider3D.enabled = false;
         }
         
         if (showDebugLog)

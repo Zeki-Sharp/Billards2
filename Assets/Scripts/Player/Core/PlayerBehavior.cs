@@ -287,8 +287,6 @@ public class PlayerBehavior : MonoBehaviour, IDamageable
         return ballPhysics != null && ballPhysics.IsMoving();
     }
     
-    // ⚠️ 多角色系统改造：IsMoving() 方法已废弃
-    // WASD移动功能已移除，不再需要此方法
     
     #endregion
     
@@ -347,19 +345,13 @@ public class PlayerBehavior : MonoBehaviour, IDamageable
         // 触发发射特效事件
         gameObject.PublishEffect("Launch", transform.position, direction);
         
-        // 使用 BallPhysics 的发射方法
+        // ✅ 3D适配：使用 BallPhysics 的发射方法
+        // 系统使用几何模拟，Rigidbody 是 kinematic，不参与运动计算
         float launchSpeed = force;
         Vector2 velocity = direction.normalized * launchSpeed;
         
-        // 直接设置刚体速度
-        if (ballPhysics.GetComponent<Rigidbody2D>() != null)
-        {
-            ballPhysics.GetComponent<Rigidbody2D>().linearVelocity = velocity;
-        }
-        else
-        {
-            ballPhysics.SetVelocity(velocity);
-        }
+        // 使用 BallPhysics 的统一接口设置速度（几何模拟）
+        ballPhysics.SetVelocity(velocity);
     }
     
     #endregion
@@ -395,16 +387,6 @@ public class PlayerBehavior : MonoBehaviour, IDamageable
                 ballPhysics.ApplyForce(wallBoostForce);
             }
         }
-    }
-    
-    /// <summary>
-    /// 处理 Trigger 碰撞（如敌人攻击范围、陷阱等）
-    /// </summary>
-    void OnTriggerEnter2D(Collider2D other)
-    {
-        // 发布 Trigger 碰撞事件
-        // 注意：source 是玩家，target 是触碰到的 Trigger（如 AttackRange）
-        GameEventBus.PublishCollision(CollisionEvent.CreateFromTrigger(gameObject, other));
     }
     
     /// <summary>

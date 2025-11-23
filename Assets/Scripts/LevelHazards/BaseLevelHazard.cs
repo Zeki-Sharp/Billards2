@@ -71,61 +71,6 @@ public abstract class BaseLevelHazard : MonoBehaviour
     
     #endregion
     
-    #region 碰撞检测
-    
-    /// <summary>
-    /// Trigger 模式：进入触发器（Collider.isTrigger = true 时触发）
-    /// </summary>
-    void OnTriggerEnter2D(Collider2D other)
-    {
-        HandleCollision(other.gameObject);
-    }
-    
-    /// <summary>
-    /// Collision 模式：发生碰撞（Collider.isTrigger = false 时触发）
-    /// </summary>
-    void OnCollisionEnter2D(Collision2D collision)
-    {
-        HandleCollision(collision.gameObject);
-    }
-    
-    /// <summary>
-    /// 处理碰撞逻辑
-    /// </summary>
-    void HandleCollision(GameObject collidedObject)
-    {
-        // 1. 检查是否是有效目标
-        if (!IsValidTarget(collidedObject))
-        {
-            return;
-        }
-        
-        // 2. 检查冷却时间
-        if (!CanTrigger())
-        {
-            if (showDebugInfo)
-            {
-                Debug.Log($"[{GetType().Name}] {collidedObject.name} 触发冷却中，忽略");
-            }
-            return;
-        }
-        
-        // 3. 更新冷却时间
-        lastTriggerTime = Time.time;
-        
-        // 4. 播放触发特效（如果配置了）
-        PlayHazardEffect();
-        
-        // 5. 调用子类实现的具体逻辑
-        if (showDebugInfo)
-        {
-            Debug.Log($"[{GetType().Name}] {collidedObject.name} 触发障碍物！");
-        }
-        
-        OnHazardTriggered(collidedObject);
-    }
-    
-    #endregion
     
     #region 虚方法（子类重写）
     

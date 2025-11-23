@@ -81,9 +81,6 @@ public class AttackRange : MonoBehaviour
         // AttackRange不再订阅阶段事件
     }
     
-    // ⚠️ 不使用 OnTriggerEnter2D 被动检测
-    // 改为在 Attack 阶段主动调用 GetTargetsInRange() 检测
-    // 这样可以确保只在 Attack 阶段造成伤害，而不是 Telegraph 阶段
     
     /// <summary>
     /// 显示预告（由Enemy调用）
