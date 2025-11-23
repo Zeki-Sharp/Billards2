@@ -475,7 +475,7 @@ MonoBehaviour:
         DebugActive: 0
         TargetRenderer: {fileID: 4372155668155967635}
         ExtraTargetRenderers: []
-        MaterialID: 0
+        MaterialID: 1
         PropertyName: _BaseColor
         PropertyType: 0
         NewColor: {r: 63.999996, g: 63.999996, b: 63.999996, a: 1}

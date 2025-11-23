@@ -367,7 +367,7 @@
 - **清理原因**：`OnStopped` 事件已稳定，不再需要 `OnBallStopped` 后备方案
 - **清理时间**：2024年（3D升级阶段）
 
-### 8.5 SkillArgs 中的 2D 方法（向后兼容）
+### 8.5 SkillArgs 中的方法
 
 #### GetHitPositionXZ()
 - **文件**：`Assets/Scripts/SkillSystem/Core/SkillArgs.cs`
@@ -376,6 +376,13 @@
 - **保留原因**：某些逻辑计算可能仍需要 2D 投影
 - **推荐**：需要 3D 位置时使用 `GetHitPosition3D()` 替代
 - **注释位置**：第 234-241 行
+
+#### GetStoppedPosition3D()
+- **文件**：`Assets/Scripts/SkillSystem/Core/SkillArgs.cs`
+- **状态**：✅ **已清理** - 已移除 `BallPhysics` 后备方案，现在只使用 `StoppedEvent`
+- **清理内容**：移除了 `TryGetEventData<BallPhysics>` 的后备检查
+- **清理原因**：`SkillManager` 和 `MovingEndTrigger` 已只使用 `StoppedEvent`，不再需要 `BallPhysics` 后备
+- **清理时间**：2024年（3D升级阶段）
 
 ### 8.6 其他遗留代码
 
@@ -411,6 +418,7 @@
 #### 已清理的向后兼容代码
 - ✅ `SkillManager.HandleBallStoppedEvent()` - 已移除，现在只使用 `HandleStoppedEvent(StoppedEvent)`
 - ✅ `MovingEndTrigger` 的 `BallPhysics` 后备方案 - 已移除，现在只使用 `StoppedEvent`
+- ✅ `SkillArgs.GetStoppedPosition3D()` 中的 `BallPhysics` 后备方案 - 已移除，现在只使用 `StoppedEvent`
 
 #### 待修复的 2D 残留（弱点系统相关，暂不处理）
 - 🔴 `WeakPointData.GetLocalPosition()` - 应改为 `Vector3` 或明确注释为 XZ 平面
@@ -419,7 +427,6 @@
 
 #### 保留的向后兼容代码
 - ✅ 事件数据结构中的 `Vector2` 字段（用于逻辑计算，XZ 平面投影）
-- ✅ `SkillArgs.GetStoppedPosition3D()` 中的 `BallPhysics` 后备方案（工具方法，保留以增加健壮性）
 - ✅ `CollisionEvent` 的 2D 创建方法
 - ✅ `SkillArgs.GetHitPositionXZ()` 方法（用于逻辑计算）
 - ✅ `PlayerBehavior.OnTriggerEnter2D`（2D 碰撞检测）

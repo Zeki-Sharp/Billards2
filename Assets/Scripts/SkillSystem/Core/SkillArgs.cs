@@ -272,14 +272,14 @@ public class SkillArgs
     
     /// <summary>
     /// ✅ 3D适配：获取停止位置的真实3D坐标（用于范围技能）
-    /// 优先从 StoppedEvent.StoppedPosition3D 获取，如果没有则从 BallPhysics 获取
+    /// 从 StoppedEvent.StoppedPosition3D 获取，如果没有则从 XZ 投影重建
     /// 
     /// 【使用场景】：范围攻击、停球后效果等需要球停止位置的地方
     /// 【推荐】：所有基于 MovingEndTrigger 的效果都应该使用此方法获取位置
     /// </summary>
     public Vector3 GetStoppedPosition3D()
     {
-        // 优先从 StoppedEvent 获取
+        // 从 StoppedEvent 获取
         if (TryGetEventData<StoppedEvent>(out var stoppedEvent))
         {
             if (stoppedEvent.StoppedPosition3D.HasValue)
@@ -289,12 +289,6 @@ public class SkillArgs
             // 后备：从 XZ 投影重建（假设 Y=0，或从 Source 获取）
             float y = Source != null ? Source.transform.position.y : 0f;
             return new Vector3(stoppedEvent.StoppedPosition.x, y, stoppedEvent.StoppedPosition.y);
-        }
-        
-        // 后备：从 BallPhysics 获取
-        if (TryGetEventData<BallPhysics>(out var ballPhysics))
-        {
-            return ballPhysics.transform.position;
         }
         
         return Vector3.zero;
