@@ -67,8 +67,19 @@ public class EnemySpawner : BaseSpawner<EnemyData>
         }
         
         // ✅ position 已经是3D坐标 (x, y, z)，直接使用
-        // Y坐标会在BallPhysics.InitializePhysics()中通过AlignToGround()调整
+        // ✅ 地面对齐由 GroundAlignAnchor 组件在 Awake() 中自动处理
         GameObject enemyInstance = Instantiate(data.enemyContainerPrefab, position, Quaternion.identity, parent);
+        
+        // ✅ 确保有 GroundAlignAnchor 组件（如果没有则自动添加）
+        GroundAlignAnchor alignAnchor = enemyInstance.GetComponent<GroundAlignAnchor>();
+        if (alignAnchor == null)
+        {
+            alignAnchor = enemyInstance.AddComponent<GroundAlignAnchor>();
+            if (showDebugInfo)
+            {
+                Debug.Log($"EnemySpawner: 自动添加 GroundAlignAnchor 组件到 {enemyInstance.name}");
+            }
+        }
         
         if (showDebugInfo)
         {

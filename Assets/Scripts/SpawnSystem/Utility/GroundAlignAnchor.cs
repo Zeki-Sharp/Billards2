@@ -35,6 +35,7 @@ public class GroundAlignAnchor : MonoBehaviour
     private void Awake()
     {
         cachedCollider = GetComponent<Collider>();
+        
         if (alignOnAwake)
         {
             AlignToGround(enableDebugLog);
@@ -59,37 +60,56 @@ public class GroundAlignAnchor : MonoBehaviour
     
     public bool AlignToGround(bool logResult)
     {
+        bool shouldLog = logResult || enableDebugLog;
+        
         if (!TryGetFootWorldPosition(out Vector3 footWorldPosition))
         {
-            if (logResult || enableDebugLog)
+            if (shouldLog)
             {
                 Debug.LogWarning($"[GroundAlignAnchor] {name} 未能确定脚底位置（未设置 Foot Point 且无 Collider）", this);
             }
             return false;
         }
         
-        Vector3 rayOrigin = footWorldPosition + Vector3.up * RaycastLift;
+        // ✅ 计算脚底点的本地偏移和世界偏移（用于日志显示）
+        Vector3 footLocalOffset = Vector3.zero;
+        Vector3 footWorldOffset = Vector3.zero;
         
-        if (Physics.Raycast(rayOrigin, Vector3.down, out RaycastHit hit, raycastDistance, groundLayers, QueryTriggerInteraction.Ignore))
+        if (footPoint != null)
+        {
+            footLocalOffset = footPoint.localPosition;
+            footWorldOffset = transform.TransformVector(footLocalOffset);
+        }
+        else
+        {
+            footWorldOffset = footWorldPosition - transform.position;
+        }
+        
+        // ✅ 修复：从较高的位置向下打射线，确保能检测到地面
+        float rayStartY = Mathf.Max(footWorldPosition.y + RaycastLift, 1f);
+        Vector3 rayOrigin = new Vector3(footWorldPosition.x, rayStartY, footWorldPosition.z);
+        float rayDistance = rayStartY - footWorldPosition.y + raycastDistance;
+        
+        if (Physics.Raycast(rayOrigin, Vector3.down, out RaycastHit hit, rayDistance, groundLayers, QueryTriggerInteraction.Ignore))
         {
             Vector3 offset = transform.position - footWorldPosition;
             Vector3 newPosition = hit.point + offset + Vector3.up * additionalYOffset;
             transform.position = newPosition;
             
-            if (logResult || enableDebugLog)
+            if (shouldLog)
             {
                 Debug.Log($"[GroundAlignAnchor] {name} 对齐成功 -> {newPosition}", this);
             }
             return true;
         }
         
-        if (logResult || enableDebugLog)
+        if (shouldLog)
         {
-            Debug.LogWarning($"[GroundAlignAnchor] {name} 对齐失败：未检测到地面（LayerMask: {groundLayers})", this);
+            Debug.LogWarning($"[GroundAlignAnchor] {name} 对齐失败：未检测到地面 (LayerMask: {groundLayers.value})", this);
         }
         return false;
     }
-    
+     
     private void OnDrawGizmosSelected()
     {
         if (TryGetFootWorldPosition(out Vector3 footPos))

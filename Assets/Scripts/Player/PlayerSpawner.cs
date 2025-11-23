@@ -218,6 +218,17 @@ public class PlayerSpawner : MonoBehaviour
         // 设置球体名称（便于调试）
         ball.name = $"Player_{character.positionIndex}_{character.characterData.info.name}";
         
+        // ✅ 确保有 GroundAlignAnchor 组件（如果没有则自动添加）
+        GroundAlignAnchor alignAnchor = ball.GetComponent<GroundAlignAnchor>();
+        if (alignAnchor == null)
+        {
+            alignAnchor = ball.AddComponent<GroundAlignAnchor>();
+            if (showDebugInfo)
+            {
+                Debug.Log($"PlayerSpawner: 自动添加 GroundAlignAnchor 组件到 {ball.name}");
+            }
+        }
+        
         // 获取 Player 组件并设置数据和ID
         Player player = ball.GetComponent<Player>();
         if (player != null)

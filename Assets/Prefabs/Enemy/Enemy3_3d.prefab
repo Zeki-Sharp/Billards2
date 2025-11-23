@@ -5212,6 +5212,7 @@ GameObject:
   - component: {fileID: 3642708861815856102}
   - component: {fileID: 2471601874072905045}
   - component: {fileID: 4372155668155967635}
+  - component: {fileID: 7942296972120014573}
   m_Layer: 6
   m_Name: Enemy3_3d
   m_TagString: Enemy
@@ -5389,6 +5390,27 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
+--- !u!114 &7942296972120014573
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7420645124294310907}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 45fefd9250eeb59499ed326c2475756f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  footPoint: {fileID: 2939903601611894452}
+  raycastDistance: 2
+  groundLayers:
+    serializedVersion: 2
+    m_Bits: 512
+  additionalYOffset: 0
+  alignOnAwake: 1
+  alignInEditor: 0
+  enableDebugLog: 1
 --- !u!1 &8377161510496417323
 GameObject:
   m_ObjectHideFlags: 0

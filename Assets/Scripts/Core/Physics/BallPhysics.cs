@@ -40,10 +40,7 @@ public class BallPhysics : MonoBehaviour
     public bool showGeometryDebug = false;
     public Color geometryDebugRayColor = Color.cyan;
     
-    [Header("地面对齐")]
-    [Tooltip("脚底位置参考点（Transform）。如果设置，初始化时会向下检测地面，确保脚底贴地")]
-    [SerializeField]
-    private Transform footPositionRef;
+    // ✅ 地面对齐已迁移到 GroundAlignAnchor 组件，不再使用 footPositionRef
     
     // 几何模拟运行时状态（从 ballData 读取配置）
     private Vector3 geometryDirection = Vector3.forward;
@@ -643,44 +640,13 @@ public class BallPhysics : MonoBehaviour
         geometryIsMoving = geometrySpeed > geometryMinSpeedThreshold;
         geometryElapsedTime = 0f;
         
-        // ✅ 地面对齐：如果设置了脚底点，初始化时检测地面并调整Y位置
-        if (footPositionRef != null)
-        {
-            AlignToGround();
-        }
+        // ✅ 地面对齐已迁移到 GroundAlignAnchor 组件，在 Awake() 中自动执行
         
         isInitialized = true;
         Debug.Log($"BallPhysics initialized for {gameObject.name} (3D kinematic mode, geometrySphereRadius={geometrySphereRadius:F3})");
     }
     
-    /// <summary>
-    /// ✅ 地面对齐：计算物体应该的Y位置（2D的(x,y) -> 3D的(x,z,y)，其中z=脚底偏移）
-    /// </summary>
-    private void AlignToGround()
-    {
-        if (footPositionRef == null)
-        {
-            // 如果没有脚底点，保持当前位置（假设物体中心就是定位点）
-            Debug.LogWarning($"BallPhysics {gameObject.name}: 未设置 footPositionRef，无法对齐地面！");
-            return;
-        }
-        
-        // 计算脚底相对于物体中心的偏移（考虑缩放）
-        // 如果脚底点在本地坐标 (0, -z, 0)，则 footOffsetY = -z * scaleY
-        float footOffsetY = footPositionRef.localPosition.y * transform.lossyScale.y;
-        
-        // 如果脚底在本地 Y = -z，那么要让脚底在地面（Y=0），物体中心应该在 Y = z
-        // 例如：脚底在 localY = -0.5，要让脚底在 Y=0，则物体中心应该在 Y = 0.5
-        float groundY = 0f; // 地面在Y=0
-        float targetCenterY = groundY - footOffsetY; // 地面Y - 脚底偏移
-        
-        // 设置物体位置（只修改Y，保持XZ不变）
-        Vector3 currentPos = transform.position;
-        Vector3 newPos = new Vector3(currentPos.x, targetCenterY, currentPos.z);
-        transform.position = newPos;
-        
-        Debug.Log($"BallPhysics {gameObject.name}: 地面对齐 - 当前位置Y={currentPos.y:F3}, 脚底本地Y={footPositionRef.localPosition.y:F3}, 脚底偏移={footOffsetY:F3}, 目标中心Y={targetCenterY:F3}, 新位置={newPos}");
-    }
+    // ✅ AlignToGround() 方法已移除，地面对齐功能已迁移到 GroundAlignAnchor 组件
 
     
     
