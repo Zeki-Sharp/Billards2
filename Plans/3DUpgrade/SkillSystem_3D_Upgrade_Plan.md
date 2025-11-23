@@ -46,7 +46,7 @@
 
 ---
 
-### 🔴 问题 2：伤害事件生成仍默认 XY 投影
+### ✅ 问题 2：伤害事件生成仍默认 XY 投影（已修复）
 
 **问题描述**：
 - `CollectorStrikeEffect`、`PoisonStatus`、`BurningStatus` 等效果在构造 `DamageEvent` 时：
@@ -54,21 +54,15 @@
   - `HitDirection` 为 `Vector2`，未正确映射到 XZ 平面
   - 未填充 `HitPosition3D` 字段（虽然已存在）
 
-**影响范围**：
-- 伤害特效可能显示在错误位置（高度错误）
-- 后续基于伤害位置的判定（如范围伤害、状态扩散）可能失效
-- 视觉特效与实际伤害位置不匹配
-
-**解决方案概述**：
-- 统一修改所有 `DamageEvent` 构造处：
-  - `HitPosition = new Vector2(pos.x, pos.z)`（XZ 投影）
-  - `HitPosition3D = pos`（真实 3D 位置）
-  - `HitDirection = new Vector2(dir.x, dir.z)`（XZ 平面方向）
-- 在 `SkillArgs` 中提供便捷方法（如 `GetHitPosition3D()`），引导技能逻辑使用 3D 字段
+**修复状态**：✅ **已修复**
+- `CollectorStrikeEffect`：已使用 XZ 投影和 `HitPosition3D`
+- `PoisonStatus`：已使用 XZ 投影和 `HitPosition3D`
+- `BurningStatus`：已使用 XZ 投影和 `HitPosition3D`
+- `SkillArgs`：已添加 `GetHitPosition3D()` 和 `GetHitPositionXZ()` 便捷方法
 
 ---
 
-### 🟡 问题 3：StoppedEvent 3D 数据在技能系统中的消费未落地
+### ✅ 问题 3：StoppedEvent 3D 数据在技能系统中的消费未落地（已修复）
 
 **问题描述**：
 - `StoppedEvent` 已包含 3D 位置数据（`StoppedPosition3D`、`LaunchPosition3D`、`FirstCollisionPoint3D`）
@@ -76,51 +70,43 @@
 - `DamageSystem` 的范围伤害已使用 3D 数据
 - 但技能系统内部（触发器、效果）获取 `BallPhysics` 或 `StoppedEvent` 时，仍依赖 2D 投影
 
-**影响范围**：
-- 基于 `MovingEndTrigger` 的范围技能可能无法正确获取 3D 位置
-- 需要精确 3D 位置的效果（如 `SpawnEffect`）可能位置错误
-
-**解决方案概述**：
-- 检查所有使用 `StoppedEvent` 的触发器/效果，确保优先使用 3D 字段
-- 在 `SkillArgs` 中提供 `GetStoppedPosition3D()` 等便捷方法
-- 对于仍需 2D 表达的场景，明确注释为 XZ 平面投影
+**修复状态**：✅ **已修复**
+- `SkillArgs`：已添加 `GetStoppedPosition3D()`、`GetLaunchPosition3D()`、`GetFirstCollisionPoint3D()` 便捷方法
+- `SkillManager`：已订阅 `OnStopped` 事件，优先使用 `StoppedEvent`
+- `MovingEndTrigger`：已支持处理 `StoppedEvent`（同时保留 `BallPhysics` 后备方案）
 
 ---
 
-### 🟡 问题 4：基于 Vector2 的工具方法需要重新对齐
+### ✅ 问题 4：基于 Vector2 的工具方法需要重新对齐（部分修复）
 
 **问题描述**：
 - `WeakPointData.GetLocalPosition()`、`DropRangeConfig.GetRandomPosition()` 等方法仍使用 `Vector2`
 - 这些方法在 3D 场景中的语义不明确（是 XY 平面还是 XZ 平面？）
 - 写入 `Transform` 或事件数据时，可能出现坐标轴混淆（Y 被当作 Z）
 
-**影响范围**：
-- 位置计算可能错误
-- 代码可读性差，容易引入新的 2D/3D 混淆
-
-**解决方案概述**：
-- 对于仍需 2D 表达的方法，明确注释为“XZ 平面坐标”
-- 在写入 `Transform` 或事件时，显式转换：`new Vector3(offset.x, height, offset.y)`
-- 考虑重构为返回 `Vector3`，或提供 `GetLocalPositionXZ()` 和 `GetLocalPosition3D()` 两个版本
+**修复状态**：✅ **部分修复**
+- `DropRangeConfig.GetRelativeRandomPosition()`：✅ 已正确映射到 XZ 平面（`x += randomCircle.x; z += randomCircle.y;`）
+- `WeakPointData.GetLocalPosition()`：🔴 **待修复**（属于问题1，弱点系统相关）
+- 其他工具方法：已添加注释说明 XZ 平面语义
 
 ---
 
-### 🟡 问题 5：新事件数据的消费未统一
+### ✅ 问题 5：新事件数据的消费未统一（已修复）
 
 **问题描述**：
 - `DamageTrigger` 和 `SkillManager.HandleDamageEvent()` 已能接收 `DamageEvent.HitPosition3D`
 - 但下游效果（DoT、弱点判定等）尚未改动，导致 3D 信息在进入技能系统后被“压扁”
 - 缺乏统一的 3D 数据访问接口
 
-**影响范围**：
-- 3D 信息在技能系统内部丢失
-- 需要 3D 位置的效果无法正确工作
-
-**解决方案概述**：
-- 在 `SkillArgs` 中增加辅助方法：
+**修复状态**：✅ **已修复**
+- `SkillArgs`：已添加完整的 3D 位置便捷方法：
   - `GetHitPositionXZ()`：返回 XZ 平面投影（用于逻辑计算）
   - `GetHitPosition3D()`：返回真实 3D 位置（用于特效/判定）
-- 统一所有效果使用这些方法，而不是直接访问 `DamageEvent` 字段
+  - `GetStoppedPosition3D()`：获取停止位置 3D 坐标
+  - `GetLaunchPosition3D()`：获取发射位置 3D 坐标
+  - `GetFirstCollisionPoint3D()`：获取第一碰撞点 3D 坐标
+  - `GetDeathPosition3D()`：获取死亡位置 3D 坐标
+- 所有方法都有详细的使用场景注释和推荐做法
 
 ---
 
@@ -245,4 +231,201 @@
 - `Assets/Scripts/EventSystem/DamageSystemEvents.cs`：事件数据结构（已包含 3D 字段）
 - `Assets/Scripts/Core/Manager/DamageSystem.cs`：伤害系统（已使用 3D 数据）
 - `Assets/Scripts/Player/PlayerAttackManager.cs`：玩家攻击管理（已发布 3D 数据）
+
+---
+
+## 八、2D 向后兼容和残留代码清单
+
+> **说明**：本文档记录了所有保留的 2D 相关代码，这些代码主要用于向后兼容或作为后备方案。在未来的重构中，可以考虑逐步移除这些兼容层。
+
+### 8.1 事件数据结构中的 Vector2 字段（向后兼容）
+
+#### CollisionEvent
+- **文件**：`Assets/Scripts/EventSystem/DamageSystemEvents.cs`
+- **字段**：
+  - `ContactPoint: Vector2` - 碰撞点（2D，向后兼容，实际存储 XZ 平面投影）
+  - `ContactNormal: Vector2` - 碰撞法线（2D，实际存储 XZ 平面法线）
+- **3D 对应字段**：`ContactPoint3D: Vector3?`
+- **保留原因**：逻辑计算可能仍需要 2D 投影（XZ 平面）
+- **使用场景**：在 3D 版本中，`ContactPoint` 存储的是 XZ 平面投影 `(x, z)`
+- **注释位置**：第 43、111、123 行
+
+#### StoppedEvent
+- **文件**：`Assets/Scripts/EventSystem/DamageSystemEvents.cs`
+- **字段**：
+  - `StoppedPosition: Vector2` - 停止位置（2D 投影，兼容旧逻辑，实际存储 XZ 平面投影）
+  - `LaunchPosition: Vector2?` - 发射起点（2D 投影，实际存储 XZ 平面投影）
+  - `FirstCollisionPoint: Vector2?` - 第一碰撞点（2D 投影，实际存储 XZ 平面投影）
+- **3D 对应字段**：
+  - `StoppedPosition3D: Vector3?`
+  - `LaunchPosition3D: Vector3?`
+  - `FirstCollisionPoint3D: Vector3?`
+- **保留原因**：向后兼容旧逻辑，同时提供 3D 数据
+- **使用场景**：在 `CreateWithTrajectory3D` 中，自动将 3D 位置投影到 XZ 平面
+- **注释位置**：第 143、150、151、212、214、215 行
+
+#### DamageEvent
+- **文件**：`Assets/Scripts/EventSystem/DamageSystemEvents.cs`
+- **字段**：
+  - `HitPosition: Vector2` - 击中位置（2D，向后兼容，用于旧逻辑，实际存储 XZ 平面投影）
+  - `HitDirection: Vector2` - 击中方向（2D，向后兼容，实际存储 XZ 平面方向）
+- **3D 对应字段**：`HitPosition3D: Vector3?`
+- **保留原因**：向后兼容旧逻辑，同时提供 3D 数据
+- **使用场景**：在技能效果中，`HitPosition` 存储的是 XZ 平面投影 `(x, z)`
+- **注释位置**：第 244、249 行
+
+### 8.2 技能系统中的 Vector2 使用（残留）
+
+#### WeakPointData.GetLocalPosition()
+- **文件**：`Assets/Scripts/SkillSystem/WeakPointData.cs`
+- **方法签名**：`public Vector2 GetLocalPosition(float radius)`
+- **问题**：返回 `Vector2`，语义不明确（是 XY 平面还是 XZ 平面？）
+- **当前使用**：在 `WeakPointManager` 中用于计算弱点标记的局部位置
+- **问题描述**：在 3D 场景中，`Vector2` 的 Y 分量被错误地当作垂直高度
+- **待修复**：应改为返回 `Vector3`，或明确注释为 XZ 平面坐标
+- **使用位置**：
+  - `WeakPointManager.cs:264` - `Vector2 localPos = data.GetLocalPosition(radius);`
+  - `WeakPointManager.cs:308` - `Vector2 newLocalPos = data.GetLocalPosition(radius);`
+- **状态**：🔴 **待修复**（属于问题1，弱点系统相关）
+
+#### WeakPointMarker.localOffset
+- **文件**：`Assets/Scripts/SkillSystem/WeakPointMarker.cs`
+- **字段**：`private Vector2 localOffset;`
+- **问题**：使用 `Vector2` 存储局部偏移，无法正确表达 3D 空间中的位置
+- **当前使用**：存储弱点标记相对于敌人的局部位置
+- **待修复**：应改为 `Vector3`，支持配置高度偏移
+- **使用位置**：
+  - `WeakPointMarker.cs:14` - 字段定义
+  - `WeakPointMarker.cs:40` - `Initialize(Transform enemy, Vector2 offset, int sector)`
+  - `WeakPointMarker.cs:75` - `UpdatePosition(Vector2 newOffset, int newSector)`
+- **状态**：🔴 **待修复**（属于问题1，弱点系统相关）
+
+#### WeakPointManager.IsWeakPointHit()
+- **文件**：`Assets/Scripts/SkillSystem/WeakPointManager.cs`
+- **问题代码**：`Vector2 toHit = ((Vector2)(hitPosition - enemyPos)).normalized;`
+- **问题描述**：将 3D 位置强制转换为 `Vector2`，隐式丢弃 Z 轴
+- **当前行为**：使用 `Vector2` 计算角度，导致方向判定错误
+- **待修复**：应改为 `new Vector2(delta.x, delta.z)`，基于 XZ 平面计算
+- **使用位置**：`WeakPointManager.cs:469`
+- **状态**：🔴 **待修复**（属于问题1，弱点系统相关）
+
+#### DropRangeConfig.GetRelativeRandomPosition()
+- **文件**：`Assets/Scripts/SkillSystem/Configs/DropRangeConfig.cs`
+- **问题代码**：`Vector2 randomCircle = Random.insideUnitCircle * dropRadius;`
+- **当前行为**：使用 `Random.insideUnitCircle` 生成 2D 随机点，然后映射到 XZ 平面
+- **状态**：✅ **已适配** - 代码已正确映射到 XZ 平面（`x += randomCircle.x; z += randomCircle.y;`）
+- **保留原因**：`Random.insideUnitCircle` 是 Unity 提供的便捷方法，内部使用 `Vector2` 是合理的
+- **使用位置**：`DropRangeConfig.cs:58`
+
+### 8.3 伤害事件构造中的 Vector2（向后兼容）
+
+#### CollectorStrikeEffect
+- **文件**：`Assets/Scripts/SkillSystem/Effects/CollectorStrikeEffect.cs`
+- **代码**：
+  ```csharp
+  HitPosition = new Vector2(enemyPos3D.x, enemyPos3D.z),  // XZ平面投影（向后兼容）
+  HitDirection = new Vector2(direction3D.x, direction3D.z),  // XZ平面方向
+  ```
+- **状态**：✅ **已修复** - 正确使用 XZ 平面投影和 `HitPosition3D`
+- **注释**：第 224、226 行
+
+#### PoisonStatus
+- **文件**：`Assets/Scripts/SkillSystem/TurnBasedStatus/Statuses/PoisonStatus.cs`
+- **代码**：
+  ```csharp
+  HitPosition = new Vector2(pos3D.x, pos3D.z),  // XZ平面投影（向后兼容）
+  HitDirection = Vector2.zero,  // 持续伤害无方向
+  ```
+- **状态**：✅ **已修复** - 正确使用 XZ 平面投影和 `HitPosition3D`
+- **注释**：第 54、56 行
+
+#### BurningStatus
+- **文件**：`Assets/Scripts/SkillSystem/TurnBasedStatus/Statuses/BurningStatus.cs`
+- **代码**：
+  ```csharp
+  HitPosition = new Vector2(pos3D.x, pos3D.z),  // XZ平面投影（向后兼容）
+  HitDirection = Vector2.zero,  // 持续伤害无方向
+  ```
+- **状态**：✅ **已修复** - 正确使用 XZ 平面投影和 `HitPosition3D`
+- **注释**：第 47、49 行
+
+### 8.4 触发器中的向后兼容
+
+#### MovingEndTrigger
+- **文件**：`Assets/Scripts/SkillSystem/Triggers/MovingEndTrigger.cs`
+- **状态**：✅ **已清理** - 已移除 `BallPhysics` 后备方案，现在只使用 `StoppedEvent`
+- **清理内容**：
+  - 移除了 `CheckEvent` 中的 `BallPhysics` 后备检查
+  - 移除了 `OnBallStopped` 事件订阅（该方法为空，无实际作用）
+  - 更新了 `SkillManager.IsEventRelevantForSkill` 中的检查逻辑
+- **清理原因**：`OnStopped` 事件已稳定，`SkillManager` 只使用 `StoppedEvent`，不再需要 `BallPhysics` 后备
+- **清理时间**：2024年（3D升级阶段）
+
+#### SkillManager.HandleBallStoppedEvent()
+- **文件**：`Assets/Scripts/SkillSystem/SkillManager.cs`
+- **状态**：✅ **已清理** - 已移除，现在只使用 `HandleStoppedEvent(StoppedEvent)`
+- **清理原因**：`OnStopped` 事件已稳定，不再需要 `OnBallStopped` 后备方案
+- **清理时间**：2024年（3D升级阶段）
+
+### 8.5 SkillArgs 中的 2D 方法（向后兼容）
+
+#### GetHitPositionXZ()
+- **文件**：`Assets/Scripts/SkillSystem/Core/SkillArgs.cs`
+- **方法签名**：`public Vector2 GetHitPositionXZ()`
+- **用途**：返回 XZ 平面投影，用于逻辑计算（范围判定、距离计算等）
+- **保留原因**：某些逻辑计算可能仍需要 2D 投影
+- **推荐**：需要 3D 位置时使用 `GetHitPosition3D()` 替代
+- **注释位置**：第 234-241 行
+
+### 8.6 其他遗留代码
+
+#### CollisionEvent.CreateFromTrigger (2D版本)
+- **文件**：`Assets/Scripts/EventSystem/DamageSystemEvents.cs`
+- **方法**：`CreateFromTrigger(GameObject source, Collider2D targetCollider)`
+- **状态**：保留用于 2D 场景的向后兼容
+- **注释**：`// 从 Trigger 碰撞创建碰撞事件（2D版本，保留向后兼容）`
+- **保留原因**：支持旧的 2D 碰撞检测代码（如 `PlayerBehavior.OnTriggerEnter2D`）
+- **使用位置**：第 79 行
+
+#### CollisionEvent.Create (2D版本)
+- **文件**：`Assets/Scripts/EventSystem/DamageSystemEvents.cs`
+- **方法**：`Create(GameObject source, Collision2D collision)`
+- **状态**：保留用于 2D 场景的向后兼容
+- **保留原因**：支持旧的 2D 物理碰撞代码
+- **使用位置**：第 54 行
+
+#### PlayerBehavior.OnTriggerEnter2D
+- **文件**：`Assets/Scripts/Player/Core/PlayerBehavior.cs`
+- **方法**：`void OnTriggerEnter2D(Collider2D other)`
+- **状态**：保留用于 2D 碰撞检测
+- **保留原因**：玩家碰撞检测仍使用 2D 触发器
+- **使用位置**：第 403 行
+
+### 8.7 总结
+
+#### 已修复的 2D 残留
+- ✅ 伤害事件构造（`CollectorStrikeEffect`、`PoisonStatus`、`BurningStatus`）
+- ✅ `DropRangeConfig` 的位置计算（已正确映射到 XZ 平面）
+- ✅ `SkillArgs` 3D 位置便捷方法（已添加完整接口）
+
+#### 已清理的向后兼容代码
+- ✅ `SkillManager.HandleBallStoppedEvent()` - 已移除，现在只使用 `HandleStoppedEvent(StoppedEvent)`
+- ✅ `MovingEndTrigger` 的 `BallPhysics` 后备方案 - 已移除，现在只使用 `StoppedEvent`
+
+#### 待修复的 2D 残留（弱点系统相关，暂不处理）
+- 🔴 `WeakPointData.GetLocalPosition()` - 应改为 `Vector3` 或明确注释为 XZ 平面
+- 🔴 `WeakPointMarker.localOffset` - 应改为 `Vector3`
+- 🔴 `WeakPointManager.IsWeakPointHit()` - 应使用 XZ 平面计算方向
+
+#### 保留的向后兼容代码
+- ✅ 事件数据结构中的 `Vector2` 字段（用于逻辑计算，XZ 平面投影）
+- ✅ `SkillArgs.GetStoppedPosition3D()` 中的 `BallPhysics` 后备方案（工具方法，保留以增加健壮性）
+- ✅ `CollisionEvent` 的 2D 创建方法
+- ✅ `SkillArgs.GetHitPositionXZ()` 方法（用于逻辑计算）
+- ✅ `PlayerBehavior.OnTriggerEnter2D`（2D 碰撞检测）
+
+#### 建议
+1. **短期**：为所有 `Vector2` 使用处添加明确注释（XY 平面或 XZ 平面）
+2. **中期**：修复弱点系统的 2D 残留问题（问题 1）
+3. **长期**：考虑逐步移除不必要的向后兼容代码，统一使用 3D 数据
 

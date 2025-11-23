@@ -30,20 +30,18 @@ public class MovingEndTrigger : ITrigger
     {
         // ⚠️ 多角色系统：不再使用全局查找，改为事件驱动
         // playerStateMachine 不再需要（改用角色ID过滤）
-        
-        // 订阅球停止事件
-        GameEventBus.OnBallStopped += OnBallStopped;
+        // ✅ 3D适配：不再订阅 OnBallStopped，现在只通过 SkillManager 的 StoppedEvent 触发
     }
     
     /// <summary>
     /// 检查事件 - 检查是否球刚停止
-    /// ✅ 3D适配：优先使用StoppedEvent（带轨迹数据），后备使用BallPhysics
+    /// ✅ 3D适配：使用StoppedEvent（带轨迹数据）
     /// </summary>
     /// <param name="args">技能参数</param>
     /// <returns>是否触发</returns>
     public bool CheckEvent(SkillArgs args)
     {
-        // ✅ 3D适配：优先检查 StoppedEvent（带3D轨迹数据）
+        // ✅ 3D适配：检查 StoppedEvent（带3D轨迹数据）
         if (args.TryGetEventData<StoppedEvent>(out var stoppedEvent))
         {
             // 检查是否是玩家球
@@ -54,28 +52,6 @@ public class MovingEndTrigger : ITrigger
             
             // ✅ 多角色系统：检查是否是归属角色的球停止事件
             if (!TriggerHelper.CheckEventSource(stoppedEvent, ownerCharacterID))
-            {
-                return false;  // 不是归属角色，不触发
-            }
-            
-            // 检查是否已触发过（每次停止只触发一次）
-            if (!hasTriggered)
-            {
-                hasTriggered = true;
-                return true;
-            }
-        }
-        // 后备：检查 BallPhysics（向后兼容）
-        else if (args.TryGetEventData<BallPhysics>(out var ballPhysics))
-        {
-            // 检查是否是玩家球
-            if (!ballPhysics.gameObject.CompareTag("Player"))
-            {
-                return false;
-            }
-            
-            // ✅ 多角色系统：检查是否是归属角色的球停止事件
-            if (!TriggerHelper.CheckEventSource(ballPhysics, ownerCharacterID))
             {
                 return false;  // 不是归属角色，不触发
             }
@@ -100,19 +76,11 @@ public class MovingEndTrigger : ITrigger
     }
     
     /// <summary>
-    /// 球停止事件处理
-    /// </summary>
-    /// <param name="ballPhysics">停止的球</param>
-    void OnBallStopped(BallPhysics ballPhysics)
-    {
-        // 这个方法主要用于初始化时的订阅，实际检查在 CheckEvent 中进行
-    }
-    
-    /// <summary>
     /// 清理事件订阅（由外部调用）
+    /// ✅ 3D适配：不再需要清理 OnBallStopped 订阅
     /// </summary>
     public void Cleanup()
     {
-        GameEventBus.OnBallStopped -= OnBallStopped;
+        // ✅ 3D适配：不再订阅 OnBallStopped，无需清理
     }
 }

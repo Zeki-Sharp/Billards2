@@ -181,8 +181,7 @@ public class SkillManager : SingletonManager<SkillManager>
         GameEventBus.OnDeath += HandleDeathEvent;
         GameEventBus.OnHealthChanged += HandleHealthChangedEvent;
         GameEventBus.OnGameFlowStateChanged += HandleGameFlowStateChanged;
-        GameEventBus.OnBallStopped += HandleBallStoppedEvent;
-        GameEventBus.OnStopped += HandleStoppedEvent;  // ✅ 3D适配：优先使用带轨迹数据的StoppedEvent
+        GameEventBus.OnStopped += HandleStoppedEvent;  // ✅ 3D适配：使用带轨迹数据的StoppedEvent
         GameEventBus.OnDamage += HandleDamageEvent;  // ✅ 新增：监听伤害事件（用于点燃等DoT技能）
         
         if (enableDebugLog)
@@ -200,7 +199,6 @@ public class SkillManager : SingletonManager<SkillManager>
         GameEventBus.OnDeath -= HandleDeathEvent;
         GameEventBus.OnHealthChanged -= HandleHealthChangedEvent;
         GameEventBus.OnGameFlowStateChanged -= HandleGameFlowStateChanged;
-        GameEventBus.OnBallStopped -= HandleBallStoppedEvent;
         GameEventBus.OnStopped -= HandleStoppedEvent;  // ✅ 3D适配：取消订阅StoppedEvent
         GameEventBus.OnDamage -= HandleDamageEvent;  // ✅ 新增：取消订阅伤害事件
         
@@ -323,35 +321,7 @@ public class SkillManager : SingletonManager<SkillManager>
     }
     
     /// <summary>
-    /// 处理球停止事件 - 用于触发 MovingEnd 技能（后备方案，当没有StoppedEvent时使用）
-    /// </summary>
-    void HandleBallStoppedEvent(BallPhysics ballPhysics)
-    {
-        if (enableDebugLog)
-        {
-            Debug.Log($"[SkillManager] 收到球停止事件（BallPhysics）: {ballPhysics.gameObject.name}");
-        }
-        
-        // 只处理玩家球的停止事件
-        if (ballPhysics.gameObject.CompareTag("Player"))
-        {
-            // 处理所有 MovingEnd 类型的技能
-            foreach (var skillInstance in skillInstances.Values)
-            {
-                if (IsEventRelevantForSkill(ballPhysics, skillInstance))
-                {
-                    bool processed = skillInstance.ProcessEvent(ballPhysics);
-                    if (processed && enableDebugLog)
-                    {
-                        Debug.Log($"[SkillManager] MovingEnd 技能 {skillInstance.config.skillName} 被触发（BallPhysics）");
-                    }
-                }
-            }
-        }
-    }
-    
-    /// <summary>
-    /// ✅ 3D适配：处理停止事件 - 优先使用带轨迹数据的StoppedEvent
+    /// ✅ 3D适配：处理停止事件 - 使用带轨迹数据的StoppedEvent
     /// </summary>
     void HandleStoppedEvent(StoppedEvent stoppedEvent)
     {
@@ -429,8 +399,8 @@ public class SkillManager : SingletonManager<SkillManager>
         }
         else if (trigger is MovingEndTrigger)
         {
-            // ✅ 3D适配：MovingEndTrigger 对球停止事件有效（优先StoppedEvent，后备BallPhysics）
-            return eventData is StoppedEvent || eventData is BallPhysics;
+            // ✅ 3D适配：MovingEndTrigger 对球停止事件有效（使用StoppedEvent）
+            return eventData is StoppedEvent;
         }
         else if (trigger is DamageTrigger)
         {

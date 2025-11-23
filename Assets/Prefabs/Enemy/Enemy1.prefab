@@ -367,8 +367,8 @@ MonoBehaviour:
         DebugActive: 0
         TargetRenderer: {fileID: 4372155668155967635}
         ExtraTargetRenderers: []
-        MaterialID: 0
-        PropertyName: _EmissionColor
+        MaterialID: 1
+        PropertyName: _BaseColor
         PropertyType: 0
         NewColor: {r: 63.999996, g: 63.999996, b: 63.999996, a: 1}
         NewFloat: 1
@@ -378,7 +378,7 @@ MonoBehaviour:
         NewScale: {x: 0, y: 0}
         NewVector: {x: 0, y: 0, z: 0, w: 0}
         InterpolateValue: 1
-        Duration: 0.3
+        Duration: 0.2
         InterpolationCurve:
           MMTweenDefinitionType: 1
           MMTweenCurve: 4
@@ -4371,6 +4371,7 @@ MeshRenderer:
   m_RendererPriority: 0
   m_Materials:
   - {fileID: 2100000, guid: 981abf7a53e6a964fba6bc48555ec31a, type: 2}
+  - {fileID: 2100000, guid: 0193588091737e941ae7e44fbd33c004, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
