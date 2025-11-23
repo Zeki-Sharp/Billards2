@@ -80,6 +80,18 @@ public abstract class BaseLevelHazard : MonoBehaviour
     /// <param name="ball">触发的球体对象</param>
     protected abstract void OnHazardTriggered(GameObject ball);
     
+    /// <summary>
+    /// 修改墙体碰撞的反弹系数（可选，子类重写）
+    /// </summary>
+    /// <param name="ball">碰撞的球体 GameObject</param>
+    /// <param name="currentSpeed">当前速度</param>
+    /// <param name="defaultBounceFactor">默认反弹系数</param>
+    /// <returns>修改后的反弹系数（如果返回 null，使用默认值）</returns>
+    public virtual float? ModifyBounceFactor(GameObject ball, float currentSpeed, float defaultBounceFactor)
+    {
+        return null; // 默认不修改
+    }
+    
     #endregion
     
     #region 特效播放
@@ -105,9 +117,9 @@ public abstract class BaseLevelHazard : MonoBehaviour
     #region 工具方法
     
     /// <summary>
-    /// 检查是否是有效的触发目标
+    /// 检查是否是有效的触发目标（供子类和接口使用）
     /// </summary>
-    bool IsValidTarget(GameObject obj)
+    protected bool IsValidTarget(GameObject obj)
     {
         if (obj == null) return false;
         
@@ -133,6 +145,32 @@ public abstract class BaseLevelHazard : MonoBehaviour
     {
         if (cooldownDuration <= 0f) return true;
         return Time.time - lastTriggerTime >= cooldownDuration;
+    }
+    
+    /// <summary>
+    /// 更新冷却时间（供子类或接口使用）
+    /// </summary>
+    protected void UpdateCooldown()
+    {
+        lastTriggerTime = Time.time;
+    }
+    
+    /// <summary>
+    /// 处理碰撞修改完成后的通用逻辑（冷却、特效等）
+    /// 供 BallPhysics 在调用 IWallCollisionModifier 后使用
+    /// </summary>
+    /// <param name="ball">碰撞的球体</param>
+    public void HandleCollisionModification(GameObject ball)
+    {
+        if (!IsValidTarget(ball)) return;
+        if (!CanTrigger()) return;
+        
+        // 更新冷却时间
+        UpdateCooldown();
+        
+        // 触发子类的逻辑和特效
+        OnHazardTriggered(ball);
+        PlayHazardEffect();
     }
     
     /// <summary>
@@ -175,21 +213,25 @@ public abstract class BaseLevelHazard : MonoBehaviour
     }
     
     /// <summary>
-    /// 验证 Collider 配置
+    /// 验证 Collider 配置（支持 2D 和 3D）
     /// </summary>
     void ValidateCollider()
     {
-        Collider2D collider = GetComponent<Collider2D>();
+        Collider collider3D = GetComponent<Collider>();
+        Collider2D collider2D = GetComponent<Collider2D>();
         
-        if (collider == null)
+        if (collider3D == null && collider2D == null)
         {
-            Debug.LogError($"[{GetType().Name}] {gameObject.name} 缺少 Collider2D 组件！");
+            Debug.LogError($"[{GetType().Name}] {gameObject.name} 缺少 Collider 组件！");
             return;
         }
         
         if (showDebugInfo)
         {
-            Debug.Log($"[{GetType().Name}] {gameObject.name} Collider 模式: {(collider.isTrigger ? "Trigger" : "Collision")}");
+            string mode = collider3D != null 
+                ? (collider3D.isTrigger ? "Trigger" : "Collision") 
+                : (collider2D.isTrigger ? "Trigger" : "Collision");
+            Debug.Log($"[{GetType().Name}] {gameObject.name} Collider 模式: {mode}");
         }
     }
     

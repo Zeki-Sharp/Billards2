@@ -9,23 +9,23 @@ using UnityEngine;
 /// - 不改变反弹方向，只增强力度
 /// 
 /// 【配置】：
-/// - bounceMultiplier: 反弹速度倍数（1.0 = 正常反弹，2.0 = 双倍反弹）
+/// - bounceFactor: 反弹系数（1.0 = 正常，1.5 = 增加50%，2.0 = 双倍反弹）
+/// - minBounceSpeed: 最小反弹速度（保证轻撞也有好反馈）
+/// - maxBounceSpeed: 最大反弹速度（防止重撞失控）
 /// - hazardEffect: 触发特效（MMF Player，可选）
-///   - 推荐效果：蓝色闪光 + 弹性缩放动画
-///   - 可在 Inspector 中配置 MMF Player 组件
 /// 
 /// 【推荐配置】：
-/// - Collider: BoxCollider2D / CircleCollider2D
+/// - Collider: BoxCollider / SphereCollider（3D）
 /// - Is Trigger: false（需要物理碰撞，正常反弹）
 /// - Layer: Obstacle
-/// - Physics Material 2D: 设置较高的弹性（Bounciness > 0.8）
+/// - Physics Material: 设置较高的弹性（Bounciness > 0.8）
 /// - Hazard Effect: 配置 MMF Player 实现蓝色闪光+弹性缩放效果
 /// </summary>
 public class BouncePad : BaseLevelHazard
 {
     [Header("弹簧配置")]
-    [Tooltip("反弹速度倍数（1.0 = 正常，2.0 = 双倍反弹力）")]
-    [SerializeField] private float bounceMultiplier = 1.5f;
+    [Tooltip("反弹系数（1.0 = 正常，1.5 = 增加50%，2.0 = 双倍反弹）")]
+    [SerializeField] private float bounceFactor = 1.5f;
     
     [Tooltip("最小反弹速度（保证轻撞也有好反馈）")]
     [SerializeField] private float minBounceSpeed = 8f;
@@ -33,54 +33,60 @@ public class BouncePad : BaseLevelHazard
     [Tooltip("最大反弹速度（防止重撞失控）")]
     [SerializeField] private float maxBounceSpeed = 15f;
     
+    #region 反弹系数修改
+    
     /// <summary>
-    /// 弹簧被触发 - 增强反弹速度
-    /// 
-    /// 【改进机制】：
-    /// 1. 先倍增速度（保留物理感）
-    /// 2. 保证最小反弹速度（轻撞也有好反馈）
-    /// 3. 限制最大反弹速度（防止重撞失控）
+    /// 修改反弹系数（重写基类方法）
     /// </summary>
-    protected override void OnHazardTriggered(GameObject ball)
+    public override float? ModifyBounceFactor(GameObject ball, float currentSpeed, float defaultBounceFactor)
     {
-        BallPhysics physics = GetBallPhysics(ball);
-        
-        if (physics == null)
+        // 检查目标有效性和冷却时间（使用基类方法）
+        if (!IsValidTarget(ball) || !CanTrigger())
         {
-            Debug.LogWarning($"[BouncePad] {ball.name} 没有 BallPhysics 组件！");
-            return;
+            return null; // 使用默认值
         }
         
-        // 获取当前速度（物理引擎已经处理了反弹）
-        Vector2 currentVelocity = physics.GetVelocity();
-        float originalSpeed = currentVelocity.magnitude;
-        Vector2 direction = currentVelocity.normalized;
+        // 计算应用反弹系数后的速度
+        float newSpeed = currentSpeed * bounceFactor;
         
-        // 1. 在反弹方向上增强速度（倍增）
-        float boostedSpeed = originalSpeed * bounceMultiplier;
+        // 应用速度范围限制
+        float clampedSpeed = Mathf.Clamp(newSpeed, minBounceSpeed, maxBounceSpeed);
         
-        // 2. 应用速度范围限制
-        float finalSpeed = Mathf.Clamp(boostedSpeed, minBounceSpeed, maxBounceSpeed);
-        
-        // 3. 计算最终速度向量
-        Vector2 finalVelocity = direction * finalSpeed;
+        // 返回实际应用的系数
+        float actualFactor = clampedSpeed / currentSpeed;
         
         if (showDebugInfo)
         {
             string limitType = "";
-            if (boostedSpeed < minBounceSpeed)
+            if (newSpeed < minBounceSpeed)
                 limitType = " [最小限制]";
-            else if (boostedSpeed > maxBounceSpeed)
+            else if (newSpeed > maxBounceSpeed)
                 limitType = " [最大限制]";
             
-            Debug.Log($"[BouncePad] {ball.name} 触发弹簧！" +
-                    $"原速度: {originalSpeed:F2}, " +
-                    $"倍增后: {boostedSpeed:F2} (x{bounceMultiplier}), " +
-                    $"最终速度: {finalSpeed:F2}{limitType}");
+            Debug.Log($"[BouncePad] {ball.name} 修改反弹系数！" +
+                    $"原速度: {currentSpeed:F2}, " +
+                    $"系数: {bounceFactor}, " +
+                    $"计算后速度: {newSpeed:F2}, " +
+                    $"最终速度: {clampedSpeed:F2}, " +
+                    $"实际系数: {actualFactor:F3}{limitType}");
         }
         
-        // 设置最终速度
-        physics.SetVelocity(finalVelocity);
+        return actualFactor;
+    }
+    
+    #endregion
+    
+    /// <summary>
+    /// 障碍物被触发时调用（现在主要用于日志和特效）
+    /// </summary>
+    protected override void OnHazardTriggered(GameObject ball)
+    {
+        // ✅ 不再修改速度，速度修改已通过接口在碰撞处理时完成
+        // 这里主要用于日志记录
+        if (showDebugInfo)
+        {
+            Debug.Log($"[BouncePad] {ball.name} 触发弹簧效果！反弹系数: {bounceFactor}");
+        }
     }
     
     #region Gizmo 可视化
@@ -90,16 +96,27 @@ public class BouncePad : BaseLevelHazard
         // 绘制弹簧垫区域（黄色）
         Gizmos.color = new Color(1f, 1f, 0f, 0.3f);
         
-        Collider2D collider = GetComponent<Collider2D>();
-        if (collider != null)
+        // 支持 3D Collider
+        Collider collider3D = GetComponent<Collider>();
+        if (collider3D != null)
         {
-            Gizmos.DrawCube(transform.position, collider.bounds.size);
+            Gizmos.DrawCube(transform.position, collider3D.bounds.size);
+        }
+        else
+        {
+            Collider2D collider2D = GetComponent<Collider2D>();
+            if (collider2D != null)
+            {
+                Vector3 size = collider2D.bounds.size;
+                size.z = 0.1f; // 2D 转 3D 显示
+                Gizmos.DrawCube(transform.position, size);
+            }
         }
         
         // 绘制倍数指示文字（在 Scene 视图中）
         #if UNITY_EDITOR
         UnityEditor.Handles.Label(transform.position + Vector3.up * 0.5f, 
-            $"Bounce x{bounceMultiplier}");
+            $"Bounce x{bounceFactor}");
         #endif
     }
     

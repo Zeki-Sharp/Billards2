@@ -274,7 +274,26 @@ public class BallPhysics : MonoBehaviour
         reflected.Normalize();
         
         geometryDirection = reflected;
-        geometrySpeed *= geometryWallBounceFactor;
+        
+        // 检查是否有障碍物需要修改反弹系数
+        float bounceFactor = geometryWallBounceFactor;
+        if (hitInfo.collider != null)
+        {
+            BaseLevelHazard hazard = hitInfo.collider.GetComponent<BaseLevelHazard>();
+            if (hazard != null)
+            {
+                float? modifiedFactor = hazard.ModifyBounceFactor(gameObject, geometrySpeed, geometryWallBounceFactor);
+                if (modifiedFactor.HasValue)
+                {
+                    bounceFactor = modifiedFactor.Value;
+                }
+                
+                // 处理冷却和特效
+                hazard.HandleCollisionModification(gameObject);
+            }
+        }
+        
+        geometrySpeed *= bounceFactor;
         
         if (hitInfo.collider != null)
         {
