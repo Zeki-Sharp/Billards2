@@ -129,8 +129,8 @@ MonoBehaviour:
   hazardEffect: {fileID: 7782376973064329920}
   showDebugInfo: 0
   bounceFactor: 1.8
-  minBounceSpeed: 8
-  maxBounceSpeed: 30
+  minBounceSpeed: 10
+  maxBounceSpeed: 25
 --- !u!1 &5738434416302236444
 GameObject:
   m_ObjectHideFlags: 0
