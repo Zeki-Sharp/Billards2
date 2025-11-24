@@ -285,6 +285,7 @@ public class BallPhysics : MonoBehaviour
         // 处理碰撞（更新速度方向，衰减在移动过程中应用）
         // 注意：这里传入 travelT * dt 作为已移动的时间，用于衰减计算
         float traveledDt = dt * travelT;
+        
         if (resolveBall)
         {
             HandleGeometryBallCollision(hitInfo, traveledDt);

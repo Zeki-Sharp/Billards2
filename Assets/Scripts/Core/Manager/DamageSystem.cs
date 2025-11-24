@@ -271,12 +271,6 @@ public class DamageSystem : SingletonManager<DamageSystem>
         
         totalCollisions++;
         
-        // ✅ 调试日志：碰撞事件
-        if (enableDebugLog)
-        {
-            Debug.Log($"[DamageSystem] 碰撞事件 - Source: {evt.Source?.name} (Tag: {evt.Source?.tag}), Target: {evt.Target?.name} (Tag: {evt.Target?.tag}), 速度: {evt.Velocity:F2}");
-        }
-        
         // 获取 source 的所有伤害规则（支持多 Profile）
         List<DamageRuleConfig> rules = GetAllDamageRules(evt.Source);
         
@@ -309,10 +303,6 @@ public class DamageSystem : SingletonManager<DamageSystem>
             if (CheckRule(rule, evt.Source, evt.Target, evt.Velocity))
             {
                 matchedCount++;
-                if (showRuleMatching)
-                {
-                    Debug.Log($"[DamageSystem] ✅ 规则匹配: {rule.ruleName}");
-                }
                 
                 // 计算并发布伤害
                 ProcessDamage(rule, evt);
@@ -672,6 +662,10 @@ public class DamageSystem : SingletonManager<DamageSystem>
         {
             if (!target.CompareTag(rule.targetTag))
             {
+                if (showRuleMatching)
+                {
+                    Debug.Log($"[DamageSystem] 规则 '{rule.ruleName}' 不匹配：目标标签不匹配 - 需要 '{rule.targetTag}'，实际 '{target.tag}' (Target: {target.name})");
+                }
                 return false;
             }
         }
@@ -681,6 +675,10 @@ public class DamageSystem : SingletonManager<DamageSystem>
         {
             if (!source.CompareTag(rule.sourceTag))
             {
+                if (showRuleMatching)
+                {
+                    Debug.Log($"[DamageSystem] 规则 '{rule.ruleName}' 不匹配：来源标签不匹配 - 需要 '{rule.sourceTag}'，实际 '{source.tag}' (Source: {source.name})");
+                }
                 return false;
             }
         }
@@ -703,6 +701,10 @@ public class DamageSystem : SingletonManager<DamageSystem>
             
             if (blackboard == null)
             {
+                if (showRuleMatching)
+                {
+                    Debug.Log($"[DamageSystem] 规则 '{rule.ruleName}' 不匹配：{source.name} 及其父级无 Blackboard（需要状态 '{rule.requireSourceState}'）");
+                }
                 return false;
             }
             
@@ -710,6 +712,10 @@ public class DamageSystem : SingletonManager<DamageSystem>
             
             if (!stateActive)
             {
+                if (showRuleMatching)
+                {
+                    Debug.Log($"[DamageSystem] 规则 '{rule.ruleName}' 不匹配：需要来源状态 '{rule.requireSourceState}'，但当前为 false (Source: {source.name})");
+                }
                 return false;
             }
         }
@@ -723,13 +729,16 @@ public class DamageSystem : SingletonManager<DamageSystem>
             if (blackboard != null)
             {
                 // 尝试获取状态值，如果状态存在且为 true，则规则不匹配
-                if (blackboard.TryGet<bool>(rule.requireSourceNotState, out bool stateValue) && stateValue)
+                if (blackboard.TryGet<bool>(rule.requireSourceNotState, out bool stateValue))
                 {
-                    if (showRuleMatching)
+                    if (stateValue)
                     {
-                        Debug.Log($"[DamageSystem] 规则 '{rule.ruleName}' 不匹配：来源处于 '{rule.requireSourceNotState}' 状态");
+                        if (showRuleMatching)
+                        {
+                            Debug.Log($"[DamageSystem] 规则 '{rule.ruleName}' 不匹配：来源处于 '{rule.requireSourceNotState}' 状态（值为 true）(Source: {source.name})");
+                        }
+                        return false;
                     }
-                    return false;
                 }
             }
         }
@@ -869,6 +878,8 @@ public class DamageSystem : SingletonManager<DamageSystem>
     /// </summary>
     private void ProcessDamage(DamageRuleConfig rule, CollisionEvent evt)
     {
+        totalDamageEvents++;
+        
         // 1. 计算基础伤害（支持从 PlayerData.attackPower 读取）
         float baseValue = rule.GetBaseDamage(evt.Source);
         float baseDamage = baseValue * rule.damageMultiplier;
@@ -912,8 +923,6 @@ public class DamageSystem : SingletonManager<DamageSystem>
         
         // 7. 发布最终伤害事件
         PublishDamageEvent(attackData, rule, evt);
-        
-        totalDamageEvents++;
     }
     
     /// <summary>

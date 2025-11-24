@@ -10,15 +10,15 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5037b3c987730d84ab57aac9a2f5788e, type: 3}
-  m_Name: Rebound
+  m_Name: Rebound2
   m_EditorClassIdentifier: 
   ruleName: "\u53CD\u5F39\u78B0\u649E\u89C4\u5219"
   priority: 0
   triggerType: 0
-  sourceTag: Player
-  targetTag: Enemy
+  sourceTag: Enemy
+  targetTag: Player
   requireSourceState: 
-  requireSourceNotState: CanAttack
+  requireSourceNotState: 
   requireTargetState: 
   requireTargetNotState: 
   minVelocity: 0.1
