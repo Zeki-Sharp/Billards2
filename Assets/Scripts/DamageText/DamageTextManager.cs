@@ -284,11 +284,41 @@ public class DamageTextManager : SingletonManager<DamageTextManager>
     private void HandleDamage(DamageEvent damageEvt)
     {
         // 检查是否有伤害值且大于0
-        if (damageEvt.FinalDamage > 0f)
+        if (damageEvt.FinalDamage <= 0f)
         {
-            // 显示伤害数字 - 使用最终伤害值
-            ShowDamageText(damageEvt.HitPosition, damageEvt.FinalDamage, damageEvt.Target);
+            return;
         }
+        
+        // 检查目标对象
+        if (damageEvt.Target == null)
+        {
+            if (enableDebugLog)
+            {
+                Debug.LogWarning($"DamageTextManager: 伤害事件的目标对象为空，无法显示伤害数字 (Source: {damageEvt.Source?.name}, Damage: {damageEvt.FinalDamage})");
+            }
+            return;
+        }
+        
+        // ✅ 优先使用3D位置，如果没有则从2D投影重建
+        Vector3 worldPosition;
+        if (damageEvt.HitPosition3D.HasValue)
+        {
+            worldPosition = damageEvt.HitPosition3D.Value;
+        }
+        else
+        {
+            // 从2D投影重建3D位置（使用目标对象的Y坐标）
+            float y = damageEvt.Target.transform.position.y;
+            worldPosition = new Vector3(damageEvt.HitPosition.x, y, damageEvt.HitPosition.y);
+        }
+        
+        if (enableDebugLog)
+        {
+            Debug.Log($"DamageTextManager: 显示伤害数字 - Target: {damageEvt.Target.name} (Tag: {damageEvt.Target.tag}), Damage: {damageEvt.FinalDamage:F2}, Position: {worldPosition}");
+        }
+        
+        // 显示伤害数字 - 使用最终伤害值
+        ShowDamageText(worldPosition, damageEvt.FinalDamage, damageEvt.Target);
     }
     
     // ClearAllDamageTexts 方法已删除，现在不需要管理活跃对象列表
