@@ -89,9 +89,18 @@
 ### 2.5 配置和数据
 
 #### BallData.cs
-- **保留**：基础物理参数（`mass`, `bounceDamping`, `friction`）
+- **保留并映射**：基础物理参数映射到 Unity 物理系统
+  - `mass` → `Rigidbody.mass`
+  - `bounceDamping` → `PhysicsMaterial.bounciness`
+  - `friction` → `PhysicsMaterial.dynamicFriction` 和 `staticFriction`
+  - `linearDamping` → `Rigidbody.drag`（线性阻尼）
+  - `maxSpeed` → 用于速度限制检查（运行时限制 `Rigidbody.velocity`）
+  - `stopThreshold` → 用于停止检测阈值
 - **移除**：几何物理参数（`geometryHighSpeedPhaseDuration`, `geometryHighPhaseDamping` 等）
-- **恢复**：`linearDamping`（用于 Rigidbody）
+- **参数映射策略**：
+  - 在 `InitializePhysics()` 中读取 `BallData` 参数并应用到 `Rigidbody` 和 `PhysicsMaterial`
+  - 保持 `BallData` 作为配置源，不直接依赖 Rigidbody 的 Inspector 值
+  - 支持运行时动态调整（通过修改 `BallData` 或直接修改物理组件）
 
 #### EnemyLevelConfig.cs
 - **移除**：`moveBallData` 相关配置（如果不再需要）
@@ -112,13 +121,33 @@
 - 实现 `FixedUpdate()` 中检测速度变化触发停止事件
 
 #### 1.2 物理参数配置
-- 配置 Rigidbody 的 `mass`, `drag`, `angularDrag`
-- 配置 `PhysicsMaterial` 的 `bounciness`, `friction`
-- 设置 `Rigidbody.constraints`（锁定 Y 轴位移）
+- **从 BallData 映射参数到 Unity 物理系统**：
+  - `ballData.mass` → `Rigidbody.mass`
+  - `ballData.linearDamping` → `Rigidbody.drag`
+  - `ballData.bounceDamping` → `PhysicsMaterial.bounciness`
+  - `ballData.friction` → `PhysicsMaterial.dynamicFriction` 和 `staticFriction`
+  - `ballData.maxSpeed` → 用于运行时速度限制（在 `FixedUpdate` 中检查）
+  - `ballData.stopThreshold` → 用于停止检测阈值
+- **创建和配置 PhysicsMaterial**：
+  - 在 `InitializePhysics()` 中创建或获取 `PhysicsMaterial`
+  - 从 `BallData` 读取参数并应用到材质
+  - 将材质赋值给 `Collider.material`
+- **重力配置决策**：
+  - 如果选择使用重力：设置 `useGravity = true`，不锁定 Y 轴，确保地面有碰撞器
+  - 如果选择不使用重力：设置 `useGravity = false`，锁定 Y 轴位移 `FreezePositionY`
+- 配置全局重力强度（如需要）：`Physics.gravity`（默认 -9.81，可根据游戏需求调整）
+- **保持参数配置的灵活性**：
+  - `BallData` 仍然是配置源，便于在 Inspector 中调整
+  - 支持运行时动态修改参数（修改 `BallData` 后重新应用，或直接修改物理组件）
+  - 可以添加参数验证和范围限制
 
 #### 1.3 碰撞检测配置
 - 配置 `LayerMask` 用于碰撞检测
 - 确保碰撞矩阵正确设置
+- **地面/桌面碰撞器检查**：
+  - 如果使用重力：确保地面/桌面有碰撞器（MeshCollider 或 BoxCollider）
+  - 检查碰撞器是否正确配置，防止球穿透或下落
+  - 测试球是否能正确"贴"在桌面上
 - 测试碰撞检测是否正常工作
 
 ### 阶段 2：移动和发射系统重构（5-8 小时）
@@ -176,10 +205,21 @@
 - 优化物理更新频率（如需要）
 
 #### 4.3 参数调优
-- 调整 Rigidbody 物理参数
-- 调整碰撞材质参数
-- 调整阻尼和摩擦力
-- 平衡游戏手感
+- **通过 BallData 调优**（推荐方式）：
+  - 调整 `BallData` 中的参数（`mass`, `bounceDamping`, `friction`, `linearDamping` 等）
+  - 参数会自动应用到 `Rigidbody` 和 `PhysicsMaterial`
+  - 便于在 Inspector 中统一管理
+- **直接调整物理组件**（高级用法）：
+  - 直接修改 `Rigidbody` 或 `PhysicsMaterial` 的值
+  - 适用于需要运行时动态调整的场景
+- **参数映射验证**：
+  - 确保 `BallData` 参数正确映射到 Unity 物理系统
+  - 验证参数范围和有效性
+- **平衡游戏手感**：
+  - 调整反弹系数（`bounceDamping` → `bounciness`）
+  - 调整摩擦力（`friction`）
+  - 调整阻尼（`linearDamping` → `drag`）
+  - 调整质量（`mass`）影响碰撞响应
 
 ---
 
@@ -188,9 +228,20 @@
 ### 4.1 Rigidbody 配置要点
 
 - **isKinematic**：设置为 `false`，让物理引擎控制运动
-- **useGravity**：设置为 `false`（2D 平面游戏）
-- **constraints**：锁定 Y 轴位移 `FreezePositionY`
+- **useGravity**：
+  - **方案 A（推荐）**：设置为 `true`，使用重力让球自然"贴"在桌面上
+    - 优点：更真实的物理行为，球会自动贴合桌面，无需手动约束 Y 轴
+    - 要求：确保地面/桌面有碰撞器（MeshCollider 或 BoxCollider），防止球下落
+    - 注意：需要调整重力强度，确保球不会过度弹跳
+  - **方案 B（保守）**：设置为 `false`，保持平面游戏逻辑
+    - 优点：与当前几何物理行为一致，无需调整地面碰撞器
+    - 缺点：需要手动约束 Y 轴，物理行为不如方案 A 自然
+- **constraints**：
+  - 如果使用重力（方案 A）：**不锁定 Y 轴**，让物理引擎自然处理
+  - 如果不使用重力（方案 B）：锁定 Y 轴位移 `FreezePositionY`
 - **collisionDetectionMode**：根据速度选择合适的检测模式
+  - 低速：`Discrete`（默认，性能好）
+  - 高速：`Continuous` 或 `ContinuousDynamic`（防止穿透）
 - **interpolation**：考虑使用 `Interpolate` 提高平滑度
 
 ### 4.2 碰撞检测要点
@@ -203,9 +254,18 @@
 ### 4.3 速度控制要点
 
 - **直接设置 velocity**：适用于精确控制速度的场景
+  - `Rigidbody.velocity = new Vector3(velocity.x, rb.velocity.y, velocity.z)`（保持 Y 轴速度）
+  - 或 `Rigidbody.velocity = new Vector3(velocity.x, 0, velocity.z)`（如果锁定 Y 轴）
 - **使用 AddForce**：适用于需要加速度的场景
-- **速度限制**：使用 `maxSpeed` 限制最大速度
-- **停止检测**：使用速度阈值判断是否停止
+  - `Rigidbody.AddForce(force, ForceMode.Impulse)` 或 `ForceMode.VelocityChange`
+- **速度限制**：
+  - 使用 `BallData.maxSpeed` 作为限制值
+  - 在 `FixedUpdate()` 中检查 `Rigidbody.velocity.magnitude`
+  - 如果超过限制，将速度归一化并乘以 `maxSpeed`
+- **停止检测**：
+  - 使用 `BallData.stopThreshold` 作为阈值
+  - 在 `FixedUpdate()` 中检查 `Rigidbody.velocity.magnitude < stopThreshold`
+  - 触发停止事件并可能将速度置零
 
 ### 4.4 轨迹预测要点
 
@@ -224,6 +284,10 @@
 - **速度控制精度**：Rigidbody 的速度控制可能不如几何物理精确
 - **轨迹预测复杂性**：实现准确的轨迹预测可能需要复杂的多场景模拟
 - **性能开销**：Rigidbody 物理可能带来额外的性能开销
+- **重力相关风险**：
+  - 如果使用重力：需要确保地面碰撞器配置正确，防止球下落或穿透
+  - 重力可能导致球在碰撞时产生轻微的垂直弹跳，需要调整物理材质参数
+  - 重力强度需要根据游戏需求调整，过强可能导致球过度弹跳
 
 ### 5.2 兼容性风险
 

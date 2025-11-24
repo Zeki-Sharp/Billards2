@@ -12017,7 +12017,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   ballData: {fileID: 11400000, guid: 5753a6296cab86e45ba7c2b9bfd00e6e, type: 2}
-  moveBallData: {fileID: 0}
+  moveBallData: {fileID: 11400000, guid: 5753a6296cab86e45ba7c2b9bfd00e6e, type: 2}
   enableGeometrySimulation: 1
   geometryWallMask:
     serializedVersion: 2
@@ -12030,7 +12030,6 @@ MonoBehaviour:
   geometryInitialDirection: {x: 0, y: 0, z: 1}
   showGeometryDebug: 1
   geometryDebugRayColor: {r: 0, g: 1, b: 1, a: 1}
-  footPositionRef: {fileID: 6934783409411443639}
   geometryMotionMode: 0
 --- !u!114 &8487390702654284861
 MonoBehaviour:

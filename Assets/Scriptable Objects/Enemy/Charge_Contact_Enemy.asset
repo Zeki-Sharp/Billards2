@@ -24,7 +24,7 @@ MonoBehaviour:
   enemyLevels:
   - level: 1
     enemyImage: {fileID: 0}
-    maxHealth: 40
+    maxHealth: 80
     damage: 10
     moveSpeed: 3
     attackCooldown: 1

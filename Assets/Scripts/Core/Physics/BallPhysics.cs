@@ -50,6 +50,10 @@ public class BallPhysics : MonoBehaviour
     private float ballStartTime = 0f;
     private bool geometryAutoEnableWarningLogged = false;
     private const float GEOMETRY_SURFACE_BACKOFF = 0.001f;
+    private const int MAX_COLLISION_ITERATIONS = 10;  // 最大碰撞迭代次数，防止无限递归
+    private const float MIN_STEP_DISTANCE = 0.0001f;  // 最小步进距离，避免无限细分
+    private const int MAX_OVERLAP_RESOLVE_ITERATIONS = 3;  // 最大重叠解决迭代次数（增加迭代次数，让修正更渐进）
+    private const float MAX_SINGLE_CORRECTION_DISTANCE = 0.02f;  // 单次修正的最大距离，防止突然飞出（约球半径的0.04-0.08倍，更平滑更不明显）
     
     // 从 ballData 读取的几何参数（运行时缓存）
     private float geometryMinSpeedThreshold;
@@ -156,13 +160,51 @@ public class BallPhysics : MonoBehaviour
         
         OnGeometryMovementStarted();
         
-        Vector3 currentPos = transform.position;
-        Vector3 displacement = geometryDirection * geometrySpeed * dt;
-        float distance = displacement.magnitude;
-        if (distance <= 0f)
+        // ✅ 使用递归子步进处理碰撞，确保处理所有碰撞
+        SimulateGeometryStepRecursive(dt, 0);
+        
+        if (geometrySpeed <= geometryMinSpeedThreshold)
         {
             geometrySpeed = 0f;
             OnGeometryMovementStopped();
+        }
+    }
+    
+    /// <summary>
+    /// 递归子步进碰撞处理（参考成熟物理引擎的实现）
+    /// 每次处理一个碰撞，然后递归处理剩余时间，直到没有碰撞或达到最大迭代次数
+    /// </summary>
+    private void SimulateGeometryStepRecursive(float dt, int iteration)
+    {
+        // 防止无限递归
+        if (iteration >= MAX_COLLISION_ITERATIONS)
+        {
+            if (showGeometryDebug)
+            {
+                Debug.LogWarning($"BallPhysics {gameObject.name}: 达到最大碰撞迭代次数 {MAX_COLLISION_ITERATIONS}，停止递归");
+            }
+            return;
+        }
+        
+        if (geometrySpeed <= geometryMinSpeedThreshold || dt <= 0f)
+        {
+            return;
+        }
+        
+        Vector3 currentPos = transform.position;
+        
+        // ✅ 关键修复：在 Cast 之前先检查并解决重叠问题
+        // 如果球已经与墙/其他球重叠，Cast 会失效，必须先解决重叠
+        ResolveOverlapsBeforeCast();
+        currentPos = transform.position;  // 更新位置，因为可能被修正了
+        
+        Vector3 displacement = geometryDirection * geometrySpeed * dt;
+        float distance = displacement.magnitude;
+        
+        // 如果移动距离太小，直接应用衰减并返回
+        if (distance < MIN_STEP_DISTANCE)
+        {
+            ApplyGeometryDamping(dt);
             return;
         }
         
@@ -204,6 +246,7 @@ public class BallPhysics : MonoBehaviour
             }
         }
         
+        // 如果没有碰撞，直接移动并应用衰减
         if (!hitBall && !hitWall)
         {
             transform.position = currentPos + displacement;
@@ -211,27 +254,40 @@ public class BallPhysics : MonoBehaviour
             return;
         }
         
+        // 选择最近的碰撞
         float ballT = hitBall ? Mathf.Clamp01(ballHit.distance / distance) : float.PositiveInfinity;
         float wallT = hitWall ? Mathf.Clamp01(wallHit.distance / distance) : float.PositiveInfinity;
         
         bool resolveBall = ballT < wallT;
         RaycastHit hitInfo = resolveBall ? ballHit : wallHit;
         float travelT = Mathf.Min(ballT, wallT);
-        if (float.IsInfinity(travelT))
+        
+        if (float.IsInfinity(travelT) || travelT <= 0f)
         {
+            // 如果碰撞距离无效，直接移动并应用衰减
             transform.position = currentPos + displacement;
             ApplyGeometryDamping(dt);
             return;
         }
         
+        // 移动到碰撞点（精确位置，使用更小的回退距离）
         float travelDistance = travelT * distance;
         Vector3 hitPos = currentPos + geometryDirection * travelDistance;
-        transform.position = hitPos - geometryDirection * GEOMETRY_SURFACE_BACKOFF;
         
-        float remainingDt = Mathf.Max(0f, dt * (1f - travelT));
+        // ✅ 使用更精确的回退：确保球不会与碰撞体重叠
+        // 回退距离应该至少等于球的半径，但这里使用较小的值避免过度回退
+        float backoffDistance = Mathf.Max(GEOMETRY_SURFACE_BACKOFF, GetEffectiveGeometrySphereRadius() * 0.1f);
+        transform.position = hitPos - geometryDirection * backoffDistance;
+        
+        // 计算剩余时间
+        float remainingDt = dt * (1f - travelT);
+        
+        // 处理碰撞（更新速度方向，衰减在移动过程中应用）
+        // 注意：这里传入 travelT * dt 作为已移动的时间，用于衰减计算
+        float traveledDt = dt * travelT;
         if (resolveBall)
         {
-            HandleGeometryBallCollision(hitInfo, remainingDt);
+            HandleGeometryBallCollision(hitInfo, traveledDt);
         }
         else
         {
@@ -245,13 +301,177 @@ public class BallPhysics : MonoBehaviour
                     Debug.LogWarning($"BallPhysics {gameObject.name}: 碰撞被判断为墙壁，但目标是球体({hitObj.name})！这可能是 LayerMask 配置问题。");
                 }
             }
-            HandleGeometryWallCollision(hitInfo, remainingDt);
+            HandleGeometryWallCollision(hitInfo, traveledDt);
         }
         
-        if (geometrySpeed <= geometryMinSpeedThreshold)
+        // ✅ 关键：递归处理剩余时间，处理后续可能的碰撞
+        if (remainingDt > 0.0001f && geometrySpeed > geometryMinSpeedThreshold)
         {
-            geometrySpeed = 0f;
-            OnGeometryMovementStopped();
+            SimulateGeometryStepRecursive(remainingDt, iteration + 1);
+        }
+        else if (remainingDt > 0.0001f)
+        {
+            // 如果没有剩余时间或速度太小，只应用剩余时间的衰减
+            ApplyGeometryDamping(remainingDt);
+        }
+    }
+    
+    /// <summary>
+    /// 在 Cast 之前解决重叠问题（关键修复：防止 Cast 失效）
+    /// 如果球已经与墙/其他球重叠，Cast 无法检测到，必须先解决重叠
+    /// </summary>
+    private void ResolveOverlapsBeforeCast()
+    {
+        if (ballCollider3D == null)
+        {
+            return;
+        }
+        
+        Vector3 currentPos = transform.position;
+        float radius = GetEffectiveGeometrySphereRadius();
+        
+        // 迭代解决重叠（最多2次，避免性能问题）
+        for (int i = 0; i < MAX_OVERLAP_RESOLVE_ITERATIONS; i++)
+        {
+            bool resolved = false;
+            
+            // 1. 检查与墙的重叠
+            if (geometryWallMask != 0)
+            {
+                Collider[] wallOverlaps = Physics.OverlapSphere(currentPos, radius, geometryWallMask, QueryTriggerInteraction.Ignore);
+                foreach (var wallCollider in wallOverlaps)
+                {
+                    if (wallCollider == null || IsSelfCollider(wallCollider))
+                    {
+                        continue;
+                    }
+                    
+                    // 使用 ComputePenetration 计算推出向量
+                    Vector3 direction;
+                    float distance;
+                    if (Physics.ComputePenetration(
+                        ballCollider3D, currentPos, transform.rotation,
+                        wallCollider, wallCollider.transform.position, wallCollider.transform.rotation,
+                        out direction, out distance))
+                    {
+                        // 归一化方向到 XZ 平面
+                        direction = NormalizeDirectionXZ(direction, currentPos, wallCollider.bounds.center);
+                        
+                        // 计算平滑修正距离
+                        float totalPushDistance = distance + GEOMETRY_SURFACE_BACKOFF;
+                        float actualPushDistance = CalculateSmoothCorrectionDistance(totalPushDistance, distance);
+                        
+                        Vector3 pushOut = direction * actualPushDistance;
+                        transform.position = currentPos + pushOut;
+                        currentPos = transform.position;
+                        resolved = true;
+                        
+                        if (showGeometryDebug)
+                        {
+                            Debug.Log($"BallPhysics {gameObject.name}: 解决墙重叠 - 墙:{wallCollider.name}, 重叠深度:{distance:F4}, 实际推出:{actualPushDistance:F4}");
+                        }
+                    }
+                }
+            }
+            
+            // 2. 检查与其他球的重叠
+            if (geometryBallMask != 0)
+            {
+                Collider[] ballOverlaps = Physics.OverlapSphere(currentPos, radius, geometryBallMask, QueryTriggerInteraction.Ignore);
+                foreach (var otherCollider in ballOverlaps)
+                {
+                    if (otherCollider == null || IsSelfCollider(otherCollider))
+                    {
+                        continue;
+                    }
+                    
+                    BallPhysics other = otherCollider.GetComponentInParent<BallPhysics>();
+                    if (other == null || other == this || other.ballCollider3D == null)
+                    {
+                        continue;
+                    }
+                    
+                    // 计算两球中心距离和方向
+                    Vector3 otherPos = other.transform.position;
+                    Vector3 centerToCenter = otherPos - currentPos;
+                    float centerDistance = centerToCenter.magnitude;
+                    centerToCenter = NormalizeDirectionXZ(centerToCenter, Vector3.zero, Vector3.zero);
+                    
+                    // 计算两球半径之和
+                    float otherRadius = other.GetEffectiveGeometrySphereRadius();
+                    float minSeparationDistance = radius + otherRadius + GEOMETRY_SURFACE_BACKOFF;
+                    
+                    // 如果两球重叠，进行分离（只移动当前球，避免竞争条件）
+                    if (centerDistance < minSeparationDistance)
+                    {
+                        float overlapDepth = minSeparationDistance - centerDistance;
+                        
+                        // 计算平滑修正距离（球重叠不需要额外的 backoff，因为已经在 minSeparationDistance 中包含了）
+                        float actualMoveDistance = CalculateSmoothCorrectionDistance(overlapDepth, overlapDepth);
+                        
+                        // 只移动当前球，避免两个球同时修改位置导致竞争
+                        Vector3 separationDir = -centerToCenter;  // 当前球远离对方
+                        Vector3 selfMove = separationDir * actualMoveDistance;
+                        transform.position = currentPos + selfMove;
+                        currentPos = transform.position;
+                        resolved = true;
+                        
+                        if (showGeometryDebug || other.showGeometryDebug)
+                        {
+                            Debug.Log($"BallPhysics 解决球重叠 - {gameObject.name} 和 {other.gameObject.name}, 重叠深度:{overlapDepth:F4}, 实际修正:{actualMoveDistance:F4}");
+                        }
+                    }
+                }
+            }
+            
+            // 如果这一轮没有解决任何重叠，可以提前退出
+            if (!resolved)
+            {
+                break;
+            }
+        }
+    }
+    
+    /// <summary>
+    /// 归一化方向向量到 XZ 平面（提取的公共方法）
+    /// </summary>
+    private Vector3 NormalizeDirectionXZ(Vector3 direction, Vector3 fallbackFrom, Vector3 fallbackTo)
+    {
+        direction.y = 0f;
+        if (direction.sqrMagnitude < 0.0001f)
+        {
+            // 如果方向无效，使用备用方向
+            if (fallbackFrom != Vector3.zero && fallbackTo != Vector3.zero)
+            {
+                direction = (fallbackFrom - fallbackTo);
+                direction.y = 0f;
+            }
+            if (direction.sqrMagnitude < 0.0001f)
+            {
+                direction = Vector3.forward;  // 最后的兜底
+            }
+        }
+        return direction.normalized;
+    }
+    
+    /// <summary>
+    /// 计算平滑修正距离（提取的公共方法，避免突然飞出）
+    /// 策略：如果重叠不深，完全修正；如果重叠很深，只修正一部分，让它在后续帧中逐渐修正
+    /// </summary>
+    private float CalculateSmoothCorrectionDistance(float totalDistance, float overlapDepth)
+    {
+        if (totalDistance <= MAX_SINGLE_CORRECTION_DISTANCE)
+        {
+            // 重叠不深，完全修正
+            return totalDistance;
+        }
+        else
+        {
+            // 重叠很深，只修正一部分（更保守的策略，修正比例更小）
+            // 使用更小的修正比例（0.15），让它在后续帧中逐渐修正，避免突然飞出
+            // 同时限制最大修正距离，确保不会一次性修正太多
+            float correctionRatio = 0.15f;  // 从 0.3f 减小到 0.15f，修正更渐进
+            return Mathf.Min(MAX_SINGLE_CORRECTION_DISTANCE, overlapDepth * correctionRatio + GEOMETRY_SURFACE_BACKOFF);
         }
     }
     

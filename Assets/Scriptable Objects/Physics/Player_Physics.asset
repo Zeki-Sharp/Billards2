@@ -102,5 +102,5 @@ MonoBehaviour:
   geometryWallBounceFactor: 0.95
   geometryBallBounceFactor: 0.9
   geometryKnockbackScale: 1
-  updateThreshold: 0.05
-  updateInterval: 0.02
+  updateThreshold: 0.02
+  updateInterval: 0.01
