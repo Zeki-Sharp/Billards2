@@ -532,18 +532,17 @@ public class EnemyBehavior : MonoBehaviour, IDamageable
     
     /// <summary>
     /// 获取当前移动速度
-    /// PhaseSequence 系统会通过 PhaseAtomicBehaviorWrapper 临时替换全局配置
-    /// 因此直接从全局配置读取即可
+    /// 从 runtimeState 中的阶段配置读取，如果没有则使用默认值
     /// </summary>
     private float GetCurrentMoveSpeed()
     {
         if (CurrentLevelConfig == null) return 3f;
         
-        // 根据当前运动状态读取对应配置的速度
-        if (CurrentLevelConfig.moveTowardsConfig != null)
-            return CurrentLevelConfig.moveTowardsConfig.moveSpeed;
-        if (CurrentLevelConfig.moveAwayConfig != null)
-            return CurrentLevelConfig.moveAwayConfig.moveSpeed;
+        // 优先从 runtimeState 中的阶段配置读取
+        if (runtimeState.currentMoveTowardsConfig != null)
+            return runtimeState.currentMoveTowardsConfig.moveSpeed;
+        if (runtimeState.currentMoveAwayConfig != null)
+            return runtimeState.currentMoveAwayConfig.moveSpeed;
         
         // 默认速度
         return 3f;

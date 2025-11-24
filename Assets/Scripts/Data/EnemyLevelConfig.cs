@@ -67,22 +67,6 @@ public class EnemyLevelConfig
     [Tooltip("统一的阶段序列系统，支持 Sequential（顺序）和 Conditional（条件）模式")]
     public PhaseSequenceConfig phaseSequenceConfig;
     
-    // ===== 原子行为全局配置（可被 PhaseSequenceConfig 中的阶段配置覆盖）=====
-    [BoxGroup("AI配置")]
-    [LabelText("向目标靠近配置（全局）")]
-    [Tooltip("全局配置，当阶段配置中未指定时使用")]
-    public MoveTowardsConfig moveTowardsConfig = new MoveTowardsConfig();
-    
-    [BoxGroup("AI配置")]
-    [LabelText("远离目标配置（全局）")]
-    [Tooltip("全局配置，当阶段配置中未指定时使用")]
-    public MoveAwayConfig moveAwayConfig = new MoveAwayConfig();
-    
-    [BoxGroup("AI配置")]
-    [LabelText("静止配置（全局）")]
-    [Tooltip("全局配置，当阶段配置中未指定时使用")]
-    public IdleConfig idleConfig = new IdleConfig();
-    
     /// <summary>
     /// 验证配置是否有效
     /// </summary>

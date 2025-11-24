@@ -40,9 +40,10 @@ public class MoveTowardsBehavior : BaseMovementBehavior
             return BehaviorStatus.Failure;
         }
         
-        // 从配置中读取参数（优先使用原子行为配置，回退到内置默认值）
-        float actualMinDistance = levelConfig.moveTowardsConfig?.minDistance ?? minDistance;
-        float actualMoveDistance = levelConfig.moveTowardsConfig?.moveDistance ?? moveDistance;
+        // 从配置中读取参数（优先使用阶段配置，回退到内置默认值）
+        MoveTowardsConfig config = runtimeState.currentMoveTowardsConfig;
+        float actualMinDistance = config?.minDistance ?? minDistance;
+        float actualMoveDistance = config?.moveDistance ?? moveDistance;
         
         // ✅ 计算与玩家的距离（3D转2D：使用 x 和 z）
         Vector3 playerPos3D = playerTransform.position;

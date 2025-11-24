@@ -72,6 +72,18 @@ public class EnemyRuntimeState
     /// </summary>
     public bool intervalIsInIdlePhase = false;
     
+    /// <summary>
+    /// 当前阶段的移动配置（临时存储，由 PhaseAtomicBehaviorWrapper 设置）
+    /// </summary>
+    [System.NonSerialized]
+    public MoveTowardsConfig currentMoveTowardsConfig = null;
+    
+    /// <summary>
+    /// 当前阶段的远离配置（临时存储，由 PhaseAtomicBehaviorWrapper 设置）
+    /// </summary>
+    [System.NonSerialized]
+    public MoveAwayConfig currentMoveAwayConfig = null;
+    
     #endregion
     
     #region 生存状态
@@ -108,6 +120,8 @@ public class EnemyRuntimeState
         intervalIsInIdlePhase = false;
         isDead = false;
         isTrapMode = false;
+        currentMoveTowardsConfig = null;
+        currentMoveAwayConfig = null;
     }
     
     /// <summary>

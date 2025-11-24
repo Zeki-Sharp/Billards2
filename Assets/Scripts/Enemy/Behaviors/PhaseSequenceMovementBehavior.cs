@@ -198,7 +198,7 @@ public class PhaseSequenceMovementBehavior : BaseMovementBehavior
     
     /// <summary>
     /// 原子行为包装器
-    /// 用于临时替换 levelConfig 中的配置
+    /// 用于传递阶段配置给原子行为
     /// </summary>
     private class PhaseAtomicBehaviorWrapper : IMovementBehavior
     {
@@ -215,26 +215,23 @@ public class PhaseSequenceMovementBehavior : BaseMovementBehavior
         
         public BehaviorStatus ExecuteMovement(Transform enemyTransform, Transform playerTransform, EnemyData enemyData, EnemyLevelConfig levelConfig, EnemyRuntimeState runtimeState, out Vector2 targetPosition)
         {
-            // 临时替换配置
-            var originalMoveTowards = levelConfig.moveTowardsConfig;
-            var originalMoveAway = levelConfig.moveAwayConfig;
-            
+            // 将阶段配置存储到 runtimeState 中，供原子行为读取
             if (moveTowardsConfig != null)
             {
-                levelConfig.moveTowardsConfig = moveTowardsConfig;
+                runtimeState.currentMoveTowardsConfig = moveTowardsConfig;
             }
             
             if (moveAwayConfig != null)
             {
-                levelConfig.moveAwayConfig = moveAwayConfig;
+                runtimeState.currentMoveAwayConfig = moveAwayConfig;
             }
             
             // 执行内部行为
             var result = innerBehavior.ExecuteMovement(enemyTransform, playerTransform, enemyData, levelConfig, runtimeState, out targetPosition);
             
-            // 恢复原配置
-            levelConfig.moveTowardsConfig = originalMoveTowards;
-            levelConfig.moveAwayConfig = originalMoveAway;
+            // 清理临时配置
+            runtimeState.currentMoveTowardsConfig = null;
+            runtimeState.currentMoveAwayConfig = null;
             
             return result;
         }
