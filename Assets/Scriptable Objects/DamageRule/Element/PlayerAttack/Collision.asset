@@ -18,12 +18,16 @@ MonoBehaviour:
   sourceTag: Player
   targetTag: Enemy
   requireSourceState: CanAttack
+  requireSourceNotStates: []
   requireTargetState: 
-  requireTargetNotState: IsTrap
+  requireTargetNotStates:
+  - IsTrap
+  - IsCharging
   minVelocity: 0
   velocityMultiplier: 0
   rangeShape: 0
   attackRange: 0
+  turnRequirement: 0
   baseDamage: 0
   damageMultiplier: 1
   damageType: 0

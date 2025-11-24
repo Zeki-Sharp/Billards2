@@ -55,7 +55,7 @@ MonoBehaviour:
           value: 2
           blackboardKey: 
         moveTowardsConfig:
-          moveSpeed: 8
+          moveSpeed: 10
           minDistance: 0
           moveDistance: 5
         moveAwayConfig:
