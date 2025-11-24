@@ -351,6 +351,10 @@ public class EnemyBehavior : MonoBehaviour, IDamageable
     /// </summary>
     IEnumerator MoveToTarget(Vector2 targetPosition)
     {
+        // ✅ 检查是否是冲刺攻击类型，如果是则设置 Blackboard 状态
+        bool isChargeAttack = CurrentLevelConfig != null && CurrentLevelConfig.attackType == AttackType.Charge;
+        var blackboard = isChargeAttack ? gameObject.GetBlackboard() : null;
+        
         // 如果没有几何物理组件，回退到旧的 Lerp 逻辑（保证兼容性）
         if (ballPhysics == null)
         {
@@ -371,6 +375,16 @@ public class EnemyBehavior : MonoBehaviour, IDamageable
             
             runtimeState.isMoving = true;
             
+            // ✅ 冲刺攻击：设置 IsCharging 状态
+            if (isChargeAttack && blackboard != null)
+            {
+                blackboard.Set("IsCharging", true);
+                if (showDebugInfo)
+                {
+                    Debug.Log($"EnemyBehavior {name}: 开始冲刺移动，设置 IsCharging = true");
+                }
+            }
+            
             float elapsed = 0f;
             while (elapsed < moveTime)
             {
@@ -382,6 +396,17 @@ public class EnemyBehavior : MonoBehaviour, IDamageable
             
             transform.position = targetPos;
             runtimeState.isMoving = false;
+            
+            // ✅ 冲刺攻击：清除 IsCharging 状态
+            if (isChargeAttack && blackboard != null)
+            {
+                blackboard.Set("IsCharging", false);
+                if (showDebugInfo)
+                {
+                    Debug.Log($"EnemyBehavior {name}: 冲刺移动结束，清除 IsCharging 状态");
+                }
+            }
+            
             NotifyEnemyStoppedIfNeeded();
             yield break;
         }
@@ -403,6 +428,16 @@ public class EnemyBehavior : MonoBehaviour, IDamageable
         
         // 标记开始移动（即使距离为0，也要标记，以便 EnemyManager 正确等待）
         runtimeState.isMoving = true;
+        
+        // ✅ 冲刺攻击：设置 IsCharging 状态
+        if (isChargeAttack && blackboard != null)
+        {
+            blackboard.Set("IsCharging", true);
+            if (showDebugInfo)
+            {
+                Debug.Log($"EnemyBehavior {name}: 开始冲刺移动，设置 IsCharging = true");
+            }
+        }
         
         // 使用主动移动配置（近似匀速）
         ballPhysics.UseActiveMoveGeometryConfig();
@@ -435,6 +470,13 @@ public class EnemyBehavior : MonoBehaviour, IDamageable
                 break;
             }
             
+            // ✅ 冲刺攻击：在移动过程中持续更新状态（确保只有真正移动时才为 true）
+            if (isChargeAttack && blackboard != null)
+            {
+                // 如果正在移动，确保状态为 true
+                blackboard.Set("IsCharging", true);
+            }
+            
             // 距离足够近，认为到达目标
             float currentDistance = Vector3.Distance(transform.position, targetPosition3D);
             if (currentDistance <= arriveThreshold)
@@ -465,6 +507,16 @@ public class EnemyBehavior : MonoBehaviour, IDamageable
         ballPhysics.UseKnockbackGeometryConfig();
         
         runtimeState.isMoving = false;
+        
+        // ✅ 冲刺攻击：清除 IsCharging 状态
+        if (isChargeAttack && blackboard != null)
+        {
+            blackboard.Set("IsCharging", false);
+            if (showDebugInfo)
+            {
+                Debug.Log($"EnemyBehavior {name}: 冲刺移动结束，清除 IsCharging 状态");
+            }
+        }
         
         if (showDebugInfo)
         {

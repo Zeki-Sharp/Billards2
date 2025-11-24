@@ -10,7 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 680835e44d1251848acb0e09b9c418ff, type: 3}
-  m_Name: Charge_Contact_Enemy 1
+  m_Name: Charge_Contact_Enemy
   m_EditorClassIdentifier: 
   info:
     name: 
@@ -20,7 +20,7 @@ MonoBehaviour:
     color: {r: 1, g: 1, b: 1, a: 1}
     enemyType: 
     threatLevel: "\u4F4E"
-  enemyContainerPrefab: {fileID: 7420645124294310907, guid: 3953b119ae556034889e4bc9a3e4948f, type: 3}
+  enemyContainerPrefab: {fileID: 7420645124294310907, guid: 7ece0d0f6abde624e8186d2e5b8c794e, type: 3}
   enemyLevels:
   - level: 1
     enemyImage: {fileID: 0}
@@ -29,7 +29,7 @@ MonoBehaviour:
     moveSpeed: 3
     attackCooldown: 1
     attackRange: 3
-    attackType: 0
+    attackType: 3
     rangedConfig:
       detectionRange: 8
       projectionDistance: 2
@@ -55,24 +55,14 @@ MonoBehaviour:
           value: 2
           blackboardKey: 
         moveTowardsConfig:
-          moveSpeed: 3
-          minDistance: 1.5
-          moveDistance: 3
+          moveSpeed: 8
+          minDistance: 0
+          moveDistance: 5
         moveAwayConfig:
           moveSpeed: 3
           triggerDistance: 5
           moveDistance: 2
       loopPhases: 1
-    moveTowardsConfig:
-      moveSpeed: 3
-      minDistance: 1.5
-      moveDistance: 3
-    moveAwayConfig:
-      moveSpeed: 3
-      triggerDistance: 5
-      moveDistance: 2
-    idleConfig:
-      placeholder: 1
   - level: 2
     enemyImage: {fileID: 0}
     maxHealth: 60
@@ -114,15 +104,8 @@ MonoBehaviour:
           triggerDistance: 5
           moveDistance: 2
       loopPhases: 1
-    moveTowardsConfig:
-      moveSpeed: 3
-      minDistance: 1.5
-      moveDistance: 3
-    moveAwayConfig:
-      moveSpeed: 3
-      triggerDistance: 5
-      moveDistance: 2
-    idleConfig:
-      placeholder: 1
   ballData: {fileID: 11400000, guid: d1c30c129175ecf48a42f1070d15a627, type: 2}
-  damageProfile: {fileID: 11400000, guid: 3ed9e342e2b5772499eee9862c6ed959, type: 2}
+  damageProfiles:
+  - {fileID: 11400000, guid: 3ed9e342e2b5772499eee9862c6ed959, type: 2}
+  - {fileID: 11400000, guid: a2054474ef1c1f74a98d37ef2a44caa5, type: 2}
+  legacyDamageProfile: {fileID: 0}

@@ -74,6 +74,9 @@ public static class BehaviorFactory
             case AttackType.Thorn:
                 return new ThornAttackBehavior();
                 
+            case AttackType.Charge:
+                return new ChargeAttackBehavior();
+                
             default:
                 Debug.LogError($"BehaviorFactory: 未知的攻击类型: {attackType}，使用默认的近战攻击行为");
                 return new MeleeAttackBehavior();
@@ -87,7 +90,8 @@ public static class BehaviorFactory
     /// <returns>是否有效</returns>
     public static bool IsValidAttackType(AttackType attackType)
     {
-        return attackType == AttackType.Melee || attackType == AttackType.Ranged || attackType == AttackType.Thorn;
+        return attackType == AttackType.Melee || attackType == AttackType.Ranged || 
+               attackType == AttackType.Thorn || attackType == AttackType.Charge;
     }
     
     /// <summary>
@@ -96,6 +100,6 @@ public static class BehaviorFactory
     /// <returns>支持的攻击类型数组</returns>
     public static AttackType[] GetSupportedAttackTypes()
     {
-        return new AttackType[] { AttackType.Melee, AttackType.Ranged, AttackType.Thorn };
+        return new AttackType[] { AttackType.Melee, AttackType.Ranged, AttackType.Thorn, AttackType.Charge };
     }
 }
